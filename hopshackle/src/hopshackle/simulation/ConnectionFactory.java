@@ -4,23 +4,28 @@ import java.sql.*;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+
 public class ConnectionFactory {
+
+	protected static String password = SimProperties.getProperty("DatabasePassword", "");
+	protected static String user = SimProperties.getProperty("DatabaseUser", "");
+	protected static String schema = SimProperties.getProperty("DatabaseSchema", "");
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 
 	public static synchronized Connection getConnection() {
-		return getConnection("NSP", "root", "Metternich", false);
+		return getConnection(schema, user, password, false);
 	}
-	
+
 	public static synchronized Connection getConnection(String db, String user, String password, boolean truncate) {
 		Connection con = null;
 		Properties connectionProperties = new Properties();
 		connectionProperties.setProperty("user", user);
 		connectionProperties.setProperty("password", password);
 		connectionProperties.setProperty("jdbcCompliantTruncation",Boolean.toString(truncate));
-		
+
 		String connectionStr = "jdbc:mysql:///" + db;
 		connectionStr = connectionStr + "?socketFactory=com.mysql.jdbc.NamedPipeSocketFactory";
-		
+
 		try {
 			Class.forName("com.mysql.jdbc.Driver").newInstance();
 
@@ -48,7 +53,7 @@ public class ConnectionFactory {
 				logger.severe(e1.getMessage());
 			}
 		}
-		
+
 		return con;
 
 	}
