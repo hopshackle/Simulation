@@ -1,0 +1,7 @@
+String s = "test";
+s.substring(0,2);(java.lang.String) te
+
+ArrayList<ActionEnum> actionSet = new ArrayList<ActionEnum>(EnumSet.allOf(BasicActions.class));
+actionSet.toString();
+String s = "test" + 34;
+s.toString();

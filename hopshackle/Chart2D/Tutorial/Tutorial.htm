@@ -1,0 +1,1098 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Chart2D Tutorial</title>
+</head>
+  <table border="0" width="612" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0; margin-top: 10" align="center"><font face="Arial" size="2"><b>The
+Chart2D
+Tutorial</b></font>
+        </p>
+        <p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2"><b><a name="Sections:">Sections:</a></b></font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">
+<a href="#What is Chart2D?">What is Chart2D?</a><br>
+<a href="#What are some examples of Chart2D objects?">What are some examples of Chart2D objects?</a><br>
+<a href="#What are all the public Chart2D classes and what do they do?">What are all the public Chart2D classes and what do they do?</a><br>
+<a href="#How do I configure a Bar Chart using LBChart2D?">
+How do I configure a Chart using LBChart2D?</a><br>
+<a href="#How do I configure a LineArea Chart using LBChart2D?">How do I
+configure a LineArea Chart using LBChart2D?</a><br>
+<a href="#How do I add a Legend to a Chart?">How do I add a Legend to a Chart?</a><br>
+<a href="#How do I add a Trend Line to a Graph Chart?">
+How do I add a Trend Line to a Graph Chart?</a><br>
+<a href="#How do I add a Warning Region to a Graph Chart?">
+How do I add a Warning Region to a Graph Chart?</a><br>
+<a href="#How do I configure a Graph Chart with Cat Coloring?">
+How do I configure a Graph Chart with Cat Coloring?</a><br>
+<a href="#How do I configure a PieChart2D object?">
+How do I configure a PieChart2D object?</a><br>
+<a href="#How should I use Chart2D to maximize performance and minimize memory usage?">
+How should I use Chart2D to maximize performance and minimize memory usage?</a></font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><b><font face="Arial" size="2"><a name="What is Chart2D?" href="#Sections:">What
+is Chart2D?</a></font></b>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Chart2D
+is a Java class library for visualizing data using two-dimensional graphical
+&quot;objects&quot;.&nbsp; The library is named Chart2D because it provides charts such as Pie Charts and Graph Charts.&nbsp; Using Chart2D requires gaining some knowledge of Java and Swing in
+particular.&nbsp; These graphical objects that Chart2D produces are extensions
+of the JComponent class.&nbsp; As you should know, JComponent objects can be
+added to Swing interfaces as GUI components.&nbsp; The Chart2D objects (that
+extend JComponent) are special in that they do not need to be added to a GUI in
+order to be used.&nbsp; Chart2D objects can be created,
+sized, and exported to BufferedImage objects.&nbsp; BufferedImage objects can be encoded to graphical files such as jpeg or
+png.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><a name="What are some examples of Chart2D objects?" href="#Sections:"><b><font face="Arial" size="2">What
+are some examples of Chart2D objects?</font>
+</b></a>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2"> Below are
+sample images of Chart2D objects inside JFrames.</font>
+        </p>
+<div align="center">
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <center>
+    <tr>
+      <td><font face="Arial" size="2"><b>LBChart2D (Float, Lines, Warning
+        Region, Legend)</b></font></td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img border="0" src="images/LBChart2DDemo.gif" width="343" height="223"></td>
+    </tr>
+    <tr>
+      <td><font face="Arial" size="2"><b>LLChart2D (Integer, Bars, Cat Coloring)</b></font></td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img border="0" src="images/LLChart2DDemo.gif" width="244" height="245"></td>
+    </tr>
+    <tr>
+      <td><font face="Arial" size="2"><b>PieChart2D (Integer)</b></font></td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img border="0" src="images/PieChart2DDemo.gif" width="308" height="175"></td>
+    </tr>
+    </table>
+  </center>
+</div>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><b><font size="2" face="Arial"><a name="How do I use Chart2D?" href="#Sections:">How
+do I use Chart2D?</a></font></b>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">There
+are three basic chart types:&nbsp; LBChart2D, LLChart2D, and PieChart2D.&nbsp; They all share a common configuration process.&nbsp; There
+are two types of objects that you will need to configure:&nbsp; properties
+objects and graphical objects.&nbsp; Properties objects are objects that hold
+all the settings and information needed by a graphical object to determine how
+it should look.&nbsp; Graphical objects are the objects that are added to GUI's or
+that export BufferedImage objects of themselves.&nbsp; Properties are separated
+from graphical objects because many graphical objects share common
+properties.&nbsp; For example, Siperian likes to create two objects (one small
+jpeg without a legend and one large jpeg with a legend) in order to save screen
+space on the web interface; the two objects share all the properties except for
+the legend properties.&nbsp; In order to allow for such sharing of properties
+objects, some properties must be separate from other properties (for example the
+legend properties must be separated from the other properties).</font>&nbsp; <font face="Arial" size="2">Thus
+there
+are multiple properties objects for every single graphical object.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="center"><img border="0" src="images/Configuration.gif" width="350" height="153">
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><b><font face="Arial" size="2"><a name="What are all the public Chart2D classes and what do they do?" href="#Sections:">What
+are all the public Chart2D classes and what do they do?</a></font></b>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Recall
+that there are two types of classes: graphical classes (that can be added to
+GUI's or exported to BufferedImage objects) and properties classes that
+specify how the graphical classes should look.&nbsp; Here is a table describing
+the graphical classes.</font>
+        </p>
+<div align="center">
+  <center>
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <tr>
+      <td colspan="2"><b><font size="2" face="Arial">Graphical Classes</font></b></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">LBChart2D</font></td>
+      <td><font size="2" face="Arial">A &quot;labels bottom&quot; graph chart.*</font></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">LLChart2D</font></td>
+      <td><font size="2" face="Arial">A &quot;labels left&quot; graph chart.**</font></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">PieChart2D</font></td>
+      <td><font size="2" face="Arial">A pie chart.</font></td>
+    </tr>
+    <tr>
+      <td colspan="2"><font size="2" face="Arial">*&nbsp; A vertical bar chart
+        is an example of a LBChart2D.</font></td>
+    </tr>
+    <tr>
+      <td colspan="2"><font size="2" face="Arial">**&nbsp; A horizontal bar
+        chart is an example of a LLChart2D.</font></td>
+    </tr>
+  </table>
+  </center>
+</div>
+  <p><font size="2" face="Arial">&nbsp;Here is a table describing the properties
+  classes.</font></p>
+<div align="center">
+  <center>
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <tr>
+      <td colspan="2"><b><font size="2" face="Arial">Properties Classes</font></b></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">Object2DProperties</font></td>
+      <td><font size="2" face="Arial">Props for enclosure and title.</font></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">Chart2DProperties</font></td>
+      <td><font size="2" face="Arial">Props for layout and data labels.</font></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">GraphChart2DProperties</font></td>
+      <td><font size="2" face="Arial">Props for axes and graph layout.</font></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">PieChart2DProperties</font></td>
+      <td><font size="2" face="Arial">Props for pie sectors and labels.</font></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">LegendProperties</font></td>
+      <td><font size="2" face="Arial">Props for legend.</font></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">Dataset</font></td>
+      <td><font size="2" face="Arial">Structure for holding data.</font></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">MultiColorsProperties</font></td>
+      <td><font size="2" face="Arial">Props for generating visualization colors.</font></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">GraphProperties</font></td>
+      <td><font size="2" face="Arial">Props for graph areas.</font></td>
+    </tr>
+    <tr>
+      <td><font size="2" face="Arial">WarningRegionProperties</font></td>
+      <td><font size="2" face="Arial">Props for warning regions of graph areas.</font></td>
+    </tr>
+  </table>
+  </center>
+</div>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Arial">&nbsp;Here
+is a table describing which properties classes are used by which graphical
+classes.&nbsp; Some graphical classes allow for the adding of multiple objects
+of particular graphical classes.&nbsp; For instance, a LBChart2D can have
+multiple Dataset objects added to it (for &quot;overlay&quot; graph charts).&nbsp;
+Some graphical classes only allow for the setting of one object of a particular
+properties class.&nbsp; The table indicates this with a &quot;Many&quot; for
+allowing multiple objects and an &quot;One&quot; for only allowing one
+object.&nbsp; There is one more item to explain.&nbsp; Graphical classes require
+the setting of some properties classes.&nbsp; For example, a Clocks2D object
+needs a Clocks2DProperties object before it can be used.&nbsp; The
+&quot;Many&quot; or &quot;One&quot; placed inside brackets &quot;[]&quot;
+indicates an optional properties class.&nbsp; The &quot;Many&quot; or
+&quot;One&quot; not inside brackets indicates a required properties class.</font>
+        </p>
+<div align="center">
+  <center>
+        <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+          <tr>
+            <td colspan="4"><b><font size="2" face="Arial">Graphical Classes and
+              their Properties Classes</font></b></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td><font size="2" face="Arial">LBChart2D</font></td>
+            <td><font size="2" face="Arial">LLChart2D</font></td>
+            <td><font size="2" face="Arial">PieChart2D</font></td>
+          </tr>
+          <tr>
+      <td><font size="2" face="Arial">Object2DProperties</font></td>
+            <td align="center">
+              <p align="center"><font size="2" face="Arial">One</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+          </tr>
+          <tr>
+      <td><font size="2" face="Arial">Chart2DProperties</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+          </tr>
+          <tr>
+      <td><font size="2" face="Arial">GraphChart2DProperties</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+            <td align="center">-</td>
+          </tr>
+          <tr>
+      <td><font size="2" face="Arial">PieChart2DProperties</font></td>
+            <td align="center">-</td>
+            <td align="center">-</td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+          </tr>
+          <tr>
+      <td><font size="2" face="Arial">LegendProperties</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+          </tr>
+          <tr>
+      <td><font size="2" face="Arial">Dataset</font></td>
+            <td align="center"><font size="2" face="Arial">Many</font></td>
+            <td align="center"><font size="2" face="Arial">Many</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+          </tr>
+          <tr>
+      <td><font size="2" face="Arial">MultiColorsProperties</font></td>
+            <td align="center"><font size="2" face="Arial">Many</font></td>
+            <td align="center"><font size="2" face="Arial">Many</font></td>
+            <td align="center"><font size="2" face="Arial">One</font></td>
+          </tr>
+          <tr>
+      <td><font size="2" face="Arial">GraphProperties</font></td>
+            <td align="center"><font size="2" face="Arial">Many</font></td>
+            <td align="center"><font size="2" face="Arial">Many</font></td>
+            <td align="center">-</td>
+          </tr>
+          <tr>
+      <td><font size="2" face="Arial">WarningRegionProperties</font></td>
+            <td align="center"><font size="2" face="Arial">[Many]</font></td>
+            <td align="center"><font size="2" face="Arial">[Many]</font></td>
+            <td align="center">-</td>
+          </tr>
+        </table>
+  </center>
+</div>
+        <p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">
+<b>
+<a name="How do I configure a Bar Chart using LBChart2D?" href="#Sections:">
+How do I configure a Bar Chart using LBChart2D?</a></b>
+        </font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+LBChart2D object requires the configuration of at seven
+properties
+        objects:&nbsp; Object2DProperties, Chart2DProperties,
+GraphChart2DProperties, LegendProperties, Dataset, MultiColorsProperties, and
+GraphProperties.&nbsp;&nbsp;</font>
+        </p>
+        <p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2"> Let's
+        begin configuring the Object2DProperties object.</font>&nbsp; <font face="Arial" size="2">The
+Object2DProperties object contains seventeen settings for the object border,
+background, title, and gaps.&nbsp; Here is a basic graphic of the managed
+components.&nbsp;</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="center"><font face="Arial" size="2"><img border="0" src="images/Object2DProperties.gif" width="500" height="282"></font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Generally
+a setting has an intelligent default value (for example the gap), but some
+settings should be passed personalized values (for example the title).&nbsp;
+Below is a table of the settings that are commonly used.</font>
+        </p>
+<div align="center">
+  <center>
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <tr>
+      <td width="140"><font size="2" face="Arial"><b>Method</b></font></td>
+      <td width="261"><font size="2" face="Arial"><b>Description</b></font></td>
+      <td width="92"><font size="2" face="Arial"><b>Default Value</b></font></td>
+    </tr>
+    <tr>
+      <td width="140"><font size="2" face="Arial">setObjectBorderColor (java.awt.Color)</font></td>
+      <td width="261"><font size="2" face="Arial">Sets the color of the object's border.</font></td>
+      <td width="92"><font size="2" face="Arial">Color.black</font></td>
+    </tr>
+    <tr>
+      <td width="140"><font size="2" face="Arial">setObjectTitleFontColor (java.awt.Color)</font></td>
+      <td width="261"><font size="2" face="Arial">Sets the color of the font for the
+        object's title.</font></td>
+      <td width="92"><font size="2" face="Arial">Color.black</font></td>
+    </tr>
+    <tr>
+      <td width="140"><font size="2" face="Arial">setObjectTitleText (java.lang.String)</font></td>
+      <td width="261"><font size="2" face="Arial">Sets the text for the object's title.</font></td>
+      <td width="92"><font size="2" face="Arial">&quot;&quot;</font></td>
+    </tr>
+  </table>
+  </center>
+</div>
+        <p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The actual configuration of an Object2DProperties
+        object looks like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">Object2DProperties
+object2DProps = new Object2DProperties();<br>
+object2DProps.setObjectTitleText (&quot;Title for this Object&quot;);</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+next properties object to configure is a Chart2DProperties object.&nbsp; There
+are only three settings to this object.&nbsp; There are only two things that
+this object manages:&nbsp; (i) the gap between the legend and the rest of the
+chart and (ii) something called &quot;the data labels precision&quot;.&nbsp; The
+data labels precision setting is a complex one.&nbsp; But basically it adjusts
+how the labels look.&nbsp; The setting doesn't affect the precision of the
+computations involved in painting the graph components.&nbsp; For example you
+might be charting cache size values (ex. 1 megabyte of cache being used); you
+may want the labels to read (1 MB instead of 1.134 MB); the setting also let's
+you adjust the look of labels from 1,123 MB to 1,500 MB (adding zeroes if that
+look is preferred).&nbsp; The current setting is to add up to three zeroes (if
+data gets that large).&nbsp; Here is a graphic depicting the area that fits
+within the titled area managed by the Object2DProperties object; the gap
+separates the legend area (on right) from the rest of the chart (on left).</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="center"><img border="0" src="images/Chart2DProperties.gif" width="346" height="284">
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Using
+the defaults, the
+configuration of a Chart2DProperties object looks like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">Chart2DProperties
+chart2DProps = new Chart2DProperties();</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+next properties object to configure is a LegendProperties object.&nbsp;
+There are twenty-two settings customizing the&nbsp;legend border, labels, label bullets,
+and gaps.&nbsp; Here
+is a basic graphic of the managed components.&nbsp; The graphic depicts
+an area that fits within the legend area managed by the Chart2DProperties object.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="center"><img border="0" src="images/LegendProperties.gif" width="320" height="193">
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Here
+are a few methods that you may want to use.</font>
+        </p>
+  <center>
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <tr>
+      <td width="158"><b><font size="2" face="Arial">Method</font></b></td>
+      <td width="252"><b><font size="2" face="Arial">Description</font></b></td>
+      <td width="89"><b><font size="2" face="Arial">Default Value</font></b></td>
+    </tr>
+    <tr>
+      <td width="158"><font face="Arial" size="2">setLegendExistence (boolean)</font></td>
+      <td width="252"><font face="Arial" size="2">Sets whether there will exist a legend on the chart.</font></td>
+      <td width="89"><font face="Arial" size="2">false</font></td>
+    </tr>
+    <tr>
+      <td width="158"><font face="Arial" size="2">setLegendBorderColor (java.awt.Color)</font></td>
+      <td width="252"><font face="Arial" size="2">Sets the color of the border around the
+        legend.</font></td>
+      <td width="89"><font face="Arial" size="2">Color.black</font></td>
+    </tr>
+    <tr>
+      <td width="158"><font face="Arial" size="2">setLegendLabelsFontColor (java.awt.Color)</font></td>
+      <td width="252"><font face="Arial" size="2">Sets the color of the font of the legend's
+        labels.</font></td>
+      <td width="89"><font face="Arial" size="2">Color.black</font></td>
+    </tr>
+    <tr>
+      <td width="158"><font face="Arial" size="2">setLegendLabelsTexts (java.lang.String[])</font></td>
+      <td width="252"><font face="Arial" size="2">Sets the texts of the legend labels.</font></td>
+      <td width="89"><font face="Arial" size="2">new String[0]</font></td>
+    </tr>
+  </table>
+  </center>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">For
+example, let's assume you didn't want a legend for your Chart.&nbsp; In that
+case, you would configure the object like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">LegendProperties
+legendProps = new LegendProperties();<br>
+legendProps.setLegendExistence (false);</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+next properties object to configure is a GraphChart2DProperties object.&nbsp;
+There are fifty-six settings customizing the&nbsp;numbers axis, the labels axis, as
+well as the optional cat coloring of graph components.&nbsp; Here
+is a basic graphic of the managed components.&nbsp; The graphic depicts
+an area that fits within the chart area managed by the Chart2DProperties object.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="center"><img border="0" src="images/GraphChart2DProperties.gif" width="400" height="319">
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Here
+are a few settings you may want to use.</font>
+        </p>
+  <center>
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <tr>
+      <td width="226"><font size="2" face="Arial"><b>Method</b></font></td>
+      <td width="189"><font size="2" face="Arial"><b>Description</b></font></td>
+      <td width="89"><font size="2" face="Arial"><b>Default Value</b></font></td>
+    </tr>
+    <tr>
+      <td width="226"><font face="Arial" size="2">setNumbersAxisLabelsFontColor (java.awt.Color)</font></td>
+      <td width="189"><font face="Arial" size="2">Sets the color of the font of the labels
+        of the numbers axis.</font></td>
+      <td width="89"><font size="2" face="Arial">Color.black</font></td>
+    </tr>
+    <tr>
+      <td width="226"><font face="Arial" size="2">setChartDatasetCustomizeLeastValue (boolean)</font></td>
+      <td width="189"><font face="Arial" size="2">Sets whether the true least value in the
+        data sets will be substituted by the custom value. This effects the
+        range of the labels of the numbers axis.</font></td>
+      <td width="89"><font size="2" face="Arial">false</font></td>
+    </tr>
+    <tr>
+      <td width="226"><font face="Arial" size="2">setChartDatasetCustomGreatestValue (float)</font></td>
+      <td width="189"><font face="Arial" size="2">Sets the custom greatest value of the data
+        sets. This value must be greater than or equal to the true greatest
+        value of the data sets for it to be used. This effects the scale of the
+        labels of the numbers axis.</font></td>
+      <td width="89"><font size="2" face="Arial">0</font></td>
+    </tr>
+  </table>
+  </center>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+&quot;custom greatest value&quot; setting is a complex setting, but it can be
+used in a simple way.&nbsp; For data that will always be within a known range
+(such as percentage data that will always be between zero and 100) it may be
+preferred to have the numbers labels be static rather than changing dynamically
+with the input data.&nbsp; You can set the &quot;greatest value&quot; at 100
+for percentage data charts where desired.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Generally
+the actual creation and configuration of
+a GraphChart2DProperties need only look like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">GraphChart2DProperties
+graph2DProps = new GraphChart2DProperties();</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+next properties object to configure is a GraphProperties object.&nbsp;
+There are thirty-seven settings customizing the graph area's border, grid lines, and graph
+components (ex. vertical bars).&nbsp; Here
+is a basic graphic of the managed components.&nbsp;The graphic depicts an area
+managed by the GraphChart2DProperties object (to the right of the numbers axis
+and above the labels axis).</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="center"><img border="0" src="images/GraphProperties.gif" width="350" height="267">
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Here
+are a few settings you may want to use.</font>
+        </p>
+<div align="center">
+  <center>
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <tr>
+      <td width="186"><b><font face="Arial" size="2">Method</font></b></td>
+      <td width="224"><b><font face="Arial" size="2">Description</font></b></td>
+      <td width="87"><b><font face="Arial" size="2">Default Value</font></b></td>
+    </tr>
+    <tr>
+      <td width="186"><font face="Arial" size="2">setGraphBorderLeftBottomColor (java.awt.Color)</font></td>
+      <td width="224"><font face="Arial" size="2">Sets the color of the graph's
+        left and bottom border.</font></td>
+      <td width="87"><font face="Arial" size="2">Color.black</font></td>
+    </tr>
+    <tr>
+      <td width="186"><font face="Arial" size="2">setGraphBorderRightTopColor (java.awt.Color)</font></td>
+      <td width="224"><font face="Arial" size="2">Sets the color of the graph's
+        right and top border.</font></td>
+      <td width="87"><font face="Arial" size="2">Color.gray</font></td>
+    </tr>
+    <tr>
+      <td width="186"><font face="Arial" size="2">setGraphLabelsLinesColor (java.awt.Color)</font></td>
+      <td width="224"><font face="Arial" size="2">Sets the color of the vertical
+        lines of this graph.</font></td>
+      <td width="87"><font face="Arial" size="2">Color.gray</font></td>
+    </tr>
+    <tr>
+      <td width="186"><font face="Arial" size="2">setGraphNumbersLinesColor (java.awt.Color)</font></td>
+      <td width="224"><font face="Arial" size="2">Sets the color of the
+        horizontal lines of this graph.</font></td>
+      <td width="87"><font face="Arial" size="2">Color.gray</font></td>
+    </tr>
+  </table>
+  </center>
+</div>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+configuration of a GraphProperties object may look like this.&nbsp;
+&quot;Bars&quot; are the default graph components.&nbsp; Other choices are lines
+and dots, and any combination of bars, lines, and dots.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">GraphProperties
+graphProps = new GraphProperties();</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+next properties object to configure is a Dataset object.&nbsp; This object is
+different than the others in that, the Dataset object doesn't directly relate to
+any visual region; for instance a legend properties object relates to a legend
+area, but a Dataset object just contains the data for a chart.&nbsp; As a
+result, there are fewer configuration methods.&nbsp; We only need to use methods
+that add data to the object.&nbsp; Their are two ways to create and configure a
+Dataset object:&nbsp; (i) you can create an empty Dataset and add data to it as
+you require or (ii) you can create a Dataset of a known size and &quot;set&quot;
+your data.&nbsp; The second way has better performance, but the size of the
+Dataset object needs to be known upon creation.&nbsp; The Dataset object's internal resources are Vectors of
+java.lang.Float objects.&nbsp; Even if data only requires precision of Integer,
+using the extra precision of Float objects is satisfactory.&nbsp;&nbsp;</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2"> A Dataset
+object is like a third order float array, for instance float[numSets][numCategories][numItems].&nbsp;
+Why would we use a third order array?&nbsp; Well consider if we were graphing
+the number of hours someone worked every week for the last two years.&nbsp; We
+could have two sets of data, data for year 2002 and data for year 2001; this
+would be the first order (also called the &quot;set&quot; order).&nbsp; Now
+having 52 labels (one label for each week) on the &quot;labels axis&quot; would
+be too many labels, so we could categorize the data for each year by month
+having only 12 labels instead; this would be the second order (also called the
+&quot;cat&quot; order).&nbsp; Lastly which data was for which week of each month
+would require another order; this is called the third order (or the
+&quot;item&quot; order).&nbsp; Most of Siperian's bar charts have 1 set, 24
+categories per set, and 1 item per category.&nbsp; The configuration of such a
+Dataset object may look like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Courier New">Dataset
+dataset = new Dataset (1, 24, 1);<br>
+dataset.set (0, 0, 0, data1)&nbsp; //where data1 is your first value (ex. 23f)<br>
+dataset.set (0, 1, 0, data2)&nbsp; //where data2 is your second value (ex. 56f)<br>
+dataset.set (0, 2, 0, data3)&nbsp; //where data3 is your third value (ex. 185f)<br>
+...<br>
+dataset.set (0,23, 0, data24)&nbsp; //where data24 is your last value (ex. 3f)</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Arial">The
+last properties object that needs to be configured is the MultiColorsProperties
+object.&nbsp; It too is special like the dataset in that it isn't directly
+related with a visual area.&nbsp; This object has settings for selecting a
+series of colors that color the graph components (ex. the vertical bars).&nbsp;
+It can automatically choose colors for you of &quot;CHART2D&quot;,
+&quot;NATURAL&quot;, and &quot;PASTEL&quot;.&nbsp; It can also be passed an
+array of colors for use.&nbsp; This object is very smart; if there isn't enough
+colors then the colors are repeated.&nbsp; Currently all automatic types have
+twelve distinct colors.&nbsp; A MultiColorsProperties is
+generally configured in this way.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Courier New">MultiColorsProperties
+multiColorsProps = new MultiColorsProperties();</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">After
+having configured all the necessary properties objects, a LBChart2D object must
+be created and configured. Remember that the LBChart2D object is the graphical
+object (the object that can be added to a GUI or can be exported to a
+BufferedImage object). You begin configuring a LBChart2D object in this way.</font>
+        </p>
+<p><font face="Courier New" size="2">LBChart2D lbChart2D = new LBChart2D();<br>
+lbChart2D.setObject2DProperties (object2DProps);<br>
+lbChart2D.setChart2DProperties (chart2DProps);<br>
+lbChart2D.setLegendProperties (legendProps);<br>
+lbChart2D.setGraphChart2DProperties (graphChart2DProps);<br>
+lbChart2D.addGraphProperties (graphProps);<br>
+lbChart2D.addDataset (dataset);<br>
+lbChart2D.addMultiColorsProperties (multiColorsProps);</font></p>
+<p><font face="Arial" size="2">LBChart2D objects have layout ratios.&nbsp; They affect the
+layout of the legend, axes, and graph.&nbsp; How they affect these is complex to
+explain.&nbsp; Expert settings of these is not necessary.&nbsp; Basically the
+layout algorithms takes some large amount of space (i.e. the maximum size of the
+graph chart) and allocates it to each of the graph chart components according to
+the layout ratios; generally the components don't require as much space as was
+given to it and they reset their ratios according to the minimum space they
+need.&nbsp; That is why the ratios don't need to be accurate:&nbsp; (i) they are
+applied to a much larger amount of space than generally is necessary&nbsp; (ii)
+they are readjusted for the particular graph chart at hand.&nbsp; Read the
+javadoc for the &quot;setLayoutRatios (float, float, float)&quot; method for
+more information.</font></p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+last steps of configuring the object depend on how you want to use it.&nbsp; If
+you want to add the object to a GUI, then treat it much the same as you would
+any JComponent.&nbsp; To encode to a file or print, then set the size and
+preferred size of the object either using &quot;pack()&quot; or the &quot;setSize(Dimension)&quot;
+and &quot;setPreferredSize (Dimension)&quot; methods.&nbsp; Pack sets the object
+to its auto-calculated preferred size and look like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">lbChart2D.pack();</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Arial">For
+adding to a Java Swing GUI, simply add the object to a Swing content pane such
+as JPanel.&nbsp; For encoding to a graph image file such as a jpeg, export the
+LBChart2D object to a BufferedImage
+object and perform the encoding.&nbsp; The BufferedImage object is obtained by
+calling the getImage() method like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">BufferedImage
+lbImage = lbChart2D.getImage();</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+last thing to mention is how to update the chart with new data/
+information as necessary.&nbsp; The key is to always keep a reference (i.e.
+global variable) to the configured LBChart2D object.&nbsp; Given that you have
+the LBChart2D object, you can access any of the objects &quot;Properties&quot;
+objects that you passed to it during original configuration.&nbsp; Simply change
+any of the Properties objects by calling the appropriate &quot;set&quot;
+methods.&nbsp; Once the Properties objects have been modified, the changes will
+be automatically reflected by the chart upon next &quot;repaint()&quot; for GUI
+display or &quot;getImage()&quot; for image encoding.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left">
+<font face="Arial" size="2"><b>
+<a name="How do I configure a LineArea Chart using LBChart2D?" href="#Sections:">
+How do I configure a LineArea Chart using LBChart2D?</a></b></font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+following is an example of a LineArea Chart using LBChart2D.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">A
+LBChart2D LineArea Chart is configured exactly like a LBChart2D Bar Chart except
+the LineArea Chart requires two extra setting to the GraphProperties
+objects.&nbsp; The GraphProperties bars must be disabled and the lines must be
+enabled.&nbsp; Use of these extra methods on a configured GraphProperties object
+looks like this. (Assume a GraphProperties object has been configured as
+described in the Bar Chart LBChart2D section.)</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Courier New">
+graphProps.setGraphBarsExistence (false);<br>
+graphProps.setGraphLinesExistence (true);</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left">
+<b>
+<font face="Arial" size="2">
+<a name="How do I add a Trend Line to a Graph Chart?" href="#Sections:">
+How do I add a Trend Line to a Graph Chart?</a>
+</font></b>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+following is an example of a GraphChart2D object with a trend line.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Adding
+a trend line to a graph chart is quite easy.&nbsp; There are three ADDITIONAL &quot;properties objects&quot; you'll need to configure:&nbsp; GraphProperties,
+Dataset, and MultiColorsProperties.&nbsp; That is, a second object of each needs
+to be configured (remember that one of each has already been configured for the
+raw data).&nbsp; The following discussion assumes a configured GraphChart2D
+object such as a Bar Chart using LBChart2D exists.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Configuration of
+the second GraphProperties object is similar to configuring the first.&nbsp;
+Generally you'll use a few additional methods when configuring the GraphProperties
+object for the trend.&nbsp; The addition methods turn the default graph
+components from &quot;bar&quot; to &quot;line&quot; (similar to configuring a
+GraphProperties object for a LineArea Chart LBChart2D).</font>&nbsp; <font face="Arial" size="2">Below are summaries of
+the additional methods only.</font>
+        </p>
+  <center>
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <tr>
+      <td width="179"><b><font face="Arial" size="2">Method</font></b></td>
+      <td width="225"><b><font face="Arial" size="2">Description</font></b></td>
+      <td width="90"><b><font face="Arial" size="2">Default Value</font></b></td>
+    </tr>
+    <tr>
+      <td width="179"><font face="Arial" size="2">setGraphBarsExistence
+        (boolean)</font></td>
+      <td width="225"><font face="Arial" size="2">Sets whether the graph
+        contains bar components.</font></td>
+      <td width="90"><font face="Arial" size="2">true</font></td>
+    </tr>
+    <tr>
+      <td width="179"><font face="Arial" size="2">setGraphLinesExistence
+        (boolean)</font></td>
+      <td width="225"><font face="Arial" size="2">Sets whether the graph
+        contains line components.</font></td>
+      <td width="90"><font face="Arial" size="2">false</font></td>
+    </tr>
+    <tr>
+      <td width="179"><font face="Arial" size="2">setGraphLinesFillInterior
+        (boolean)</font></td>
+      <td width="225"><font face="Arial" size="2">Sets whether the graph lines
+        will made to form a shape (ie like a mountain range).</font></td>
+      <td width="90"><font face="Arial" size="2">true</font></td>
+    </tr>
+    <tr>
+      <td width="179"><font face="Arial" size="2">setGraphLinesThicknessModel
+        (int)</font></td>
+      <td width="225"><font face="Arial" size="2">Sets the thickness of the line
+        components for the chart's model size.</font></td>
+      <td width="90"><font face="Arial" size="2">1</font></td>
+    </tr>
+  </table>
+  </center>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Assuming
+an extra configured GraphProperties objects exists (configured as described in the Bar
+Chart LBChart2D section), use of the additional methods looks like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left">
+<font size="2" face="Courier New">
+      trendGraphProps.setGraphBarsExistence (false);<br>
+      trendGraphProps.setGraphLinesExistence (true);<br>
+      trendGraphProps.setGraphLinesFillInterior (false);<br>
+      trendGraphProps.setGraphLinesThicknessModel (2);</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+next additional object we need is a Dataset object.&nbsp; The object needs data;
+specifically it needs data (i.e. trend data) that is based on the data (i.e. raw
+data) in the first Dataset
+object.&nbsp; Built in is a moving average function for its trend
+function.&nbsp; The number of categories and data items in each Dataset object
+(the raw object and the trend object) must be equal.&nbsp; There is an easy way
+of configuring the trend Dataset object once the raw Dataset object is
+created.&nbsp; Configuration looks like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">Dataset
+trendDataset = new Dataset (1,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+dataset.getNumCats(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+dataset.getNumItems());<br>
+trendDataset.setMovingAverage (0, dataset, 5);</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+&quot;setMovingAverage&quot; method may need some description.&nbsp; The &quot;0&quot;
+indicates the trend data should be placed in the first set.&nbsp; The
+&quot;dataset&quot; variable passes in the raw Dataset object for analysis.&nbsp; The &quot;5&quot; indicates how many items to analyze for each moving
+average item.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+last additional object that needs to be configured is the MultiColorsProperties
+object.&nbsp; You should choose a custom color here.&nbsp; One color (i.e.
+the trend line color) needs to
+be chosen..&nbsp; Configuration of the trend
+MultiColorsProperties object looks like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">MultiColorsProperties
+trendColorsProps = new MultiColorsProperties(); trendColorsProps.setColorsCustom
+(Color.yellow);</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Arial">Now
+that the three additional properties objects are configured, they need to be
+added to the GraphChart2D object.&nbsp; Remember that object was called
+&quot;lbChart2D&quot;.&nbsp; Adding these properties must come AFTER the adding
+of the other three original properties objects.&nbsp; The configuration of the
+GraphChart2D object with the original and additional properties objects looks
+like this.</font>
+        </p>
+<pre>LBChart2D lbChart2D = new LBChart2D();
+...
+lbChart2D.addGraphProperties (graphProps);
+lbChart2D.addDataset (dataset);
+lbChart2D.addMultiColorsProperties (multiColorsProps);
+lbChart2D.addGraphProperties (trendGraphProps);
+lbChart2D.addDataset (trendDataset);
+lbChart2D.addMultiColorsProperties (trendColorsProps);</pre>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Arial">The
+remaining configuration and use of the &quot;Trend Line&quot; LBChart2D object
+is the same as described in the Bar Chart LBChart2D section.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left">
+<font face="Arial" size="2"><b><a name="How do I add a Legend to a Chart?" href="#Sections:">How do I add a Legend to a Chart?</a>
+</b></font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Legend's
+can be added to any object extending the Chart2D class.&nbsp; That means that
+legends can be added to LBChart2D, LLChart2D, and PieChart2D objects.&nbsp;
+Remember that even when configuring a Chart2D object without a legend, a
+LegendProperties object must be created and configured.&nbsp; Note this section
+assumes a configured Chart2D object such as a Bar Chart using LBChart2D
+exists.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Here
+are a few methods you may use.</font>
+        </p>
+<div align="center">
+  <center>
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <tr>
+      <td width="167"><b><font face="Arial" size="2">Method</font></b></td>
+      <td width="240"><b><font face="Arial" size="2">Description</font></b></td>
+      <td width="88"><b><font face="Arial" size="2">Default Value</font></b></td>
+    </tr>
+    <tr>
+      <td width="167"><font face="Arial" size="2">setLegendExistence (boolean)</font></td>
+      <td width="240"><font face="Arial" size="2">Sets whether there will exist
+        a legend on the chart.</font></td>
+      <td width="88"><font face="Arial" size="2">false</font></td>
+    </tr>
+    <tr>
+      <td width="167"><font face="Arial" size="2">setLegendBorderColor (java.awt.Color)</font></td>
+      <td width="240"><font face="Arial" size="2">Sets the color of the border around the legend.</font></td>
+      <td width="88"><font face="Arial" size="2">Color.black</font></td>
+    </tr>
+    <tr>
+      <td width="167"><font face="Arial" size="2">setLegendLabelsFontColor (java.awt.Color)</font></td>
+      <td width="240"><font face="Arial" size="2">Sets the color of the font of the legend's labels.</font></td>
+      <td width="88"><font face="Arial" size="2">Color.black</font></td>
+    </tr>
+    <tr>
+      <td width="167"><font face="Arial" size="2">setLegendLabelsTexts (java.lang.String[])</font></td>
+      <td width="240"><font face="Arial" size="2">Sets the texts of the legend labels.</font></td>
+      <td width="88"><font face="Arial" size="2">new String[]</font></td>
+    </tr>
+  </table>
+  </center>
+</div>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">For
+a Chart2D object with a legend, the configuration of a LegendProperties object
+looks like this where &quot;Set 1&quot; and Set 2&quot; can be any string labels
+for your sets of data.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">LegendProperties
+legendProps = new LegendProperties();<br>
+legendProps.setLegendLabelsTexts (new String[] {&quot;Set 1&quot;, &quot;Set
+2&quot;});</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left">
+<font face="Arial" size="2"><b><a name="How do I add a Warning Region to a Graph Chart?" href="#Sections:">How do I add a Warning Region to a Graph Chart?</a></b></font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Warning
+regions can only be added to GraphChart2D objects.&nbsp; Adding a warning region
+requires configuring a WarningRegionProperties object.&nbsp; In fact, any number
+of warning regions can be added; each warning region requires its own
+WarningRegionProperties object.&nbsp; The following discussion assumes that a
+configured GraphChart2D object such as described in the Bar Chart LBChart2D
+section exists.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Warning
+regions are colored areas of graph charts.&nbsp; If a graph component (ex. a
+bar) enters that area, then that section of the component entering the area is
+of an alternative color.&nbsp; The area of the warning region is
+specified by indicating at which (data) values, high and low, the warning region
+should color.&nbsp; There are two special &quot;values&quot; that can be passed
+however:&nbsp; (i) TOP indicating the far edge of the graph and (ii) BOTTOM
+indicating the near edge of the graph.</font>&nbsp; <font face="Arial" size="2">Siperian
+uses the following methods to configure the WarningRegionProperties objects.</font>
+        </p>
+<div align="center">
+  <center>
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <tr>
+      <td width="122"><b><font face="Arial" size="2">Method</font></b></td>
+      <td width="278"><b><font face="Arial" size="2">Description</font></b></td>
+      <td width="92"><b><font face="Arial" size="2">Default Value</font></b></td>
+      <td width="101"><b><font face="Arial" size="2">Siperian Value</font></b></td>
+    </tr>
+    <tr>
+      <td width="122"><font face="Arial" size="2">setBackgroundColor
+        (java.awt.Color)</font></td>
+      <td width="278"><font face="Arial" size="2">Sets the color that the graph
+        background becomes in this region if the graph background exists.</font></td>
+      <td width="92"><font face="Arial" size="2">new Color (250,221,230)</font></td>
+      <td width="101"><font face="Arial" size="2">[depends]</font></td>
+    </tr>
+    <tr>
+      <td width="122"><font face="Arial" size="2">setComponentColor
+        (java.awt.Color)</font></td>
+      <td width="278"><font face="Arial" size="2">Sets the color that any
+        component entering this region should become.</font></td>
+      <td width="92"><font face="Arial" size="2">new Color (220,000,050)</font></td>
+      <td width="101"><font face="Arial" size="2">[depends]</font></td>
+    </tr>
+    <tr>
+      <td width="122"><font face="Arial" size="2">setHigh (float)</font></td>
+      <td width="278"><font face="Arial" size="2">Sets the high value of this
+        warning region.</font></td>
+      <td width="92"><font face="Arial" size="2">TOP</font></td>
+      <td width="101"><font face="Arial" size="2">[depends]</font></td>
+    </tr>
+    <tr>
+      <td width="122"><font face="Arial" size="2">setLow (float)</font></td>
+      <td width="278"><font face="Arial" size="2">Sets the low value of this
+        warning region.</font></td>
+      <td width="92"><font face="Arial" size="2">BOTTOM</font></td>
+      <td width="101"><font face="Arial" size="2">[depends]</font></td>
+    </tr>
+  </table>
+  </center>
+</div>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Configuration
+of a WarningRegionProperties object looks like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">WarningRegionProperties
+warningProps = new WarningRegionProperties();<br>
+warningProps.setHigh (WarningRegionProperties.TOP);<br>
+warningProps.setLow (6000);<br>
+warningProps.setComponentColor (new Color (250,221,230));<br>
+warningProps.setBackgroundColor (new Color (220,000,050));</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+last step in adjusting a configured GraphChart2D object for having a warning
+region is adding the WarningRegionProperties objects to the GraphChart2D
+object.&nbsp; Adding the WarningRegionProperties object looks like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Courier New">lbChart2D.addWarningRegionProperties
+(warningProps);</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Arial">All
+other configuration and use is the same as described in the Bar Chart LBChart2D
+section.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left">
+<font face="Arial" size="2"><b><a name="How do I configure a Graph Chart with Cat Coloring?" href="#Sections:">How do I configure a Graph Chart with Cat
+Coloring?</a></b></font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">&quot;Cat
+Coloring&quot; is where graph components are colored according to their
+category; by default they are colored according to their set.&nbsp; &quot;Cat
+Coloring&quot; was added late in the Chart2D API; it still has not fully been
+integrated with it.&nbsp; This is apparent when wanting a legend and Cat
+Coloring.&nbsp; The legend bullets can only be colored by set.&nbsp; The graph
+components can be colored by set or by category.&nbsp; This is also apparent in that
+&quot;Cat Coloring&quot; has no interpretation for Graph Charts with
+lines.&nbsp; Only use cat coloring for bar charts, dot charts, or bar-dot charts
+without legends.&nbsp; To enable Cat Coloring, two things need to occur; but first assume
+that a fully configured Graph Chart exists as described in the Bar Chart
+LBChart2D section.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">For
+Cat Coloring, a new MultiColorsProperties object must be configured.&nbsp; Configuration of a MultiColorsProperties
+object for Cat Coloring looks like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">MultiColorsProperties
+catColorsProps = new MultiColorsProperties();</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">For
+cat coloring to take effect, the existing GraphChart2DProperties object must
+have additional methods called on it.&nbsp; Calling the additional methods looks
+like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New" size="2">graphChart2DProps.setGraphComponentsColoringByCat
+(true);<br>
+graphChart2DProps.setGraphComponentsColorsByCat (catColorsProps);</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Arial">All
+other configuration and use is the same as described in the Bar Chart LBChart2D
+section.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left">
+<font face="Arial" size="2"><b>
+<a name="How do I configure a PieChart2D object?" href="#Sections:">
+How do I configure a PieChart2D object?</a></b></font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+PieChart2D object requires the configuration of six
+properties
+        objects:&nbsp; Object2DProperties, Chart2DProperties, PieChart2DProperties, LegendProperties, Dataset,
+and MultiColorsProperties.&nbsp; The Object2DProperties and Chart2DProperties
+are configured in the same way as the LBChart2D Bar Chart.&nbsp; The other
+properties objects (besides PieChart2DProperties) are configured in a similar
+way to a LBChart2D Bar Chart.&nbsp; However in order to configure these objects
+correctly one must note that each pie sector (since it is of a different color)
+corresponds to a set in the dataset; remember by default coloring is by
+set.&nbsp; So for a pie with &quot;n&quot; sectors, one needs a Dataset object
+with &quot;n&quot; sets, and one also needs a MultiColorsProperties object with
+&quot;n&quot; custom colors (since Siperian always uses custom colors).&nbsp;
+Also if there is to be a legend for the Pie Chart, then it must have
+&quot;n&quot; labels.&nbsp; With that said, how to configure the
+LegendProperties, Dataset, and MultiColorsProperties should be known from
+reading the LBChart2D Bar Chart section.&nbsp; The only properties object left
+to describe the configuration of, is the PieChart2DProperties object.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">For
+the PieChart2DProperties object, there are twenty-four settings customizing the&nbsp;pie
+sectors, pie labels, and pie sector labels lines, and gaps.&nbsp; Here
+is a basic graphic of the managed components.&nbsp; The graphic depicts
+an area that fits within the chart area managed by the Chart2DProperties object.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="center"><img border="0" src="images/PieChart2DProperties.gif" width="400" height="247">
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">Again, many of the settings have intelligent default
+values.&nbsp; Currently
+Siperian is using the following customization methods only.</font>
+        </p>
+  <center>
+  <table border="1" cellspacing="0" bordercolor="#C0C0C0">
+    <tr>
+      <td width="168"><b><font size="2" face="Arial">Method</font></b></td>
+      <td width="234"><b><font size="2" face="Arial">Description</font></b></td>
+      <td width="94"><b><font size="2" face="Arial">Default Value</font></b></td>
+      <td width="105"><b><font size="2" face="Arial">Siperian Value</font></b></td>
+    </tr>
+    <tr>
+      <td width="168"><font size="2" face="Arial">void setPieLabelsFontColor
+        (java.awt.Color)</font></td>
+      <td width="234"><font size="2" face="Arial">Sets the color of the font of
+        the pie labels.</font></td>
+      <td width="94"><font size="2" face="Arial">Color.black</font></td>
+      <td width="105"><font size="2" face="Arial">new Color (000,027,090)</font></td>
+    </tr>
+    <tr>
+      <td width="168"><font size="2" face="Arial">setPieLabelsLinesColor
+        (java.awt.Color)</font></td>
+      <td width="234"><font size="2" face="Arial">Specifies the color of the
+        lines relating each pie sector with its particular label.</font></td>
+      <td width="94"><font size="2" face="Arial">Color.black</font></td>
+      <td width="105"><font size="2" face="Arial">new Color (000,035,115)</font></td>
+    </tr>
+    <tr>
+      <td width="168"><font size="2" face="Arial">setPieLabelsLinesDotsColor
+        (java.awt.Color)</font></td>
+      <td width="234"><font size="2" face="Arial">Specifies the color of the
+        dots that exist at the beginning and ending of the lines relating each
+        pie sector with its particular label.</font></td>
+      <td width="94"><font size="2" face="Arial">Color.black</font></td>
+      <td width="105"><font size="2" face="Arial">new Color (000,035,115)</font></td>
+    </tr>
+  </table>
+  </center>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The actual
+configuration of
+a GraphChart2DProperties
+        looks like this.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Courier New"><font size="2">PieChart2DProperties
+pieChart2DProps = new PieChart2DProperties();<br>
+pieChart2DProps.setPieLabelsFontColor (new Color (000,027,090));<br>
+pieChart2DProps.setPieLabelsLinesColor (new Color (000,035,115));<br>
+pieChart2DProps.setPieLabelsLinesDotsColor (new Color (000,035,115));</font></font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">After
+having configured all the necessary properties objects, a PieChart2D object must
+be created and configured. Remember that the PieChart2D object is the graphical
+object (the object that can be added to a GUI or can be exported to a
+BufferedImage object). You begin configuring a PieChart2D object in this way.</font>
+        </p>
+<p><font face="Courier New" size="2">PieChart2D pieChart2D = new PieChart2D();<br>
+pieChart2D.setObject2DProperties (object2DProps);<br>
+pieChart2D.setChart2DProperties (chart2DProps);<br>
+pieChart2D.setLegendProperties (legendProps);<br>
+pieChart2D.setPieChart2DProperties (pieChart2DProps);<br>
+pieChart2D.addDataset (dataset);<br>
+pieChart2D.addMultiColorsProperties (multiColorsProps);</font></p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font size="2" face="Arial">All
+other configuration and use is the same as described in the Clocks2D section.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left">&nbsp;<font face="Arial" size="2"><b><a name="How should I use Chart2D to maximize performance and minimize memory usage?" href="#Sections:">How
+should I use Chart2D to maximize performance and minimize memory usage?</a></b></font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">There
+are three approaches to maximizing performance and minimizing memory usage when
+using Chart2D.&nbsp; The first is to create and configure objects as few times
+as possible (hopefully only once) and simply update them as necessary (i.e. with
+new data or labels).&nbsp; The Chart2D objects only need to be created
+and configured once.&nbsp; After that (and as long as a variable is kept to hold
+the Chart2D objects), the objects can be updated by re-calling some of the
+&quot;set&quot; methods of the properties objects and passing in the updated
+values.&nbsp; One thing to note here is that merely by keeping a reference to
+the graphical object (ex. LBChart2D, LLChart2D, or
+PieChart2D) one can access all its properties objects through its
+&quot;get&quot; methods.&nbsp; An update is usually 3 times faster than a full
+configure.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+next approach falls within the same category (to configure as few objects as
+possible).&nbsp; In this case what is done, is to use configured properties
+objects for more than one chart.&nbsp; Sometimes you'll want to create two
+&quot;versions&quot; of a single chart (i.e. a smaller one without a legend and
+a larger one with a legend).&nbsp; In this case, you can reuse all the property
+objects (except for the LegendProperties object which must be configured
+twice for example).&nbsp; The rule of thumb is that properties objects can be
+reused for multiple graphical objects if all the values for its settings (had there been two properties objects) would be the same.</font>
+        </p>
+<p style="line-height: 100%; text-indent: 0; margin-left: 0; margin-right: 0" align="left"><font face="Arial" size="2">The
+last approach has already been mentioned once.&nbsp; For this approach, each
+graphical object's size and preferred size are set using the &quot;setSize
+(Dimension)&quot; and &quot;setPreferredSize (Dimension)&quot; methods,
+respectively.&nbsp; This increases performance and memory usage because frees
+Chart2D from the burden of calculating a preferred size for the graphical
+object.</font>
+        </p>
+      </td>
+    </tr>
+  </table>
+</html>

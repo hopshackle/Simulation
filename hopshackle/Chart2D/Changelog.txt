@@ -1,0 +1,523 @@
+Chart2D_1.9.6k (2002 Dec 22):
+-Adds some "get" methods to PieChart2D.
+
+Chart2D_1.9.6j (2002 Sep 28):
+-Fixes 2 bugs for PieChart2D when dataset values are small floats instead of ints.
+ (Thanks to Andrea Stocchero of Italy!)
+
+Chart2D_1.9.6i (2002 Sep 13):
+-Fixes bug where lines in charts would not be drawn if the number of cats
+ was less than 2.
+
+Chart2D_1.9.6h (2002 Aug 24):
+-Changes to LBChart2DFrameDemo and LLChart2DFrameDemo to demonstrate optional
+ performance improvements for improving speed of start up.  These improvements
+ are only applicable to situations where multiple Chart2D objects are added
+ to a GUI such as a JTabbedPane.  Makes start up time to be constant
+ regardless of how many objects are added (i.e. equal to the amount of time if
+ there was only one Chart2D object).
+
+Chart2D_1.9.6g (2002 Aug 24):
+-Fixed pie labeling bug "once and for all".  Now behaves correctly even with
+ datasets containing zeroes.
+
+Chart2D_1.9.6f (2002 Aug 23):
+-Modified code to change coloring of bars for stacked bar charts (i.e. bar
+ charts with alignment allowed, technically speaking).  Now the bar representing
+ the first set of data is visible when multiple bars are the same height.
+ Before, the last set of data was visible.
+
+Chart2D_1.9.6e (2002 Aug 09):
+-Added ability to set a custom AlphaComposite object for painting of graph components.  This
+ especially helps graphs such as "line area" or "filled line" charts but can also be used so that
+ graph grids can be seen underneath graph components and for purely aesthetic purposes as well.
+
+Chart2D_1.9.6d (2002 Aug 08):
+-Squashed bug where the outline of a graph component line, covered the line graph component.
+-Squashed bug causing "ductus renderer" exception for VERY small charts.
+-Squashed bug making filled line charts compatible with the "convert to stacked" function.
+-Squashed bug making legends not show for some LLChart2D charts.
+-Added more charts to the demos.
+
+Chart2D_1.9.6c (2002 Aug 05):
+-Squashed a bug in Object2D that created an event thread by calling the "Toolkit" class.
+ Default max chart size is now 1024 x 768.  Use the "Object2D.setMaximumSize(...)" method to change.
+-Squashed a bug in LBGraphArea and LLGraphArea for "Array Index Out of Bounds Exception" for line
+ charts with less than one data items per set.  Now line charts require at least two points/values
+ (to draw the line between).
+
+Chart2D_1.9.6b (2002 July 19):
+-Finally squashed the PieChart2D labeling bug for every small chart sizes.
+
+Chart2D_1.9.6a (2002 July 18):
+-General
+  -Fixed multiple bugs througout.
+  -Improved documentation.
+  -Modified (and simplified) public configuration API.
+  -Modified (and simplified) validation API.
+  -Moved LegendProperties out of Chart2DProperties to support reuse among charts with legends.
+  -Made chart stretch (to fill space) mandatory instead of optional.
+  -Added gradient paint ability through "light source" specifications.
+  -Modified default properties.
+-Performance:
+  -Audited update logic.
+  -Audited for "final" reserved word.
+  -ChartColors performance improvements.
+  -Properties objects validation font check improvement.
+-Chart Colors
+  -Renamed ChartColors to MultiColorsProperties and made many improvements.
+  -Custom color setting now more flexible (colors are automatically repeated if not enough).
+-Dataset
+  -Added a new addMovingAverage (...) method.
+  -Modified creation of Dataset objects for performance improvements.
+-GraphChart2D (LBChart2D and LLChart2D)
+  -Fixed multiple bugs including layout bugs.
+  -Increased performance by improving layout logic.
+  -Removed numbers axis range get/set methods.
+  -Added ability to select a light source for gradient paint of bars and graph background.
+  -Added logic for optional rounding of the ends of the graph component bars.
+  -Added convenience methods for graph charts without axes, labels, or bullets.
+  -Added ability to color graph components of graph charts by "category" instead of only by "set".
+  -Added ability to specify multiple "Warning Regions" for custom coloring of regions of graph
+   backgrounds and for custom coloring of graph components that enter such regions.
+-PieChart2D
+  -Fixed multiple bugs in label locating and line/dot locating.
+  -Added more customization ability in the API.
+  -Added optional lighting effect of pie sectors.
+  -Modified API of PieChart2DProperties for labels points gap offset.
+
+1.9.5b (2002 January 28):
+-Fixed bug in PieChart2D.  Pie label sizing logic was faulty for some datasets.
+ Users of pie charts are strongly urged to move to 1.9.5b.
+-No API Change.
+
+1.9.5a (2002 January 27):
+-Fixed bug in PieChart2D.  Pie sector labels had incorrect locations.
+ This bug has existed throughout all 1.4+ releases.  So anyone making use of
+ PieChart2D is encouraged to move to the new 1.9.5a release.
+-A more appropriate default minimum size of PieChart2D has been chosen.
+-API Change:  The change only affects those who are using the
+ PieChart2DProperties.setPiePreferredSize (Dimension) method.  That method has
+ changed to PieChart2DProperties.setPiePreferredSize (int).  The preferred size
+ of the pie is now specified by specifing the diameter of a bounding circle.
+ The int has the value of this diameter.  For developers who have used this
+ method, the change should be relatively effortless.
+
+1.9.4d (2002 January 26):
+-Fixed bug in ChartArea for locales that use comma as the decimal separator.
+-No API Change.
+
+1.9.4c (2002 January 25):
+-Fixed bug in ChartArea for locales that use comma as the decimal seperator.
+-Cleaned up demos.
+-No API Change.
+
+1.9.4b (2002 January 16):
+-Fixed bug in ChartProperties where data labels precision values greater than
+ 8 or less than -8 were invalid.  Now values within 38 and -38 are valid.
+-Fixed bug in Dataset.validate (boolean).  Now only prints when boolean is true.
+-Added convenience method for converting any Dataset object for use in a true
+ stacked chart such as a stacked bar chart or a stacked filled line (area)
+ chart.  See Dataset.convertToStacked().
+-Added methods for obtaining the automatically calculated range of the numbers
+ axis labels.  See GraphChart2D.getNumbersAxisRange*().
+-No API Change.
+
+1.9.4a (2002 January 11):
+-Aleviated some of the limitation on the range of values that can be plotted.
+ Before data was limited to 1E+-8.  Now it's the full precision of the float
+ datatype, 1E+-38.
+-No API Change.
+
+1.9.3e (2002 January 07):
+-Fixed minor bug in GraphChart2DProperties.validate(boolean).  Sometimes
+ returned "valid" when properties were invalid.
+-No API Change.
+
+1.9.3d (2002 January 04):
+-Fixed bug for line charts with only one data category and set.
+-Fixed minor bug in GraphPropertiesPanel.
+-Changed default minimum sizes for LBChart2D, LLChart2D, and PieChart2D.
+-No API Change.
+
+1.9.3c (2002 January 02):
+-Fixed bug in Chart2DPropertiesPanel.  Colors type property wasn't working.
+-Improved pie labels layout.  Labels now hug chart more closely.
+-Improved Dataset class for use with pie charts.  Values to represent by pie
+ sectors are sums of all the items for each set of data in the dataset.
+-No API Change.
+
+1.9.3b (2001 December 29):
+-For overlay charts, added ability to specify the order graphs are painted.
+ See GraphChart2DProperties.setGraphOverlayOrder (int).
+ See GraphChart2DProperties.setGraphOverlayOrderCustom (int[]).
+-No API Change.
+
+1.9.3a (2001 December 27):
+-Rename static variable of Dataset.
+-Fix bugs relating to incorrect layout when graph borders where different
+ thicknesses.
+-Improve use of available space and preferred sizing accurracy.  This was a
+ significant improvement.
+-Other bug fixes for charts with extreme settings.
+-Some API Change:
+ -Dataset.VALIDATE_ON_UPDATE renamed to Dataset.VALIDATE_ON_UPDATE_DEFAULT.
+
+1.9.2c (2001 December 26):
+-Each *Properties class now has a method that returns all the *Chart2D objects
+ that are using *Properties object.  This is useful because *Chart2D objects
+ in GUIs can now be told to repaint themselves, without validating the the GUI.
+-Some bug fixes in the update logic.
+-No API Change.
+
+1.9.2b (2001 December 25):
+-Corrected javadoc descriptions in PieChart2D, LBChart2D, LLChart2D, and
+ Dataset.
+-Renamed GraphProperties setVerticalLines* methods to setLabelsLines*.
+-Renamed GraphProperties setHorizontalLines* methods to setNumbersLines*.
+-Added new constructors/specifiers/accessors for many classes in order to make
+ chart configuration easier.  No new customizability introduced.
+-Moderate API Change:  Renaming of some methods.
+
+1.9.2a (2001 December 23):
+-Switched to new structure for data sets.  Instead of float[][] now use the
+ Dataset class.  A Dataset class can be used by multiple different charts so
+ that copying the dataset is reduced.
+-Changed naming scheme for axis properties in GraphChart2DProperties.  The XAxis
+ and YAxis methods have been dropped and replaced by LabelsAxis and NumbersAxis
+ methods.  This way, one GraphChart2DProperties configuration will produce the
+ same chart when added to either LBChart2D or LLChart2D.
+ Also the single PlotAxis method was replaced by a NumbersAxis method.
+ "LabelsAxis" refers to the axis for which one must specify labels explicitly.
+ "NumbersAxis" refers to the axis that always contains the range of numbers to
+ plot against.
+-Moderate API Change:
+ -Change dataset structure from float[][] to Dataset.  Use new Dataset methods.
+ -Change XAxis and YAxis methods to LabelsAxis and NumbersAxis methods.
+
+1.9.1c (2001 December 22):
+-Bug fix for GraphChart2DPropertiesDialog.
+ setCustomizeGreatestValue (boolean) not updating properties.
+-Input error checking implemented for *Dialog classes.
+-No API Change.
+
+1.9.1b (2001 December 21):
+-Bug fix for certain overlay charts.
+-Changed the preferred size logic some.  Always performs calculation regardless
+ of chart changes.  This makes behavior more consistent.
+-Changed pack() some.  Calling pack() now sets the size of the component to its
+ preferred size.  Not to be used if *Chart2D is added to a content pane.
+-Some API Change:  The behavior of pack() is different.
+
+1.9.1a (2001 December 20):
+-Updated Chart2D dialogs for 1.9.0 API.  Dialogs are now designed for developers
+ expirementing with Chart2D settings, rather than for end users.
+-Changed the preferred size layout logic some.
+-Improved LLChart2DFrameDemo.  Vertical graph lines should be visible.
+-Some API Change:
+ -The old dialogs don't exist anymore.  Replaced by new dialogs.
+ -Some methods were renamed slightly
+  (ex. setXAxisBulletsColor (Color) became setXAxisTicksColor (Color)).
+
+1.9.0g (2001 December 16):
+-Fixed bug in graph charts sizing logic.  Preferred size now more accurate.
+-Added logic for specifying the amount of overlap of components for charts with
+ multiple data values per category and per set.  New methods are:
+ GraphProperties.setGraphBarsWithinCategoryOverlapRatio (float),
+ GraphProperties.setGraphDotsWithinCategoryOverlapRatio (float), and
+ GraphProperties.setGraphLinesWithinCategoryOverlapRatio (float).
+ -Added logic for specifying how much of any leftover graph space should be fed
+  back to dots and lines thicknesses.  Now, logic matches that for bar feedback.
+  Use GraphProperties.setGraphBarsExcessSpaceFeedbackRatio (float).
+  Use GraphProperties.setGraphDotsExcessSpaceFeedbackRatio (float).
+  Use GraphProperties.setGraphLinesExcessSpaceFeedbackRatio (float).
+-Improved logic for pie labels lines.  Thick lines are smoother.
+-Fixed bug in GraphProperties.  GraphProperties can now be used for multiple
+ charts.
+-Fixed bug in preferred size logic of LLChart2D.
+-No API Change:  Compatible with 1.9.0f.
+
+1.9.0f (2001 December 10):
+-Moved logic of the setCustomPreferredSize() method into the setPreferredSize()
+ method.  Using setPreferredSize() will cause all preferred size calculations
+ to be bypassed, until the pack() method is called.
+-Added logic for setMinimumSize().  The minimum size will bound the preferred
+ size at the "bottom" similar to setMaximumSize() bounding the preferred size at
+ the "top".
+-Removed Chart2DProperties.setCustomMinPrefSize().  That would have been
+ duplicate logic, since now this can be specified in the *Chart2D classes.
+-Some API Change:  Not totally compatible with 1.9.0e.
+ -Change calls of Chart2DProperties.setCustomMinPrefSize() to calls of
+  *Chart2D.setMinimumSize().
+ -Change calls of *Chart2D.setCustomPreferredSize() to calls of
+  *Chart2D.setPreferredSize().
+
+1.9.0e (2001 December 9):
+-Added logic that allows for faster start up time of GUI's with multiple charts,
+ where at least one of them is hidden (ex. charts added to a JTabbedPane).  See
+ MultipleChart2DFrameDemo for an example of how to take advantage of this logic.
+-Added a method, setCustomPreferredSize (boolean, Dimension) for scenarios where
+ multiple charts are being created, they all have equal initial sizes, and they
+ are allowed to magnify.  Use the method to make the preffered sizes of charts
+ the initial size so that all the charts won't be magnified at the initial size.
+-No API Change:  Compatible with 1.9.0d.
+
+1.9.0d (2001 December 5):
+-Fixed more problems with graph components due to trying to keep components
+ from overlapping.  They look better when they are allowed to overlap.
+ To keep components from overlapping, reduce their thickness models manually.
+-Fixed problem with some GraphProperties constants not being accessible/public.
+-No API Change:  Compatible with 1.9.0c.
+
+1.9.0c (2001 December 4):
+-Fixed a problem with stacked bar charts overlapping eachother.  Added a method
+ for specifying how much of the extra space in a graph should be fedback to
+ the bars.  The default is for 75% of the space to be fedback to the bars.
+-Improved the look of the labeling of pie charts.  Added one method.
+-No API Change:  Compatible with 1.9.0b.
+
+1.9.0b (2001 December 1):
+-Gap between chart and legend now specifiable from the Chart2DProperties
+ class. See the setChartBetweenChartAndLegendGap*(*) methods.
+-No API Change:  Compatible with 1.9.0a.
+
+1.9.0a (2001 November 30):
+-Bug fixes for extreme cases (i.e. charts with no data).
+-Better bar charts.  Unused space on the graph can be fed back to the bar.
+ The new method for adjusting the amount of feedback is:
+ GraphProperties.setGraphBarsExcessSpaceFeedbackRatio (float).
+ The default is to feedback .75f * the amount of space to the bars, the
+ rest will remain as unused graph space between bars.
+-Better pie charts.  The preferred size is more accurate now.
+-No API Change:  Compatible with 1.9.0.
+
+1.9.0 (2001 November 28):
+-Beginning transition to new model for configuring charts. (More on this below)
+-Added ability for charts to have multiple GraphArea classes  Before, each set
+ of data could only be graphed by the same components.  Now, one can add
+ multiple data sets to the chart, and with each data set, one can add a new
+ graph area specifying what components to graph the data (i.e. bars, lines,
+ dots...).  See the LLChart2DFrameDemo or the tutorial for more information.
+-Changed some code in TextArea to make it compute the smallest bounds of a label
+ faster.
+-Changes some code that computes the preferred sizes of the charts.  Preferred
+ sizes should now be more accurate.
+-Added ability to specify the color of the outline of graph components.
+-Added ability to set the minimum preferred size of the *ChartArea.  This is
+ useful because the layout of Chart2D is so good, the charts don't need enough
+ room...  Setting the custom minimum preferred size, the Chart will be at least
+ as big as you want.
+-API Change:  The old Chart2D API is no more.  The properties of the charts
+ are now in seperate classes than the charts themselves.  This way multiple
+ charts can be configured/and changed via a single properties class.  This new
+ API is under development and may still see significant chagnes.  To configure
+ charts now, you create a Chart2DProperties class, then configure either a
+ PieChart2DProperties class or a GraphChart2DProperties class (depending on the
+ kind of chart that you want) then pass that last configured class to either
+ a PieChart2D, LBChart2D, or LLChart2D class depending on what kind of chart
+ you want.  As before, you then either add the chart2d to a content pane of
+ a GUI or call getImage.
+
+1.8.3 (2001 November 19):
+-Bug fix for data sets with floating point labels.
+-No API Change.
+
+1.8.2 (2001 November 18):
+-Area under line charts can now be filled in with the same color as the line.
+ Use GraphArea.setLinesFillInterior (boolean).
+ Note that for these types of charts, there is no reason to have lines of
+ thickness greater than 3.
+-Adjusted the auto labeling logic of the "numbers" axis again.  Labels that are
+ imbetween the two widest ranging labels (ex. labels 5000 and 0 of 5 labels)
+ are the only ones that will respect the "precision num" setting.  The
+ imbetween labels (ex. "1000", "2000") may have more significant digits
+ (ex. "1250", "2500") than specified by "precision num".  This way the
+ difference between adjacent labels will be equal
+ (ex. "0", "1250", "2500", "3750", "5000" instead of
+      "0", "1000", "3000", "4000", "5000").
+-No API Change.
+
+1.8.1 (2001 November 17):
+-Bugs fixed in HorizontalTextListArea, VerticalTextListArea, LegendArea that
+ allowed for bullets/ticks to not align correctly with labels when bullets' gap
+ was different than labels' gap.
+-Bugs fixed in LBChartArea and LLChartArea that allowed for the "number" axis
+ to have labels not evenly spaced on both sides of zero, when data sets
+ contained both positive and negative values.
+-Added ability to accept data sets where the number of data values in each data
+ set can be any multiple of the number of labels in the "labels" axis.  Before,
+ the number of data values in each set had to equal the number of labels in the
+ "labels" axis. For example, now a person can plot data for each day of some
+ number of years, and label the data by year and by month only.  There must be
+ only 30 data values per year-month though, not 31 for some and 30 for others.
+ This functionality exists for all charts:  LBChart2D, LLChart2D, line, bar,
+ dot, and any combination.
+-No API Change. GraphArea.setOutlineComponents (boolean) was added.  It allows
+ one to remove the default thin black line that outlines lines, dots, and bars.
+
+1.8.0 (2001 November 14):
+-Addition of optional data labels in PieChart2D.  The default is for the labels
+ to exist.  To turn them off use PieChartArea.setPieLabelsExistence (false).
+-PieChart2DDialog now has a "Pie Labels" panel that allows changing the pie
+ labels settings.
+-Can now set maximum size via setMaximumSize(Dimension); default is 1024, 768
+-Improvements to the auto labeling code - the auto labeling of the numbers axis.
+ There exists three new static variables to be passed into
+ setLabelsPrecisionNum (int),
+ ChartArea.MAX_INTEGER, ChartArea.MAX_FLOAT, ChartArea.DEFAULT_FLOAT.
+-API Changes:
+  -ChartArea.MAX_ZEROES doesn't exist anymore.  ChartArea.MAX_INTEGER replaces
+   it.  No breakage for charts that didn't set the setLabelsPrecisionNum(int)
+   method.
+  -By default, data labels now encircle pie charts.
+  -PieChart2DDialog now has a "Pie Labels" panel.
+
+1.7.4 (2001 November 07):
+-Added a method to align ticks differently for line and/or dot charts.
+ For bar charts do setTicksAlignment (BETWEEN).  BETWEEN is the default.
+ For line and/or dot charts do setTicksAlignment (CENTERED) if you want.
+ This will line up the ticks with the components instead of between them.
+-Added GUI adjustment components for the new method to the ChartDialogPanel.
+-API Change:  There will be some breakage for anyone using the ChartDialogPanel
+  class.  To remedy this, change your constructors as follows:
+  ChartDialogPanel (..., GRAPH) goes to ChartDialogPanel (..., LB or LL).
+  ChartDialogPanel (..., OTHER) goes to ChartDialogPanel (..., PIE).
+
+1.7.3 (2001 October 23):
+-Fix for charts with values either all nonnegative or all nonpositive.
+  If some values were very close to zero, then data sets were treated as
+  having some oppositely signed data value.
+-Fix for charts with small dots/bars <= 3 pixels thick.  Dots/bars usually
+  have a black border but with very smal dots/bars, there is not space for
+  the border.  This doesn't paint the border for small bars/dots.
+-No API Changes.
+
+1.7.2 (2001 October 22):
+-Fix for charts with both bars and lines and/or dots.  Lines and/or dots are
+  now drawn in front of bars instead of behind them.
+-No API Changes.
+
+1.7.1 (2001 October 21):
+-Added support bar charts graphing of data sets with negative values.
+  For data sets with both positive and negative numbers, bars begin at zero.
+  For data sets with only negative numbers, bars begin at the highest value.
+  For data sets with only positive numbers, bars begin at the lowest value,
+   as before.
+-Added support for stacked bar charts.  Configure a normal bar chart but call
+  the GraphArea.setAllowComponentAlignment (boolean) method and pass a value
+  of true.
+-Some API Additions but no API breakage.
+
+1.7.0 (2001 October 18):
+-Added support for negative data set values.  This means that any data value
+  (positive, negative, reals, and integers) can be now be graphed...
+-Added the method GraphChartArea.setCustomLeastValue (boolean, float).  This
+  method allows for setting a custom value of lowest label on a graph chart.
+-API Change:  Method added, but default behavior still remains the same.  No
+  "breakage" should be experienced.
+
+1.6.9 (2001 October 17):
+-Modified the *Chart2DDialog classes a little.  Added an optional "Pack" button
+  near the "Apply" button at the bottom of the dialogs.  The "Pack" button,
+  if pressed, calls the pack() method of the owner frame of the chart2d chart.
+  For example, if the user modifies the chart using the dialog, the user
+  can have the chart find a size (its preferred size) for the chart with these
+  modifications.  Developers using chart2d as an embedded applet can disable
+  the pack button from appearing since chart applets shouldn't be resized.
+-Updated the *Chart2DFrameDemo's with the new dialogs.
+-API Change.  LBChart2DDialog, LLChart2DDialog, and PieChart2D constructors
+  have one new parameter each -- the allow "Pack" button boolean.  Developers
+  using the dialogs may experience "breakage" which is remedied by using the
+  new constructor.
+
+1.6.8 (2001 October 9):
+-Added the Chart2DEmbeddedAppletDemo for users wanting to embed charts in web
+  pages.
+-Removed some unecessary temp files that were accidentally left in the 1.6.7
+  release.
+-No API Change.
+
+1.6.7 (2001 October 9):
+-LBChart2D and LLChart2D resetting data sets bug fix.  Changing the data sets
+  of a chart once the chart had been displayed sometimes resulted in error.
+  Now, the data sets can be changed without error.
+-No API Change.
+
+1.6.6 (2001 October 4):
+-LBChart2D and LLChart2D custom coloring bug fix.  Choose custom colors for
+  legend labesl, graph objects (i.e. bars, dots, lines), and pie sectors.
+-No API Change.
+
+1.6.5 (2001 September 25):
+-Added GraphChartArea.setCustomGreatestValue (boolean, float).  This method
+  allows complete specification of the plot axis labels.  See the javadoc or
+  the tutorial for more details.
+-No API Change.
+
+1.6.4 (2001 September 24):
+-Area.setBackground (boolean) now works again.  This means that if passed
+  'false', the background of the underlying content pane will show through
+  (i.e. company logo or some other graphic or painting).
+-No API Change.
+
+1.6.3 (2001 September 16):
+-Demo cleanups.
+-Graph lines outlined in black (this improves the appearance of the graph
+  lines).
+-Axis Bullets not outlined in black (before the y axis bullets were but the
+ x axis bullets weren't, this was an aesthetic problem when the bullets were
+ some color other than black).
+-No API Change.
+
+1.6.2 (2001 August 27):
+-Fixes LBChart2D, the setNumPlotAxisLabels() method wasn't working.
+-Fixes the dialog demos for Linux.  Dialog's wouldn't show when user right
+ clicked.
+-No API Change.
+
+1.6.1 (2001 August 26):
+-API Change:  Moved LBChartArea.setXAxisNumLabels and
+ LLChartArea.setXAxisNumLabels to GraphChartArea.setNumPlotAxisLabels.
+-API Change:  Changed the constructor ChartDialogPanel (ChartArea) to
+ ChartDialogPanel (ChartArea, int).  The int specifies whether you're passing a
+ graph chart or a pie chart.  Needed to have some extra settings in the panel
+ for graph charts.
+-Fixes LBChart2DDialog, the YAxisDialogPanel wasn't visible.
+-Improvements to *Dialog classes.
+
+1.6.0 (2001 August 25):
+-API Change:  Added the ChartArea and GraphChartArea classes.  Pushed some of
+ the shared functionality of LBChartArea, LLChartArea, and PieChartArea into
+  common classes.
+-Adds LBChart2DDialog, LLChart2DDialog, and PieChart2DDialog classes.  These
+ dialogs are user interface dialogs which can be shown to the user to allow the
+ user to customize their chart.  See their javadocs or the LBChart2DFrameDemo,
+ LLChart2DFrameDemo, or PieChart2DFrameDemo demos for more examples.
+
+1.4.3 (2001 August 02):
+-No API Change.
+-Fixes a bug in PieArea and PieChartArea.  PieChart2D was not sizing properly
+ for small sizes.  Now it is.
+
+1.4.2 (2001 July 29):
+-No API Change.
+-Fixes a bug in FontArea.  Default font was Arial.  Default is now SansSerif.
+ SansSerif is a font that is guaranteed to exist on any OS for Sun JVMs.
+ Arial does not have such a guarantee, and there were problems running on Linux.
+ In Windows, SansSerif maps to Arial.  In other OSs, I'm not sure.
+
+1.4.1 (2001 July 26):
+-API Change: Small change for LBChart2D, LLChart2D, PieChart2D, see below.
+-Fixes a bug in the ChartImageDemo.
+-Removes side effects from calling getPreferredSize() and getImage() methods.
+ -getPreferredSize() returns the preferred size but no longer sets the chart2d's
+  to it.
+ -getImage() no longer sets the chart2d to its preferred size. So, the chart2d's
+  size must be set before calling getImage().  Use pack() or setSize (...).
+ -pack() has been added to the API.  pack() does setSize (getPreferredSize()).
+
+1.4.0 (2001 July 22):
+-No API Change.
+-Uses more of the space allocated to a chart.
+ -Squeezes the title closer to the chart.
+ -Squeezes the legend closer to the chart.
