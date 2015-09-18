@@ -21,21 +21,21 @@ public class ConnectionFactoryTest {
 
 	@Test
 	public void testFailure() {
-		Connection c = ConnectionFactory.getConnection("dummy", "who", "noidea", true);
+		Connection c = ConnectionFactory.getConnection("dummy", "who", "noidea", "", true);
 		assertTrue (c == null);
 	}
 
 	@Test
 	public void testVariants() {
 
-		Connection c = ConnectionFactory.getConnection("NSP", "root", "Metternich", false);
+		Connection c = ConnectionFactory.getConnection("NSP", "root", "Metternich", "", false);
 		assertTrue (c != null);
 		try {
 			c.close();
 		} catch (SQLException e) {
 		}
 
-		c = ConnectionFactory.getConnection("NSP", "root", "Metternich", true);
+		c = ConnectionFactory.getConnection("NSP", "root", "Metternich", "", true);
 		assertTrue (c != null);
 		try {
 			c.close();

@@ -38,7 +38,7 @@ public class StateAnalysis {
 		}
 
 		String sqlQuery = null;
-		Connection con = ConnectionFactory.getConnection("SimAnalysis", "root", "Metternich", false);
+		Connection con = ConnectionFactory.getConnection("SimAnalysis", "root", "Metternich", "", false);
 		try {
 			sqlQuery = "CREATE TABLE IF NOT EXISTS Stateanalysis " +
 			" (	datasetgroup	VARCHAR(50)	NOT NULL,"	+
@@ -73,7 +73,7 @@ public class StateAnalysis {
 		for (DataSetGroup dsg : dsgArray) {
 			for (DataSet ds : dsg.getArrayList()) {
 				String tableName = "states_" + ds.toString();
-				MySQLDataSet dataset = new MySQLDataSet("NSP", tableName, "root", "Metternich");
+				MySQLDataSet dataset = new MySQLDataSet("NSP", tableName, "root", "Metternich", "");
 				ResultSet rs = dataset.getResultSet("SELECT * FROM &Table where visited > " + MIN_VISITED + ";");
 
 				for (String stateText : CLASS) {

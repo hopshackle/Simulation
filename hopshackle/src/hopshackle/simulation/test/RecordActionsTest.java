@@ -20,11 +20,11 @@ public class RecordActionsTest {
 		w = new World(new ActionProcessor(), "JUNIT", 2*60000L);
 		w.setCalendar(new FastCalendar(0L));
 		w.setLocationMap(new SquareMap(1, 1));
-		DatabaseAccessUtility dbu = new DatabaseAccessUtility("junit", "root", "Metternich");
+		DatabaseAccessUtility dbu = new DatabaseAccessUtility("junit", "root", "Metternich", "");
 		Thread t = new Thread(dbu);
 		t.start();
 		w.setDatabaseAccessUtility(dbu);
-		con = ConnectionFactory.getConnection("junit", "root", "Metternich", true);
+		con = ConnectionFactory.getConnection("junit", "root", "Metternich", "", true);
 		ftr = new Character(Race.HUMAN, CharacterClass.FIGHTER, w);
 	}
 

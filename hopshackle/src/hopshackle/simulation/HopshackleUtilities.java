@@ -72,11 +72,12 @@ public class HopshackleUtilities {
 			try {
 				aeClass = Class.forName(aeString);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				logger.severe(e.toString() + " in HopshackleUtilities.loadEnums");
 			}
-			for (Object ae : EnumSet.allOf(aeClass))  {
-				retList.add(ae);
-			}
+			if (aeClass != null)
+				for (Object ae : EnumSet.allOf(aeClass))  {
+					retList.add(ae);
+				}
 		}
 		return retList;
 	}

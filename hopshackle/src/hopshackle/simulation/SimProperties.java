@@ -9,16 +9,21 @@ public class SimProperties {
 	private static Properties geneticProperties;
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	private static boolean initialised = false;
+	private static String fileLocation = "C:\\Users\\James\\Google Drive\\Simulations\\Genomes\\GeneticProperties.txt";
 
 	public static void clear() {
 		initialised = false;
 		initialiseProperties();
 	}
 	
+	public static void setFileLocation(String newLocation) {
+		fileLocation = newLocation;
+	}
+	
 	private static void initialiseProperties() {
 		if (initialised == false) {
 			geneticProperties = new Properties();
-			File f = new File("C:\\Users\\James\\Google Drive\\Simulations\\Genomes\\GeneticProperties.txt");
+			File f = new File(fileLocation);
 			try {
 				FileInputStream fis = new FileInputStream(f);
 				geneticProperties.load(fis);

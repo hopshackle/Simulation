@@ -47,7 +47,7 @@ public class DataSetGroup {
 					dsName = br.readLine();
 
 					if (dsName != null) 
-						temp.add(new MySQLDataSet("NSP", dsName, "root", "Metternich"));
+						temp.add(new MySQLDataSet("NSP", dsName, "root", "Metternich", ""));
 				} while (dsName != null);
 
 				br.close();

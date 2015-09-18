@@ -17,8 +17,8 @@ public class DatabaseAccessUtility implements Runnable{
 		otherSetup();
 	}
 
-	public DatabaseAccessUtility(String db, String user, String password) {
-		mainConnection = ConnectionFactory.getConnection(db, user, password, true);
+	public DatabaseAccessUtility(String db, String user, String password, String hostname) {
+		mainConnection = ConnectionFactory.getConnection(db, user, password, hostname, true);
 		otherSetup();
 	}
 

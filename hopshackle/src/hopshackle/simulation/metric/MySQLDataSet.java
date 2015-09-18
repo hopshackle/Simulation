@@ -14,13 +14,13 @@ public class MySQLDataSet implements DataSet {
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	private Connection connection;
 
-	public MySQLDataSet(String db, String table, String user, String password) {
+	public MySQLDataSet(String db, String table, String user, String password, String hostname) {
 		databaseName = db;
 		tableName = table;
 		if (dbConnectionMap.containsKey(databaseName)) {
 			connection = dbConnectionMap.get(databaseName);
 		} else {
-			connection = ConnectionFactory.getConnection(databaseName, user, password, true);
+			connection = ConnectionFactory.getConnection(databaseName, user, password, hostname, true);
 			dbConnectionMap.put(databaseName, connection);
 		}
 	}

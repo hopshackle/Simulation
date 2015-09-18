@@ -40,7 +40,7 @@ public class MySQLMetricTest {
 		String sqlQuery = "SELECT MAX(testInt) FROM &Table";
 		MySQLMetric testMetric = new MySQLMetric("TestMetric", sqlQuery);
 		
-		MySQLDataSet testDataSet = new MySQLDataSet("NSP", "MySQLMetricTest", "root", "Metternich");
+		MySQLDataSet testDataSet = new MySQLDataSet("NSP", "MySQLMetricTest", "root", "Metternich", "");
 		
 		assertTrue(testMetric.toString().equals("TestMetric"));
 		assertEquals(testMetric.getResult(testDataSet), 5.0, 0.0001);
@@ -51,7 +51,7 @@ public class MySQLMetricTest {
 		String sqlQuery = "SELECT TestStr FROM MySQLMetricTest";
 		MySQLMetric testMetric = new MySQLMetric("TestMetric", sqlQuery);
 		
-		MySQLDataSet testDataSet = new MySQLDataSet("NSP", "MySQLMetricTest", "root", "Metternich");
+		MySQLDataSet testDataSet = new MySQLDataSet("NSP", "MySQLMetricTest", "root", "Metternich", "");
 		
 		assertTrue(testMetric.toString().equals("TestMetric"));
 		assertEquals(testMetric.getResult(testDataSet), 0.0, 0.0001);

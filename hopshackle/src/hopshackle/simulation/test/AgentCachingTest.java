@@ -16,7 +16,7 @@ public class AgentCachingTest {
 	public void setUp() {
 		world = new World();
 		world.setName("testWorld");
-		testJunit = new DatabaseAccessUtility("junit", "root", "Metternich");
+		testJunit = new DatabaseAccessUtility("junit", "root", "Metternich", "");
 		Thread t = new Thread(testJunit);
 		t.start();
 		world.setDatabaseAccessUtility(testJunit);
@@ -46,7 +46,7 @@ public class AgentCachingTest {
 		wasteTime();
 		Agent agentReturnedFromCache = Agent.getAgent(testAgent.getUniqueID());
 		assertTrue(agentReturnedFromCache == null);
-		AgentRetriever<BasicAgent> agentRetriever = new BasicAgentRetriever(ConnectionFactory.getConnection("junit", "root", "Metternich", true));
+		AgentRetriever<BasicAgent> agentRetriever = new BasicAgentRetriever(ConnectionFactory.getConnection("junit", "root", "Metternich", "", true));
 		agentReturnedFromCache = Agent.getAgent(testAgent.getUniqueID(), agentRetriever, world);
 		assertTrue(agentReturnedFromCache != null);
 		assertFalse(agentReturnedFromCache == testAgent);

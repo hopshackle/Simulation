@@ -15,7 +15,7 @@ public class DatabaseServiceTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		testJunit = new DatabaseAccessUtility("junit", "root", "Metternich");
+		testJunit = new DatabaseAccessUtility("junit", "root", "Metternich", "");
 		t = new Thread(testJunit);
 		t.start();
 		testJunit.addUpdate("DROP TABLE IF EXISTS dau_test;");
@@ -44,7 +44,7 @@ public class DatabaseServiceTest {
 		sqlUpdate = "CREATE TABLE IF NOT EXISTS dau_test (id INT NOT NULL, text VARCHAR(20) NOT NULL);";
 		testJunit.addUpdate(sqlUpdate);
 		wasteTime();
-		Connection tempConn = ConnectionFactory.getConnection("junit", "root", "Metternich", true);
+		Connection tempConn = ConnectionFactory.getConnection("junit", "root", "Metternich", "", true);
 		String sqlQuery = "SELECT * FROM dau_test;";
 		try {
 			Statement st = tempConn.createStatement();
@@ -64,7 +64,7 @@ public class DatabaseServiceTest {
 		wasteTime();
 		sqlUpdate = "INSERT INTO dau_test SET id = 1, text = 'Hello';";
 		testJunit.addUpdate(sqlUpdate);
-		Connection tempConn = ConnectionFactory.getConnection("junit", "root", "Metternich", true);
+		Connection tempConn = ConnectionFactory.getConnection("junit", "root", "Metternich", "", true);
 		wasteTime();
 		String sqlQuery = "SELECT * FROM dau_test;";
 		try {
@@ -84,7 +84,7 @@ public class DatabaseServiceTest {
 		sqlUpdate = "CREATE TABLE IF NOT EXISTS dau_test (id INT NOT NULL, text STRING NOT NULL);";
 		testJunit.addUpdate(sqlUpdate);
 		wasteTime();
-		Connection tempConn = ConnectionFactory.getConnection("junit", "root", "Metternich", true);
+		Connection tempConn = ConnectionFactory.getConnection("junit", "root", "Metternich", "", true);
 		String sqlQuery = "SELECT * FROM dau_test;";
 		try {
 			Statement st = tempConn.createStatement();
@@ -115,7 +115,7 @@ public class DatabaseServiceTest {
 	}
 	
 	private int getCurrentRecordWritten() {
-		Connection tempConn = ConnectionFactory.getConnection("junit", "root", "Metternich", true);
+		Connection tempConn = ConnectionFactory.getConnection("junit", "root", "Metternich", "", true);
 		String sqlQuery = "SELECT * FROM dau_test;";
 		int currentRecordWritten = 0;
 		try {

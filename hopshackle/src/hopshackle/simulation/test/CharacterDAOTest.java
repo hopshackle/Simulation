@@ -18,7 +18,7 @@ public class CharacterDAOTest {
 	
 	@Before
 	public void setUp() {
-		testJunit = new DatabaseAccessUtility("junit", "root", "Metternich");
+		testJunit = new DatabaseAccessUtility("junit", "root", "Metternich", "");
 		t = new Thread(testJunit);
 		t.start();
 		clearTable();
@@ -82,7 +82,7 @@ public class CharacterDAOTest {
 	private int recordsInTable() {
 		wasteTime();
 		int counter = 0;
-		Connection tempConn = ConnectionFactory.getConnection("junit", "root", "Metternich", true);
+		Connection tempConn = ConnectionFactory.getConnection("junit", "root", "Metternich", "",  true);
 		String sqlQuery = "SELECT * FROM AllChr_test;";
 		try {
 			Statement st = tempConn.createStatement();

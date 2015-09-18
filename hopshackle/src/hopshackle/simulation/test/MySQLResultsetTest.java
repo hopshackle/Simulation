@@ -13,7 +13,7 @@ public class MySQLResultsetTest {
 
 	@Before
 	public void setUp() throws Exception {
-		conn = ConnectionFactory.getConnection("junit", "root", "Metternich", false);
+		conn = ConnectionFactory.getConnection("junit", "root", "Metternich", "", false);
 	}
 
 	@Test

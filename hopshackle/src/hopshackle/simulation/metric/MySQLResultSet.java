@@ -43,7 +43,7 @@ public class MySQLResultSet {
 		if (database == null || database == "") {
 			database = "SimAnalysis";
 		}
-		Connection con = ConnectionFactory.getConnection(database, "root", "Metternich", false);
+		Connection con = ConnectionFactory.getConnection(database, "root", "Metternich", "", false);
 
 		try {
 

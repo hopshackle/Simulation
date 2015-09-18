@@ -6,7 +6,7 @@ import java.sql.*;
 
 public class MySqlTimingTest {
 
-	private static Connection conn = ConnectionFactory.getConnection("junit", "root", "Metternich", true);
+	private static Connection conn = ConnectionFactory.getConnection("junit", "root", "Metternich", "", true);
 	/**
 	 * @param args
 	 */
