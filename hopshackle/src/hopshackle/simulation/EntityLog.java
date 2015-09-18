@@ -16,7 +16,7 @@ public class EntityLog {
 	private long birth;
 
 	public EntityLog(String logFileName, World w) {
-		logFile = new File(logDir + "\\" + logFileName + ".txt");
+		logFile = new File(logDir + File.separator + logFileName + ".txt");
 		world = w;
 		logFileOpen = false;
 	}
@@ -54,7 +54,7 @@ public class EntityLog {
 
 	public void rename(String newName) {
 		close();
-		logFile.renameTo(new File(logDir + "\\" + newName + ".txt"));
+		logFile.renameTo(new File(logDir + File.separator + newName + ".txt"));
 	}
 
 	public void close() {

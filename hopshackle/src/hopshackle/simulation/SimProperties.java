@@ -80,4 +80,14 @@ public class SimProperties {
 		double retValue = Double.valueOf(temp);
 		return retValue;
 	}
+
+	public static int getPropertyAsInteger(String name, String defaultValue) {
+		if (!initialised) initialiseProperties();
+		if (!geneticProperties.containsKey(name)) { 
+			logger.warning(name + " not found in Properties. Using default.");
+			setProperty(name, defaultValue);
+		}
+		String temp = getProperty(name, defaultValue);
+		return Integer.valueOf(temp);
+	}
 }
