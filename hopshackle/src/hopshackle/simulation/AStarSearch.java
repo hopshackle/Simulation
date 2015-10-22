@@ -11,6 +11,7 @@ public final class AStarSearch<T extends State> {
 			heuristic = new ValuationFunction<T>() {
 			@Override
 			public double getValue(T item) {return 0;}
+			public String toString(T item) {return "";}
 		};
 
 		if (goalTest == null)
