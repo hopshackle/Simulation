@@ -58,9 +58,9 @@ public class BarterOffer extends Offer {
 			seller.removeItemFromThoseOnMarket(item);
 			if (bestBid != null) {
 				List<Artefact> priceReceived = bestBid.getBarterItems();
-				String message = String.format("Sells %s for %s (%.2f)", item.toString(), valFunction.toString(bestBid.getBarterItems()), bestBid.getAmount());
+				String message = String.format("Sells %s for %s (%.2f)", item.toString(), valFunction.toString(priceReceived), bestBid.getAmount());
 				if (numberOfItem > 1) 
-					message = String.format("Sells %d %s for %s (%.2f)", (int)numberOfItem, item.toString(), valFunction.toString(bestBid.getBarterItems()), bestBid.getAmount());
+					message = String.format("Sells %d %s for %s (%.2f)", (int)numberOfItem, item.toString(), valFunction.toString(priceReceived), bestBid.getAmount());
 				seller.log(message);
 				for (Artefact a : priceReceived) 
 					seller.addItem(a);
