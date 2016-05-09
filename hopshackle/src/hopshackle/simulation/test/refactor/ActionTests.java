@@ -65,6 +65,8 @@ public class ActionTests {
 	@Test
 	public void onAcceptanceOfOptionalAgentsWhenPROPOSEDNothingHappens() {
 		TestAction t = factory(2, 2, 0, 0);
+		assertTrue(t.isOptionalParticipant(allAgents.get(3)));
+		assertFalse(t.isOptionalParticipant(allAgents.get(0)));
 		t.agree(allAgents.get(2));
 		assertTrue(t.getState() == Action.State.PROPOSED);
 		t.agree(allAgents.get(3));
@@ -161,6 +163,11 @@ public class ActionTests {
 		assertEquals(t.getStartTime(), 0);
 		assertEquals(t.getEndTime(), 0);
 	}
+	@Test
+	public void cancellingAnActionRemovesItFromActionQueuesOfAllAgents() {
+		fail("Not yet implemented");
+	}
+
 	
 	private TestAction factory(int mandatory, int optional, long offset, long duration) {
 		List<Agent> mandatoryAgents = new ArrayList<Agent>();

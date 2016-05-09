@@ -456,7 +456,7 @@ public class Character extends DnDAgent implements Persistent {
 			return;
 		}
 		long newMaintenance = getWorld().getCurrentTime();
-		double subsistence =  ((newMaintenance - lastMaintenance) /(1000.0 * throttle) * level);
+		double subsistence =  ((newMaintenance - lastMaintenance) /(1000.0) * level);
 		if (subsistence > 0.0) {
 			lastMaintenance = newMaintenance;
 			addGold(-subsistence);

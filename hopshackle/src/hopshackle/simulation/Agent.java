@@ -8,9 +8,14 @@ import java.util.logging.Logger;
 
 public abstract class Agent extends Observable {
 
+	protected static boolean debug = false;
+	protected static boolean fullDebug = false;
+	private static AtomicLong idFountain = new AtomicLong(1);
+	
 	protected Location location;
 	protected World world;
 	protected Decider decider;
+	protected ActionPlan actionPlan;
 	protected static Logger errorLogger = Logger.getLogger("hopshackle.simulation");
 	protected Genome genome;
 	public static String newline = System.getProperty("line.separator");
@@ -21,24 +26,17 @@ public abstract class Agent extends Observable {
 	protected List<Long> children;
 	private Lock agentLock = new ReentrantLock();
 	private InheritancePolicy inheritancePolicy = null;
-
-	protected static boolean debug = false;
-	protected static boolean fullDebug = false;
-	private static AtomicLong idFountain = new AtomicLong(1);
 	protected boolean debug_this = false;
 
 	protected long birth = 0;
 	protected long death = -1;
 	private long uniqueID;
-	protected List<Action> actionQueue;
-	protected List<Action> executedActions;
+
 	protected List<Artefact> inventory;
 	protected List<Artefact> inventoryOnMarket = new ArrayList<Artefact>();
-	protected Action actionOverride;
 	protected double gold;
 
 	protected List<AWTEventListener> listeners;
-	protected static double throttle = SimProperties.getPropertyAsDouble("ActionThrottle", "1.0");
 	protected double maxAge = SimProperties.getPropertyAsDouble("MaximumAgentAgeInSeconds", "100");
 	protected static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
 
@@ -52,7 +50,6 @@ public abstract class Agent extends Observable {
 	private static int deadAgentsToHoldInLivingCache = 1000;
 	protected AgentRetriever<?> agentRetriever;	// to be set up by implementing subclass
 	protected EntityLog logger;
-
 
 	public Agent(World world) {
 		if (world != null)
@@ -77,13 +74,11 @@ public abstract class Agent extends Observable {
 
 	private void generalAgentInitialisation(World world) {
 		this.world = world;
-		if (world != null)
-			setBirth(world.getCurrentTime());
+		if (world != null) setBirth(world.getCurrentTime());
 		genome = new Genome();
-		actionQueue = new ArrayList<Action>();
-		executedActions = new ArrayList<Action>();
 		inventory = new ArrayList<Artefact>();
 		gold =0;
+		actionPlan = new ActionPlan(this);
 		parents = new ArrayList<Long>();
 		children = new ArrayList<Long>();
 		listeners = new ArrayList<AWTEventListener>();
@@ -107,7 +102,7 @@ public abstract class Agent extends Observable {
 
 	public Action decide(Decider deciderOverride) {
 		Action retArray = null;
-		if (actionQueue.isEmpty()) {
+		if (actionPlan.requiresDecision()) {
 			if (deciderOverride == null) 
 				deciderOverride = this.getDecider();
 
@@ -171,57 +166,16 @@ public abstract class Agent extends Observable {
 	}
 
 	public void addAction(Action newAction) {
-		if (!isDead() && (getLocation() != null) && newAction != null) {
-			if (actionOverride != null && newAction.startTime >= actionOverride.startTime) {
-				newAction.delete();
-				newAction = actionOverride;
-				purgeActions();
-			}
-			actionQueue.add(newAction);
-			getLocation().addAction(newAction);
-		}
+		actionPlan.addAction(newAction);
 	}
 	public void actionExecuted(Action oldAction) {
-		if (oldAction != null) {
-			removeAction(oldAction);
-			executedActions.add(oldAction);
-		} else errorLogger.warning("Null action sent");
-	}
-	protected void removeAction(Action oldAction) {
-	//	oldAction.setEndTime(getWorld().getCurrentTime());
-		actionQueue.remove(oldAction);
+		actionPlan.actionExecuted(oldAction);
 	}
 	public void purgeActions(){
-		while (getNextAction() != null) {
-			Action nextAction = getNextAction();
-			nextAction.delete();
-			removeAction(nextAction);
-		}
-		if (actionOverride != null) {
-			actionOverride.delete();
-			actionOverride = null;
-		}
+		actionPlan.purgeActions();
 	}
 	public Action getNextAction() {
-		if (actionQueue.isEmpty())
-			return null;
-		return actionQueue.get(0);
-	}
-	public List<Action> getActionQueue() {
-		return HopshackleUtilities.cloneList(actionQueue);
-	}
-	public void setActionOverride(Action overrideAction) {
-		// indicate that the agent has decided to override their previously chosen set of decisions
-		Action nextAction = getNextAction();
-		if (nextAction != null && nextAction.startTime >= overrideAction.startTime)
-			purgeActions();
-
-		if (!actionQueue.isEmpty()) {
-			// still have at least one action to execute before the override takes effect
-			actionOverride = overrideAction;
-		} else {
-			addAction(overrideAction);
-		}
+		return actionPlan.getNextAction();
 	}
 
 	public Location getLocation() {
@@ -327,7 +281,7 @@ public abstract class Agent extends Observable {
 	}
 
 	public int getMaxAge() {
-		return (int)(maxAge * 1000.0 * throttle);
+		return (int)(maxAge * 1000.0);
 	}
 
 	public long getUniqueID() {
@@ -414,7 +368,7 @@ public abstract class Agent extends Observable {
 	}
 
 	public List<Action> getExecutedActions() {
-		return executedActions;
+		return actionPlan.executedActions;
 	}
 
 	public int getNumberOfChildren() {

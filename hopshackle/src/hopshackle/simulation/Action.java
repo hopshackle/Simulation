@@ -5,22 +5,6 @@ import java.util.logging.Logger;
 import java.util.*;
 
 /**
- * The run() method executes four methods in turn:
- * 
- * doAdmin(); doStuff(); doCleanUp(); doNextDecision();
- * 
- * the intention being that these are overridden in children classes to
- * implement behaviour the only ones that do anything in this base
- * implementation are:
- * 
- * doAdmin - records this action against the actor's log doNextDecision - the
- * agent decides on next decision, and implements this.
- * 
- * the most commonly overridden method should be doStuff(), and possibly
- * doNextDecision() if the default decider is not to be called
- * 
- * The contract states that no logic will ever be put into doStuff() or
- * doCleanUp() in this Action superclass
  * 
  * Re-write May 2016 The new arrangement is that an Action has an internal
  * StateMachine that moves it between: PROPOSED PLANNED EXECUTING FINISHED
@@ -50,6 +34,24 @@ import java.util.*;
  * cancel() Moves from any state to CANCELLED (not valid if we are in a FINISHED
  * state)
  * 
+ * 	The run() method executes four methods in turn:
+ * 		doAdmin(); doStuff(); doCleanUp(); doNextDecision();
+ *  The start() method executes initialisation()
+ *  The cancel() method executes delete()	
+ * 
+ * The intention being that these are overridden in children classes to
+ * implement behaviour the only ones that do anything in this base
+ * implementation are:
+ * 
+ * doAdmin - records this action against the actor's log doNextDecision - the
+ * agent decides on next decision, and implements this.
+ * 
+ * the most commonly overridden method should be doStuff(), and possibly
+ * doNextDecision() if the default decider is not to be called
+ * 
+ * The contract states that no logic will ever be put into delete(), initialisation(), doStuff() or
+ * doCleanUp() in this Action superclass
+ * 
  * @author James
  *
  */
@@ -78,6 +80,7 @@ public abstract class Action implements Delayed {
 	protected long plannedEndTime;
 	protected long plannedStartTime;
 	protected State currentState = State.PROPOSED;
+	protected int value = 0;
 
 	public Action(Agent a, boolean recordAction) {
 		this(a, 1000, recordAction);
@@ -175,7 +178,7 @@ public abstract class Action implements Delayed {
 	}
 	
 	protected void doAdmin() {
-		actor.actionExecuted(this);
+
 	}
 
 	protected void doStuff() {
@@ -183,6 +186,14 @@ public abstract class Action implements Delayed {
 	}
 
 	protected void doCleanUp() {
+		for (Agent a : mandatoryActors) {
+			a.actionExecuted(this);
+		}
+		for (Agent a : optionalActors) {
+			if (agentAgreement.getOrDefault(a.getUniqueID(), false)) {
+				a.actionExecuted(this);
+			}
+		}
 	}
 
 	/**
@@ -243,5 +254,14 @@ public abstract class Action implements Delayed {
 	protected void delete() {
 
 	}
-
+	
+	public int getValue() {
+		return value;
+	}
+	public void setValue(int newValue) {
+		value = newValue;
+	}
+	public boolean isOptionalParticipant(Agent p) {
+		return optionalActors.contains(p);
+	}
 }
