@@ -106,24 +106,24 @@ public abstract class Agent extends Observable {
 	}
 
 	public Action decide(Decider deciderOverride) {
-		maintenance();
 		Action retArray = null;
-		if (!actionQueue.isEmpty())
-			return null;
-		if (deciderOverride == null) 
-			deciderOverride = this.getDecider();
+		if (actionQueue.isEmpty()) {
+			if (deciderOverride == null) 
+				deciderOverride = this.getDecider();
 
-		if (deciderOverride != null) {
-			// first of all we learn from last decision
-			dispatchLearningEvent();
+			if (deciderOverride != null) {
+				// first of all we learn from last decision
+				dispatchLearningEvent();
 
-			// then we make the next decision
-			if (!isDead()) {
-				ActionEnum action = deciderOverride.decide(this);
-				if (action != null)
-					retArray = action.getAction(this);
+				// then we make the next decision
+				if (!isDead()) {
+					ActionEnum action = deciderOverride.decide(this);
+					if (action != null)
+						retArray = action.getAction(this);
+				}
 			}
 		}
+		maintenance();
 		return retArray;
 	}
 
@@ -188,7 +188,7 @@ public abstract class Agent extends Observable {
 		} else errorLogger.warning("Null action sent");
 	}
 	protected void removeAction(Action oldAction) {
-		oldAction.setEndTime(getWorld().getCurrentTime());
+	//	oldAction.setEndTime(getWorld().getCurrentTime());
 		actionQueue.remove(oldAction);
 	}
 	public void purgeActions(){

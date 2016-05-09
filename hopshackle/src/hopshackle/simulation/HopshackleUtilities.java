@@ -24,6 +24,12 @@ public class HopshackleUtilities {
 		}
 		return retValue;
 	}
+	
+	public static <T> List<T> listFromInstance(T instance) {
+		List<T> retList = new ArrayList<T>();
+		retList.add(instance);
+		return retList;
+	}
 
 	public static List<String> createListFromFile(File f) {
 		List<String> retList = new ArrayList<String>();

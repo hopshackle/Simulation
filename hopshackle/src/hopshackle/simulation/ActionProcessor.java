@@ -78,11 +78,12 @@ public class ActionProcessor {
 	}
 	private boolean validAction(Action currentAction2) {
 		if (currentAction2 == null)
-			return true;
+			return false;
 		if (!currentAction2.isDeleted())
 			return true;
 		return false;
 	}
+	// Only used in testing?
 	public Action getNextUndeletedAction() {
 		return getNextUndeletedAction(1, TimeUnit.MILLISECONDS);
 	}
