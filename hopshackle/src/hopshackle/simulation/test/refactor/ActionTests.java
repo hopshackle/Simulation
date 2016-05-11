@@ -5,27 +5,44 @@ import java.util.*;
 import hopshackle.simulation.*;
 import org.junit.*;
 
+class TestAction extends Action {
+	public TestAction(List<Agent> mandatory, List<Agent> optional, long startOffset, long duration, boolean recordAction) {
+		super(mandatory, optional, startOffset, duration, recordAction);
+	}
+}
+
+class TestAgent extends Agent {
+	public TestAgent(World world) {
+		super(world);
+	}
+}
+
+class TestActionFactory {
+	
+	List<TestAgent> allAgents;
+	public TestActionFactory(List<TestAgent> allAgents) {
+		this.allAgents = allAgents;
+	}
+	public TestAction factory(int mandatory, int optional, long offset, long duration) {
+		List<Agent> mandatoryAgents = new ArrayList<Agent>();
+		List<Agent> optionalAgents = new ArrayList<Agent>();
+		for (int i = 0; i < mandatory; i++) {
+			mandatoryAgents.add(allAgents.get(i));
+		}
+		for (int i = mandatory; i < mandatory + optional; i++) {
+			optionalAgents.add(allAgents.get(i));
+		}
+		return new TestAction(mandatoryAgents, optionalAgents, offset, duration, true);
+	}
+}
+
+
 public class ActionTests {
-	
-	class TestAction extends Action {
-		public TestAction(List<Agent> mandatory, List<Agent> optional, long startOffset, long duration, boolean recordAction) {
-			super(mandatory, optional, startOffset, duration, recordAction);
-		}
-	}
-	
-	class TestAgent extends Agent {
-		public TestAgent(World world) {
-			super(world);
-		}
-		@Override
-		public double getScore() {return 0;}
-		@Override
-		public double getMaxScore() {return 0;}
-	}
 	
 	World w;
 	List<TestAgent> allAgents = new ArrayList<TestAgent>();
 	List<Agent> emptyList = new ArrayList<Agent>();
+	TestActionFactory taf;
 	
 	@Before
 	public void setup() {
@@ -33,22 +50,56 @@ public class ActionTests {
 		for (int i = 0; i < 10; i++) {
 			allAgents.add(new TestAgent(w));
 		}
+		taf = new TestActionFactory(allAgents);
 	}
 
 	@Test
 	public void newActionHasStateOfPROPOSED() {
-		TestAction t = factory(1, 0, 0, 0);
+		TestAction t = taf.factory(1, 0, 0, 0);
 		assertTrue(t.getState() == Action.State.PROPOSED);
 	}
 	@Test
-	public void onRejectionOfMandatoryAgentStateIsCANCELLED() {
-		TestAction t = factory(2, 0, 0, 0);
+	public void onRejectionOfMandatoryAgentStateIsCANCELLEDFromPROPOSED() {
+		TestAction t = taf.factory(2, 0, 0, 0);
 		t.reject(allAgents.get(1));
 		assertTrue(t.getState() == Action.State.CANCELLED);
 	}
 	@Test
+	public void onRejectionOfMandatoryAgentStateIsCANCELLEDFromPLANNED() {
+		TestAction t = taf.factory(2, 0, 0, 0);
+		t.agree(allAgents.get(1));
+		t.agree(allAgents.get(0));
+		assertTrue(t.getState() == Action.State.PLANNED);
+		assertEquals(t.getAllConfirmedParticipants().size(), 2);
+		t.reject(allAgents.get(0));
+		assertTrue(t.getState() == Action.State.CANCELLED);
+	}
+	@Test
+	public void onRejectionOfOptionalAgentFromPLANNEDNoEffect() {
+		TestAction t = taf.factory(1, 1, 0, 0);
+		t.agree(allAgents.get(1));
+		t.agree(allAgents.get(0));
+		assertTrue(t.getState() == Action.State.PLANNED);
+		assertEquals(t.getAllConfirmedParticipants().size(), 2);
+		t.reject(allAgents.get(1));
+		assertTrue(t.getState() == Action.State.PLANNED);
+		assertEquals(t.getAllConfirmedParticipants().size(), 1);
+	}
+	@Test
+	public void rejectionFromEXECUTINGNoEffect() {
+		TestAction t = taf.factory(1, 1, 0, 0);
+		t.agree(allAgents.get(1));
+		t.agree(allAgents.get(0));
+		assertTrue(t.getState() == Action.State.PLANNED);
+		t.start();
+		t.reject(allAgents.get(1));
+		assertTrue(t.getState() == Action.State.EXECUTING);
+		assertEquals(t.getAllConfirmedParticipants().size(), 2);
+	}
+	
+	@Test
 	public void onAcceptanceOfAllMandatoryAgentsStateIsPLANNED() {
-		TestAction t = factory(2, 0, 0, 0);
+		TestAction t = taf.factory(2, 0, 0, 0);
 		t.agree(allAgents.get(1));
 		assertTrue(t.getState() == Action.State.PROPOSED);
 		t.agree(allAgents.get(0));
@@ -56,7 +107,7 @@ public class ActionTests {
 	}
 	@Test
 	public void onAcceptanceOfAllMandatoryAgentsStateIsPLANNEDreversedOrder() {
-		TestAction t = factory(2, 0, 0, 0);
+		TestAction t = taf.factory(2, 0, 0, 0);
 		t.agree(allAgents.get(0));
 		assertTrue(t.getState() == Action.State.PROPOSED);
 		t.agree(allAgents.get(1));
@@ -64,7 +115,7 @@ public class ActionTests {
 	}
 	@Test
 	public void onAcceptanceOfOptionalAgentsWhenPROPOSEDNothingHappens() {
-		TestAction t = factory(2, 2, 0, 0);
+		TestAction t = taf.factory(2, 2, 0, 0);
 		assertTrue(t.isOptionalParticipant(allAgents.get(3)));
 		assertFalse(t.isOptionalParticipant(allAgents.get(0)));
 		t.agree(allAgents.get(2));
@@ -74,7 +125,7 @@ public class ActionTests {
 	}
 	@Test
 	public void onAcceptanceOfOptionalAgentOnceStateIsPLANNEDNothingHappens() {
-		TestAction t = factory(1, 1, 0, 0);
+		TestAction t = taf.factory(1, 1, 0, 0);
 		t.agree(allAgents.get(0));
 		assertTrue(t.getState() == Action.State.PLANNED);
 		t.agree(allAgents.get(1));
@@ -82,12 +133,12 @@ public class ActionTests {
 	}
 	@Test (expected = Action.InvalidStateTransition.class)
 	public void actionCannotBeStartedFromPROPOSED() {
-		TestAction t = factory(1, 1, 0, 0);
+		TestAction t = taf.factory(1, 1, 0, 0);
 		t.start();
 	}
 	@Test
 	public void actionCanBeStartedFromPLANNEDAndMovesToEXECUTING() {
-		TestAction t = factory(1, 0, 0, 0);
+		TestAction t = taf.factory(1, 0, 0, 0);
 		t.agree(allAgents.get(0));
 		assertTrue(t.getState() == Action.State.PLANNED);
 		t.start();
@@ -96,19 +147,19 @@ public class ActionTests {
 
 	@Test (expected = Action.InvalidStateTransition.class)
 	public void actionCannotBeFinishedFromPROPOSED() {
-		TestAction t = factory(1, 0, 0, 0);
+		TestAction t = taf.factory(1, 0, 0, 0);
 		t.run();
 	}
 	@Test (expected = Action.InvalidStateTransition.class)
 	public void actionCannotBeFinishedFromPLANNED() {
-		TestAction t = factory(1, 0, 0, 0);
+		TestAction t = taf.factory(1, 0, 0, 0);
 		t.agree(allAgents.get(0));
 		t.run();
 	}
 
 	@Test
 	public void actionCanBeFinishedFromEXECUTING() {
-		TestAction t = factory(1, 2, 0, 0);
+		TestAction t = taf.factory(1, 2, 0, 0);
 		t.agree(allAgents.get(0));
 		t.start();
 		assertTrue(t.getState() == Action.State.EXECUTING);
@@ -117,24 +168,24 @@ public class ActionTests {
 	}
 	@Test (expected = Action.InvalidStateTransition.class)
 	public void actionCannotBeFinishedFromFINISHED() {
-		TestAction t = factory(1, 0, 0, 0);
+		TestAction t = taf.factory(1, 0, 0, 0);
 		t.agree(allAgents.get(0));
 		t.run();
 		t.run();
 	}
 	@Test (expected = Action.InvalidStateTransition.class)
 	public void actionCannotBeFinishedFromCANCELLED() {
-		TestAction t = factory(1, 0, 0, 0);
+		TestAction t = taf.factory(1, 0, 0, 0);
 		t.reject(allAgents.get(0));
 		t.run();
 	}
 	@Test
 	public void actionCanBeCANCELLEDFromPROPOSEDorPLANNED() {
-		TestAction t = factory(1, 0, 0, 0);
+		TestAction t = taf.factory(1, 0, 0, 0);
 		t.agree(allAgents.get(0));
 		t.cancel();
 		assertTrue(t.getState() == Action.State.CANCELLED);
-		t = factory(1, 0, 0, 0);
+		t = taf.factory(1, 0, 0, 0);
 		t.agree(allAgents.get(0));
 		t.start();
 		t.cancel();
@@ -142,7 +193,7 @@ public class ActionTests {
 	}
 	@Test
 	public void cancelFromFINISHEDHasNoEffect() {
-		TestAction t = factory(1, 0, 0, 0);
+		TestAction t = taf.factory(1, 0, 0, 0);
 		t.agree(allAgents.get(0));
 		t.start();
 		t.run();
@@ -152,7 +203,7 @@ public class ActionTests {
 	}
 	@Test
 	public void plannedStartAndEndTimesUseOffset() {
-		TestAction t = factory(1, 0, 100, 1000);
+		TestAction t = taf.factory(1, 0, 100, 1000);
 		assertEquals(t.getStartTime(), 100);
 		assertEquals(t.getEndTime(), 1100);
 		t.agree(allAgents.get(0));
@@ -164,21 +215,28 @@ public class ActionTests {
 		assertEquals(t.getEndTime(), 0);
 	}
 	@Test
-	public void cancellingAnActionRemovesItFromActionQueuesOfAllAgents() {
-		fail("Not yet implemented");
+	public void confirmedParticipantsChangeOverLifeCycle() {
+		TestAction t = taf.factory(1, 2, 0, 0);
+		assertEquals(t.getAllConfirmedParticipants().size(), 0);
+		t.agree(allAgents.get(0));
+		assertEquals(t.getAllConfirmedParticipants().size(), 1);
+		assertTrue(t.getAllConfirmedParticipants().contains(allAgents.get(0)));
+		t.agree(allAgents.get(2));
+		t.agree(allAgents.get(1));
+		assertEquals(t.getAllConfirmedParticipants().size(), 3);
+		t.reject(allAgents.get(1));
+		t.start();
+		assertTrue(t.getState() == Action.State.EXECUTING);
+		assertEquals(t.getAllConfirmedParticipants().size(), 2);
+		assertTrue(t.getAllConfirmedParticipants().contains(allAgents.get(0)));
+		assertFalse(t.getAllConfirmedParticipants().contains(allAgents.get(1)));
+		assertTrue(t.getAllConfirmedParticipants().contains(allAgents.get(2)));
+		t.run();
+		assertTrue(t.getState() == Action.State.FINISHED);
+		assertEquals(t.getAllConfirmedParticipants().size(), 2);
 	}
 
 	
-	private TestAction factory(int mandatory, int optional, long offset, long duration) {
-		List<Agent> mandatoryAgents = new ArrayList<Agent>();
-		List<Agent> optionalAgents = new ArrayList<Agent>();
-		for (int i = 0; i < mandatory; i++) {
-			mandatoryAgents.add(allAgents.get(i));
-		}
-		for (int i = mandatory; i < mandatory + optional; i++) {
-			optionalAgents.add(allAgents.get(i));
-		}
-		return new TestAction(mandatoryAgents, optionalAgents, offset, duration, true);
-	}
+
 
 }

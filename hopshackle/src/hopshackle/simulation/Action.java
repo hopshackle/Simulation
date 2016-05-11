@@ -107,31 +107,46 @@ public abstract class Action implements Delayed {
 	}
 
 	public void agree(Agent a) {
-		updateAgreement(a, true);
+		switch (currentState) {
+		case PROPOSED:
+		case PLANNED:
+			updateAgreement(a, true);
+			break;
+		default:
+			a.log("Attempts to agree to Action: " + a + " irrelevant from " + currentState);
+			logger.warning("Attempts to agree to Action: " + a + " irrelevant from " + currentState);
+		}
 	}
 
 	public void reject(Agent a) {
-		updateAgreement(a, false);
+		switch (currentState) {
+		case PROPOSED:
+		case PLANNED:
+			updateAgreement(a, false);
+			a.actionPlan.actionQueue.remove(this);
+			break;
+		default:
+			a.log("Attempts to reject Action: " + a + " irrelevant from " + currentState);
+			logger.warning("Attempts to reject Action: " + a + " irrelevant from " + currentState);
+		}
 	}
 
 	private void updateAgreement(Agent a, boolean choice) {
 		agentAgreement.put(a.getUniqueID(), choice);
 		// Now check for change of state
-		if (currentState == State.PROPOSED) {
-			boolean changeState = true;
-			for (Agent m : mandatoryActors) {
-				if (agentAgreement.containsKey(m.getUniqueID())) {
-					if (agentAgreement.get(m.getUniqueID()) == false) {
-						this.cancel();
-						changeState = false;
-						break;
-					}
-				} else {
+		boolean changeState = (currentState == State.PROPOSED);
+		for (Agent m : mandatoryActors) {
+			if (agentAgreement.containsKey(m.getUniqueID())) {
+				if (agentAgreement.get(m.getUniqueID()) == false) {
+					this.cancel();
 					changeState = false;
+					break;
 				}
+			} else {
+				changeState = false;
 			}
-			if (changeState) changeState(State.PLANNED);
 		}
+		if (changeState) changeState(State.PLANNED);
 	}
 
 	public State getState() {
@@ -167,9 +182,9 @@ public abstract class Action implements Delayed {
 			endTime = world.getCurrentTime();
 			doAdmin();
 			doStuff();
+			changeState(State.FINISHED);
 			doCleanUp();
 			doNextDecision();
-			changeState(State.FINISHED);
 		}
 	}
 
@@ -187,11 +202,11 @@ public abstract class Action implements Delayed {
 
 	protected void doCleanUp() {
 		for (Agent a : mandatoryActors) {
-			a.actionExecuted(this);
+			a.actionPlan.actionCompleted(this);
 		}
 		for (Agent a : optionalActors) {
 			if (agentAgreement.getOrDefault(a.getUniqueID(), false)) {
-				a.actionExecuted(this);
+				a.actionPlan.actionCompleted(this);
 			}
 		}
 	}
@@ -249,19 +264,26 @@ public abstract class Action implements Delayed {
 			changeState(State.CANCELLED);
 		}
 		delete();
+		doCleanUp();
 	}
 
 	protected void delete() {
 
 	}
-	
-	public int getValue() {
-		return value;
-	}
-	public void setValue(int newValue) {
-		value = newValue;
-	}
+
 	public boolean isOptionalParticipant(Agent p) {
 		return optionalActors.contains(p);
+	}
+	public boolean isMandatoryParticipant(Agent p) {
+		return mandatoryActors.contains(p);
+	}
+	public List<Agent> getAllConfirmedParticipants() {
+		List<Agent> retValue = new ArrayList<Agent>();
+		for (long id : agentAgreement.keySet()) {
+			if (agentAgreement.get(id)) {
+				retValue.add(Agent.getAgent(id));
+			}
+		}
+		return retValue;
 	}
 }

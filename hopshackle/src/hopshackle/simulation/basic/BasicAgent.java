@@ -47,7 +47,7 @@ public class BasicAgent extends Agent implements Persistent {
 		}
 		if (Math.random() < debugChance) 
 			setDebugLocal(true);
-		setInheritancePolicy(new BasicInheritance());
+		setPolicy(new BasicInheritance<BasicAgent>());
 		agentRetriever = masterAgentRetriever;
 	}
 

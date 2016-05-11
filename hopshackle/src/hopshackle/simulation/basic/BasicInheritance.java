@@ -4,18 +4,16 @@ import java.util.List;
 
 import hopshackle.simulation.*;
 
-public class BasicInheritance extends SimpleInheritance {
+public class BasicInheritance<T extends Agent> extends SimpleInheritance<T> {
 
-
-	@SuppressWarnings("unchecked")
 	@Override
-	protected <T extends Agent> List<T> getInheritorsInOrder(T testator) {
-		List<T> inheritors = super.getInheritorsInOrder(testator);
+	protected List<Agent> getInheritorsInOrder(Agent testator) {
+		List<Agent> inheritors = super.getInheritorsInOrder(testator);
 		if (inheritors.isEmpty()) {
 			BasicAgent t = ((BasicAgent) testator);
 			List<BasicAgent> spouses = t.getAllPartners();
 			if (!spouses.isEmpty())
-				inheritors.add((T) spouses.get(spouses.size()-1));
+				inheritors.add(spouses.get(spouses.size()-1));
 		}
 		return inheritors;
 	}

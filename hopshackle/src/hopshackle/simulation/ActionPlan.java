@@ -4,6 +4,13 @@ import java.util.*;
 
 public class ActionPlan {
 	
+	private static Policy<Action> defaultActionPolicy = new Policy<Action>("action") {
+		@Override
+		public double getValue(Action action, Agent agent) {
+			return 0.0;
+		}
+	};
+	
 	protected Agent agent;
 	protected PriorityQueue<Action> actionQueue = new PriorityQueue<Action>();
 	protected List<Action> executedActions = new ArrayList<Action>();
@@ -11,17 +18,28 @@ public class ActionPlan {
 	public ActionPlan(Agent agent) {
 		this.agent = agent;
 	}
-	
 	public boolean requiresDecision() {
-		return true;
+		return requiresDecision(0);
+	}
+	public boolean requiresDecision(int forwardWindow) {
+		Action next = getNextAction();
+		long timeToGo = Long.MAX_VALUE;
+		if (next != null) {
+			timeToGo = next.getStartTime() - agent.getWorld().getCurrentTime();
+		}
+		return timeToGo > forwardWindow;
 	}
 	public void addAction(Action newAction) {
 		if (!agent.isDead() && (agent.getWorld() != null) && newAction != null) {
 			List<Action> overriddenActions = new ArrayList<Action>();
+			@SuppressWarnings("unchecked")
+			Policy<Action> actionPolicy = (Policy<Action>) agent.getPolicy("action");
+			if (actionPolicy == null) actionPolicy = defaultActionPolicy;
+			double newActionValue = actionPolicy.getValue(newAction, agent);
 			boolean willFitInPlan = true;
 			for (Action a : actionQueue) {
 				if (overlap(a, newAction)) {
-					if ((a.getState() != Action.State.EXECUTING) && a.getValue() >= newAction.getValue()) {
+					if ((a.getState() != Action.State.EXECUTING) && actionPolicy.getValue(a, agent) < newActionValue) {
 						overriddenActions.add(a);
 					} else {
 						newAction.reject(agent);
@@ -32,13 +50,16 @@ public class ActionPlan {
 			}
 			if (willFitInPlan) {
 				for (Action a : overriddenActions) {
-					cancelOrReject(a);
+					a.reject(agent);
 					// currently all agents accept/reject when the action is created
 					// this will ultimately need to change for asynchronous decisions
 					// TODO: 
 				}
+				newAction.agree(agent);
 				actionQueue.add(newAction);
 				agent.getWorld().addAction(newAction);
+				// TODO: really only want to add action to queue once...not once per agent
+				// although this should not cause any problems as the later entries will be discarded
 			}
 		}
 	}
@@ -54,26 +75,22 @@ public class ActionPlan {
 		return !(earlier.getEndTime() <= later.getStartTime());
 	}
 	
-	public void actionExecuted(Action oldAction) {
+	public void actionCompleted(Action oldAction) {
 		if (oldAction != null) {
 			actionQueue.remove(oldAction);
-			executedActions.add(oldAction);
+			if (oldAction.getState() == Action.State.FINISHED) {
+				executedActions.add(oldAction);
+			}
 		} else Agent.errorLogger.warning("Null action sent");
 	}
 	public void purgeActions(){
-		for (Action a : actionQueue) {
-			cancelOrReject(a);
+		for (Action a : HopshackleUtilities.cloneList(actionQueue)) {
+			a.reject(agent);
 		}
 	}
 	public Action getNextAction() {
 		return actionQueue.peek();
 	}
-	private void cancelOrReject(Action a) {
-		if (a.isOptionalParticipant(agent)) {
-			a.reject(agent);
-		} else {
-			a.cancel();
-		}
-	}
+
 }
 

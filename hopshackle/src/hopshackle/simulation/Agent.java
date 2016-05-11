@@ -25,7 +25,7 @@ public abstract class Agent extends Observable {
 	protected List<Long> parents;
 	protected List<Long> children;
 	private Lock agentLock = new ReentrantLock();
-	private InheritancePolicy inheritancePolicy = null;
+	private Map<String, Policy<?>> policies = new HashMap<String, Policy<?>>(); 
 	protected boolean debug_this = false;
 
 	protected long birth = 0;
@@ -136,8 +136,10 @@ public abstract class Agent extends Observable {
 	public void die(String reason) {
 		log("Dies. " + reason);
 
+		@SuppressWarnings("unchecked")
+		Policy<Agent> inheritancePolicy = (Policy<Agent>) getPolicy("inheritance");
 		if (inheritancePolicy != null) {
-			inheritancePolicy.bequeathEstate(this);
+			inheritancePolicy.apply(this);
 		}
 
 		if (queueForTheFerryman.size() >= deadAgentsToHoldInLivingCache) {
@@ -167,9 +169,6 @@ public abstract class Agent extends Observable {
 
 	public void addAction(Action newAction) {
 		actionPlan.addAction(newAction);
-	}
-	public void actionExecuted(Action oldAction) {
-		actionPlan.actionExecuted(oldAction);
 	}
 	public void purgeActions(){
 		actionPlan.purgeActions();
@@ -411,8 +410,12 @@ public abstract class Agent extends Observable {
 		}
 	}
 
-	public abstract double getScore();
-	public abstract double getMaxScore();
+	public double getScore() {
+		return 0;
+	}
+	public double getMaxScore() {
+		return 0;
+	}
 	public void maintenance() {
 		if (isDead()) return;
 
@@ -514,9 +517,6 @@ public abstract class Agent extends Observable {
 	public boolean tryLock() {
 		return agentLock.tryLock();
 	}
-	public void setInheritancePolicy(InheritancePolicy ip) {
-		inheritancePolicy = ip;
-	}
 
 	public boolean getFullDebug() {
 		return fullDebug;
@@ -527,5 +527,14 @@ public abstract class Agent extends Observable {
 	}
 	public void removeItemFromThoseOnMarket(Artefact item) {
 		inventoryOnMarket.remove(item);
+	}
+	public Policy<?> getPolicy(String type) {
+		return policies.getOrDefault(type, null);
+	}
+	public void setPolicy(Policy<?> newPolicy) {
+		policies.put(newPolicy.type, newPolicy);
+	}
+	public ActionPlan getActionPlan() {
+		return actionPlan;
 	}
 }

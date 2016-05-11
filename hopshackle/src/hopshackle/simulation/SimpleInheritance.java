@@ -2,22 +2,25 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class SimpleInheritance implements InheritancePolicy {
+public class SimpleInheritance<T extends Agent> extends Policy<T> {
+
+	public SimpleInheritance() {
+		super("inheritance");
+	}
 
 	@Override
-	public <T extends Agent> void bequeathEstate(T testator) {
+	public void apply(Agent testator) {
 		List<Artefact> tempInv = testator.getInventory();
-		List<T> heirs = this.getInheritorsInOrder(testator);
-		for (T heir : heirs)
+		List<Agent> heirs = this.getInheritorsInOrder(testator);
+		for (Agent heir : heirs)
 			heir.log("Inherits from estate of " + testator + ":");
 		distributeArtefactsToHeirs(testator, tempInv, heirs);
 	}
 
-	@SuppressWarnings("unchecked")
-	protected <T extends Agent> List<T> getInheritorsInOrder(T testator) {
-		List<T> inheritors = new ArrayList<T>();
+	protected List<Agent> getInheritorsInOrder(Agent testator) {
+		List<Agent> inheritors = new ArrayList<Agent>();
 		for (Agent child : testator.getChildren()) {
-			T inheritor = (T) child;
+			Agent inheritor = child;
 			if (inheritor != null && !inheritor.isDead())
 				inheritors.add(inheritor);
 		}
@@ -38,4 +41,5 @@ public class SimpleInheritance implements InheritancePolicy {
 			}
 		}
 	}
+
 }
