@@ -1,8 +1,5 @@
 package hopshackle.simulation;
 
-import hopshackle.simulation.dnd.*;
-import hopshackle.simulation.dnd.Character;
-
 public class Bid {
 
 	protected double amount;
@@ -23,12 +20,6 @@ public class Bid {
 			} else {
 				buyer.addItem(item);
 				buyer.addGold(amount-actualPrice);
-				if (buyer instanceof Character) {
-					Character c = (Character) buyer;
-					if (c.getChrClass() == CharacterClass.EXPERT) {
-						c.addXp((int)(5.0*(-actualPrice)));
-					}
-				}
 				buyer.log(String.format("Buys %s for %.2f", item.toString(), actualPrice));
 				return true;
 			}

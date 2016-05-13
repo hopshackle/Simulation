@@ -1,7 +1,7 @@
 package hopshackle.simulation.test;
 import static org.junit.Assert.*;
 import hopshackle.simulation.*;
-import hopshackle.simulation.dnd.Character;
+import hopshackle.simulation.basic.*;
 
 import org.junit.*;
 
@@ -12,7 +12,7 @@ public class MapKnowledgeTest {
 
 	@Before
 	public void setUp() {
-		agent = new Character(new World());
+		agent = new BasicAgent(new World());
 		testMapKnowledge = agent.getMapKnowledge();
 	}
 
@@ -31,7 +31,7 @@ public class MapKnowledgeTest {
 		Location loc2 = new Location();
 		loc1.setParentLocation(w);
 		loc2.setParentLocation(w);
-		Character c = new Character(w);
+		Agent c = new BasicAgent(w);
 		MapKnowledge map = c.getMapKnowledge();
 		assertFalse(map.isKnown(loc1));
 		c.setLocation(loc1);

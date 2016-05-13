@@ -1,8 +1,5 @@
 package hopshackle.simulation;
 
-import hopshackle.simulation.dnd.*;
-import hopshackle.simulation.dnd.Character;
-
 import java.util.logging.Logger;
 
 public class Offer {
@@ -57,12 +54,6 @@ public class Offer {
 			double tax = MARKET_TAX * actualPrice;
 			if (tax < 0.01) tax = 0.01; // minimum transaction charge of 1 copper piece
 			seller.addGold(actualPrice-tax);
-			if (seller instanceof Character) {
-				Character c = (Character) seller;
-				if (c.getChrClass() == CharacterClass.EXPERT) {
-					c.addXp(Math.round(5.0*(actualPrice-tax)));
-				}
-			}
 		}
 	}
 

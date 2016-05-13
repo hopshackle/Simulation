@@ -50,10 +50,7 @@ public class BasicRunWorld {
 		suffix = w.toString();
 
 		LocationMap tempMap = w.getLocationMap();
-		if (tempMap instanceof SquareMap) {
-			defaultStartLocation = ((SquareMap)tempMap).getSquareAt(0, 0);
-			worldMapDisplay = new WorldMap(w);
-		} else if (tempMap instanceof HexMap) {
+		if (tempMap instanceof HexMap) {
 			defaultStartLocation = ((HexMap)tempMap).getHexAt(0, 0);
 			worldMapDisplay = new WorldHexMap(w);
 		} else {
