@@ -217,7 +217,7 @@ public abstract class Action implements Delayed {
 		for (Agent actor : allActors) {
 			if (!actor.isDead()) {
 				Action newAction = actor.decide();
-				actor.addAction(newAction);
+				if (newAction != null) actor.addAction(newAction);
 			}
 		}
 	}
@@ -248,8 +248,9 @@ public abstract class Action implements Delayed {
 		switch (currentState) {
 		case EXECUTING:
 		case FINISHED:
-		case CANCELLED:
 			return startTime;
+		case CANCELLED:
+			if (startTime > -1) return startTime;
 		default:
 			return plannedStartTime;
 		}
@@ -262,6 +263,7 @@ public abstract class Action implements Delayed {
 	public void cancel() {
 		if (currentState != State.FINISHED) {
 			changeState(State.CANCELLED);
+			endTime = world.getCurrentTime();
 		}
 		delete();
 		doCleanUp();

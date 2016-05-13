@@ -1,6 +1,6 @@
 package hopshackle.simulation;
 import java.io.*;
-import java.util.Hashtable;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
 
@@ -16,7 +16,7 @@ public class ActionProcessor {
 	private Hashtable<String, Long> actionTimes;
 	private Hashtable<String, Integer> actionCount;
 	private String logFile;
-	private boolean debug = false;
+	private boolean debug = true;
 	private boolean delayQueue, done;
 
 	public ActionProcessor() {

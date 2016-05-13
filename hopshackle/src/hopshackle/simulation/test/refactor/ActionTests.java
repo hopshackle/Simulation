@@ -5,60 +5,11 @@ import java.util.*;
 import hopshackle.simulation.*;
 import org.junit.*;
 
-class TestAction extends Action {
-	public TestAction(List<Agent> mandatory, List<Agent> optional, long startOffset, long duration, boolean recordAction) {
-		super(mandatory, optional, startOffset, duration, recordAction);
-	}
-}
-
-class TestAgent extends Agent {
-	
-	List<Action> actionsAdded = new ArrayList<Action>();
-	int decisionsTaken = 0;
-	
-	public TestAgent(World world) {
-		super(world);
-	}
-	@Override
-	public void addAction(Action a) {
-		super.addAction(a);
-		actionsAdded.add(a);
-	}
-	@Override
-	public Action decide() {
-		super.decide();
-		decisionsTaken++;
-		List<Agent> thisAgentAsList = new ArrayList<Agent>();
-		thisAgentAsList.add(this);
-		return new TestAction(thisAgentAsList, new ArrayList<Agent>(), 0, 1000, true);
-	}
-}
-
-class TestActionFactory {
-	
-	List<TestAgent> allAgents;
-	public TestActionFactory(List<TestAgent> allAgents) {
-		this.allAgents = allAgents;
-	}
-	public TestAction factory(int mandatory, int optional, long offset, long duration) {
-		List<Agent> mandatoryAgents = new ArrayList<Agent>();
-		List<Agent> optionalAgents = new ArrayList<Agent>();
-		for (int i = 0; i < mandatory; i++) {
-			mandatoryAgents.add(allAgents.get(i));
-		}
-		for (int i = mandatory; i < mandatory + optional; i++) {
-			optionalAgents.add(allAgents.get(i));
-		}
-		return new TestAction(mandatoryAgents, optionalAgents, offset, duration, true);
-	}
-}
-
 
 public class ActionTests {
 	
 	World w;
 	List<TestAgent> allAgents = new ArrayList<TestAgent>();
-	List<Agent> emptyList = new ArrayList<Agent>();
 	TestActionFactory taf;
 	
 	@Before

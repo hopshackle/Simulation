@@ -18,21 +18,6 @@ public class ActionPlanTests {
 	TestActionFactory taf;
 	Agent one, two, three;
 	
-	class TestActionPolicy extends Policy<Action> {
-		Map<Action, Double> actionValues = new HashMap<Action, Double>();
-		public TestActionPolicy(String name) {
-			super(name);
-		}
-		@Override
-		public double getValue(Action a, Agent p) {
-			return actionValues.getOrDefault(a, 0.0);
-		}
-		public void setValue(Action a, double value) {
-			actionValues.put(a, value);
-		}
-		
-	}
-	
 	TestActionPolicy actionPolicy = new TestActionPolicy("action");
 	
 	@Before
@@ -120,6 +105,7 @@ public class ActionPlanTests {
 	}
 	@Test
 	public void runActionCorrectlyUpdatesTheExecutedActionListInActionPlan() {
+		one.setDecider(null);
 		Action a = taf.factory(1, 0, 500, 1000);
 		one.addAction(a);
 		a.start();
@@ -141,9 +127,9 @@ public class ActionPlanTests {
 		assertTrue(three.getNextAction() == a);
 		a.reject(two);
 		assertTrue(a.getState() == Action.State.CANCELLED);
-		assertTrue(one.getNextAction() == null);
-		assertTrue(two.getNextAction() == null);
-		assertTrue(three.getNextAction() == null);
+		assertTrue(one.getNextAction() != a);
+		assertTrue(two.getNextAction() != a);
+		assertTrue(three.getNextAction() != a);
 		assertEquals(one.getExecutedActions().size(), 0);
 		assertEquals(two.getExecutedActions().size(), 0);
 		assertEquals(three.getExecutedActions().size(), 0);
@@ -186,20 +172,19 @@ public class ActionPlanTests {
 		assertTrue(c.getState() == Action.State.PLANNED);
 		assertTrue(d.getState() == Action.State.CANCELLED);
 		assertEquals(two.getExecutedActions().size(), 0);
-		assertTrue(two.getNextAction() == null);
 	}
 	
 	@Test
 	public void decisionRequiredIfThereIsAGapUpToSpecifiedTime() {
-		assertTrue(one.getActionPlan().requiresDecision());
+		one.setDecider(null);
+		assertEquals(one.getActionPlan().timeToNextActionStarts(), Long.MAX_VALUE);
 		Action a = taf.factory(1, 0, 0, 1000);
 		one.addAction(a);
-		assertFalse(one.getActionPlan().requiresDecision());
+		assertEquals(one.getActionPlan().timeToNextActionStarts(), 0);
 		a.cancel();
-		assertTrue(one.getActionPlan().requiresDecision());
+		assertEquals(one.getActionPlan().timeToNextActionStarts(), Long.MAX_VALUE);
 		Action b = taf.factory(1, 0, 500, 1000);
 		one.addAction(b);
-		assertTrue(one.getActionPlan().requiresDecision(250));
-		assertFalse(one.getActionPlan().requiresDecision(1000));
+		assertEquals(one.getActionPlan().timeToNextActionStarts(), 500);
 	}
 }

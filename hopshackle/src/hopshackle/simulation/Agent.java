@@ -102,7 +102,9 @@ public abstract class Agent extends Observable {
 
 	public Action decide(Decider deciderOverride) {
 		Action retArray = null;
-		if (actionPlan.requiresDecision()) {
+		long chosenDuration = 0;
+		long availableTime = actionPlan.timeToNextActionStarts();
+		if (availableTime > 0) {
 			if (deciderOverride == null) 
 				deciderOverride = this.getDecider();
 
@@ -117,8 +119,10 @@ public abstract class Agent extends Observable {
 						retArray = action.getAction(this);
 				}
 			}
+			if (retArray != null) chosenDuration = retArray.getEndTime() - world.getCurrentTime();
 		}
 		maintenance();
+		if (chosenDuration > availableTime) retArray = null;
 		return retArray;
 	}
 

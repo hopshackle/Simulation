@@ -18,16 +18,13 @@ public class ActionPlan {
 	public ActionPlan(Agent agent) {
 		this.agent = agent;
 	}
-	public boolean requiresDecision() {
-		return requiresDecision(0);
-	}
-	public boolean requiresDecision(int forwardWindow) {
-		Action next = getNextAction();
+	public long timeToNextActionStarts() {
+		long currentTime = agent.getWorld().getCurrentTime();
 		long timeToGo = Long.MAX_VALUE;
-		if (next != null) {
-			timeToGo = next.getStartTime() - agent.getWorld().getCurrentTime();
+		for (Action a : actionQueue) {
+			timeToGo = Math.min(timeToGo, a.getStartTime() - currentTime);
 		}
-		return timeToGo > forwardWindow;
+		return timeToGo;	
 	}
 	public void addAction(Action newAction) {
 		if (!agent.isDead() && (agent.getWorld() != null) && newAction != null) {
