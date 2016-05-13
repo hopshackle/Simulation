@@ -18,9 +18,8 @@ public class ActionProcessorTests {
 	
 	@Before
 	public void setup() {
-		w = new World();
-		ap.setWorld(w);
-		w.setActionProcessor(ap);
+		w = new World(ap, "test");
+		w.setCalendar(new FastCalendar(0l));
 		ap.start();
 		for (int i = 0; i < 10; i++) {
 			allAgents.add(new TestAgent(w));
@@ -35,9 +34,16 @@ public class ActionProcessorTests {
 	public void addingAnActionQueuesItForPlannedStartTime() throws InterruptedException {
 		Action a = taf.factory(1, 0, 200, 1000);
 		assertEquals(w.getCurrentTime().intValue(), 0);
-		one.addAction(a);
-        Thread.sleep(5000);
-		assertEquals(w.getCurrentTime().intValue(), 200);
+		synchronized (ap) {
+			one.addAction(a);
+			assertTrue(a.getState() == Action.State.PLANNED);
+			ap.wait(1000);
+			assertTrue(a.getState() == Action.State.EXECUTING);
+			assertEquals(w.getCurrentTime().intValue(), 200);
+			ap.wait(1000);
+			assertTrue(a.getState() == Action.State.FINISHED);
+			assertEquals(w.getCurrentTime().intValue(), 1200);
+		}
 	}
 	@Test
 	public void afterActionHasBeenStartedItIsQueuedForEndTime() {

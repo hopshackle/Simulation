@@ -165,7 +165,9 @@ public abstract class Action implements Delayed {
 		case CANCELLED:
 			throw new Action.InvalidStateTransition("Cannot start() from " + currentState);
 		case PLANNED:
-			startTime = world.getCurrentTime();
+			startTime = Math.max(world.getCurrentTime(), plannedStartTime);
+			long duration = plannedEndTime - plannedStartTime;
+			plannedEndTime = startTime + duration;
 			changeState(State.EXECUTING);
 			initialisation();
 		}
@@ -179,7 +181,7 @@ public abstract class Action implements Delayed {
 		case CANCELLED:
 			throw new Action.InvalidStateTransition("Cannot run() from " + currentState);
 		case EXECUTING:
-			endTime = world.getCurrentTime();
+			endTime = Math.max(plannedEndTime, world.getCurrentTime());
 			doAdmin();
 			doStuff();
 			changeState(State.FINISHED);
@@ -223,7 +225,13 @@ public abstract class Action implements Delayed {
 	}
 
 	public long getDelay(TimeUnit tu) {
-		return tu.convert(startTime - world.getCurrentTime(), TimeUnit.MILLISECONDS);
+		switch (getState()) {
+		case EXECUTING:
+			return tu.convert(getEndTime() - world.getCurrentTime(), TimeUnit.MILLISECONDS);
+		default:
+			return tu.convert(getStartTime() - world.getCurrentTime(), TimeUnit.MILLISECONDS);
+		}
+
 	}
 
 	public int compareTo(Delayed d) {
