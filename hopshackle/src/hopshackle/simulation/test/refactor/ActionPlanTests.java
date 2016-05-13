@@ -5,10 +5,10 @@ import static org.junit.Assert.*;
 import java.util.*;
 
 import hopshackle.simulation.*;
-import hopshackle.simulation.test.refactor.TestAgent;
 import hopshackle.simulation.test.refactor.TestActionFactory;
 
 import org.junit.*;
+
 
 public class ActionPlanTests {
 	
@@ -202,6 +202,4 @@ public class ActionPlanTests {
 		assertTrue(one.getActionPlan().requiresDecision(250));
 		assertFalse(one.getActionPlan().requiresDecision(1000));
 	}
-
-
 }

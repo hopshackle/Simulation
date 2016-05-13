@@ -211,14 +211,14 @@ public abstract class Action implements Delayed {
 		}
 	}
 
-	/**
-	 * If actor is dead, then does nothing. Otherwise calls the decide method,
-	 * and queues the resultant action up
-	 */
 	protected void doNextDecision() {
-		if (!actor.isDead()) {
-			Action newAction = actor.decide();
-			actor.addAction(newAction);
+		List<Agent> allActors = HopshackleUtilities.cloneList(mandatoryActors);
+		allActors.addAll(optionalActors);
+		for (Agent actor : allActors) {
+			if (!actor.isDead()) {
+				Action newAction = actor.decide();
+				actor.addAction(newAction);
+			}
 		}
 	}
 
@@ -265,6 +265,7 @@ public abstract class Action implements Delayed {
 		}
 		delete();
 		doCleanUp();
+		doNextDecision();
 	}
 
 	protected void delete() {

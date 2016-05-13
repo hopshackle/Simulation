@@ -12,8 +12,25 @@ class TestAction extends Action {
 }
 
 class TestAgent extends Agent {
+	
+	List<Action> actionsAdded = new ArrayList<Action>();
+	int decisionsTaken = 0;
+	
 	public TestAgent(World world) {
 		super(world);
+	}
+	@Override
+	public void addAction(Action a) {
+		super.addAction(a);
+		actionsAdded.add(a);
+	}
+	@Override
+	public Action decide() {
+		super.decide();
+		decisionsTaken++;
+		List<Agent> thisAgentAsList = new ArrayList<Agent>();
+		thisAgentAsList.add(this);
+		return new TestAction(thisAgentAsList, new ArrayList<Agent>(), 0, 1000, true);
 	}
 }
 
@@ -235,8 +252,34 @@ public class ActionTests {
 		assertTrue(t.getState() == Action.State.FINISHED);
 		assertEquals(t.getAllConfirmedParticipants().size(), 2);
 	}
-
-	
-
-
+	@Test
+	public void whenAnActionFinishesANewDecisionIsTriggeredForAllParticipants() {
+		TestAction a = taf.factory(1, 1, 0, 1000);
+		a.agree(allAgents.get(0));
+		a.agree(allAgents.get(1));
+		a.start();
+		assertEquals(allAgents.get(0).decisionsTaken, 0);
+		assertEquals(allAgents.get(0).actionsAdded.size(), 0);
+		assertEquals(allAgents.get(1).decisionsTaken, 0);
+		assertEquals(allAgents.get(1).actionsAdded.size(), 0);
+		a.run();
+		assertEquals(allAgents.get(0).decisionsTaken, 1);
+		assertEquals(allAgents.get(0).actionsAdded.size(), 1);
+		assertEquals(allAgents.get(1).decisionsTaken, 1);
+		assertEquals(allAgents.get(1).actionsAdded.size(), 1);
+	}
+	@Test
+	public void cancellingAnEXECUTINGActionTriggersADecisionToo() {
+		TestAction a = taf.factory(1, 1, 0, 1000);
+		a.agree(allAgents.get(0));
+		a.agree(allAgents.get(1));
+		a.start();
+		assertEquals(allAgents.get(0).decisionsTaken, 0);
+		assertEquals(allAgents.get(0).actionsAdded.size(), 0);
+		a.cancel();
+		assertEquals(allAgents.get(0).decisionsTaken, 1);
+		assertEquals(allAgents.get(0).actionsAdded.size(), 1);
+		assertEquals(allAgents.get(1).decisionsTaken, 1);
+		assertEquals(allAgents.get(1).actionsAdded.size(), 1);
+	}
 }
