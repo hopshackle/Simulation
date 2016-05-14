@@ -107,12 +107,40 @@ public class ActionProcessorTests {
 	}
 	
 	@Test
-	public void PROPOSEDActionIsCANCELLEDByActionProcessor() {
-		fail("Not yet implemented.");
+	public void PROPOSEDActionIsCANCELLEDByActionProcessor() throws InterruptedException {
+		Action a = taf.factory(2, 0, 200, 1000);
+		assertEquals(w.getCurrentTime().intValue(), 0);
+		synchronized (ap) {
+			one.addAction(a);
+			assertTrue(a.getState() == Action.State.PROPOSED);
+			ap.wait(1000);
+			assertTrue(a.getState() == Action.State.CANCELLED);
+			assertEquals(w.getCurrentTime().intValue(), 200);
+			assertTrue(one.getNextAction() != a);
+		}
 	}
 	@Test
-	public void FINISHEDActionIsIgnoredByActionProcessor() {
-		fail("Not yet implemented.");
+	public void FINISHEDActionIsIgnoredByActionProcessor() throws InterruptedException {
+		Action a = taf.factory(1, 0, 0, 1000);
+		Action b = taf.factory(1, 0, 1000, 1000);
+		assertEquals(w.getCurrentTime().intValue(), 0);
+		synchronized (ap) {
+			one.addAction(a);
+			one.addAction(b);
+			a.start();
+			w.setCurrentTime(500l);
+			a.run();
+			ap.wait();
+			assertTrue(a.getState() == Action.State.FINISHED);
+			assertTrue(b.getState() == Action.State.PLANNED);
+			assertEquals(w.getCurrentTime().intValue(), 500);
+			assertTrue(one.getNextAction() == b);
+			ap.wait();
+			assertTrue(a.getState() == Action.State.FINISHED);
+			assertTrue(b.getState() == Action.State.EXECUTING);
+			assertEquals(w.getCurrentTime().intValue(), 1000);
+			assertTrue(one.getNextAction() == b);
+		}
 	}
 	
 	@After

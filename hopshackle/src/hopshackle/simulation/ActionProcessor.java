@@ -16,7 +16,7 @@ public class ActionProcessor {
 	private Hashtable<String, Long> actionTimes;
 	private Hashtable<String, Integer> actionCount;
 	private String logFile;
-	private boolean debug = true;
+	private boolean debug = false;
 	private boolean delayQueue, done;
 
 	public ActionProcessor() {
@@ -114,15 +114,16 @@ public class ActionProcessor {
 					if (currentAction != null) {
 
 						synchronized (ap) {
-							if (debug) logger.info("started action: " + currentAction.toString());
+							if (debug) logger.info("started action: " + currentAction.toString() + " in state of " + currentAction.getState());
 							startTime = System.currentTimeMillis();
 							
 							switch (currentAction.getState()) {
 							case PROPOSED:
+								updateWorldTime(currentAction.getStartTime());
 								currentAction.cancel();	// To late
 							case FINISHED:
 							case CANCELLED:
-								continue;
+								break;
 							case PLANNED:
 								updateWorldTime(currentAction.getStartTime());
 								currentAction.start();
