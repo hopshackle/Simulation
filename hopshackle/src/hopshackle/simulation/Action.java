@@ -165,7 +165,7 @@ public abstract class Action implements Delayed {
 		case CANCELLED:
 			throw new Action.InvalidStateTransition("Cannot start() from " + currentState);
 		case PLANNED:
-			startTime = Math.max(world.getCurrentTime(), plannedStartTime);
+			startTime = world.getCurrentTime();
 			long duration = plannedEndTime - plannedStartTime;
 			plannedEndTime = startTime + duration;
 			changeState(State.EXECUTING);
@@ -181,7 +181,7 @@ public abstract class Action implements Delayed {
 		case CANCELLED:
 			throw new Action.InvalidStateTransition("Cannot run() from " + currentState);
 		case EXECUTING:
-			endTime = Math.max(plannedEndTime, world.getCurrentTime());
+			endTime = world.getCurrentTime();
 			doAdmin();
 			doStuff();
 			changeState(State.FINISHED);

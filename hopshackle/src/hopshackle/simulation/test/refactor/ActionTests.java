@@ -177,7 +177,7 @@ public class ActionTests {
 		t.agree(allAgents.get(0));
 		t.start();
 		assertEquals(t.getStartTime(), 0);
-		assertEquals(t.getEndTime(), 1100);
+		assertEquals(t.getEndTime(), 1000);
 		t.run();
 		assertEquals(t.getStartTime(), 0);
 		assertEquals(t.getEndTime(), 0);

@@ -88,6 +88,17 @@ public class ActionPlan {
 	public Action getNextAction() {
 		return actionQueue.peek();
 	}
+	public int sizeOfQueue() {
+		return actionQueue.size();
+	}
+	public long timeToEndOfQueue() {
+		long currentTime = agent.getWorld().getCurrentTime();
+		long timeToGo = 0;
+		for (Action a : actionQueue) {
+			timeToGo = Math.max(timeToGo, a.getEndTime() - currentTime);
+		}
+		return timeToGo;	
+	}
 
 }
 

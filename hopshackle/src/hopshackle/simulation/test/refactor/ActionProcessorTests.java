@@ -10,7 +10,7 @@ import org.junit.*;
 
 public class ActionProcessorTests {
 	
-	ActionProcessor ap = new ActionProcessor("test", false);
+	ActionProcessor ap;
 	World w;
 	List<TestAgent> allAgents = new ArrayList<TestAgent>();
 	TestActionFactory taf;
@@ -18,6 +18,7 @@ public class ActionProcessorTests {
 	
 	@Before
 	public void setup() {
+		ap = new ActionProcessor("test", false);
 		w = new World(ap, "test");
 		w.setCalendar(new FastCalendar(0l));
 		ap.start();
@@ -31,7 +32,7 @@ public class ActionProcessorTests {
 	}
 	
 	@Test
-	public void addingAnActionQueuesItForPlannedStartTime() throws InterruptedException {
+	public void actionIsQueuedInTwoStagesForStartAndRun() throws InterruptedException {
 		Action a = taf.factory(1, 0, 200, 1000);
 		assertEquals(w.getCurrentTime().intValue(), 0);
 		synchronized (ap) {
@@ -46,15 +47,76 @@ public class ActionProcessorTests {
 		}
 	}
 	@Test
-	public void afterActionHasBeenStartedItIsQueuedForEndTime() {
+	public void afterActionHasBeenExecutedANewOneIsQueuedForStartTimeIfAgentPlanIsEmpty() throws InterruptedException {
+		Action a = taf.factory(1, 0, 200, 1000);
+		assertEquals(w.getCurrentTime().intValue(), 0);
+		synchronized (ap) {
+			one.addAction(a);
+			assertTrue(a.getState() == Action.State.PLANNED);
+			ap.wait(1000);
+			assertTrue(a.getState() == Action.State.EXECUTING);
+			assertEquals(w.getCurrentTime().intValue(), 200);
+			assertTrue(one.getNextAction() == a);
+			assertEquals(a.getStartTime(), 200);
+			assertEquals(a.getEndTime(), 1200);
+			ap.wait(1000);
+			assertTrue(a.getState() == Action.State.FINISHED);
+			assertEquals(w.getCurrentTime().intValue(), 1200);
+			assertTrue(one.getNextAction() != null);
+			assertTrue(one.getNextAction() != a);
+			assertEquals(one.getNextAction().getStartTime(), 1200);
+			assertEquals(one.getNextAction().getEndTime(), 2200);
+		}
+	}
+	@Test
+	public void ifAgentQueueIsFullThenNoNewDecisionIsTaken() throws InterruptedException {
+		Action a = taf.factory(1, 0, 200, 1000);
+		Action b = taf.factory(1, 0, 1400, 1000);
+		Action c = taf.factory(1, 0, 2600, 1000);
+		assertEquals(w.getCurrentTime().intValue(), 0);
+		synchronized (ap) {
+			one.addAction(a);
+			one.addAction(b);
+			one.addAction(c);
+			ap.wait(1000);
+			assertTrue(a.getState() == Action.State.EXECUTING);
+			assertTrue(b.getState() == Action.State.PLANNED);
+			assertTrue(c.getState() == Action.State.PLANNED);
+			assertEquals(one.getActionPlan().sizeOfQueue(), 3);
+			assertEquals(one.actionsAdded.size(), 3);
+			assertEquals(one.getActionPlan().timeToNextActionStarts(), 0);
+			assertEquals(one.getActionPlan().timeToEndOfQueue(), 3400);
+			ap.wait(1000);
+			assertTrue(a.getState() == Action.State.FINISHED);
+			assertTrue(b.getState() == Action.State.PLANNED);
+			assertTrue(c.getState() == Action.State.PLANNED);
+			assertEquals(one.getActionPlan().sizeOfQueue(), 2);
+			assertEquals(one.actionsAdded.size(), 3);
+			assertEquals(one.getActionPlan().timeToNextActionStarts(), 200);
+			assertEquals(one.getActionPlan().timeToEndOfQueue(), 2400);
+			assertEquals(w.getCurrentTime().intValue(), 1200);
+			assertTrue(one.getNextAction() == b);
+			ap.wait(1000);
+			assertTrue(one.getNextAction() == b);
+			assertEquals(w.getCurrentTime().intValue(), 1400);
+			assertTrue(b.getState() == Action.State.EXECUTING);
+			assertTrue(c.getState() == Action.State.PLANNED);
+			assertEquals(one.getActionPlan().sizeOfQueue(), 2);
+			assertEquals(one.getActionPlan().timeToEndOfQueue(), 2200);
+		}
+	}
+	
+	@Test
+	public void PROPOSEDActionIsCANCELLEDByActionProcessor() {
 		fail("Not yet implemented.");
 	}
 	@Test
-	public void afterActionHasBeenExecutedANewOneIsQueuedForStartTimeIfAgentPlanIsEmpty() {
+	public void FINISHEDActionIsIgnoredByActionProcessor() {
 		fail("Not yet implemented.");
 	}
-	@Test
-	public void ifAgentQueueIsFullThenNoNewDecisionIsTaken() {
-		fail("Not yet implemented.");
+	
+	@After
+	public void cleanup() {
+		ap.stop();
 	}
 }

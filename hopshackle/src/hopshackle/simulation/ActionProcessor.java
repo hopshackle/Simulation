@@ -44,8 +44,12 @@ public class ActionProcessor {
 	public void start() {
 		t.start();
 	}
+	public void stop() {
+		done = true;
+	}
 
 	public void add(Action a) {
+		if (debug) logger.info("Adding action " + a);
 		if (a == null) {
 			logger.severe("Null action sent to ActionProcessor");
 			return;
@@ -102,18 +106,16 @@ public class ActionProcessor {
 			ap = parent;
 		}
 		public void run() {
-			Long startTime, endTime, worldStartTime;
+			Long startTime, endTime;
 			try {
-				do { 
+				do while (!done) { 
 					currentAction = q.poll(10, TimeUnit.SECONDS);
 					// If we ever have to wait for more than 10 seconds, then exit
 					if (currentAction != null) {
 
 						synchronized (ap) {
 							if (debug) logger.info("started action: " + currentAction.toString());
-							worldStartTime = world.getCurrentTime();
 							startTime = System.currentTimeMillis();
-							long timeAtCompletion = 0l;
 							
 							switch (currentAction.getState()) {
 							case PROPOSED:
@@ -122,39 +124,24 @@ public class ActionProcessor {
 							case CANCELLED:
 								continue;
 							case PLANNED:
+								updateWorldTime(currentAction.getStartTime());
 								currentAction.start();
 								add(currentAction);		// This will queue up the actual action execution
-								timeAtCompletion = currentAction.getStartTime();
 								break;
 							case EXECUTING:
+								updateWorldTime(currentAction.getEndTime());
 								currentAction.run();
-								timeAtCompletion = currentAction.getEndTime();
 								break;
 							}
 							endTime = System.currentTimeMillis();
 							if (debug) {
-								logger.info("processed action: " + currentAction.toString() + ". timeAtCompletion " + timeAtCompletion);
+								logger.info("processed action: " + currentAction.toString() + " to state of " + currentAction.getState() + 
+										" at world time " + world.getCurrentTime());
 								if (currentAction.getState() == Action.State.FINISHED)
 									recordAction(currentAction.toString(), endTime - startTime);
 							}
 							if ((endTime - startTime) > 1000) {
 								logger.warning(currentAction.toString() + " takes " + (endTime-startTime) + " ms");
-							}
-							if (delayQueue) {
-								delay = worldStartTime - timeAtCompletion;
-								if (delay > 500 && delayCount < delay) {
-									logger.warning("Delay is " + delay + " ms");
-									// Delay only makes sense in real-time mode
-								}
-								delayCount = Math.max(delay, delayCount);
-								delayCount -= 5;
-							} else {
-								if (world != null) {
-									if (world.getCurrentTime() < timeAtCompletion) {
-										world.setCurrentTime(timeAtCompletion);
-								//		if (debug) logger.info("Setting world time to " + timeAtCompletion);
-									}
-								}
 							}
 							ap.notifyAll();
 						}
@@ -167,6 +154,26 @@ public class ActionProcessor {
 			} catch (InterruptedException ex) {
 				logger.severe("Action Processor: " + ex.toString());
 				ex.printStackTrace();
+			}
+		}
+	}
+	
+	private void updateWorldTime(long timeAtCompletion) {
+		long worldStartTime = world.getCurrentTime();
+		if (delayQueue) {
+			delay = worldStartTime - timeAtCompletion;
+			if (delay > 500 && delayCount < delay) {
+				logger.warning("Delay is " + delay + " ms");
+				// Delay only makes sense in real-time mode
+			}
+			delayCount = Math.max(delay, delayCount);
+			delayCount -= 5;
+		} else {
+			if (world != null) {
+				if (world.getCurrentTime() < timeAtCompletion) {
+					world.setCurrentTime(timeAtCompletion);
+			//		if (debug) logger.info("Setting world time to " + timeAtCompletion);
+				}
 			}
 		}
 	}

@@ -8,6 +8,25 @@ class TestAction extends Action {
 	public TestAction(List<Agent> mandatory, List<Agent> optional, long startOffset, long duration, boolean recordAction) {
 		super(mandatory, optional, startOffset, duration, recordAction);
 	}
+	@Override
+	public void initialisation() {
+		waitABit();
+	}
+	@Override 
+	public void doStuff() {
+		waitABit();
+	}
+	private void waitABit() {
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	@Override
+	public String toString() {
+		return "TEST(" + getStartTime() + "-" + getEndTime() + ")";
+	}
 }
 
 class TestActionEnum implements ActionEnum {
