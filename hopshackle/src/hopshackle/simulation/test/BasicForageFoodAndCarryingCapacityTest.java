@@ -29,6 +29,12 @@ public class BasicForageFoodAndCarryingCapacityTest {
 		testAgent = new BasicAgent(w);
 	}
 	
+	private void run(Action a) {
+		a.agree(a.getActor());
+		a.start();
+		a.run();
+	}
+	
 	@Test
 	public void chooseableInForestAndPlainsOnly() {
 		testAgent.setLocation(forestHex);
@@ -46,7 +52,7 @@ public class BasicForageFoodAndCarryingCapacityTest {
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.WOOD), 0);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.FOOD), 0);
 		Forage testForage = new Forage(testAgent);
-		testForage.run();
+		run(testForage);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.WOOD), 1);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.FOOD), 0);
 		int newCapacity = forestHex.getCarryingCapacity();
@@ -60,7 +66,7 @@ public class BasicForageFoodAndCarryingCapacityTest {
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.WOOD), 0);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.FOOD), 0);
 		Forage testForage = new Forage(testAgent);
-		testForage.run();
+		run(testForage);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.WOOD), 0);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.FOOD), 1);
 		int newCapacity = plainsHex.getCarryingCapacity();
@@ -75,7 +81,7 @@ public class BasicForageFoodAndCarryingCapacityTest {
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.WOOD), 0);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.FOOD), 0);
 		Forage testForage = new Forage(testAgent);
-		testForage.run();
+		run(testForage);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.WOOD), 0);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.FOOD), 0);
 		assertEquals(plainsHex.getCarryingCapacity(), 0);

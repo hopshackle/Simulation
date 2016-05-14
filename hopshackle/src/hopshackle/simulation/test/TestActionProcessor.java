@@ -27,7 +27,7 @@ public class TestActionProcessor {
 
 	public void validateAndRunAction(Action nextAction, Class<? extends Action> classType) {
 		assertTrue(classType.isInstance(nextAction));
-		nextAction.run();
+		run(nextAction);
 	}
 	
 	public Action getNextAction() {
@@ -40,5 +40,11 @@ public class TestActionProcessor {
 			retAction = actionProcessor.getNextUndeletedAction(1, TimeUnit.MILLISECONDS);
 			System.out.println(retAction);
 		} while (retAction != null);
+	}
+	
+	public void run(Action nextAction) {
+		nextAction.agree(nextAction.getActor());
+		nextAction.start();
+		nextAction.run();
 	}
 }

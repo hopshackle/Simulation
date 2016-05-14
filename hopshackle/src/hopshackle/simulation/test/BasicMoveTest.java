@@ -105,10 +105,11 @@ public class BasicMoveTest {
 	public void movingReducesHealthInLineWithMovementPointsSpent() {
 		giveTestAgentFullKnowledge();
 		double startingHealth = testAgent.getHealth();
-		new Move(testAgent, 1000, hexMap.getHexAt(1, 1)).run();
+		Action a = new Move(testAgent, 1000, hexMap.getHexAt(1, 1));
+		run(a);
 		assertTrue(testAgent.getLocation() == hexMap.getHexAt(1, 1));
 		assertEquals(startingHealth - testAgent.getHealth(), 1.0, 0.01);
-		new Move(testAgent, 2500, hexMap.getHexAt(1, 2)).run();
+		run(new Move(testAgent, 2500, hexMap.getHexAt(1, 2)));
 		assertEquals(startingHealth - testAgent.getHealth(), 3.5, 0.01);
 	}
 
@@ -275,4 +276,9 @@ public class BasicMoveTest {
 		knownLocations.addLocationMap(w.getLocationMap());
 	}
 
+	private void run(Action a) {
+		a.agree(a.getActor());
+		a.start();
+		a.run();
+	}
 }

@@ -61,7 +61,7 @@ public class HutTest {
 		Action buildAction = new BuildHut(testAgent);
 		assertEquals(plainsHex.getMaxCarryingCapacity(), 9);
 		assertEquals(plainsHex.getCarryingCapacity(), 9);
-		buildAction.run();
+		run(buildAction);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.WOOD), 0);
 		assertEquals(testAgent.getNumberInInventoryOf(BuildingType.HUT), 1);
 		assertEquals(plainsHex.getMaxCarryingCapacity(), 9);
@@ -147,7 +147,7 @@ public class HutTest {
 		calendar.setTime(30000);
 		
 		assertTrue(h1.isClaimable() && h2.isClaimable());
-		(new Rest(testAgent2)).run();
+		run(new Rest(testAgent2));
 		assertTrue(h1.getOwner().equals(testAgent2) || h2.getOwner().equals(testAgent2));
 		assertEquals(testAgent2.getNumberInInventoryOf(BuildingType.HUT), 1);
 		assertEquals(testAgent.getNumberInInventoryOf(BuildingType.HUT), 1);
@@ -172,11 +172,17 @@ public class HutTest {
 		JourneyPlan jPlanHut = testMapKnowledge.getJourneyTracker("HUT");
 		assertEquals(jPlanHut.distance(), -1, 0.001);
 		Action buildAction = new BuildHut(testAgent);
-		buildAction.run();
+		run(buildAction);
 		testAgent.setLocation(forestHex);
 		JourneyPlan jPlanHut2 = testMapKnowledge.getJourneyTracker("HUT");
 		assertFalse(jPlanHut == jPlanHut2);
 		assertEquals(jPlanHut2.distance(), 1.0, 0.001);
+	}
+	
+	private void run(Action a) {
+		a.agree(a.getActor());
+		a.start();
+		a.run();
 	}
 	
 }

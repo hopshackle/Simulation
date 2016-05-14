@@ -53,7 +53,7 @@ public class BasicFarmTest {
 		new BuildHut(testAgent).doStuff();
 		assertEquals(plainsHex.getCarryingCapacity(), 9);
 		Action farmAction = new Farm(testAgent);
-		farmAction.run();
+		run(farmAction);
 		assertEquals(testAgent.getNumberInInventoryOf(Resource.FOOD), 2);
 		assertEquals(plainsHex.getCarryingCapacity(), 9);
 	}
@@ -64,4 +64,9 @@ public class BasicFarmTest {
 		new Hut(testAgent);
 		assertTrue(BasicActions.FARM.isChooseable(testAgent));
 	}	
+	private void run(Action a) {
+		a.agree(a.getActor());
+		a.start();
+		a.run();
+	}
 }

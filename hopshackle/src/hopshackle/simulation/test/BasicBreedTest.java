@@ -90,7 +90,7 @@ public class BasicBreedTest {
 		testAgent1.addItem(Resource.FOOD);
 		assertEquals(homeHex.getAgents().size(), 3);
 		Action breed = new Breed(testAgent1, testAgent2);
-		breed.run();
+		run(breed);
 		List<Agent> fullPopulation = homeHex.getAgents();
 		assertEquals(fullPopulation.size(), 4);
 		assertEquals(testAgent1.getNumberOfChildren(), 1);
@@ -117,7 +117,7 @@ public class BasicBreedTest {
 	@Test
 	public void aChildIncreasesScoreOfBothParentsByItsHealthAtBirth() {
 		Action breed = new Breed(testAgent1, testAgent2);
-		breed.run();
+		run(breed);
 		assertEquals(testAgent1.getScore(), 30, 0.001);
 		assertEquals(testAgent2.getScore(), 30, 0.001);
 		assertEquals(testAgent3.getScore(), 20, 0.001);
@@ -153,7 +153,7 @@ public class BasicBreedTest {
 		testAgent2.setDecider(new HardCodedDecider(BasicActions.REST));
 		testAgent1.setDecider(new HardCodedDecider(BasicActions.BREED));
 		Action marriage = new Marry(testAgent1, testAgent2);
-		marriage.run();
+		run(marriage);
 		assertTrue(testAgent1.isMarried());
 		assertTrue(testAgent2.isMarried());
 		ap.getValidateAndRunNextAction(ObeySpouse.class);
@@ -170,7 +170,7 @@ public class BasicBreedTest {
 		testAgent1.setLocation(homeHex);
 		testAgent2.setLocation(homeHex);
 		Action breed = new Breed(testAgent1, testAgent2);
-		breed.run();
+		run(breed);
 		BasicAgent child = getChildFromHomeHex();
 
 		assertTrue(child.getMapKnowledge().isKnown(homeHex));
@@ -183,7 +183,7 @@ public class BasicBreedTest {
 		testAgent1.setGeneration(1);
 		testAgent2.setGeneration(2);
 		Action breed = new Breed(testAgent1, testAgent2);
-		breed.run();
+		run(breed);
 		BasicAgent child = getChildFromHomeHex();
 		assertEquals(child.getGeneration(), 2);
 	}
@@ -192,7 +192,7 @@ public class BasicBreedTest {
 	public void childInheritHuts() {
 		new Hut(testAgent1);
 		Action breed = new Breed(testAgent1, testAgent2);
-		breed.run();
+		run(breed);
 		BasicAgent child = getChildFromHomeHex();
 		assertEquals(child.getNumberInInventoryOf(BuildingType.HUT), 0);
 		assertEquals(testAgent1.getNumberInInventoryOf(BuildingType.HUT), 1);
@@ -208,13 +208,13 @@ public class BasicBreedTest {
 		new Hut(testAgent1);
 
 		Action breed = new Breed(testAgent1, testAgent2);
-		breed.run();
+		run(breed);
 		BasicAgent child1 = getChildFromHomeHex();
 
 		testAgent1.addHealth(20);
 		testAgent2.addHealth(20);
 		breed = new Breed(testAgent1, testAgent2);
-		breed.run();
+		run(breed);
 		testAgent3.setLocation(new Location());
 		testAgent3 = child1;
 		BasicAgent child2 = getChildFromHomeHex();
@@ -233,7 +233,7 @@ public class BasicBreedTest {
 		new Marriage(testAgent1, testAgent2);
 		new Hut(testAgent1);
 		Action breed = new Breed(testAgent1, testAgent2);
-		breed.run();
+		run(breed);
 		BasicAgent child = getChildFromHomeHex();
 		child.die("ooops");
 		testAgent1.die("Oops");
@@ -250,5 +250,10 @@ public class BasicBreedTest {
 			child = (BasicAgent)a;
 		}
 		return child;
+	}
+	private void run(Action a) {
+		a.agree(a.getActor());
+		a.start();
+		a.run();
 	}
 }

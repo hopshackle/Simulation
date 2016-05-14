@@ -85,6 +85,8 @@ public class CivilisationMatcherTest {
 
 	private void validateAndRunAction(Action nextAction, Class<? extends Action> classType) {
 		assertTrue(classType.isInstance(nextAction));
+		nextAction.agree(nextAction.getActor());
+		nextAction.start();
 		nextAction.run();
 	}
 }
