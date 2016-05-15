@@ -130,8 +130,6 @@ class TestDecider extends QDecider {
 			return 0.01;
 		case MARRY:
 			return 0.01;
-		case OBEY_SPOUSE:
-			return 0.01;
 		case REST:
 			return 0.01;
 		}

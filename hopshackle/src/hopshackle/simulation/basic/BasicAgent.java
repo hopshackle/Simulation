@@ -188,6 +188,14 @@ public class BasicAgent extends Agent implements Persistent {
 			throw new AssertionError("Marriage not possible if already married.");
 	}
 	
+	@Override
+	public Action decide(Decider decider) {
+		if (isMarried() && isFemale()) {
+			return null;
+		}
+		return super.decide(decider);
+	}
+	
 	public void dissolveMarriage() {
 		if (marriage != null)
 			marriage.dissolve();

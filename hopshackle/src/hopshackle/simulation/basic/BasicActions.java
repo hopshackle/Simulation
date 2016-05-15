@@ -12,7 +12,6 @@ public enum BasicActions implements ActionEnum {
 	FARM,
 	BREED,
 	MARRY,
-	OBEY_SPOUSE,
 	FIND_PLAINS,
 	FIND_FOREST,
 	FIND_WATER,
@@ -48,8 +47,6 @@ public enum BasicActions implements ActionEnum {
 			} else {
 				return new Rest(a);
 			}
-		case OBEY_SPOUSE:
-			return new ObeySpouse(ba);
 		case FIND_WATER:
 			return new BasicMove(a, new TerrainMatcher(TerrainType.OCEAN));
 		case FIND_PLAINS:
@@ -134,8 +131,6 @@ public enum BasicActions implements ActionEnum {
 			if (ba.isMarried()) 
 				return false;
 			return true;
-		case OBEY_SPOUSE:
-			return false;
 		case FIND_FOREST:
 			if (h.getTerrainType() == TerrainType.FOREST)
 				return false;

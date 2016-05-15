@@ -26,6 +26,7 @@ public class Marriage implements Persistent {
 
 		partner1.setMarriage(this);
 		partner2.setMarriage(this);
+		
 		world = seniorPartner.getWorld();
 		startDate = world.getCurrentTime();
 		uniqueId = idFountain.getAndIncrement();
@@ -43,6 +44,9 @@ public class Marriage implements Persistent {
 		dissolutionDate = world.getCurrentTime();
 		
 		marriageWriter.write(this, getWorld().toString());
+		
+		juniorPartner.updatePlan(1000);
+		seniorPartner.updatePlan(1000);
 		
 		this.seniorPartner = null;
 		this.juniorPartner = null;

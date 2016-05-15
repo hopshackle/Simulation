@@ -70,9 +70,11 @@ public class ActionProcessor {
 	 */
 	public Action getNextUndeletedAction(long wait1, TimeUnit wait2) {
 		try {
+			int count = 0;
 			do {
+				count++;
 				currentAction = q.poll(wait1, wait2);
-			} while (!validAction(currentAction));
+			} while (!validAction(currentAction) && count < 10);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

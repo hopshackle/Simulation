@@ -36,7 +36,7 @@ public class ActionProcessorTests {
 		Action a = taf.factory(1, 0, 200, 1000);
 		assertEquals(w.getCurrentTime().intValue(), 0);
 		synchronized (ap) {
-			one.addAction(a);
+			a.addToAllPlans();
 			assertTrue(a.getState() == Action.State.PLANNED);
 			ap.wait(1000);
 			assertTrue(a.getState() == Action.State.EXECUTING);
@@ -51,7 +51,7 @@ public class ActionProcessorTests {
 		Action a = taf.factory(1, 0, 200, 1000);
 		assertEquals(w.getCurrentTime().intValue(), 0);
 		synchronized (ap) {
-			one.addAction(a);
+			a.addToAllPlans();
 			assertTrue(a.getState() == Action.State.PLANNED);
 			ap.wait(1000);
 			assertTrue(a.getState() == Action.State.EXECUTING);
@@ -75,15 +75,14 @@ public class ActionProcessorTests {
 		Action c = taf.factory(1, 0, 2600, 1000);
 		assertEquals(w.getCurrentTime().intValue(), 0);
 		synchronized (ap) {
-			one.addAction(a);
-			one.addAction(b);
-			one.addAction(c);
+			a.addToAllPlans();
+			b.addToAllPlans();
+			c.addToAllPlans();
 			ap.wait(1000);
 			assertTrue(a.getState() == Action.State.EXECUTING);
 			assertTrue(b.getState() == Action.State.PLANNED);
 			assertTrue(c.getState() == Action.State.PLANNED);
 			assertEquals(one.getActionPlan().sizeOfQueue(), 3);
-			assertEquals(one.actionsAdded.size(), 3);
 			assertEquals(one.getActionPlan().timeToNextActionStarts(), 0);
 			assertEquals(one.getActionPlan().timeToEndOfQueue(), 3400);
 			ap.wait(1000);
@@ -91,7 +90,6 @@ public class ActionProcessorTests {
 			assertTrue(b.getState() == Action.State.PLANNED);
 			assertTrue(c.getState() == Action.State.PLANNED);
 			assertEquals(one.getActionPlan().sizeOfQueue(), 2);
-			assertEquals(one.actionsAdded.size(), 3);
 			assertEquals(one.getActionPlan().timeToNextActionStarts(), 200);
 			assertEquals(one.getActionPlan().timeToEndOfQueue(), 2400);
 			assertEquals(w.getCurrentTime().intValue(), 1200);
@@ -111,7 +109,8 @@ public class ActionProcessorTests {
 		Action a = taf.factory(2, 0, 200, 1000);
 		assertEquals(w.getCurrentTime().intValue(), 0);
 		synchronized (ap) {
-			one.addAction(a);
+			one.getActionPlan().addAction(a);
+			ap.add(a);
 			assertTrue(a.getState() == Action.State.PROPOSED);
 			ap.wait(1000);
 			assertTrue(a.getState() == Action.State.CANCELLED);
@@ -125,17 +124,17 @@ public class ActionProcessorTests {
 		Action b = taf.factory(1, 0, 1000, 1000);
 		assertEquals(w.getCurrentTime().intValue(), 0);
 		synchronized (ap) {
-			one.addAction(a);
-			one.addAction(b);
+			a.addToAllPlans();
+			b.addToAllPlans();
 			a.start();
 			w.setCurrentTime(500l);
 			a.run();
-			ap.wait();
+			ap.wait(1000);
 			assertTrue(a.getState() == Action.State.FINISHED);
 			assertTrue(b.getState() == Action.State.PLANNED);
 			assertEquals(w.getCurrentTime().intValue(), 500);
 			assertTrue(one.getNextAction() == b);
-			ap.wait();
+			ap.wait(1000);
 			assertTrue(a.getState() == Action.State.FINISHED);
 			assertTrue(b.getState() == Action.State.EXECUTING);
 			assertEquals(w.getCurrentTime().intValue(), 1000);

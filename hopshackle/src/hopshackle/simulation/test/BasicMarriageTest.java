@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 import hopshackle.simulation.*;
 import hopshackle.simulation.basic.*;
 
-import java.util.ArrayList;
+import java.util.*;
 
 import org.junit.*;
 public class BasicMarriageTest {
@@ -39,6 +39,15 @@ public class BasicMarriageTest {
 		retAgent.addHealth(health - BasicAgent.FULL_HEALTH);
 		assertEquals(retAgent.getHealth(), health, 0.0001);
 		return retAgent;
+	}
+	
+	private List<Action> getNextActions(int number) {
+		ArrayList<Action> actionList = new ArrayList<Action>();
+		for (int i = 0; i < number ; i++) {
+			Action next = ap.getNextAction();
+			if (next != null) actionList.add(next);
+		}
+		return actionList;
 	}
 
 	@Test
@@ -104,28 +113,31 @@ public class BasicMarriageTest {
 	}
 
 	@Test
-	public void spouseOnlyTakesObeySpouseActionsAfterMarriage() {
+	public void spouseTakesNoActionsAfterMarriage() {
 		maleAgent1.setDecider(new HardCodedDecider(BasicActions.MARRY));
-		ap.makeValidateAndRunFirstDecision(femaleAgent2, Rest.class);
+//		ap.makeValidateAndRunFirstDecision(femaleAgent2, Rest.class);
 		ap.makeValidateAndRunFirstDecision(maleAgent1, Marry.class);
 		assertTrue(maleAgent1.isMarried());
 		assertTrue(femaleAgent2.isMarried());
-		ArrayList<Action> actionList = new ArrayList<Action>();
-		actionList.add(ap.getNextAction());
-		actionList.add(ap.getNextAction());
+		List<Action> actionList = getNextActions(3);
 		findInActionArray(actionList, Rest.class, maleAgent1);
-		findInActionArray(actionList, ObeySpouse.class, femaleAgent2);
-		actionList.get(0).run();
-		actionList.get(1).run();
-		actionList.clear();
-		actionList.add(ap.getNextAction());
-		actionList.add(ap.getNextAction());
+		assertTrue(noActionInArray(actionList, femaleAgent2));
+		ap.run(actionList.get(0));
+		actionList = getNextActions(3);
 		findInActionArray(actionList, Rest.class, maleAgent1);
-		findInActionArray(actionList, ObeySpouse.class, femaleAgent2);
+		assertTrue(noActionInArray(actionList, femaleAgent2));
 	}
 
-
-	private void findInActionArray(ArrayList<Action> actionList, Class<? extends Action> classType, BasicAgent testAgent) {
+	private boolean noActionInArray(List<Action> actionList, BasicAgent testAgent) {
+		boolean matchFound = false;
+		for (Action a : actionList) {
+			if (a.getActor() == testAgent) {
+				matchFound = true;
+			}
+		}
+		return !matchFound;
+	}
+	private void findInActionArray(List<Action> actionList, Class<? extends Action> classType, BasicAgent testAgent) {
 		boolean matchFound = false;
 		for (Action a : actionList) {
 			if (a.getActor() == testAgent) {
@@ -229,15 +241,10 @@ public class BasicMarriageTest {
 		ap.makeValidateAndRunFirstDecision(maleAgent1, Marry.class);
 		assertTrue(maleAgent1.isMarried());
 		assertTrue(femaleAgent2.isMarried());
-		ArrayList<Action> actionList = new ArrayList<Action>();
-		actionList.add(ap.getNextAction());
-		actionList.add(ap.getNextAction());
+		List<Action> actionList = getNextActions(3);
 		findInActionArray(actionList, Rest.class, maleAgent1);
-		findInActionArray(actionList, ObeySpouse.class, femaleAgent2);
+		assertTrue(noActionInArray(actionList, femaleAgent2));
 		maleAgent1.die("Oops");
-		actionList.get(0).run();
-		actionList.get(1).run();
-		actionList.clear();
 		actionList.add(ap.getNextAction());
 		findInActionArray(actionList, Rest.class, femaleAgent2); // i.e. not ObeySpouse
 	}

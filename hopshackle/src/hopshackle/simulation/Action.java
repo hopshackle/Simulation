@@ -217,10 +217,13 @@ public abstract class Action implements Delayed {
 		List<Agent> allActors = HopshackleUtilities.cloneList(mandatoryActors);
 		allActors.addAll(optionalActors);
 		for (Agent actor : allActors) {
-			if (!actor.isDead()) {
-				Action newAction = actor.decide();
-				if (newAction != null) actor.addAction(newAction);
-			}
+			doNextDecision(actor);
+		}
+	}
+	protected void doNextDecision(Agent actor) {
+		if (!actor.isDead()) {
+			Action newAction = actor.decide();
+			if (newAction != null) newAction.addToAllPlans();
 		}
 	}
 
@@ -279,7 +282,6 @@ public abstract class Action implements Delayed {
 	}
 
 	protected void delete() {
-
 	}
 
 	public boolean isOptionalParticipant(Agent p) {
@@ -296,5 +298,19 @@ public abstract class Action implements Delayed {
 			}
 		}
 		return retValue;
+	}
+	public List<Agent> getAllInvitedParticipants() {
+		List<Agent> allAgents = new ArrayList<Agent>();
+		allAgents.addAll(mandatoryActors);
+		allAgents.addAll(optionalActors);
+		return allAgents;
+	}
+	public void addToAllPlans() {
+		if (actor.getWorld() != null) {
+			for (Agent participant : getAllInvitedParticipants()) {
+				participant.actionPlan.addAction(this);
+			}
+			actor.getWorld().addAction(this);
+		}
 	}
 }

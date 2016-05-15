@@ -62,17 +62,11 @@ class TestActionEnum implements ActionEnum {
 
 class TestAgent extends Agent {
 	
-	List<Action> actionsAdded = new ArrayList<Action>();
 	int decisionsTaken = 0;
 	
 	public TestAgent(World world) {
 		super(world);
 		setDecider(new TestDecider());
-	}
-	@Override
-	public void addAction(Action a) {
-		super.addAction(a);
-		actionsAdded.add(a);
 	}
 	@Override
 	public Action decide() {

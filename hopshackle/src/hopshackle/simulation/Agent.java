@@ -171,9 +171,16 @@ public abstract class Agent extends Observable {
 			logger.close();
 	}
 
-	public void addAction(Action newAction) {
-		actionPlan.addAction(newAction);
+	public void updatePlan(long forwardWindow) {
+		int emergencyCount = 0;
+		while (actionPlan.timeToEndOfQueue() < forwardWindow && emergencyCount <= 100) {
+			Action newAction = decide();
+			actionPlan.addActionToAllPlans(newAction);
+			emergencyCount++;
+			if (emergencyCount > 99) errorLogger.warning("Too many actions being added in Agent.updatePlan for forwardWindow " + forwardWindow);
+		}
 	}
+	
 	public void purgeActions(){
 		actionPlan.purgeActions();
 	}

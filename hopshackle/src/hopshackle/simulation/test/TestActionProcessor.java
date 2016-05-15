@@ -43,7 +43,9 @@ public class TestActionProcessor {
 	}
 	
 	public void run(Action nextAction) {
-		nextAction.agree(nextAction.getActor());
+		for (Agent agent : nextAction.getAllInvitedParticipants()) {
+			nextAction.agree(agent);
+		}
 		nextAction.start();
 		nextAction.run();
 	}

@@ -4,6 +4,14 @@ import java.util.*;
 
 public class ActionPlan {
 	
+	public static long timeUntilAllAvailable(List<Agent> agents) {
+		long retValue = 0;
+		for (Agent a : agents) {
+			retValue = Math.max(retValue, a.actionPlan.timeToNextActionStarts());
+		}
+		return retValue;
+	}
+	
 	private static Policy<Action> defaultActionPolicy = new Policy<Action>("action") {
 		@Override
 		public double getValue(Action action, Agent agent) {
@@ -35,7 +43,7 @@ public class ActionPlan {
 			double newActionValue = actionPolicy.getValue(newAction, agent);
 			boolean willFitInPlan = true;
 			for (Action a : actionQueue) {
-				if (overlap(a, newAction)) {
+				if (a != newAction && overlap(a, newAction)) {
 					if ((a.getState() != Action.State.EXECUTING) && actionPolicy.getValue(a, agent) < newActionValue) {
 						overriddenActions.add(a);
 					} else {
@@ -54,10 +62,18 @@ public class ActionPlan {
 				}
 				newAction.agree(agent);
 				actionQueue.add(newAction);
-				agent.getWorld().addAction(newAction);
-				// TODO: really only want to add action to queue once...not once per agent
-				// although this should not cause any problems as the later entries will be discarded
 			}
+		}
+	}
+	public void addActionToAllPlans(Action newAction) {
+		if (agent.getWorld() != null && newAction != null) {
+			List<Agent> allAgents = new ArrayList<Agent>();
+			allAgents.addAll(newAction.mandatoryActors);
+			allAgents.addAll(newAction.optionalActors);
+			for (Agent participant : allAgents) {
+				participant.actionPlan.addAction(newAction);
+			}
+			agent.getWorld().addAction(newAction);
 		}
 	}
 	private boolean overlap(Action a1, Action a2) {

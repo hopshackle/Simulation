@@ -102,7 +102,7 @@ public class BasicPopulationSpawner implements Runnable{
 						newC.setLocation(defaultStartLocation);
 
 						Action firstAction = BasicActions.REST.getAction(newC);
-						newC.addAction(firstAction);
+						firstAction.addToAllPlans();
 					}
 				}
 			} while (!done);

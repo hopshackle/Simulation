@@ -58,7 +58,7 @@ public class BasicMove extends Action {
 		}
 		int timeTakenToMove = (int) (terrain.getPointsToEnter() * 1000);
 		Action moveAction = new Move(actor, timeTakenToMove, nextMove);
-		actor.addAction(moveAction);
+		moveAction.addToAllPlans();
 	}
 
 	public String toString() {

@@ -128,9 +128,9 @@ public class BasicBreedTest {
 		// this will never currently happen given that BREED cannot be selected unless married.
 		// However the functionality can be re-enabled easily, and hence is tested
 		long currentTime  = world.getCurrentTime();
-		testAgent2.addAction(new Forage(testAgent2));
+		(new Forage(testAgent2)).addToAllPlans();;
 		Action breed = new Breed(testAgent1, testAgent2);
-		testAgent1.addAction(breed);
+		breed.addToAllPlans();
 		Action nextAction = ap.getNextAction();
 		assertTrue(nextAction instanceof Rest);
 		assertEquals(nextAction.getActor(), testAgent2);
@@ -145,20 +145,6 @@ public class BasicBreedTest {
 	public void marriedParentAlwaysBreedsWithSpouse() {
 		new Marriage(testAgent1, testAgent2);
 		assertTrue( new PartnerFinder(testAgent1, new BreedingPartnerScoringFunction(testAgent1)).getPartner().equals(testAgent2));
-	}
-
-	@Test
-	public void spouseKeepsObeyingSpouseDuringPregnancy() {
-		new Hut(testAgent1);
-		testAgent2.setDecider(new HardCodedDecider(BasicActions.REST));
-		testAgent1.setDecider(new HardCodedDecider(BasicActions.BREED));
-		Action marriage = new Marry(testAgent1, testAgent2);
-		run(marriage);
-		assertTrue(testAgent1.isMarried());
-		assertTrue(testAgent2.isMarried());
-		ap.getValidateAndRunNextAction(ObeySpouse.class);
-		ap.getValidateAndRunNextAction(ObeySpouse.class);
-		ap.getValidateAndRunNextAction(ObeySpouse.class);
 	}
 
 	@Test

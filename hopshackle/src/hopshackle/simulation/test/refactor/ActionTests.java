@@ -208,29 +208,29 @@ public class ActionTests {
 		TestAction a = taf.factory(1, 1, 0, 1000);
 		a.agree(allAgents.get(0));
 		a.agree(allAgents.get(1));
+		a.addToAllPlans();
 		a.start();
 		assertEquals(allAgents.get(0).decisionsTaken, 0);
-		assertEquals(allAgents.get(0).actionsAdded.size(), 0);
+		assertEquals(allAgents.get(0).getActionPlan().timeToEndOfQueue(), 1000);
 		assertEquals(allAgents.get(1).decisionsTaken, 0);
-		assertEquals(allAgents.get(1).actionsAdded.size(), 0);
+		assertEquals(allAgents.get(1).getActionPlan().timeToEndOfQueue(), 1000);
 		a.run();
 		assertEquals(allAgents.get(0).decisionsTaken, 1);
-		assertEquals(allAgents.get(0).actionsAdded.size(), 1);
+		assertEquals(allAgents.get(0).getActionPlan().timeToEndOfQueue(), 1000);
 		assertEquals(allAgents.get(1).decisionsTaken, 1);
-		assertEquals(allAgents.get(1).actionsAdded.size(), 1);
+		assertEquals(allAgents.get(1).getActionPlan().timeToEndOfQueue(), 1000);
 	}
 	@Test
 	public void cancellingAnEXECUTINGActionTriggersADecisionToo() {
 		TestAction a = taf.factory(1, 1, 0, 1000);
-		a.agree(allAgents.get(0));
-		a.agree(allAgents.get(1));
+		a.addToAllPlans();
 		a.start();
 		assertEquals(allAgents.get(0).decisionsTaken, 0);
-		assertEquals(allAgents.get(0).actionsAdded.size(), 0);
+		assertEquals(allAgents.get(0).getActionPlan().timeToEndOfQueue(), 1000);
 		a.cancel();
 		assertEquals(allAgents.get(0).decisionsTaken, 1);
-		assertEquals(allAgents.get(0).actionsAdded.size(), 1);
+		assertEquals(allAgents.get(0).getActionPlan().timeToEndOfQueue(), 1000);
 		assertEquals(allAgents.get(1).decisionsTaken, 1);
-		assertEquals(allAgents.get(1).actionsAdded.size(), 1);
+		assertEquals(allAgents.get(1).getActionPlan().timeToEndOfQueue(), 1000);
 	}
 }
