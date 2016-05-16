@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 import hopshackle.simulation.*;
 import hopshackle.simulation.basic.*;
 
-import java.util.*;
-
 import org.junit.*;
 public class BasicMarriageTest {
 
@@ -17,8 +15,8 @@ public class BasicMarriageTest {
 
 	@Before
 	public void setUp() {
-		world = new World();
-		ap = new TestActionProcessor(world);
+		ap = new TestActionProcessor();
+		world = ap.w;
 		homeHex = new BasicHex(0, 0);
 		homeHex.setParentLocation(world);
 		maleAgent1 = createAgent(50, 20, true);
@@ -39,15 +37,6 @@ public class BasicMarriageTest {
 		retAgent.addHealth(health - BasicAgent.FULL_HEALTH);
 		assertEquals(retAgent.getHealth(), health, 0.0001);
 		return retAgent;
-	}
-	
-	private List<Action> getNextActions(int number) {
-		ArrayList<Action> actionList = new ArrayList<Action>();
-		for (int i = 0; i < number ; i++) {
-			Action next = ap.getNextAction();
-			if (next != null) actionList.add(next);
-		}
-		return actionList;
 	}
 
 	@Test
@@ -106,60 +95,24 @@ public class BasicMarriageTest {
 		createAgent(20, fullHealth-5, false);
 		new Marriage (maleAgent3, marriedAgent1);
 		Action marryAction = BasicActions.MARRY.getAction(maleAgent1);
-		ap.run(marryAction);
+		run(marryAction);
 		assertTrue(maleAgent1.isMarried());
 		assertEquals(maleAgent1.getPartner().getAge()/1000, 10);
 		assertEquals(maleAgent1.getPartner().getHealth(), fullHealth, 0.01);
 	}
 
 	@Test
-	public void spouseTakesNoActionsAfterMarriage() {
-		maleAgent1.setDecider(new HardCodedDecider(BasicActions.MARRY));
-//		ap.makeValidateAndRunFirstDecision(femaleAgent2, Rest.class);
-		ap.makeValidateAndRunFirstDecision(maleAgent1, Marry.class);
-		assertTrue(maleAgent1.isMarried());
-		assertTrue(femaleAgent2.isMarried());
-		List<Action> actionList = getNextActions(3);
-		findInActionArray(actionList, Rest.class, maleAgent1);
-		assertTrue(noActionInArray(actionList, femaleAgent2));
-		ap.run(actionList.get(0));
-		actionList = getNextActions(3);
-		findInActionArray(actionList, Rest.class, maleAgent1);
-		assertTrue(noActionInArray(actionList, femaleAgent2));
-	}
-
-	private boolean noActionInArray(List<Action> actionList, BasicAgent testAgent) {
-		boolean matchFound = false;
-		for (Action a : actionList) {
-			if (a.getActor() == testAgent) {
-				matchFound = true;
-			}
-		}
-		return !matchFound;
-	}
-	private void findInActionArray(List<Action> actionList, Class<? extends Action> classType, BasicAgent testAgent) {
-		boolean matchFound = false;
-		for (Action a : actionList) {
-			if (a.getActor() == testAgent) {
-				assertTrue(classType.isInstance(a));
-				matchFound = true;
-			}
-		}
-		assertTrue("No match found in array", matchFound);
-	}
-
-	@Test
 	public void foragingOutputIsDoubled() {
 		int foodStart = maleAgent1.getNumberInInventoryOf(Resource.FOOD);
 		Action forage = BasicActions.FORAGE.getAction(maleAgent1);
-		ap.run(forage);
+		run(forage);
 		int foodMid = maleAgent1.getNumberInInventoryOf(Resource.FOOD) + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		assertTrue(foodMid > foodStart);
 
 		new Marriage(maleAgent1, femaleAgent2);
 
 		forage = BasicActions.FORAGE.getAction(maleAgent1);
-		ap.run(forage);
+		run(forage);
 		int foodEnd = maleAgent1.getNumberInInventoryOf(Resource.FOOD)  + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		assertEquals(foodEnd - foodMid, 2*(foodMid-foodStart));
 	}
@@ -170,7 +123,7 @@ public class BasicMarriageTest {
 		int foodStart = maleAgent1.getNumberInInventoryOf(Resource.FOOD)  + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		new Marriage(maleAgent1, femaleAgent2);
 		Action forage = BasicActions.FORAGE.getAction(maleAgent1);
-		ap.run(forage);
+		run(forage);
 		int foodEnd = maleAgent1.getNumberInInventoryOf(Resource.FOOD) + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		assertEquals(foodEnd - foodStart, 1);	
 	}
@@ -180,7 +133,7 @@ public class BasicMarriageTest {
 		int foodStart = femaleAgent1.getNumberInInventoryOf(Resource.FOOD)  + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		new Marriage(maleAgent1, femaleAgent2);
 		Action farm = BasicActions.FARM.getAction(maleAgent1);
-		ap.run(farm);
+		run(farm);
 		int foodEnd = maleAgent1.getNumberInInventoryOf(Resource.FOOD) + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		assertEquals(foodEnd - foodStart, 4);
 	}
@@ -191,8 +144,8 @@ public class BasicMarriageTest {
 		hex2.setParentLocation(world);
 		homeHex.addAccessibleLocation(hex2);
 		new Marriage(maleAgent1, femaleAgent2);
-		Action move = new Move(maleAgent1, 0, hex2);
-		ap.run(move);
+		Action move = new Move(maleAgent1, 0, 0, hex2);
+		run(move);
 		assertTrue(maleAgent1.getLocation() == hex2);
 		assertTrue(femaleAgent2.getLocation() == hex2);
 		assertTrue(femaleAgent3.getLocation() == homeHex);
@@ -237,16 +190,15 @@ public class BasicMarriageTest {
 	public void onDissolutionSpouseTakesActionsAgain() {
 		new Hut(maleAgent1);
 		maleAgent1.setDecider(new HardCodedDecider(BasicActions.MARRY));
-		ap.makeValidateAndRunFirstDecision(femaleAgent2, Rest.class);
-		ap.makeValidateAndRunFirstDecision(maleAgent1, Marry.class);
+		femaleAgent2.updatePlan();
+		maleAgent1.updatePlan();
+		ap.processActionsInQueue(4);
 		assertTrue(maleAgent1.isMarried());
 		assertTrue(femaleAgent2.isMarried());
-		List<Action> actionList = getNextActions(3);
-		findInActionArray(actionList, Rest.class, maleAgent1);
-		assertTrue(noActionInArray(actionList, femaleAgent2));
+		assertTrue(maleAgent1.getNextAction() instanceof Rest);
+		assertTrue(femaleAgent2.getNextAction() == null);
 		maleAgent1.die("Oops");
-		actionList = getNextActions(3);
-		findInActionArray(actionList, Rest.class, femaleAgent2); // i.e. not ObeySpouse
+		assertTrue(femaleAgent2.getNextAction() instanceof Rest);// i.e. not ObeySpouse
 	}
 
 	@Test
@@ -256,6 +208,14 @@ public class BasicMarriageTest {
 		assertEquals(BasicVariables.MARRIED_STATUS.getValue(femaleAgent2, femaleAgent2), 1.0, 0.001);
 		assertEquals(BasicVariables.MARRIED_STATUS.getValue(maleAgent3, maleAgent3), 0.0, 0.001);
 		assertEquals(BasicVariables.MARRIED_STATUS.getValue(femaleAgent3, femaleAgent3), 0.0, 0.001);
+	}
+	
+	private void run(Action a) {
+		for (Agent agent : a.getAllInvitedParticipants()) {
+			a.agree(agent);
+		}
+		a.start();
+		a.run();
 	}
 
 }

@@ -10,6 +10,7 @@ public class ActionProcessor {
 	private BlockingQueue<Action> q;
 	private Action currentAction;
 	private Thread t;
+	private ActionThread actionThread;
 	private World world;
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	private Long delay, delayCount, originalStartTime, lastRecordedTime;
@@ -17,8 +18,9 @@ public class ActionProcessor {
 	private Hashtable<String, Integer> actionCount;
 	private String logFile;
 	private boolean debug = false;
-	private boolean delayQueue, done;
-
+	private boolean delayQueue, done, stepping;
+	private Queue<Action> steppingBuffer = new PriorityQueue<Action>();
+	
 	public ActionProcessor() {
 		this("", true);
 	}
@@ -37,7 +39,8 @@ public class ActionProcessor {
 		delayCount = 0l;
 		String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
 		logFile = baseDir + "\\logs\\ActionProcessorRecord_" + suffix + ".log";
-		t = new Thread(new ActionThread(this), "Action Thread");
+		actionThread = new ActionThread(this);
+		t = new Thread(actionThread, "Action Thread");
 		originalStartTime = 0L;
 	}
 
@@ -49,18 +52,22 @@ public class ActionProcessor {
 	}
 
 	public void add(Action a) {
-		if (debug) logger.info("Adding action " + a);
+		if (debug) logger.info("Adding action " + a + " (" + a.getState() + ")");
 		if (a == null) {
 			logger.severe("Null action sent to ActionProcessor");
 			return;
 		}
-		try {
-			if (!q.offer(a, 2, TimeUnit.SECONDS)) {
-				logger.severe("Action dropped as queue is blocked ");
+		if (stepping) {
+			steppingBuffer.add(a);
+		} else {
+			try {
+				if (!q.offer(a, 2, TimeUnit.SECONDS)) {
+					logger.severe("Action dropped as queue is blocked ");
+				}
+			} catch (InterruptedException e) {
+				logger.severe("Action Processor add function: " + e.toString());
+				e.printStackTrace();
 			}
-		} catch (InterruptedException e) {
-			logger.severe("Action Processor add function: " + e.toString());
-			e.printStackTrace();
 		}
 	}
 
@@ -101,7 +108,26 @@ public class ActionProcessor {
 	public Action getNextUndeletedAction() {
 		return getNextUndeletedAction(1, TimeUnit.MILLISECONDS);
 	}
-
+	
+	public void setTestingMode(boolean state) {
+		stepping = state;
+	}
+	public Action processNextAction() {
+		if (stepping) {
+			Action nextAction = steppingBuffer.poll();
+			try {
+				if (!q.offer(nextAction, 2, TimeUnit.SECONDS)) {
+					logger.severe("Action dropped as queue is blocked ");
+				}
+			} catch (InterruptedException e) {
+				logger.severe("Action Processor add function: " + e.toString());
+				e.printStackTrace();
+			}
+			return nextAction;
+		}
+		return null;
+	}
+	
 	class ActionThread implements Runnable {
 		ActionProcessor ap;
 		public ActionThread(ActionProcessor parent) {
@@ -116,7 +142,8 @@ public class ActionProcessor {
 					if (currentAction != null) {
 
 						synchronized (ap) {
-							if (debug) logger.info("started action: " + currentAction.toString() + " in state of " + currentAction.getState());
+							if (debug) logger.info("started action: " + currentAction.toString() + " in state of " + currentAction.getState() + 
+									" at " + world.getCurrentTime());
 							startTime = System.currentTimeMillis();
 							
 							switch (currentAction.getState()) {

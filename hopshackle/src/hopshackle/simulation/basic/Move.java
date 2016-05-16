@@ -7,9 +7,9 @@ public class Move extends Action {
 	private Location destination;
 	private long duration;
 
-	public Move(Agent a, long start, Location destination) {
-		super(a, start, false);
-		duration = start;
+	public Move(Agent a, long start, long duration, Location destination) {
+		super(a, start, duration, false);
+		this.duration = duration;;
 		this.destination = destination;
 		if (!actor.getLocation().hasRouteTo(destination)) {
 			throw new AssertionError(actor + " cannot get to " + destination + " from " + actor.getLocation());
@@ -31,4 +31,8 @@ public class Move extends Action {
 		ba.addHealth(- (double)duration / 1000.0);
 	}
 
+	@Override
+	public String toString() {
+		return "MOVE to " + destination;
+	}
 }

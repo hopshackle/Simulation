@@ -116,5 +116,13 @@ public class ActionPlan {
 		return timeToGo;	
 	}
 
+	@Override
+	public String toString() {
+		StringBuffer retValue = new StringBuffer();
+		for (Action a : actionQueue) {
+			retValue.append(a.toString() + " (" + a.getStartTime() + "-" + a.getEndTime() + ")\n");
+		}
+		return retValue.toString();
+	}
 }
 

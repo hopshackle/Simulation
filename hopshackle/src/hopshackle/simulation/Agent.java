@@ -181,7 +181,11 @@ public abstract class Agent extends Observable {
 			Action newAction = decide();
 			actionPlan.addActionToAllPlans(newAction);
 			emergencyCount++;
-			if (emergencyCount > 99) errorLogger.warning("Too many actions being added in Agent.updatePlan for forwardWindow " + forwardWindow);
+			assert newAction != null : "Null action in Agent.updatePlan for " + this.toString();
+			if (emergencyCount > 99) {
+				errorLogger.warning("Too many actions being added in Agent.updatePlan for forwardWindow " + forwardWindow);
+				errorLogger.warning(actionPlan.toString());
+			}
 		}
 	}
 	

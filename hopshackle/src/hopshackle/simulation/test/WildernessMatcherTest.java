@@ -8,13 +8,12 @@ public class WildernessMatcherTest {
 	private World w;
 	private Hex[] locations;
 	private Agent testAgent, builder;
-	private ActionProcessor actionProcessor;
+	private TestActionProcessor ap;
 	
 	@Before
 	public void setUp() {
-		actionProcessor = new ActionProcessor("test", false);
-		w = new World();
-		w.setActionProcessor(actionProcessor);
+		ap = new TestActionProcessor();
+		w = ap.w;
 		testAgent = new BasicAgent(w);
 		builder = new BasicAgent(w);
 		locations = new Hex[11];
@@ -55,20 +54,20 @@ public class WildernessMatcherTest {
 		bh.getHuts().get(0).destroy();
 		testAgent.setLocation(locations[3]);
 		testAgent.setDecider(new HardCodedDecider(BasicActions.FIND_PLAINS));
-		makeValidateAndRunFirstDecision(BasicMove.class);
-		getValidateAndRunNextAction(Move.class);
+		ap.makeValidateAndRunFirstDecision(testAgent, BasicMove.class);
+		ap.validateAndRunNextAction(Move.class);
 		JourneyPlan jPlan = testAgent.getJourneyPlan();
 		assertTrue(jPlan.getLocationMatcher() instanceof WildernessMatcher);
 		assertTrue(testAgent.getLocation() == locations[2]);
 		
-		getValidateAndRunNextAction(BasicMove.class);
-		getValidateAndRunNextAction(Move.class);
+		ap.validateAndRunNextAction(BasicMove.class);
+		ap.validateAndRunNextAction(Move.class);
 		assertTrue(jPlan == testAgent.getJourneyPlan());
 		assertTrue(testAgent.getLocation() == locations[1]);
 		
-		getValidateAndRunNextAction(BasicMove.class);
+		ap.validateAndRunNextAction(BasicMove.class);
 		assertTrue(jPlan == testAgent.getJourneyPlan());
-		getValidateAndRunNextAction(Move.class);
+		ap.validateAndRunNextAction(Move.class);
 		assertTrue(testAgent.getLocation() == locations[0]);
 		assertTrue(testAgent.getJourneyPlan() == null);
 	}
@@ -97,22 +96,8 @@ public class WildernessMatcherTest {
 		assertFalse(wm.matches(locations[0]));
 		assertTrue(wm.matches(locations[3]));
 	}
-	
-
-	private void getValidateAndRunNextAction(Class<? extends Action> classType) {
-		Action nextAction = actionProcessor.getNextUndeletedAction();
-		validateAndRunAction(nextAction, classType);
-	}
-
-	private void makeValidateAndRunFirstDecision(Class<? extends Action> classType) {
-		Action nextAction = testAgent.decide();
-		validateAndRunAction(nextAction, classType);
-	}
-
-	private void validateAndRunAction(Action nextAction, Class<? extends Action> classType) {
-		assertTrue(classType.isInstance(nextAction));
-		nextAction.agree(nextAction.getActor());
-		nextAction.start();
-		nextAction.run();
+	@After
+	public void cleanup() {
+		ap.stop();
 	}
 }

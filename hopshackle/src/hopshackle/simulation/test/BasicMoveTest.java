@@ -15,8 +15,8 @@ public class BasicMoveTest {
 
 	@Before
 	public void setUp() {
-		w = new World();
-		testAP = new TestActionProcessor(w);
+		testAP = new TestActionProcessor();
+		w = testAP.w;
 		hexMap = new HexMap<BasicHex>(5, 5, BasicHex.getHexFactory());
 		setTerrainAtHex(hexMap, 2, 2, TerrainType.OCEAN);
 		setTerrainAtHex(hexMap, 3, 2, TerrainType.OCEAN);
@@ -90,13 +90,13 @@ public class BasicMoveTest {
 		testAP.makeValidateAndRunFirstDecision(testAgent, BasicMove.class);
 		assertTrue(testAgent.getLocation().equals(startLocation)); // just worked out where to move so far
 
-		testAP.getValidateAndRunNextAction(Move.class);
+		testAP.validateAndRunNextAction(Move.class);
 		assertFalse(testAgent.getLocation().equals(startLocation)); // now should actually have moved one hex
 
-		testAP.getValidateAndRunNextAction(BasicMove.class);
-		testAP.getValidateAndRunNextAction(Move.class);
-		testAP.getValidateAndRunNextAction(BasicMove.class);
-		testAP.getValidateAndRunNextAction(Move.class);
+		testAP.validateAndRunNextAction(BasicMove.class);
+		testAP.validateAndRunNextAction(Move.class);
+		testAP.validateAndRunNextAction(BasicMove.class);
+		testAP.validateAndRunNextAction(Move.class);
 
 		assertTrue(testAgent.getLocation().equals(destination));
 	}
@@ -105,18 +105,18 @@ public class BasicMoveTest {
 	public void movingReducesHealthInLineWithMovementPointsSpent() {
 		giveTestAgentFullKnowledge();
 		double startingHealth = testAgent.getHealth();
-		Action a = new Move(testAgent, 1000, hexMap.getHexAt(1, 1));
+		Action a = new Move(testAgent, 0, 1000, hexMap.getHexAt(1, 1));
 		run(a);
 		assertTrue(testAgent.getLocation() == hexMap.getHexAt(1, 1));
 		assertEquals(startingHealth - testAgent.getHealth(), 1.0, 0.01);
-		run(new Move(testAgent, 2500, hexMap.getHexAt(1, 2)));
+		run(new Move(testAgent, 0, 2500, hexMap.getHexAt(1, 2)));
 		assertEquals(startingHealth - testAgent.getHealth(), 3.5, 0.01);
 	}
 
 	@Test
 	public void moveToUnexploredLocationWithoutFullKnowledge() {	
 		testAP.makeValidateAndRunFirstDecision(testAgent, BasicMove.class);
-		testAP.getValidateAndRunNextAction(Move.class);
+		testAP.validateAndRunNextAction(Move.class);
 		assertFalse(testAgent.getLocation().equals(startLocation));
 	}
 	
@@ -156,10 +156,10 @@ public class BasicMoveTest {
 		startLocation = hexMap.getHexAt(0, 2);
 		testAgent.setLocation(startLocation);
 		testAP.makeValidateAndRunFirstDecision(testAgent, BasicMove.class);
-		testAP.getValidateAndRunNextAction(Move.class);
+		testAP.validateAndRunNextAction(Move.class);
 		assertFalse(testAgent.getLocation().equals(startLocation));
-		testAP.getValidateAndRunNextAction(BasicMove.class);
-		testAP.getValidateAndRunNextAction(Move.class);
+		testAP.validateAndRunNextAction(BasicMove.class);
+		testAP.validateAndRunNextAction(Move.class);
 		assertTrue(testAgent.getLocation().equals(targetLocation));
 	}
 
@@ -177,8 +177,8 @@ public class BasicMoveTest {
 		assertTrue(journeyPlan.getLocationMatcher().equals(new TerrainMatcher(TerrainType.OCEAN)));
 		assertTrue(journeyPlan.getDestination().equals(destination));
 
-		testAP.getValidateAndRunNextAction(Move.class);
-		testAP.getValidateAndRunNextAction(BasicMove.class);
+		testAP.validateAndRunNextAction(Move.class);
+		testAP.validateAndRunNextAction(BasicMove.class);
 
 		JourneyPlan journeyPlan2 = testAgent.getJourneyPlan();
 		assertTrue(journeyPlan == journeyPlan2);
@@ -199,8 +199,8 @@ public class BasicMoveTest {
 		assertTrue(journeyPlan.getDestination().equals(destination));
 
 		testAgent.setDecider(new HardCodedDecider(BasicActions.FIND_FOREST));
-		testAP.getValidateAndRunNextAction(Move.class);
-		testAP.getValidateAndRunNextAction(BasicMove.class);
+		testAP.validateAndRunNextAction(Move.class);
+		testAP.validateAndRunNextAction(BasicMove.class);
 
 		JourneyPlan journeyPlan2 = testAgent.getJourneyPlan();
 		assertFalse(journeyPlan == journeyPlan2);
@@ -245,21 +245,21 @@ public class BasicMoveTest {
 
 	private void agentMovesToDestinationWithoutJourneyPlan(Location destination) {
 		testAP.makeValidateAndRunFirstDecision(testAgent, BasicMove.class);
-		testAP.getValidateAndRunNextAction(Move.class);
+		testAP.validateAndRunNextAction(Move.class);
 		while(testAgent.getLocation() != destination) {
 			testAgent.setJourneyPlan(null);
-			testAP.getValidateAndRunNextAction(BasicMove.class);
-			testAP.getValidateAndRunNextAction(Move.class);
+			testAP.validateAndRunNextAction(BasicMove.class);
+			testAP.validateAndRunNextAction(Move.class);
 			testAgent.addHealth(2.0);
 		}
 	}
 
 	private void agentMovesToDestinationWithJourneyPlan(Location destination) {
 		testAP.makeValidateAndRunFirstDecision(testAgent, BasicMove.class);
-		testAP.getValidateAndRunNextAction(Move.class);
+		testAP.validateAndRunNextAction(Move.class);
 		while(testAgent.getLocation() != destination) {
-			testAP.getValidateAndRunNextAction(BasicMove.class);
-			testAP.getValidateAndRunNextAction(Move.class);
+			testAP.validateAndRunNextAction(BasicMove.class);
+			testAP.validateAndRunNextAction(Move.class);
 			testAgent.addHealth(2.0);
 		}
 	}
@@ -279,5 +279,9 @@ public class BasicMoveTest {
 		a.agree(a.getActor());
 		a.start();
 		a.run();
+	}
+	@After
+	public void cleanup() {
+		testAP.stop();
 	}
 }

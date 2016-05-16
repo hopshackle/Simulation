@@ -11,8 +11,8 @@ public class GeneralLinearQDecider extends QDecider {
 		super(actions, variables);
 		actionLength = actions.size();
 		variableLength = variables.size();
-		weights = new double[actionLength+1][variableLength];
-		for (int i=0; i<actionLength+1; i++)
+		weights = new double[actionLength][variableLength];
+		for (int i=0; i<actionLength; i++)
 			for (int j=0; j<variableLength; j++) 
 				weights[i][j] = 1.0;		// initialise to 1.0 to promote optimistic exploration
 	}
@@ -28,21 +28,21 @@ public class GeneralLinearQDecider extends QDecider {
 
 	@Override
 	public double valueOption(ActionEnum option, double[] state) {
-		int optionIndex = actionSet.indexOf(option)+1;
+		int optionIndex = actionSet.indexOf(option);
+		assert (optionIndex != -1) : option + " not found in actionSet in GLQDecider.valueOption";
 		double retValue = 0.0;
 
 		for (int i = 0; i < variableLength; i++) {
-			retValue += weights[0][i] * state[i];
+			//		retValue += weights[0][i] * state[i];
 			retValue += weights[optionIndex][i] * state[i];
 		}
-
 		return retValue;
 	}
 
 	public void updateWeight(GeneticVariable input, ActionEnum option, double delta) {
-		int optionIndex = actionSet.indexOf(option)+1;
+		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(input);
-		weights[0][varIndex] += delta - weights[0][varIndex] * lambda;
+		//		weights[0][varIndex] += delta - weights[0][varIndex] * lambda;
 		weights[optionIndex][varIndex] += delta - weights[optionIndex][varIndex] * lambda;
 	}
 	
@@ -51,18 +51,15 @@ public class GeneralLinearQDecider extends QDecider {
 		weights = newWeights;
 	}
 
-	public double[] getWeightOf(GeneticVariable input, ActionEnum option) {
-		int optionIndex = actionSet.indexOf(option)+1;
+	public double getWeightOf(GeneticVariable input, ActionEnum option) {
+		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(input);
-		double[] retValue = new double[2];
-		retValue[0] = weights[0][varIndex];
-		retValue[1] = weights[optionIndex][varIndex];
-		return retValue;
+		return weights[optionIndex][varIndex];
 	}
 
 	public double getLargestWeight() {
 		double retValue = 0.0;
-		for (int i = 0; i < actionLength+1; i++) {
+		for (int i = 0; i < actionLength; i++) {
 			for (int j = 0; j < variableLength; j++) {
 				if (Math.abs(weights[i][j]) > retValue) 
 					retValue = Math.abs(weights[i][j]);
@@ -96,9 +93,9 @@ public class GeneralLinearQDecider extends QDecider {
 			double value = startState[i];
 			GeneticVariable input = variableSet.get(i);
 			double weightChange = value * delta * alpha;
-			if (localDebug) log(String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f / %.2f", input.toString(), value, weightChange, 
-					getWeightOf(input, exp.getActionTaken())[0], getWeightOf(input, exp.getActionTaken())[1]));
-			updateWeight(input, exp.getActionTaken(), value * delta * alpha);
+			if (localDebug) log(String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f", input.toString(), value, weightChange, 
+					getWeightOf(input, exp.getActionTaken())));
+			updateWeight(input, exp.getActionTaken(), weightChange);
 		}
 	}
 }

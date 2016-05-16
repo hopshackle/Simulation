@@ -6,17 +6,15 @@ import hopshackle.simulation.*;
 import java.util.concurrent.TimeUnit;
 public class TestActionProcessor {
 
-	private ActionProcessor actionProcessor;
+	private ActionProcessor ap;
+	World w;
 
-	public TestActionProcessor(World w) {
-		w.setCalendar(new FastCalendar(10));
-		actionProcessor = new ActionProcessor("test", false);
-		w.setActionProcessor(actionProcessor);
-	}
-
-	public void getValidateAndRunNextAction(Class<? extends Action> classType) {
-		Action nextAction = getNextAction();
-		validateAndRunAction(nextAction, classType);
+	public TestActionProcessor() {
+		ap = new ActionProcessor("test", false);
+		w = new World(ap, "test");
+		w.setCalendar(new FastCalendar(0l));
+		ap.start();
+		ap.setTestingMode(true);
 	}
 
 	public void makeValidateAndRunFirstDecision(Agent testAgent, Class<? extends Action> classType) {
@@ -26,27 +24,52 @@ public class TestActionProcessor {
 	}
 
 	public void validateAndRunAction(Action nextAction, Class<? extends Action> classType) {
-		assertTrue(classType.isInstance(nextAction));
-		run(nextAction);
+		nextAction.addToAllPlans();
+		validateAndRunNextAction(classType);
 	}
 	
 	public Action getNextAction() {
-		return actionProcessor.getNextUndeletedAction();
+		return ap.getNextUndeletedAction();
 	}
 
 	public void clearQueue() {
 		Action retAction = null;
 		do {
-			retAction = actionProcessor.getNextUndeletedAction(1, TimeUnit.MILLISECONDS);
+			retAction = ap.getNextUndeletedAction(1, TimeUnit.MILLISECONDS);
 			System.out.println(retAction);
 		} while (retAction != null);
 	}
 	
-	public void run(Action nextAction) {
-		for (Agent agent : nextAction.getAllInvitedParticipants()) {
-			nextAction.agree(agent);
+	public void processActionsInQueue(int number) {
+		try {
+			synchronized (ap) {
+				for (int i = 0; i < number; i++) {
+					ap.processNextAction();
+					ap.wait();
+				}
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		nextAction.start();
-		nextAction.run();
+	}
+	
+	public void validateAndRunNextAction(Class<? extends Action> classType) {
+		try {
+			synchronized (ap) {
+				Action next = ap.processNextAction();	//start
+				assertTrue(classType.isInstance(next));
+				ap.wait();
+				next = ap.processNextAction();	// run
+				ap.wait();
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void stop() {
+		ap.stop();
 	}
 }

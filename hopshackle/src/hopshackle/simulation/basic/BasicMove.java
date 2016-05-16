@@ -1,27 +1,38 @@
 package hopshackle.simulation.basic;
 
+import java.util.List;
+
 import hopshackle.simulation.*;
 
 public class BasicMove extends Action {
 
 	private GoalMatcher locationMatcher;
-	private Location nextMove;
 
 	public BasicMove(Agent agent, GoalMatcher locationMatcher) {
-		super(agent, 0, false);
+		super(agent, 500, false);
 		this.locationMatcher = locationMatcher;
 		world.recordAction(this); // bit of a hack - as locationMatcher provides part of the name of the action to be recorded
 	}
-
 	@Override
 	public void doStuff() {
+		Location nextMove = getNextMove();
+		
+		TerrainType terrain = TerrainType.MOUNTAINS;
+		if (nextMove instanceof Hex) {
+			terrain = ((Hex)nextMove).getTerrainType();
+		}
+		int timeTakenToMove = (int) (terrain.getPointsToEnter() * 1000);
+		Action moveAction = new Move(actor, 0, timeTakenToMove - 500, nextMove);
+		moveAction.addToAllPlans();
+	}
+
+	private Location getNextMove() {
 		BasicAgent mover = (BasicAgent) actor;
 		JourneyPlan currentJourneyPlan = mover.getJourneyPlan();
 		if (currentJourneyPlan != null && currentJourneyPlanIsValid(currentJourneyPlan)) {
 			Location nextLoc = currentJourneyPlan.getNextMove();
 			if (nextLoc != null) {
-				nextMove = nextLoc;
-				return;
+				return nextLoc;
 			}
 		} 
 
@@ -32,9 +43,11 @@ public class BasicMove extends Action {
 		}
 		if (!jPlan.isEmpty()) {
 			mover.setJourneyPlan(jPlan);
-			nextMove = jPlan.getNextMove();
+			return jPlan.getNextMove();
 		} else {
 			mover.setHasUnexploredLocations(false);
+			List<Location> possibleMoves = mover.getLocation().getAccessibleLocations();
+			return possibleMoves.get(Dice.roll(1, possibleMoves.size()) - 1);
 		}
 	}
 
@@ -44,21 +57,6 @@ public class BasicMove extends Action {
 			return true;
 		}
 		return false;
-	}
-
-	@Override
-	public void doNextDecision() {
-		if (nextMove == null) {
-			super.doNextDecision();
-			return;
-		}
-		TerrainType terrain = TerrainType.MOUNTAINS;
-		if (nextMove instanceof Hex) {
-			terrain = ((Hex)nextMove).getTerrainType();
-		}
-		int timeTakenToMove = (int) (terrain.getPointsToEnter() * 1000);
-		Action moveAction = new Move(actor, timeTakenToMove, nextMove);
-		moveAction.addToAllPlans();
 	}
 
 	public String toString() {

@@ -11,6 +11,10 @@ public class Forage extends Action {
 	public void doStuff() {
 		BasicAgent agent = (BasicAgent) actor;
 		BasicHex currentLocation = (BasicHex) agent.getLocation();
+		if (currentLocation == null) {
+			logger.warning("Null location for " + agent + " while foraging.");
+			return;
+		}
 		int numberOfAgents = 1;
 		if (agent.isMarried()) numberOfAgents++;
 		for (int loop = 0; loop < numberOfAgents; loop++) {
@@ -27,6 +31,7 @@ public class Forage extends Action {
 					currentLocation.changeCarryingCapacity(-1);
 				}
 				break;
+			default:
 			}
 		}
 	}

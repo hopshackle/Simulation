@@ -88,7 +88,10 @@ public abstract class Action implements Delayed {
 	}
 
 	public Action(Agent a, long duration, boolean recordAction) {
-		this(HopshackleUtilities.listFromInstance(a), new ArrayList<Agent>(), 0l, duration, recordAction);
+		this(a, 0l, duration, recordAction);
+	}
+	public Action(Agent a, long startOffset, long duration, boolean recordAction) {
+		this(HopshackleUtilities.listFromInstance(a), new ArrayList<Agent>(), startOffset, duration, recordAction);
 	}
 
 	public Action(List<Agent> mandatory, List<Agent> optional, long startOffset, long duration, boolean recordAction) {

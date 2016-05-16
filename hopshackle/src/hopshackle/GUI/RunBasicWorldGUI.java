@@ -34,9 +34,8 @@ public class RunBasicWorldGUI {
 		logger = Logger.getLogger("hopshackle");
 		FileHandler fh = null;
 		try {
-			String fileName = "/Simulations/logs/RunWorldGUI_"  + 
-			String.format("%tY%<tm%<td_%<tH%<tM.log", Calendar.getInstance());
-
+			String fileName = SimProperties.getProperty("BaseDirectory", "C:/Simulations/logs") + "/RunWorldGUI_" + 
+					String.format("%tY%<tm%<td_%<tH%<tM.log", Calendar.getInstance());
 			fh = new FileHandler(fileName);
 			fh.setFormatter(new SimpleFormatter());
 			logger.addHandler(fh);
@@ -150,7 +149,7 @@ public class RunBasicWorldGUI {
 				suffixField.getText() + iterations.getText().trim(),
 				((long)endTime) * 60l * 1000l);
 		w.initialiseMarket();
-		w.setCalendar(new FastCalendar(0l));
+		w.setCalendar(new RealtimeCalendar());
 		w.setLocationMap(new HexMap<BasicHex>(selectedFile, BasicHex.getHexFactory()));
 		w.setDatabaseAccessUtility(databaseUtility);
 		

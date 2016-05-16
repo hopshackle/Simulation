@@ -30,7 +30,7 @@ public class BasicRunWorld {
 	public BasicRunWorld(World w1, boolean showGUI, long runTime) {
 		simlog = Logger.getLogger("hopshackle.simulation");
 		try {
-			String fileName = "/Simulations/logs/RunWorld_" + w1.toString() + "_" + 
+			String fileName = SimProperties.getProperty("BaseDirectory", "C:/Simulations/logs") + "/RunWorld_" + w1.toString() + "_" + 
 					String.format("%tY%<tm%<td_%<tH%<tM.log", Calendar.getInstance());
 
 			fh = new FileHandler(fileName);
@@ -167,8 +167,7 @@ public class BasicRunWorld {
 					b = new BasicAgent(w);
 					b.setLocation(defaultStartLocation);
 					b.setDecider(basicDecider);
-					Action firstAction = (new BasicMove(b, new TerrainMatcher(TerrainType.FOREST)));
-					w.getActionProcessor().add(firstAction);
+					b.updatePlan();
 				}
 			} 
 		}
@@ -185,9 +184,9 @@ public class BasicRunWorld {
 				for (ActionEnum ae : basicDecider.getActions()) {
 					System.out.println(ae + ":");
 					for (GeneticVariable gv1 : basicDecider.getVariables()) {
-							double[] arr = basicDecider.getWeightOf(gv1, ae);
-							if (Math.abs(arr[1]) > largestWeight / 100.0)
-								System.out.println(String.format("\t%-15s\t\t%.3f : %.3f", gv1.toString(), arr[0], arr[1]));
+							double arr = basicDecider.getWeightOf(gv1, ae);
+							if (Math.abs(arr) > largestWeight / 100.0)
+								System.out.println(String.format("\t%-15s\t\t%.3f", gv1.toString(), arr));
 						}
 				}
 			}

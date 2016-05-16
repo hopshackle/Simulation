@@ -3,18 +3,21 @@ import static org.junit.Assert.*;
 import hopshackle.simulation.*;
 import hopshackle.simulation.basic.*;
 
+import org.hamcrest.core.IsInstanceOf;
 import org.junit.*;
 public class CivilisationMatcherTest {
 	private World w;
 	private Hex[] locations;
 	private Agent testAgent, builder;
-	private ActionProcessor actionProcessor;
+	private ActionProcessor ap;
 	
 	@Before
 	public void setUp() {
-		actionProcessor = new ActionProcessor("test", false);
-		w = new World();
-		w.setActionProcessor(actionProcessor);
+		ap = new ActionProcessor("test", false);
+		w = new World(ap, "test");
+		w.setCalendar(new FastCalendar(0l));
+		ap.start();
+		ap.setTestingMode(true);
 		testAgent = new BasicAgent(w);
 		builder = new BasicAgent(w);
 		locations = new Hex[11];
@@ -48,45 +51,38 @@ public class CivilisationMatcherTest {
 	}
 
 	@Test
-	public void civMatcherIsNotOverriddenWhenPassingThroughLowerCivLevelOnWayToDestination() {
+	public void civMatcherIsNotOverriddenWhenPassingThroughLowerCivLevelOnWayToDestination() throws InterruptedException {
 		builder.setLocation(locations[2]);
 		new Hut(builder);
 		new Hut(builder);
 		testAgent.setLocation(locations[2]);
 		testAgent.setDecider(new HardCodedDecider(BasicActions.FIND_CIVILISATION));
-		makeValidateAndRunFirstDecision(BasicMove.class);
-		getValidateAndRunNextAction(Move.class);
-		JourneyPlan jPlan = testAgent.getJourneyPlan();
-		assertTrue(jPlan.getLocationMatcher() instanceof CivilisationMatcher);
-		assertTrue(testAgent.getLocation() == locations[3]);
-		
-		getValidateAndRunNextAction(BasicMove.class);
-		getValidateAndRunNextAction(Move.class);
-		assertTrue(jPlan == testAgent.getJourneyPlan());
-		assertTrue(testAgent.getLocation() == locations[4]);
-		
-		getValidateAndRunNextAction(BasicMove.class);
-		assertTrue(jPlan == testAgent.getJourneyPlan());
-		getValidateAndRunNextAction(Move.class);
-		assertTrue(testAgent.getLocation() == locations[5]);
-		assertTrue(testAgent.getJourneyPlan() == null);
+		testAgent.updatePlan();
+		synchronized (ap) {
+			validateAndRunNextAction(BasicMove.class);
+			validateAndRunNextAction(Move.class);
+			JourneyPlan jPlan = testAgent.getJourneyPlan();
+			assertTrue(jPlan.getLocationMatcher() instanceof CivilisationMatcher);
+			assertTrue(testAgent.getLocation() == locations[3]);
+			
+			validateAndRunNextAction(BasicMove.class);
+			validateAndRunNextAction(Move.class);
+			assertTrue(jPlan == testAgent.getJourneyPlan());
+			assertTrue(testAgent.getLocation() == locations[4]);
+			
+			validateAndRunNextAction(BasicMove.class);
+			assertTrue(jPlan == testAgent.getJourneyPlan());
+			validateAndRunNextAction(Move.class);
+			assertTrue(testAgent.getLocation() == locations[5]);
+			assertTrue(testAgent.getJourneyPlan() == null);
+		}
 	}
 	
-
-	private void getValidateAndRunNextAction(Class<? extends Action> classType) {
-		Action nextAction = actionProcessor.getNextUndeletedAction();
-		validateAndRunAction(nextAction, classType);
-	}
-
-	private void makeValidateAndRunFirstDecision(Class<? extends Action> classType) {
-		Action nextAction = testAgent.decide();
-		validateAndRunAction(nextAction, classType);
-	}
-
-	private void validateAndRunAction(Action nextAction, Class<? extends Action> classType) {
-		assertTrue(classType.isInstance(nextAction));
-		nextAction.agree(nextAction.getActor());
-		nextAction.start();
-		nextAction.run();
+	private void validateAndRunNextAction(Class<? extends Action> classType) throws InterruptedException {
+		Action next = ap.processNextAction();	//start
+		assertTrue(classType.isInstance(next));
+		ap.wait();
+		next = ap.processNextAction();	// run
+		ap.wait();
 	}
 }

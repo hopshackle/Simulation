@@ -18,7 +18,8 @@ public class Marry extends Action {
 		this(BasicUtilities.partnersAsList(ba, partner));
 	}
 
-	public void doStuff() {
+	@Override
+	public void initialisation() {
 		assert(mandatoryActors.size() == 2) : "Marriage without two participants " + mandatoryActors; 
 		new Marriage(p1, p2);
 	}

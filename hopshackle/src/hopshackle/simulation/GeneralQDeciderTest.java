@@ -84,24 +84,16 @@ public class GeneralQDeciderTest {
 
 	@Test
 	public void updateWeights() {
-		assertEquals(decider.getWeightOf(gold, right)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, right)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[1], 0.0, 0.001);
+		assertEquals(decider.getWeightOf(gold, right), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(gold, left), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, right), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, left), 0.0, 0.001);
 		decider.updateWeight(gold, right, 0.2);
 		decider.updateWeight(constantTerm, left, -0.05);
-		assertEquals(decider.getWeightOf(gold, right)[0], 0.2, 0.001);
-		assertEquals(decider.getWeightOf(gold, right)[1], 0.2, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[0], 0.2, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[0], -0.05, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[0], -0.05, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[1], -0.05, 0.001);
+		assertEquals(decider.getWeightOf(gold, right), 0.2, 0.001);
+		assertEquals(decider.getWeightOf(gold, left), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, right), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, left), -0.05, 0.001);
 	}
 
 	@Test
@@ -127,14 +119,10 @@ public class GeneralQDeciderTest {
 		// reward of 2.0 versus an expected 0.0
 		// we have no information, so both actions give an expectation of 0.0
 		// so actual difference is 2.0 + gamma * 0.0 - 0.0 = 2.0
-		assertEquals(decider.getWeightOf(gold, right)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, right)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[0], 0.4, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[1], 0.4, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[0], 0.4, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[1], 0.0, 0.001);
+		assertEquals(decider.getWeightOf(gold, right), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(gold, left), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, right), 0.4, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, left), 0.0, 0.001);
 		
 		exp = decider.getExperienceRecord(testAgent, testAgent, left);
 		testAgent.addGold(-2.0);
@@ -143,14 +131,10 @@ public class GeneralQDeciderTest {
 		// prediction would be 0.4
 		// reward of -2.0. Value of left is 0.4, and value of right is 0.8. So max is 0.8.
 		// so difference = -2.0 + gamma * 0.80 - 0.40 = -1.68
-		assertEquals(decider.getWeightOf(gold, right)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, right)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[0], 0.064, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[1], 0.4, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[0], 0.064, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[1], -0.336, 0.001);
+		assertEquals(decider.getWeightOf(gold, right), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(gold, left), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, right), 0.4, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, left), -0.336, 0.001);
 		
 		exp = decider.getExperienceRecord(testAgent, testAgent, right);
 		testAgent.addGold(1.0);
@@ -159,14 +143,10 @@ public class GeneralQDeciderTest {
 		// prediction would be 0.464
 		// reward of 1.0. Value of left is -0.272, and value of right is 0.464. So max is 0.464
 		// so difference = 1.0 + gamma * 0.464 - 0.464 = 0.9536
-		assertEquals(decider.getWeightOf(gold, right)[0], -0.38144, 0.001);
-		assertEquals(decider.getWeightOf(gold, right)[1], -0.38144, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[0], -0.38144, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[0], 0.25472, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[1], 0.59072, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[0], 0.25472, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[1], -0.336, 0.001);
+		assertEquals(decider.getWeightOf(gold, right), -0.38144, 0.001);
+		assertEquals(decider.getWeightOf(gold, left), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, right), 0.59072, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, left), -0.336, 0.001);
 	}
 	
 	@Test
@@ -175,13 +155,9 @@ public class GeneralQDeciderTest {
 		exp.updateWithResults(0.0, decider.getCurrentState(testAgent, testAgent), actions, false);
 		decider.learnFrom(exp, 10.0);
 		// reward of 0.0, with value of best action = 0.0, so difference = 0.0 + gamma * 0.0 - 0.0 = 0.00
-		assertEquals(decider.getWeightOf(gold, right)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, right)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(gold, left)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, right)[1], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[0], 0.0, 0.001);
-		assertEquals(decider.getWeightOf(constantTerm, left)[1], 0.0, 0.001);
+		assertEquals(decider.getWeightOf(gold, right), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(gold, left), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, right), 0.0, 0.001);
+		assertEquals(decider.getWeightOf(constantTerm, left), 0.0, 0.001);
 	}
 }

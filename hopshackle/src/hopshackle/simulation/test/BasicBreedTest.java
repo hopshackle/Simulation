@@ -19,8 +19,8 @@ public class BasicBreedTest {
 		SimProperties.setProperty("FemaleBreedingAgeRange", "20-100");
 		SimProperties.setProperty("MaleBreedingAgeRange", "20-180");
 		BasicAgent.refreshBreedingAges();
-		world = new World();
-		ap = new TestActionProcessor(world);
+		ap = new TestActionProcessor();
+		world = ap.w;
 		homeHex = new BasicHex(0, 0);
 		homeHex.setParentLocation(world);
 		testAgent1 = new BasicAgent(world);
