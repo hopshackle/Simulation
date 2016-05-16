@@ -27,9 +27,10 @@ public class DatabaseServiceTest {
 	}
 	
 	private void wasteTime() {
-		String timeWaster = "1";
-		for (int loop=0; loop< 6000; loop++) {
-			timeWaster += loop;
+		try {
+			Thread.sleep(250);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -109,9 +110,7 @@ public class DatabaseServiceTest {
 		int firstRecord = getCurrentRecordWritten();
 		wasteTime();
 		int secondRecord = getCurrentRecordWritten();
-		assertTrue(secondRecord > firstRecord);
-		assertTrue(secondRecord < 200);
-
+		assertTrue(secondRecord > firstRecord + 20);
 	}
 	
 	private int getCurrentRecordWritten() {

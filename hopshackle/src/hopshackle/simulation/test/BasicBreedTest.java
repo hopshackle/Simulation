@@ -127,18 +127,24 @@ public class BasicBreedTest {
 	public void unmarriedParentIsForcedToRestWhileBreedingOccursAndChildAlsoMakesADecision() {
 		// this will never currently happen given that BREED cannot be selected unless married.
 		// However the functionality can be re-enabled easily, and hence is tested
-		long currentTime  = world.getCurrentTime();
-		(new Forage(testAgent2)).addToAllPlans();;
+		testAgent2.setDecider(new HardCodedDecider(BasicActions.FORAGE));
+		testAgent2.updatePlan();
+		assertEquals(testAgent1.getActionPlan().timeToEndOfQueue(), 0);
+		assertEquals(testAgent2.getActionPlan().timeToEndOfQueue(), 1000);
 		Action breed = new Breed(testAgent1, testAgent2);
 		breed.addToAllPlans();
+		assertEquals(testAgent1.getActionPlan().timeToEndOfQueue(), 6000);
+		assertEquals(testAgent2.getActionPlan().timeToEndOfQueue(), 6000);
+		assertTrue(testAgent2.getNextAction() != breed);
 		Action nextAction = ap.getNextAction();
-		assertTrue(nextAction instanceof Rest);
-		assertEquals(nextAction.getActor(), testAgent2);
-		assertEquals(nextAction.getStartTime() - currentTime, 4990);
-		nextAction = ap.getNextAction();
-		assertEquals(nextAction.getActor(), testAgent1);
-		nextAction = ap.getNextAction();
-		assertEquals(nextAction.getActor().getUniqueID(), testAgent1.getChildren().get(0).getUniqueID());
+		assertTrue(nextAction != breed);
+		breed.start();
+		breed.run();
+		assertEquals(testAgent2.getActionPlan().timeToEndOfQueue(), 1000);
+		assertTrue(testAgent2.getNextAction() != null);
+		Agent child = testAgent2.getChildren().get(0);
+		assertEquals(child.getActionPlan().timeToEndOfQueue(), 1000);
+		assertTrue(child.getNextAction() != null);
 	}
 
 	@Test
@@ -238,7 +244,7 @@ public class BasicBreedTest {
 		return child;
 	}
 	private void run(Action a) {
-		a.agree(a.getActor());
+		a.addToAllPlans();
 		a.start();
 		a.run();
 	}

@@ -4,10 +4,10 @@ import java.util.*;
 
 public class ActionPlan {
 	
-	public static long timeUntilAllAvailable(List<Agent> agents) {
+	public static long timeUntilAllAvailable(List<? extends Agent> agents) {
 		long retValue = 0;
 		for (Agent a : agents) {
-			retValue = Math.max(retValue, a.actionPlan.timeToNextActionStarts());
+			retValue = Math.max(retValue, a.actionPlan.timeToEndOfQueue());
 		}
 		return retValue;
 	}
@@ -96,9 +96,9 @@ public class ActionPlan {
 			}
 		} else Agent.errorLogger.warning("Null action sent");
 	}
-	public void purgeActions(){
+	public void purgeActions(boolean overrideExecuting){
 		for (Action a : HopshackleUtilities.cloneList(actionQueue)) {
-			a.reject(agent);
+			a.reject(agent, overrideExecuting);
 		}
 	}
 	public Action getNextAction() {

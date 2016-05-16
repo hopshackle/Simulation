@@ -1,29 +1,43 @@
 package hopshackle.simulation.basic;
 
-import hopshackle.simulation.Action;
+import java.util.*;
+import hopshackle.simulation.*;
 
 public class Breed extends Action {
 
-	private BasicAgent child;
-
-	public Breed(BasicAgent parent1, BasicAgent parent2) {
-		super(parent1, 5000, true);
-		if (!breedingPartnersAreMarried(parent1, parent2)) {
-			parent2.purgeActions();
-			(new Rest(parent2, 4990)).addToAllPlans();
-		}
-		child = new BasicAgent(parent1, parent2);
-		int childGeneration = Math.min(parent1.getGeneration(), parent2.getGeneration()) + 1;
-		child.setGeneration(childGeneration);
-		(new Rest(child, 5010)).addToAllPlans();
-	}
+	private BasicAgent child, mother, father;
+	private boolean parentsAreMarried;
 	
-	private boolean breedingPartnersAreMarried(BasicAgent parent1, BasicAgent parent2) {
-		return (parent1.getPartner() == parent2);
+	public Breed(BasicAgent parent1, BasicAgent parent2) {
+		this(BasicUtilities.partnersAsList(parent1, parent2));
 	}
+
+	public Breed(List<Agent> parents) {
+		super(parents, new ArrayList<Agent>(), ActionPlan.timeUntilAllAvailable(parents), 5000, true);
+		for (int i = 0; i < mandatoryActors.size(); i++) {
+			BasicAgent parent = (BasicAgent) mandatoryActors.get(i);
+			if (parent.isFemale()) {
+				mother = parent;
+			} else {
+				father = parent;
+			}
+		}
+		parentsAreMarried = mother.getPartner() == father;
+	}	
 
 	public void doStuff() {
-		// nothing To Do
+		child = new BasicAgent(father, mother);
+		int childGeneration = Math.min(father.getGeneration(), mother.getGeneration()) + 1;
+		child.setGeneration(childGeneration);
+		child.updatePlan();
+	}
+	
+	@Override protected void doNextDecision(Agent actor) {
+		if (actor == mother && parentsAreMarried) {
+			// Do nothing
+		} else {
+			super.doNextDecision(actor);
+		}
 	}
 
 	public String toString() {

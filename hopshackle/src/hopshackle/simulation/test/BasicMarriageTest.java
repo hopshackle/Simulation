@@ -245,7 +245,7 @@ public class BasicMarriageTest {
 		findInActionArray(actionList, Rest.class, maleAgent1);
 		assertTrue(noActionInArray(actionList, femaleAgent2));
 		maleAgent1.die("Oops");
-		actionList.add(ap.getNextAction());
+		actionList = getNextActions(3);
 		findInActionArray(actionList, Rest.class, femaleAgent2); // i.e. not ObeySpouse
 	}
 

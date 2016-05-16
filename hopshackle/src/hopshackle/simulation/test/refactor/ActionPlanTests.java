@@ -145,9 +145,26 @@ public class ActionPlanTests {
 		b.start();
 		assertEquals(one.getExecutedActions().size(), 0);
 		assertTrue(one.getNextAction() == a);
-		one.purgeActions();
+		one.purgeActions(false);
 		assertEquals(one.getExecutedActions().size(), 0);
 		assertTrue(one.getNextAction() == b);
+	}
+	@Test
+	public void purgeActionsCanOverrideEXECUTINGActions() {
+		Action a = taf.factory(2, 1, 500, 1000);
+		Action b = taf.factory(1, 0, 1500, 1000);
+		one.getActionPlan().addAction(a);
+		one.getActionPlan().addAction(b);
+		b.start();
+		assertTrue(a.getState() == Action.State.PROPOSED);
+		assertTrue(b.getState() == Action.State.EXECUTING);
+		one.purgeActions(false);
+		assertTrue(a.getState() == Action.State.CANCELLED);
+		assertTrue(b.getState() == Action.State.EXECUTING);
+		one.purgeActions(true);
+		assertTrue(a.getState() == Action.State.CANCELLED);
+		assertTrue(b.getState() == Action.State.CANCELLED);
+		assertTrue(one.getNextAction() != b);
 	}
 	@Test
 	public void purgeActionsCancelsMandatoryActionsOnly() {
@@ -166,7 +183,7 @@ public class ActionPlanTests {
 		assertTrue(b.getState() == Action.State.PLANNED);
 		assertTrue(c.getState() == Action.State.PLANNED);
 		assertTrue(d.getState() == Action.State.PROPOSED);
-		two.purgeActions();
+		two.purgeActions(false);
 		assertTrue(a.getState() == Action.State.CANCELLED);
 		assertTrue(b.getState() == Action.State.PLANNED);
 		assertTrue(c.getState() == Action.State.PLANNED);
@@ -220,5 +237,15 @@ public class ActionPlanTests {
 		assertTrue(a.getState() == Action.State.PLANNED);
 		assertEquals(one.getActionPlan().timeToEndOfQueue(), 2000);
 		assertEquals(two.getActionPlan().timeToEndOfQueue(), 2000);
+	}
+	@Test
+	public void timeUntilAllAvailableReturnsMaxEndQueueTime() {
+		assertEquals(ActionPlan.timeUntilAllAvailable(allAgents), 0);
+		Action a = taf.factory(1, 1, 0, 1000);
+		a.addToAllPlans();
+		assertEquals(ActionPlan.timeUntilAllAvailable(allAgents), 1000);
+		Action b = taf.factory(1, 0, 3000, 3000);
+		b.addToAllPlans();
+		assertEquals(ActionPlan.timeUntilAllAvailable(allAgents), 6000);
 	}
 }

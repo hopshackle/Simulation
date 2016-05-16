@@ -51,4 +51,9 @@ public class BasicAgentTest {
 		assertEquals(testAgent.getAge(), 10000, 1);
 	}
 	
+	@After
+	public void cleanup() {
+		SimProperties.setProperty("MaximumAgentAgeInSeconds", "180");
+	}
+	
 }

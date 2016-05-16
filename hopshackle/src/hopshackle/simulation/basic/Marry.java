@@ -15,13 +15,7 @@ public class Marry extends Action {
 	}
 
 	public Marry(BasicAgent ba, BasicAgent partner) {
-		this(partnersAsList(ba, partner));
-	}
-	private static List<Agent> partnersAsList(BasicAgent a1, BasicAgent a2) {
-		List<Agent> retValue = new ArrayList<Agent>();
-		retValue.add(a1);
-		retValue.add(a2);
-		return retValue;
+		this(BasicUtilities.partnersAsList(ba, partner));
 	}
 
 	public void doStuff() {
@@ -33,7 +27,7 @@ public class Marry extends Action {
 	public void doNextDecision(Agent a) {
 		BasicAgent ba = (BasicAgent)a;
 		if (ba.isFemale()) {
-			ba.purgeActions();
+			ba.purgeActions(false);
 			return;
 		}
 		super.doNextDecision(a);

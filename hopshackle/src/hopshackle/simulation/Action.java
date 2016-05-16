@@ -1,6 +1,7 @@
 package hopshackle.simulation;
 
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.*;
 
@@ -119,15 +120,30 @@ public abstract class Action implements Delayed {
 	}
 
 	public void reject(Agent a) {
+		reject(a, false);
+	}
+	public void reject(Agent a, boolean overrideExecuting) {
+		
+		Consumer<Agent> reportError = (agent) -> {
+			a.log("Attempts to reject Action: " + a + " irrelevant from " + currentState);
+			logger.warning("Attempts to reject Action: " + a + " irrelevant from " + currentState);
+		};
+		
 		switch (currentState) {
+		case EXECUTING:
+			if (overrideExecuting) {
+				a.log("Withdraws from " + this + " early.");
+			} else {
+				reportError.accept(a);
+				break;
+			}
 		case PROPOSED:
 		case PLANNED:
 			updateAgreement(a, false);
 			a.actionPlan.actionQueue.remove(this);
 			break;
 		default:
-			a.log("Attempts to reject Action: " + a + " irrelevant from " + currentState);
-			logger.warning("Attempts to reject Action: " + a + " irrelevant from " + currentState);
+			reportError.accept(a);
 		}
 	}
 

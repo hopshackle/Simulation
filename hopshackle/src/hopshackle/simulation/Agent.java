@@ -153,7 +153,7 @@ public abstract class Agent extends Observable {
 		}
 		queueForTheFerryman.offer(this);
 
-		purgeActions();
+		purgeActions(true);
 		death = getWorld().getCurrentTime();
 		dispatchLearningEvent();
 		deathLocation = getLocation();
@@ -170,6 +170,10 @@ public abstract class Agent extends Observable {
 		if (logger != null)
 			logger.close();
 	}
+	
+	public void updatePlan() {
+		updatePlan(1);	// a single forward action
+	}
 
 	public void updatePlan(long forwardWindow) {
 		int emergencyCount = 0;
@@ -181,8 +185,8 @@ public abstract class Agent extends Observable {
 		}
 	}
 	
-	public void purgeActions(){
-		actionPlan.purgeActions();
+	public void purgeActions(boolean overrideExecuting){
+		actionPlan.purgeActions(overrideExecuting);
 	}
 	public Action getNextAction() {
 		return actionPlan.getNextAction();

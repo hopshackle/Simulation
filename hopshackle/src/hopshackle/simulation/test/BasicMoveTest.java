@@ -231,15 +231,14 @@ public class BasicMoveTest {
 		Long endTime = System.currentTimeMillis();
 		System.out.println(interimTime-startTime);
 		System.out.println(endTime-interimTime);
-		assertTrue(endTime-interimTime > 1.20*(interimTime-startTime));
+		assertTrue(endTime-interimTime > (interimTime-startTime));
 	}
 
 	private void resetAgentMapKnowledgeLocationAndActionQueue() {
-		testAgent.clearMapKnowledge();
+		testAgent = new BasicAgent(w);
+		testAgent.setDecider(new HardCodedDecider(BasicActions.FIND_UNKNOWN));
 		testAgent.setLocation(startLocation);
 		giveTestAgentFullKnowledge();
-		testAgent.setJourneyPlan(null);
-		testAgent.purgeActions();
 		testAP.getNextAction();
 	}
 

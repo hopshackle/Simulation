@@ -20,8 +20,7 @@ public class HopshackleUtilitiesTest {
 
 	@Test
 	public void loadEnumsFromFile() {
-		SimProperties.setProperty("ActionEnumsToUse", baseDir + "\\Genomes\\Standard\\ActionEnumsDnD.txt");
-		File actionEnumFile = new File(SimProperties.getProperty("ActionEnumsToUse", ""));
+		File actionEnumFile = new File(SimProperties.getProperty("ActionEnumClassFile", ""));
 		List<String> classNames = HopshackleUtilities.createListFromFile(actionEnumFile);
 		List<Object> actionEnums = HopshackleUtilities.loadEnums(classNames);
 		assertFalse(actionEnums.isEmpty());
