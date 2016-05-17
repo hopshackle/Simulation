@@ -6,7 +6,6 @@ import hopshackle.simulation.*;
 public class Breed extends BasicAction {
 
 	private BasicAgent child, mother, father;
-	private boolean parentsAreMarried;
 	
 	public Breed(BasicAgent parent1, BasicAgent parent2) {
 		this(BasicUtilities.partnersAsList(parent1, parent2));
@@ -22,7 +21,6 @@ public class Breed extends BasicAction {
 				father = parent;
 			}
 		}
-		parentsAreMarried = mother.getPartner() == father;
 	}	
 
 	public void doStuff() {
@@ -30,14 +28,6 @@ public class Breed extends BasicAction {
 		int childGeneration = Math.min(father.getGeneration(), mother.getGeneration()) + 1;
 		child.setGeneration(childGeneration);
 		child.updatePlan();
-	}
-	
-	@Override protected void doNextDecision(BasicAgent actor) {
-		if (actor == mother && parentsAreMarried) {
-			// Do nothing
-		} else {
-			super.doNextDecision(actor);
-		}
 	}
 
 	public String toString() {

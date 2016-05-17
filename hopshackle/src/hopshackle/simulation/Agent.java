@@ -100,8 +100,8 @@ public abstract class Agent extends Observable {
 		this.decider = decider;
 	}
 
-	public Action decide(Decider deciderOverride) {
-		Action retArray = null;
+	public Action<?> decide(Decider deciderOverride) {
+		Action<?> retArray = null;
 		long chosenDuration = 0;
 		long availableTime = actionPlan.timeToNextActionStarts();
 		if (availableTime > 0) {
@@ -178,10 +178,10 @@ public abstract class Agent extends Observable {
 		if (isDead()) return;
 		int emergencyCount = 0;
 		while (actionPlan.timeToEndOfQueue() < forwardWindow && emergencyCount <= 100) {
-			Action newAction = decide();
+			Action<?> newAction = decide();
+			if (newAction == null) break;
 			actionPlan.addActionToAllPlans(newAction);
 			emergencyCount++;
-			assert newAction != null : "Null action in Agent.updatePlan for " + this.toString();
 			if (emergencyCount > 99) {
 				errorLogger.warning("Too many actions being added in Agent.updatePlan for forwardWindow " + forwardWindow);
 				errorLogger.warning(actionPlan.toString());
@@ -192,7 +192,7 @@ public abstract class Agent extends Observable {
 	public void purgeActions(boolean overrideExecuting){
 		actionPlan.purgeActions(overrideExecuting);
 	}
-	public Action getNextAction() {
+	public Action<?> getNextAction() {
 		return actionPlan.getNextAction();
 	}
 
