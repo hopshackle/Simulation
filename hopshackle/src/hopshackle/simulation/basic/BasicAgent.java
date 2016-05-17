@@ -15,7 +15,7 @@ public class BasicAgent extends Agent implements Persistent {
 	private long lastMaintenance;
 	private static AgentWriter<BasicAgent> agentWriter = new AgentWriter<BasicAgent>(new BasicAgentDAO());
 	private static BasicAgentRetriever masterAgentRetriever = new BasicAgentRetriever();
-	private static double debugChance = 0.003;
+	private static double debugChance = 1;
 	private int movementPointsSpent;
 	private Marriage marriage;
 	private List<Long> allPartners = new ArrayList<Long>();

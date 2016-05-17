@@ -5,7 +5,6 @@ import java.util.*;
 import hopshackle.simulation.*;
 import org.junit.*;
 
-
 public class ActionTests {
 	
 	World w;
@@ -99,7 +98,7 @@ public class ActionTests {
 		t.agree(allAgents.get(1));
 		assertTrue(t.getState() == Action.State.PLANNED);
 	}
-	@Test (expected = Action.InvalidStateTransition.class)
+	@Test (expected = InvalidStateTransition.class)
 	public void actionCannotBeStartedFromPROPOSED() {
 		TestAction t = taf.factory(1, 1, 0, 0);
 		t.start();
@@ -113,12 +112,12 @@ public class ActionTests {
 		assertTrue(t.getState() == Action.State.EXECUTING);
 	}
 
-	@Test (expected = Action.InvalidStateTransition.class)
+	@Test (expected = InvalidStateTransition.class)
 	public void actionCannotBeFinishedFromPROPOSED() {
 		TestAction t = taf.factory(1, 0, 0, 0);
 		t.run();
 	}
-	@Test (expected = Action.InvalidStateTransition.class)
+	@Test (expected = InvalidStateTransition.class)
 	public void actionCannotBeFinishedFromPLANNED() {
 		TestAction t = taf.factory(1, 0, 0, 0);
 		t.agree(allAgents.get(0));
@@ -134,14 +133,14 @@ public class ActionTests {
 		t.run();
 		assertTrue(t.getState() == Action.State.FINISHED);
 	}
-	@Test (expected = Action.InvalidStateTransition.class)
+	@Test (expected = InvalidStateTransition.class)
 	public void actionCannotBeFinishedFromFINISHED() {
 		TestAction t = taf.factory(1, 0, 0, 0);
 		t.agree(allAgents.get(0));
 		t.run();
 		t.run();
 	}
-	@Test (expected = Action.InvalidStateTransition.class)
+	@Test (expected = InvalidStateTransition.class)
 	public void actionCannotBeFinishedFromCANCELLED() {
 		TestAction t = taf.factory(1, 0, 0, 0);
 		t.reject(allAgents.get(0));
@@ -232,5 +231,15 @@ public class ActionTests {
 		assertEquals(allAgents.get(0).getActionPlan().timeToEndOfQueue(), 1000);
 		assertEquals(allAgents.get(1).decisionsTaken, 1);
 		assertEquals(allAgents.get(1).getActionPlan().timeToEndOfQueue(), 1000);
+	}
+	@Test
+	public void dyingWhenActionIsExecutingPurgesQueue() {
+		TestAction a = taf.factory(1, 1, 0, 1000);
+		a.dieInMiddle = true;
+		a.addToAllPlans();
+		a.start();
+		a.run();
+		assertTrue(allAgents.get(0).isDead());
+		assertTrue(allAgents.get(0).getNextAction() == null);
 	}
 }

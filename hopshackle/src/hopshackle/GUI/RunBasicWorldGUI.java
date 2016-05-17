@@ -145,11 +145,17 @@ public class RunBasicWorldGUI {
 		if (endTime < 0) endTime = 60;
 		if (endTime > 1000) endTime = 1000;
 
-		World w = new World(new ActionProcessor(suffixField.getText(), false), 
+		boolean realTime = true;
+
+		World w = new World(new ActionProcessor(suffixField.getText(), realTime), 
 				suffixField.getText() + iterations.getText().trim(),
 				((long)endTime) * 60l * 1000l);
 		w.initialiseMarket();
-		w.setCalendar(new RealtimeCalendar());
+		if (realTime) {
+			w.setCalendar(new RealtimeCalendar());
+		} else {
+			w.setCalendar(new FastCalendar(0l));
+		}
 		w.setLocationMap(new HexMap<BasicHex>(selectedFile, BasicHex.getHexFactory()));
 		w.setDatabaseAccessUtility(databaseUtility);
 		

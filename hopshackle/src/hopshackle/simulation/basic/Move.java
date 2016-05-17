@@ -2,14 +2,14 @@ package hopshackle.simulation.basic;
 
 import hopshackle.simulation.*;
 
-public class Move extends Action {
+public class Move extends BasicAction {
 
 	private Location destination;
 	private long duration;
 
-	public Move(Agent a, long start, long duration, Location destination) {
+	public Move(BasicAgent a, long start, long duration, Location destination) {
 		super(a, start, duration, false);
-		this.duration = duration;;
+		this.duration = duration;
 		this.destination = destination;
 		if (!actor.getLocation().hasRouteTo(destination)) {
 			throw new AssertionError(actor + " cannot get to " + destination + " from " + actor.getLocation());
@@ -18,7 +18,6 @@ public class Move extends Action {
 
 	@Override
 	public void doStuff() {
-		super.doStuff();
 		BasicAgent ba = (BasicAgent) actor;
 		doMoveStuff(ba);
 		if (ba.isMarried())
@@ -33,6 +32,6 @@ public class Move extends Action {
 
 	@Override
 	public String toString() {
-		return "MOVE to " + destination;
+		return "MOVE to " + destination + "(" + plannedStartTime + "-" + plannedEndTime + ")";
 	}
 }

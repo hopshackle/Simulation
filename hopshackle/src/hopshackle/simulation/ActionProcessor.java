@@ -52,7 +52,7 @@ public class ActionProcessor {
 	}
 
 	public void add(Action a) {
-		if (debug) logger.info("Adding action " + a + " (" + a.getState() + ")");
+		if (debug) logger.info("Adding action " + a + " (" + a.getState() + ") with delay of " + a.getDelay(TimeUnit.MILLISECONDS));
 		if (a == null) {
 			logger.severe("Null action sent to ActionProcessor");
 			return;
@@ -143,7 +143,7 @@ public class ActionProcessor {
 
 						synchronized (ap) {
 							if (debug) logger.info("started action: " + currentAction.toString() + " in state of " + currentAction.getState() + 
-									" at " + world.getCurrentTime());
+									" at " + world.getCurrentTime() + " with delay of " + currentAction.getDelay(TimeUnit.MILLISECONDS));
 							startTime = System.currentTimeMillis();
 							
 							switch (currentAction.getState()) {

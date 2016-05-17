@@ -120,7 +120,7 @@ public class ActionPlan {
 	public String toString() {
 		StringBuffer retValue = new StringBuffer();
 		for (Action a : actionQueue) {
-			retValue.append(a.toString() + " (" + a.getStartTime() + "-" + a.getEndTime() + ")\n");
+			retValue.append(a.toString() + "\n");
 		}
 		return retValue.toString();
 	}

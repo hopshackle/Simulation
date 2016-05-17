@@ -3,7 +3,7 @@ package hopshackle.simulation.basic;
 import java.util.*;
 import hopshackle.simulation.*;
 
-public class Breed extends Action {
+public class Breed extends BasicAction {
 
 	private BasicAgent child, mother, father;
 	private boolean parentsAreMarried;
@@ -12,8 +12,8 @@ public class Breed extends Action {
 		this(BasicUtilities.partnersAsList(parent1, parent2));
 	}
 
-	public Breed(List<Agent> parents) {
-		super(parents, new ArrayList<Agent>(), ActionPlan.timeUntilAllAvailable(parents), 5000, true);
+	public Breed(List<BasicAgent> parents) {
+		super(parents, new ArrayList<BasicAgent>(), ActionPlan.timeUntilAllAvailable(parents), 5000, true);
 		for (int i = 0; i < mandatoryActors.size(); i++) {
 			BasicAgent parent = (BasicAgent) mandatoryActors.get(i);
 			if (parent.isFemale()) {
@@ -32,7 +32,7 @@ public class Breed extends Action {
 		child.updatePlan();
 	}
 	
-	@Override protected void doNextDecision(Agent actor) {
+	@Override protected void doNextDecision(BasicAgent actor) {
 		if (actor == mother && parentsAreMarried) {
 			// Do nothing
 		} else {

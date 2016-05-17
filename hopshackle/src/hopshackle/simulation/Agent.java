@@ -121,7 +121,6 @@ public abstract class Agent extends Observable {
 			}
 			if (retArray != null) chosenDuration = retArray.getEndTime() - world.getCurrentTime();
 		}
-		maintenance();
 		if (chosenDuration > availableTime) retArray = null;
 		return retArray;
 	}
@@ -153,11 +152,11 @@ public abstract class Agent extends Observable {
 		}
 		queueForTheFerryman.offer(this);
 
-		purgeActions(true);
 		death = getWorld().getCurrentTime();
 		dispatchLearningEvent();
 		deathLocation = getLocation();
-
+		purgeActions(true);
+		
 		AgentEvent deathEvent = new AgentEvent(this, AgentEvents.DEATH);
 		eventDispatch(deathEvent);
 
@@ -176,6 +175,7 @@ public abstract class Agent extends Observable {
 	}
 
 	public void updatePlan(long forwardWindow) {
+		if (isDead()) return;
 		int emergencyCount = 0;
 		while (actionPlan.timeToEndOfQueue() < forwardWindow && emergencyCount <= 100) {
 			Action newAction = decide();

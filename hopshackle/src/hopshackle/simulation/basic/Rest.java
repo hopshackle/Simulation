@@ -4,12 +4,12 @@ import hopshackle.simulation.*;
 
 import java.util.List;
 
-public class Rest extends Action {
+public class Rest extends BasicAction {
 
-	public Rest(Agent a) {
+	public Rest(BasicAgent a) {
 		super(a, 1000, false);
 	}
-	public Rest(Agent a, long time) {
+	public Rest(BasicAgent a, long time) {
 		super(a, time, true);
 	}
 

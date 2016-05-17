@@ -1,7 +1,6 @@
 package hopshackle.simulation;
 
 import java.util.concurrent.*;
-import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.*;
 
@@ -13,7 +12,7 @@ import java.util.*;
  * 
  * On instantiation we enter the PROPOSED state. An Action has lists of
  * mandatory and optional Agents. We add the PROPOSED action to the ActionPlan
- * of all Agents ans wait for their responses. Once all mandatory Agents have
+ * of all Agents and wait for their responses. Once all mandatory Agents have
  * responded, we either enter PLANNED (if they said yes), or CANCELLED
  * (otherwise). [Note that previously Agent maintenance occurred in decide(),
  * *before* a decision was made. We now move this to after.] Once the Action
@@ -57,24 +56,18 @@ import java.util.*;
  *
  */
 
-public abstract class Action implements Delayed {
+public abstract class Action<A extends Agent> implements Delayed {
 
 	public enum State {
 		PROPOSED, PLANNED, EXECUTING, FINISHED, CANCELLED;
 	}
-	public class InvalidStateTransition extends RuntimeException {
-		private static final long serialVersionUID = -8459076735758399835L;
-		public InvalidStateTransition(String message) {
-			super(message);
-		}
-	}
 
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	
-	protected List<Agent> mandatoryActors;
-	protected List<Agent> optionalActors;
+	protected List<A> mandatoryActors;
+	protected List<A> optionalActors;
 	protected Map<Long, Boolean> agentAgreement = new HashMap<Long, Boolean>();
-	protected Agent actor; // currently left in for backwards compatibility
+	protected A actor; // currently left in for backwards compatibility
 	protected World world;
 	protected long startTime = -1;
 	protected long endTime = -1;
@@ -83,18 +76,18 @@ public abstract class Action implements Delayed {
 	protected State currentState = State.PROPOSED;
 	protected int value = 0;
 
-	public Action(Agent a, boolean recordAction) {
+	public Action(A a, boolean recordAction) {
 		this(a, 1000, recordAction);
 	}
 
-	public Action(Agent a, long duration, boolean recordAction) {
+	public Action(A a, long duration, boolean recordAction) {
 		this(a, 0l, duration, recordAction);
 	}
-	public Action(Agent a, long startOffset, long duration, boolean recordAction) {
-		this(HopshackleUtilities.listFromInstance(a), new ArrayList<Agent>(), startOffset, duration, recordAction);
+	public Action(A a, long startOffset, long duration, boolean recordAction) {
+		this(HopshackleUtilities.listFromInstance(a), new ArrayList<A>(), startOffset, duration, recordAction);
 	}
 
-	public Action(List<Agent> mandatory, List<Agent> optional, long startOffset, long duration, boolean recordAction) {
+	public Action(List<A> mandatory, List<A> optional, long startOffset, long duration, boolean recordAction) {
 		mandatoryActors = HopshackleUtilities.cloneList(mandatory);
 		optionalActors = HopshackleUtilities.cloneList(optional);
 		if (!mandatory.isEmpty()) {
@@ -110,7 +103,7 @@ public abstract class Action implements Delayed {
 		if (recordAction) world.recordAction(this);
 	}
 
-	public void agree(Agent a) {
+	public void agree(A a) {
 		switch (currentState) {
 		case PROPOSED:
 		case PLANNED:
@@ -122,22 +115,17 @@ public abstract class Action implements Delayed {
 		}
 	}
 
-	public void reject(Agent a) {
+	public void reject(A a) {
 		reject(a, false);
 	}
-	public void reject(Agent a, boolean overrideExecuting) {
-		
-		Consumer<Agent> reportError = (agent) -> {
-			a.log("Attempts to reject Action: " + a + " irrelevant from " + currentState);
-			logger.warning("Attempts to reject Action: " + a + " irrelevant from " + currentState);
-		};
+	public void reject(A a, boolean overrideExecuting) {
 		
 		switch (currentState) {
 		case EXECUTING:
 			if (overrideExecuting) {
 				a.log("Withdraws from " + this + " early.");
 			} else {
-				reportError.accept(a);
+				a.log("Attempts to reject Action: " + a + " irrelevant from " + currentState);
 				break;
 			}
 		case PROPOSED:
@@ -146,15 +134,15 @@ public abstract class Action implements Delayed {
 			a.actionPlan.actionQueue.remove(this);
 			break;
 		default:
-			reportError.accept(a);
+			a.log("Attempts to reject Action: " + a + " irrelevant from " + currentState);
 		}
 	}
 
-	private void updateAgreement(Agent a, boolean choice) {
+	private void updateAgreement(A a, boolean choice) {
 		agentAgreement.put(a.getUniqueID(), choice);
 		// Now check for change of state
 		boolean changeState = (currentState == State.PROPOSED);
-		for (Agent m : mandatoryActors) {
+		for (A m : mandatoryActors) {
 			if (agentAgreement.containsKey(m.getUniqueID())) {
 				if (agentAgreement.get(m.getUniqueID()) == false) {
 					this.cancel();
@@ -182,7 +170,7 @@ public abstract class Action implements Delayed {
 		case FINISHED:
 		case EXECUTING:
 		case CANCELLED:
-			throw new Action.InvalidStateTransition("Cannot start() from " + currentState);
+			throw new InvalidStateTransition("Cannot start() from " + currentState);
 		case PLANNED:
 			startTime = world.getCurrentTime();
 			long duration = plannedEndTime - plannedStartTime;
@@ -198,7 +186,7 @@ public abstract class Action implements Delayed {
 		case FINISHED:
 		case PLANNED:
 		case CANCELLED:
-			throw new Action.InvalidStateTransition("Cannot run() from " + currentState);
+			throw new InvalidStateTransition("Cannot run() from " + currentState);
 		case EXECUTING:
 			endTime = world.getCurrentTime();
 			doAdmin();
@@ -222,30 +210,33 @@ public abstract class Action implements Delayed {
 	}
 
 	protected void doCleanUp() {
-		for (Agent a : mandatoryActors) {
+		for (A a : mandatoryActors) {
 			a.actionPlan.actionCompleted(this);
+			a.maintenance();
 		}
-		for (Agent a : optionalActors) {
+		for (A a : optionalActors) {
 			if (agentAgreement.getOrDefault(a.getUniqueID(), false)) {
 				a.actionPlan.actionCompleted(this);
+				a.maintenance();
 			}
 		}
 	}
 
 	protected void doNextDecision() {
-		List<Agent> allActors = HopshackleUtilities.cloneList(mandatoryActors);
+		List<A> allActors = HopshackleUtilities.cloneList(mandatoryActors);
 		allActors.addAll(optionalActors);
-		for (Agent actor : allActors) {
+		for (A actor : allActors) {
 			doNextDecision(actor);
 		}
 	}
-	protected void doNextDecision(Agent actor) {
+	protected void doNextDecision(A actor) {
 		if (!actor.isDead()) {
-			Action newAction = actor.decide();
+			Action<A> newAction = actor.decide();
 			if (newAction != null) newAction.addToAllPlans();
 		}
 	}
 
+	@Override
 	public long getDelay(TimeUnit tu) {
 		switch (getState()) {
 		case EXECUTING:
@@ -256,6 +247,7 @@ public abstract class Action implements Delayed {
 
 	}
 
+	@Override
 	public int compareTo(Delayed d) {
 		return (int) (getDelay(TimeUnit.MILLISECONDS) - d.getDelay(TimeUnit.MILLISECONDS));
 	}
@@ -309,17 +301,18 @@ public abstract class Action implements Delayed {
 	public boolean isMandatoryParticipant(Agent p) {
 		return mandatoryActors.contains(p);
 	}
-	public List<Agent> getAllConfirmedParticipants() {
-		List<Agent> retValue = new ArrayList<Agent>();
+	@SuppressWarnings("unchecked")
+	public List<A> getAllConfirmedParticipants() {
+		List<A> retValue = new ArrayList<A>();
 		for (long id : agentAgreement.keySet()) {
 			if (agentAgreement.get(id)) {
-				retValue.add(Agent.getAgent(id));
+				retValue.add((A) Agent.getAgent(id));
 			}
 		}
 		return retValue;
 	}
-	public List<Agent> getAllInvitedParticipants() {
-		List<Agent> allAgents = new ArrayList<Agent>();
+	public List<A> getAllInvitedParticipants() {
+		List<A> allAgents = new ArrayList<A>();
 		allAgents.addAll(mandatoryActors);
 		allAgents.addAll(optionalActors);
 		return allAgents;

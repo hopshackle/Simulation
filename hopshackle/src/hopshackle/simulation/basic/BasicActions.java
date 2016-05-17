@@ -4,7 +4,7 @@ import hopshackle.simulation.*;
 
 import java.util.List;
 
-public enum BasicActions implements ActionEnum {
+public enum BasicActions implements ActionEnum<BasicAgent> {
 
 	REST,
 	FORAGE,
@@ -20,7 +20,7 @@ public enum BasicActions implements ActionEnum {
 	FIND_CIVILISATION;
 
 	@Override
-	public Action getAction(Agent a) {
+	public BasicAction getAction(BasicAgent a) {
 		BasicAgent ba = (BasicAgent)a;
 		switch (this) {
 		case REST:
@@ -64,7 +64,7 @@ public enum BasicActions implements ActionEnum {
 	}
 
 	@Override
-	public Action getAction(Agent a1, Agent a2) {
+	public Action<BasicAgent> getAction(BasicAgent a1, BasicAgent a2) {
 		return getAction(a1);
 	}
 
@@ -74,9 +74,8 @@ public enum BasicActions implements ActionEnum {
 	}
 
 	@Override
-	public boolean isChooseable(Agent a) {
+	public boolean isChooseable(BasicAgent a) {
 		BasicHex h = (BasicHex)a.getLocation();
-		BasicAgent ba = (BasicAgent) a;
 		List<Artefact> inventory = a.getInventory();
 		switch (this) {
 		case FORAGE:
@@ -111,30 +110,30 @@ public enum BasicActions implements ActionEnum {
 			}
 			return hasAHutInTheHex;
 		case BREED:
-			if (!ba.isMarried())
+			if (!a.isMarried())
 				return false;
 			if (!FARM.isChooseable(a)) 
 				return false;
 			if (h.getAgents().size() < 2)
 				return false;
-			if (!ba.ableToBreed())
+			if (!a.ableToBreed())
 				return false;
-			BasicAgent spouse = ba.getPartner();
+			BasicAgent spouse = a.getPartner();
 			if (spouse == null || !spouse.ableToBreed())
 				return false;
 			if (a.getNumberInInventoryOf(Resource.FOOD) == 0) 
 				return false;
 			return true;
 		case MARRY:
-			if (ba.isFemale())
+			if (a.isFemale())
 				return false;
-			if (ba.isMarried()) 
+			if (a.isMarried()) 
 				return false;
 			return true;
 		case FIND_FOREST:
 			if (h.getTerrainType() == TerrainType.FOREST)
 				return false;
-			if (BasicVariables.FOREST.getProximityToTerrain(ba) < 0.01)
+			if (BasicVariables.FOREST.getProximityToTerrain(a) < 0.01)
 				return false;
 			return true;
 		case FIND_PLAINS:
@@ -149,11 +148,11 @@ public enum BasicActions implements ActionEnum {
 				if (adjacentHex.getTerrainType() == TerrainType.OCEAN) 
 					return false;
 			}
-			if (BasicVariables.WATER.getProximityToTerrain(ba) < 0.01)
+			if (BasicVariables.WATER.getProximityToTerrain(a) < 0.01)
 				return false;
 			return true;
 		case FIND_UNKNOWN:
-			return ba.hasUnexploredLocations();
+			return a.hasUnexploredLocations();
 		case FIND_HUT:
 			boolean hasHut = false;
 			for (Artefact item : inventory) {

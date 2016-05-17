@@ -126,6 +126,25 @@ public class BasicMoveTest {
 	}
 	
 	@Test
+	public void moveCreatedFromBasicMoveStarts500InFuture() {
+		testAgent.setLocation(hexMap.getHexAt(2, 0));
+		testAgent.addKnowledgeOfLocation(hexMap.getHexAt(2, 2));
+		testAgent.addKnowledgeOfLocation(hexMap.getHexAt(2, 1));
+		testAgent.updatePlan();
+		assertEquals((long)w.getCurrentTime(), 0l);
+		testAP.processActionsInQueue(2);
+		assertEquals((long)w.getCurrentTime(), 400l);
+		assertTrue(testAgent.getNextAction() instanceof Move);
+		assertEquals(testAgent.getNextAction().getStartTime(), 500);
+		assertEquals(testAgent.getNextAction().getEndTime(), 1000);
+		testAP.processActionsInQueue(1);
+		assertEquals((long)w.getCurrentTime(), 500l);
+		testAP.processActionsInQueue(1);
+		assertEquals((long)w.getCurrentTime(), 1000l);
+		assertTrue(testAgent.getLocation() == hexMap.getHexAt(2, 1));
+	}
+	
+	@Test
 	public void unexploredLocationsSetToFalseOnceMoveUnknownFails() {
 		giveTestAgentFullKnowledge();
 		assertTrue(testAgent.hasUnexploredLocations());

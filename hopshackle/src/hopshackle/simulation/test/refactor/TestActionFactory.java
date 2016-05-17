@@ -4,10 +4,12 @@ import hopshackle.simulation.*;
 
 import java.util.*;
 
-class TestAction extends Action {
+class TestAction extends Action<Agent> {
+	boolean dieInMiddle = false;
 	public TestAction(List<Agent> mandatory, List<Agent> optional, long startOffset, long duration, boolean recordAction) {
 		super(mandatory, optional, startOffset, duration, recordAction);
 	}
+	
 	@Override
 	public void initialisation() {
 		waitABit();
@@ -15,6 +17,11 @@ class TestAction extends Action {
 	@Override 
 	public void doStuff() {
 		waitABit();
+		if (dieInMiddle) {
+			for (Agent a : getAllConfirmedParticipants()) {
+				a.die("Oops");
+			}
+		}
 	}
 	private void waitABit() {
 		try {
@@ -29,7 +36,7 @@ class TestAction extends Action {
 	}
 }
 
-class TestActionEnum implements ActionEnum {
+class TestActionEnum implements ActionEnum<Agent> {
 
 	@Override
 	public String getChromosomeDesc() {
@@ -37,14 +44,14 @@ class TestActionEnum implements ActionEnum {
 	}
 
 	@Override
-	public Action getAction(Agent a) {
+	public Action<Agent> getAction(Agent a) {
 		List<Agent> thisAgentAsList = new ArrayList<Agent>();
 		thisAgentAsList.add(a);
 		return new TestAction(thisAgentAsList, new ArrayList<Agent>(), 0, 1000, true);
 	}
 
 	@Override
-	public Action getAction(Agent a1, Agent a2) {
+	public Action<Agent> getAction(Agent a1, Agent a2) {
 		return getAction(a1);
 	}
 
@@ -69,7 +76,7 @@ class TestAgent extends Agent {
 		setDecider(new TestDecider());
 	}
 	@Override
-	public Action decide() {
+	public Action<Agent> decide() {
 		decisionsTaken++;
 		return super.decide();
 	}
@@ -77,7 +84,7 @@ class TestAgent extends Agent {
 
 class TestDecider extends BaseDecider {
 	
-	static List<ActionEnum> actionList = new ArrayList<ActionEnum>();
+	static List<ActionEnum<Agent>> actionList = new ArrayList<ActionEnum<Agent>>();
 	static {
 		actionList.add(new TestActionEnum());
 	}
@@ -112,16 +119,16 @@ class TestActionFactory {
 	}
 }
 
-class TestActionPolicy extends Policy<Action> {
-	Map<Action, Double> actionValues = new HashMap<Action, Double>();
+class TestActionPolicy extends Policy<Action<? extends Agent>> {
+	Map<Action<?>, Double> actionValues = new HashMap<Action<?>, Double>();
 	public TestActionPolicy(String name) {
 		super(name);
 	}
 	@Override
-	public double getValue(Action a, Agent p) {
+	public double getValue(Action<?> a, Agent p) {
 		return actionValues.getOrDefault(a, 0.0);
 	}
-	public void setValue(Action a, double value) {
+	public void setValue(Action<?> a, double value) {
 		actionValues.put(a, value);
 	}
 	

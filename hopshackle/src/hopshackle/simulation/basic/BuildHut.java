@@ -2,9 +2,9 @@ package hopshackle.simulation.basic;
 
 import hopshackle.simulation.*;
 
-public class BuildHut extends Action {
+public class BuildHut extends BasicAction {
 
-	public BuildHut(Agent a) {
+	public BuildHut(BasicAgent a) {
 		super(a, 5000, true);
 		Location hutLocation = a.getLocation();
 		if (hutLocation instanceof BasicHex) {

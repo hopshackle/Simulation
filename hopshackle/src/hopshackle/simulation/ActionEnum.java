@@ -1,12 +1,12 @@
 package hopshackle.simulation;
 
-public interface ActionEnum {
+public interface ActionEnum<A extends Agent> {
 
 	public String getChromosomeDesc();
 	
-	public Action getAction(Agent a);
+	public Action<A> getAction(A a);
 	
-	public Action getAction(Agent a1, Agent a2);
+	public Action<A> getAction(A a1, A a2);
 	
 	/* 
 	 * The isChooseable method returns true if the pre-conditions are met
@@ -15,7 +15,7 @@ public interface ActionEnum {
 	 * It should always be checked by any Decider.
 	 * 
 	 */
-	public boolean isChooseable(Agent a);
+	public boolean isChooseable(A a);
 	
 	@SuppressWarnings("unchecked")
 	public Enum getEnum();

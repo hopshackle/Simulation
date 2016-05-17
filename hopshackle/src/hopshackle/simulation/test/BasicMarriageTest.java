@@ -94,7 +94,7 @@ public class BasicMarriageTest {
 		createAgent(20, fullHealth, false);
 		createAgent(20, fullHealth-5, false);
 		new Marriage (maleAgent3, marriedAgent1);
-		Action marryAction = BasicActions.MARRY.getAction(maleAgent1);
+		BasicAction marryAction = BasicActions.MARRY.getAction(maleAgent1);
 		run(marryAction);
 		assertTrue(maleAgent1.isMarried());
 		assertEquals(maleAgent1.getPartner().getAge()/1000, 10);
@@ -104,7 +104,7 @@ public class BasicMarriageTest {
 	@Test
 	public void foragingOutputIsDoubled() {
 		int foodStart = maleAgent1.getNumberInInventoryOf(Resource.FOOD);
-		Action forage = BasicActions.FORAGE.getAction(maleAgent1);
+		BasicAction forage = BasicActions.FORAGE.getAction(maleAgent1);
 		run(forage);
 		int foodMid = maleAgent1.getNumberInInventoryOf(Resource.FOOD) + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		assertTrue(foodMid > foodStart);
@@ -122,7 +122,7 @@ public class BasicMarriageTest {
 		homeHex.changeCarryingCapacity(-9);
 		int foodStart = maleAgent1.getNumberInInventoryOf(Resource.FOOD)  + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		new Marriage(maleAgent1, femaleAgent2);
-		Action forage = BasicActions.FORAGE.getAction(maleAgent1);
+		BasicAction forage = BasicActions.FORAGE.getAction(maleAgent1);
 		run(forage);
 		int foodEnd = maleAgent1.getNumberInInventoryOf(Resource.FOOD) + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		assertEquals(foodEnd - foodStart, 1);	
@@ -132,7 +132,7 @@ public class BasicMarriageTest {
 	public void farmingOutputIsDoubled() {
 		int foodStart = femaleAgent1.getNumberInInventoryOf(Resource.FOOD)  + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		new Marriage(maleAgent1, femaleAgent2);
-		Action farm = BasicActions.FARM.getAction(maleAgent1);
+		BasicAction farm = BasicActions.FARM.getAction(maleAgent1);
 		run(farm);
 		int foodEnd = maleAgent1.getNumberInInventoryOf(Resource.FOOD) + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
 		assertEquals(foodEnd - foodStart, 4);
@@ -144,7 +144,7 @@ public class BasicMarriageTest {
 		hex2.setParentLocation(world);
 		homeHex.addAccessibleLocation(hex2);
 		new Marriage(maleAgent1, femaleAgent2);
-		Action move = new Move(maleAgent1, 0, 0, hex2);
+		BasicAction move = new Move(maleAgent1, 0, 0, hex2);
 		run(move);
 		assertTrue(maleAgent1.getLocation() == hex2);
 		assertTrue(femaleAgent2.getLocation() == hex2);
@@ -210,8 +210,8 @@ public class BasicMarriageTest {
 		assertEquals(BasicVariables.MARRIED_STATUS.getValue(femaleAgent3, femaleAgent3), 0.0, 0.001);
 	}
 	
-	private void run(Action a) {
-		for (Agent agent : a.getAllInvitedParticipants()) {
+	private void run(BasicAction a) {
+		for (BasicAgent agent : a.getAllInvitedParticipants()) {
 			a.agree(agent);
 		}
 		a.start();

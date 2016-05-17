@@ -4,12 +4,12 @@ import java.util.List;
 
 import hopshackle.simulation.*;
 
-public class BasicMove extends Action {
+public class BasicMove extends BasicAction {
 
 	private GoalMatcher locationMatcher;
 
-	public BasicMove(Agent agent, GoalMatcher locationMatcher) {
-		super(agent, 500, false);
+	public BasicMove(BasicAgent agent, GoalMatcher locationMatcher) {
+		super(agent, 400, false);
 		this.locationMatcher = locationMatcher;
 		world.recordAction(this); // bit of a hack - as locationMatcher provides part of the name of the action to be recorded
 	}
@@ -22,7 +22,7 @@ public class BasicMove extends Action {
 			terrain = ((Hex)nextMove).getTerrainType();
 		}
 		int timeTakenToMove = (int) (terrain.getPointsToEnter() * 1000);
-		Action moveAction = new Move(actor, 0, timeTakenToMove - 500, nextMove);
+		BasicAction moveAction = new Move(actor, 100, timeTakenToMove - 500, nextMove);
 		moveAction.addToAllPlans();
 	}
 
@@ -46,6 +46,7 @@ public class BasicMove extends Action {
 			return jPlan.getNextMove();
 		} else {
 			mover.setHasUnexploredLocations(false);
+			if (mover.getLocation() == null) logger.warning("Null location for " + mover);
 			List<Location> possibleMoves = mover.getLocation().getAccessibleLocations();
 			return possibleMoves.get(Dice.roll(1, possibleMoves.size()) - 1);
 		}
@@ -61,7 +62,7 @@ public class BasicMove extends Action {
 
 	public String toString() {
 		if (locationMatcher != null) 
-			return "MOVE_" + locationMatcher.toString();
+			return "MOVE_" + locationMatcher.toString() + " (" + plannedStartTime + "-" + plannedEndTime + ")";
 		else 
 			return "MOVE_NULL";
 

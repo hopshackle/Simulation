@@ -4,14 +4,14 @@ import java.util.*;
 
 import hopshackle.simulation.*;
 
-public class Marry extends Action {
+public class Marry extends BasicAction {
 	
 	BasicAgent p1, p2;
 	
-	public Marry(List<Agent> partners) {
-		super(partners, new ArrayList<Agent>(), ActionPlan.timeUntilAllAvailable(partners), 1000, true);
-		p1 = (BasicAgent) mandatoryActors.get(0);
-		p2 = (BasicAgent) mandatoryActors.get(1);
+	public Marry(List<BasicAgent> partners) {
+		super(partners, new ArrayList<BasicAgent>(), ActionPlan.timeUntilAllAvailable(partners), 1000, true);
+		p1 = mandatoryActors.get(0);
+		p2 = mandatoryActors.get(1);
 	}
 
 	public Marry(BasicAgent ba, BasicAgent partner) {
@@ -21,14 +21,17 @@ public class Marry extends Action {
 	@Override
 	public void initialisation() {
 		assert(mandatoryActors.size() == 2) : "Marriage without two participants " + mandatoryActors; 
-		new Marriage(p1, p2);
+		if (!p1.isMarried() && !p2.isMarried()) {
+			new Marriage(p1, p2);
+		} else {
+			this.cancel();
+		}
 	}
 	
 	@Override
-	public void doNextDecision(Agent a) {
-		BasicAgent ba = (BasicAgent)a;
-		if (ba.isFemale()) {
-			ba.purgeActions(false);
+	public void doNextDecision(BasicAgent a) {
+		if (a.isFemale()) {
+			a.purgeActions(false);
 			return;
 		}
 		super.doNextDecision(a);

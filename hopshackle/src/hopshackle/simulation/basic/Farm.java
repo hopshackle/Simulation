@@ -2,17 +2,16 @@ package hopshackle.simulation.basic;
 
 import hopshackle.simulation.*;
 
-public class Farm extends Action {
+public class Farm extends BasicAction {
 
-	public Farm(Agent a) {
+	public Farm(BasicAgent a) {
 		super(a, 4000, true);
 	}
 	
 	public void doStuff() {
 		actor.addItem(Resource.FOOD);
 		actor.addItem(Resource.FOOD);
-		BasicAgent ba = (BasicAgent) actor;
-		if (ba.isMarried()) {
+		if (actor.isMarried()) {
 			actor.addItem(Resource.FOOD);
 			actor.addItem(Resource.FOOD);
 		}
