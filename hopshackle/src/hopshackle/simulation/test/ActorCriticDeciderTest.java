@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import org.junit.*;
 public class ActorCriticDeciderTest {
 
-	private ActorCriticDecider decider;
+	private ActorCriticDecider<BasicAgent> decider;
 	private BasicAgent agent;
 	private World world;
-	private ArrayList<ActionEnum> actions = new ArrayList<ActionEnum>();
+	private ArrayList<ActionEnum<BasicAgent>> actions = new ArrayList<ActionEnum<BasicAgent>>();
 	private ArrayList<GeneticVariable> variables = new ArrayList<GeneticVariable>();
-	private AgentTeacher agentTeacher = new AgentTeacher();
+	private AgentTeacher<BasicAgent> agentTeacher = new AgentTeacher<BasicAgent>();
 	private HexMap<BasicHex> hexMap;
 	private BasicHex plainsHex;
 
@@ -29,7 +29,7 @@ public class ActorCriticDeciderTest {
 		variables.add(BasicVariables.HEALTH);
 		variables.add(BasicVariables.FOOD_LEVEL);
 
-		decider = new ActorCriticDecider(actions, variables);
+		decider = new ActorCriticDecider<BasicAgent>(actions, variables);
 		agent.setDecider(decider);
 		decider.setTeacher(agentTeacher);
 
@@ -45,8 +45,8 @@ public class ActorCriticDeciderTest {
 		double forageValue = decider.valueOption(BasicActions.FORAGE, agent, agent);
 		double restValue = decider.valueOption(BasicActions.REST, agent, agent);
 
-		ActionEnum decisionTaken = decider.decide(agent, agent);
-		ActionEnum decisionNotTaken = BasicActions.REST;
+		ActionEnum<BasicAgent> decisionTaken = decider.decide(agent, agent);
+		ActionEnum<BasicAgent> decisionNotTaken = BasicActions.REST;
 		double decisionTakenValue = forageValue;
 		double decisionNotTakenValue = restValue; 
 		if (decisionTaken == BasicActions.REST) {
@@ -55,7 +55,7 @@ public class ActorCriticDeciderTest {
 			decisionNotTakenValue = forageValue;
 		}
 
-		ExperienceRecord exp = agentTeacher.getExperienceRecords(agent).get(0);
+		ExperienceRecord<BasicAgent> exp = agentTeacher.getExperienceRecords(agent).get(0);
 		exp.updateWithResults(1.0, decider.getCurrentState(agent, agent), actions, false);
 		decider.learnFrom(exp, 1.0);
 		double laterValue = decider.valueState(agent);

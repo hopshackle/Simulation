@@ -4,9 +4,9 @@ import hopshackle.simulation.*;
 
 import java.util.*;
 
-class TestAction extends Action<Agent> {
+class TestAction extends Action<TestAgent> {
 	boolean dieInMiddle = false;
-	public TestAction(List<Agent> mandatory, List<Agent> optional, long startOffset, long duration, boolean recordAction) {
+	public TestAction(List<TestAgent> mandatory, List<TestAgent> optional, long startOffset, long duration, boolean recordAction) {
 		super(mandatory, optional, startOffset, duration, recordAction);
 	}
 	
@@ -36,7 +36,7 @@ class TestAction extends Action<Agent> {
 	}
 }
 
-class TestActionEnum implements ActionEnum<Agent> {
+class TestActionEnum implements ActionEnum<TestAgent> {
 
 	@Override
 	public String getChromosomeDesc() {
@@ -44,19 +44,19 @@ class TestActionEnum implements ActionEnum<Agent> {
 	}
 
 	@Override
-	public Action<Agent> getAction(Agent a) {
-		List<Agent> thisAgentAsList = new ArrayList<Agent>();
+	public Action<TestAgent> getAction(TestAgent a) {
+		List<TestAgent> thisAgentAsList = new ArrayList<TestAgent>();
 		thisAgentAsList.add(a);
-		return new TestAction(thisAgentAsList, new ArrayList<Agent>(), 0, 1000, true);
+		return new TestAction(thisAgentAsList, new ArrayList<TestAgent>(), 0, 1000, true);
 	}
 
 	@Override
-	public Action<Agent> getAction(Agent a1, Agent a2) {
+	public Action<TestAgent> getAction(TestAgent a1, Agent a2) {
 		return getAction(a1);
 	}
 
 	@Override
-	public boolean isChooseable(Agent a) {
+	public boolean isChooseable(TestAgent a) {
 		return true;
 	}
 
@@ -76,15 +76,15 @@ class TestAgent extends Agent {
 		setDecider(new TestDecider());
 	}
 	@Override
-	public Action<Agent> decide() {
+	public Action<?> decide() {
 		decisionsTaken++;
 		return super.decide();
 	}
 }
 
-class TestDecider extends BaseDecider {
+class TestDecider extends BaseDecider<TestAgent> {
 	
-	static List<ActionEnum<Agent>> actionList = new ArrayList<ActionEnum<Agent>>();
+	static List<ActionEnum<TestAgent>> actionList = new ArrayList<ActionEnum<TestAgent>>();
 	static {
 		actionList.add(new TestActionEnum());
 	}
@@ -94,7 +94,7 @@ class TestDecider extends BaseDecider {
 	}
 
 	@Override
-	public double valueOption(ActionEnum option, Agent decidingAgent, Agent contextAgent) {
+	public double valueOption(ActionEnum<TestAgent> option, TestAgent decidingAgent, Agent contextAgent) {
 		return 0;
 	}
 
@@ -107,8 +107,8 @@ class TestActionFactory {
 		this.allAgents = allAgents;
 	}
 	public TestAction factory(int mandatory, int optional, long offset, long duration) {
-		List<Agent> mandatoryAgents = new ArrayList<Agent>();
-		List<Agent> optionalAgents = new ArrayList<Agent>();
+		List<TestAgent> mandatoryAgents = new ArrayList<TestAgent>();
+		List<TestAgent> optionalAgents = new ArrayList<TestAgent>();
 		for (int i = 0; i < mandatory; i++) {
 			mandatoryAgents.add(allAgents.get(i));
 		}
@@ -119,16 +119,16 @@ class TestActionFactory {
 	}
 }
 
-class TestActionPolicy extends Policy<Action<? extends Agent>> {
-	Map<Action<?>, Double> actionValues = new HashMap<Action<?>, Double>();
+class TestActionPolicy extends Policy<TestAction> {
+	Map<TestAction, Double> actionValues = new HashMap<TestAction, Double>();
 	public TestActionPolicy(String name) {
 		super(name);
 	}
 	@Override
-	public double getValue(Action<?> a, Agent p) {
+	public double getValue(TestAction a, Agent p) {
 		return actionValues.getOrDefault(a, 0.0);
 	}
-	public void setValue(Action<?> a, double value) {
+	public void setValue(TestAction a, double value) {
 		actionValues.put(a, value);
 	}
 	

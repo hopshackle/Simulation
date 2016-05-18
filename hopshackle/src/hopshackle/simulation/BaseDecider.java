@@ -4,12 +4,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-public abstract class BaseDecider implements Decider {
+public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
-	protected List<ActionEnum> actionSet = new ArrayList<ActionEnum>();
+	protected List<ActionEnum<A>> actionSet = new ArrayList<ActionEnum<A>>();
 	protected List<GeneticVariable> variableSet = new ArrayList<GeneticVariable>();
-	protected Teacher teacher;
+	protected Teacher<A> teacher;
 	protected String name = "DEFAULT";
 	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMinChance", "0.0");
@@ -21,9 +21,9 @@ public abstract class BaseDecider implements Decider {
 	private static AtomicInteger idFountain = new AtomicInteger(0);
 	private int id;
 
-	public BaseDecider(List<? extends ActionEnum> actions, List<GeneticVariable> variables) {
+	public BaseDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables) {
 		if (actions != null) {
-			for (ActionEnum ae : actions)
+			for (ActionEnum<A> ae : actions)
 				actionSet.add(ae);
 		}
 		variableSet = variables;
@@ -31,15 +31,15 @@ public abstract class BaseDecider implements Decider {
 	}
 
 	@Override
-	public abstract double valueOption(ActionEnum option, Agent decidingAgent, Agent contextAgent);
+	public abstract double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent);
 
 	@Override
-	public void learnFrom(ExperienceRecord exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		// no default implementation - requires override
 	}
 
 	@Override
-	public void learnFromBatch(ExperienceRecord[] exp, double maxResult) {
+	public void learnFromBatch(ExperienceRecord<A>[] exp, double maxResult) {
 		// no default implementation - requires override
 	}
 
@@ -52,35 +52,35 @@ public abstract class BaseDecider implements Decider {
 	 */
 
 	@Override
-	public ActionEnum decide(Agent decidingAgent) {
-		ActionEnum retValue = decide(decidingAgent, null);
+	public ActionEnum<A> decide(A decidingAgent) {
+		ActionEnum<A> retValue = decide(decidingAgent, null);
 		return retValue;
 	}
 
 	@Override
-	public ActionEnum decide(Agent decidingAgent, Agent contextAgent) {
-		ActionEnum decisionMade = makeDecision(decidingAgent, contextAgent);
+	public ActionEnum<A> decide(A decidingAgent, Agent contextAgent) {
+		ActionEnum<A> decisionMade = makeDecision(decidingAgent, contextAgent);
 		learnFromDecision(decidingAgent, contextAgent, decisionMade);
 
 		return decisionMade;
 	}
 
-	protected ActionEnum makeDecision(Agent decidingAgent, Agent contextAgent) {
+	protected ActionEnum<A> makeDecision(A decidingAgent, Agent contextAgent) {
 		double temp = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		double explorationChance = (maxChanceOfRandomChoice - minChanceOfRandomChoice) * temp + minChanceOfRandomChoice;
 		return makeDecision(decidingAgent, contextAgent, explorationChance);
 	}
 
 	@Override
-	public ActionEnum getOptimalDecision(Agent decidingAgent, Agent contextAgent) {
+	public ActionEnum<A> getOptimalDecision(A decidingAgent, Agent contextAgent) {
 		return makeDecision(decidingAgent, contextAgent, 0.0);
 	}
 
-	protected ActionEnum makeDecision(Agent decidingAgent, Agent contextAgent, double explorationChance) {
+	protected ActionEnum<A> makeDecision(A decidingAgent, Agent contextAgent, double explorationChance) {
 		if (decidingAgent.isDead()) return null;
 
-		ActionEnum winningChoice = null;
-		List<ActionEnum> chooseableOptions = getChooseableOptions(decidingAgent, contextAgent);
+		ActionEnum <A>winningChoice = null;
+		List<ActionEnum<A>> chooseableOptions = getChooseableOptions(decidingAgent, contextAgent);
 		if (chooseableOptions.size() == 0) return null;
 
 		double chance = Math.random();
@@ -93,9 +93,9 @@ public abstract class BaseDecider implements Decider {
 		return winningChoice;
 	}
 
-	public List<ActionEnum> getChooseableOptions(Agent decidingAgent, Agent contextAgent) {
-		List<ActionEnum> retValue = new ArrayList<ActionEnum>();
-		for (ActionEnum option : actionSet) {
+	public List<ActionEnum<A>> getChooseableOptions(A decidingAgent, Agent contextAgent) {
+		List<ActionEnum<A>> retValue = new ArrayList<ActionEnum<A>>();
+		for (ActionEnum<A> option : actionSet) {
 			if (option.isChooseable(decidingAgent)) {
 				retValue.add(option);
 			}
@@ -103,8 +103,8 @@ public abstract class BaseDecider implements Decider {
 		return retValue;
 	}
 
-	protected ActionEnum selectOption(List<ActionEnum> optionList, Agent decidingAgent, Agent contextAgent) {
-		ActionEnum winningChoice = null;
+	protected ActionEnum<A> selectOption(List<ActionEnum<A>> optionList, A decidingAgent, Agent contextAgent) {
+		ActionEnum<A> winningChoice = null;
 
 		List<Double> optionValues = getValuesPerOption(optionList, decidingAgent, contextAgent);
 		double highestScore = Double.NEGATIVE_INFINITY;
@@ -121,7 +121,7 @@ public abstract class BaseDecider implements Decider {
 
 		if (winningChoice == null) {
 			String logString = "No option chosen in Decider " + this.toString() + ". ";
-			for (ActionEnum option : optionList)
+			for (ActionEnum<A> option : optionList)
 				logString = logString +  option.toString() + "   ";
 			logger.warning(logString);
 		}
@@ -129,8 +129,8 @@ public abstract class BaseDecider implements Decider {
 		return winningChoice;
 	}
 
-	protected ActionEnum selectOptionUsingBoltzmann(List<ActionEnum> optionList, Agent decidingAgent, Agent contextAgent) {
-		ActionEnum winningChoice = null;
+	protected ActionEnum<A> selectOptionUsingBoltzmann(List<ActionEnum<A>> optionList, A decidingAgent, Agent contextAgent) {
+		ActionEnum<A> winningChoice = null;
 		List<Double> optionWeightings = getNormalisedBoltzmannValuesPerOption(optionList, decidingAgent, contextAgent);
 		double randomNumber = Math.random();
 		double runningSum = 0.0;
@@ -146,7 +146,7 @@ public abstract class BaseDecider implements Decider {
 
 		if (winningChoice == null) {
 			String logString = "No option chosen in Decider " + this.toString() + ". ";
-			for (ActionEnum option : optionList)
+			for (ActionEnum<A> option : optionList)
 				logString = logString +  option.toString() + "   ";
 			logger.warning(logString);
 			logger.warning(optionWeightings.toString());
@@ -155,7 +155,7 @@ public abstract class BaseDecider implements Decider {
 		return winningChoice;
 	}
 
-	protected List<Double> getValuesPerOption(List<ActionEnum> optionList, Agent decidingAgent, Agent contextAgent){
+	protected List<Double> getValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent, Agent contextAgent){
 		List<Double> retValue = new ArrayList<Double>();
 		for (int i = 0; i < optionList.size(); i++) {
 			double optionValue = this.valueOption(optionList.get(i), decidingAgent, contextAgent);
@@ -164,7 +164,7 @@ public abstract class BaseDecider implements Decider {
 		return retValue;
 	}
 
-	protected List<Double> getNormalisedBoltzmannValuesPerOption(List<ActionEnum> optionList, Agent decidingAgent, Agent contextAgent){
+	protected List<Double> getNormalisedBoltzmannValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent, Agent contextAgent){
 		List<Double> baseValuesPerOption = getValuesPerOption(optionList, decidingAgent, contextAgent);
 		for (int i = 0; i < baseValuesPerOption.size(); i++)
 			if (baseValuesPerOption.get(i) == Double.NaN)
@@ -195,19 +195,19 @@ public abstract class BaseDecider implements Decider {
 	}
 
 
-	protected void learnFromDecision(Agent decidingAgent, Agent contextAgent, ActionEnum decisionMade) {
+	protected void learnFromDecision(A decidingAgent, Agent contextAgent, ActionEnum<A> decisionMade) {
 		if (teacher != null) 
 			teacher.registerDecision(decidingAgent, getExperienceRecord(decidingAgent, contextAgent, decisionMade));
 	}
 
-	protected ExperienceRecord getExperienceRecord(Agent decidingAgent, Agent contextAgent, ActionEnum option) {
-		ExperienceRecord output = new ExperienceRecord(variableSet, getCurrentState(decidingAgent, contextAgent), option, 
+	protected ExperienceRecord<A> getExperienceRecord(A decidingAgent, Agent contextAgent, ActionEnum<A> option) {
+		ExperienceRecord<A> output = new ExperienceRecord<A>(variableSet, getCurrentState(decidingAgent, contextAgent), option, 
 				getChooseableOptions(decidingAgent, contextAgent));
 		return output;
 	}
 
 	@Override
-	public double[] getCurrentState(Agent decidingAgent, Agent contextAgent) {
+	public double[] getCurrentState(A decidingAgent, Agent contextAgent) {
 		double[] inputs = new double[variableSet.size()];
 		for (int i = 0; i < variableSet.size(); i ++) {
 			GeneticVariable gv = variableSet.get(i);
@@ -217,17 +217,17 @@ public abstract class BaseDecider implements Decider {
 	}
 
 	@Override
-	public ActionEnum decideWithoutLearning(Agent decidingAgent, Agent contextAgent) {
+	public ActionEnum<A> decideWithoutLearning(A decidingAgent, Agent contextAgent) {
 		return makeDecision(decidingAgent, contextAgent);
 	}
 
 	@Override
-	public List<ActionEnum> getActions() {
+	public List<ActionEnum<A>> getActions() {
 		return HopshackleUtilities.cloneList(actionSet);
 	}
-	public void setActions(List<? extends ActionEnum> actionList) {
-		actionSet = new ArrayList<ActionEnum>();
-		for (ActionEnum ae : actionList) {
+	public void setActions(List<? extends ActionEnum<A>> actionList) {
+		actionSet = new ArrayList<ActionEnum<A>>();
+		for (ActionEnum<A> ae : actionList) {
 			actionSet.add(ae);
 		}
 	}
@@ -243,11 +243,11 @@ public abstract class BaseDecider implements Decider {
 	}
 
 	@Override
-	public void setTeacher(Teacher teacher) {
+	public void setTeacher(Teacher<A> teacher) {
 		this.teacher = teacher;
 	}
 	@Override
-	public Teacher getTeacher() {
+	public Teacher<A> getTeacher() {
 		return teacher;
 	}
 
@@ -256,7 +256,7 @@ public abstract class BaseDecider implements Decider {
 	 *  Default behaviour is to return the Decider on which the call is made
 	 */
 	@Override
-	public Decider crossWith(Decider careerDecider) {
+	public Decider<A> crossWith(Decider<A> careerDecider) {
 		return this;
 	}
 

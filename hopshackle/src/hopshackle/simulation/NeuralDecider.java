@@ -8,13 +8,13 @@ import org.encog.neural.data.basic.*;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
-public class NeuralDecider extends QDecider {
+public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	protected Hashtable<String, BasicNetwork> brain;
 	protected static double temperature;
 	protected double maxNoise;
-	private HashMap<ActionEnum, Integer> last100Choices;
-	private HashMap<ActionEnum, Integer> previous100Choices;
+	private HashMap<ActionEnum<A>, Integer> last100Choices;
+	private HashMap<ActionEnum<A>, Integer> previous100Choices;
 	private int decisionCounter = 0;
 	private boolean nd_debug = false;
 	private static boolean initialOptimismTraining = SimProperties.getProperty("NeuralDeciderInitialOptimismTraining", "true").equals("true");
@@ -22,15 +22,15 @@ public class NeuralDecider extends QDecider {
 	protected double baseMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum", "0.0");
 	private double overrideLearningCoefficient, overrideMomentum; 
 
-	public NeuralDecider(List<? extends ActionEnum> actions, List<GeneticVariable> variables){
+	public NeuralDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables){
 		super(actions, variables);
 		maxNoise = SimProperties.getPropertyAsDouble("NeuralNoise", "0.20");
 		// Each NeuralDecider will have a brain consisting of:
 		//	A Neural Network for each Option, containing 1 output Neuron,
 		//  and a number of input Neurons equal to the Variables
 		brain = initialiseFullBrain(actionSet, variableSet);
-		last100Choices = new HashMap<ActionEnum, Integer>();
-		previous100Choices = new HashMap<ActionEnum, Integer>();
+		last100Choices = new HashMap<ActionEnum<A>, Integer>();
+		previous100Choices = new HashMap<ActionEnum<A>, Integer>();
 		overrideLearningCoefficient = SimProperties.getPropertyAsDouble("NeuralLearningCoefficient." + toString(), "-99.0");
 		overrideMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");
 		if (overrideLearningCoefficient > -98) baseLearningCoefficient = overrideLearningCoefficient;
@@ -48,15 +48,15 @@ public class NeuralDecider extends QDecider {
 		super.setVariables(genVar);
 		brain = initialiseFullBrain(actionSet, variableSet);
 	}
-	public void setActions(List<? extends ActionEnum> actions) {
+	public void setActions(List<? extends ActionEnum<A>> actions) {
 		super.setActions(actions);
 		brain = initialiseFullBrain(actionSet, variableSet);
 	}
 
-	protected static Hashtable<String, BasicNetwork> initialiseFullBrain(List<ActionEnum> actionSet, List<GeneticVariable> varSet) {
+	protected static <A extends Agent> Hashtable<String, BasicNetwork> initialiseFullBrain(List<ActionEnum<A>> actionSet, List<GeneticVariable> varSet) {
 		Hashtable<String, BasicNetwork> retValue = new Hashtable<String, BasicNetwork>();
 		if (actionSet == null || varSet == null) return retValue;
-		for (ActionEnum ae : actionSet) {
+		for (ActionEnum<A> ae : actionSet) {
 			retValue.put(ae.toString(), initialiseBrain(varSet));
 		}
 		return retValue;
@@ -78,7 +78,7 @@ public class NeuralDecider extends QDecider {
 	}
 
 	@Override
-	public double valueOption(ActionEnum option, Agent decidingAgent, Agent contextAgent) {
+	public double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent) {
 		double[] state = getCurrentState(decidingAgent, contextAgent);
 		double retValue = valueOption(option, state);
 		if (nd_debug)
@@ -87,7 +87,7 @@ public class NeuralDecider extends QDecider {
 	}
 	
 	@Override
-	public double valueOption(ActionEnum option, double[] state) {
+	public double valueOption(ActionEnum<A> option, double[] state) {
 		BasicNetwork brainSection = brain.get(option.toString());
 		if (brainSection == null) {
 			logger.severe("Action reference for " + option.toString() + " not found in Brain");
@@ -141,14 +141,14 @@ public class NeuralDecider extends QDecider {
 	}
 
 
-	public static NeuralDecider createNeuralDecider(File saveFile) {
-		NeuralDecider retValue = null;
+	public static <A extends Agent> NeuralDecider<A> createNeuralDecider(File saveFile) {
+		NeuralDecider<A> retValue = null;
 		try {
 			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(saveFile));
 
 			ArrayList actionSet = (ArrayList) ois.readObject();
 			ArrayList variableSet = (ArrayList) ois.readObject();
-			retValue = new NeuralDecider(actionSet, variableSet);
+			retValue = new NeuralDecider<A>(actionSet, variableSet);
 
 			BasicNetwork[] actionNN = new BasicNetwork[actionSet.size()];
 			for (int n=0; n<actionSet.size(); n++)
@@ -186,7 +186,7 @@ public class NeuralDecider extends QDecider {
 
 			oos.writeObject(actionSet);
 			oos.writeObject(variableSet);
-			for (ActionEnum ae : actionSet)
+			for (ActionEnum<A> ae : actionSet)
 				oos.writeObject(brain.get(ae.toString()));
 
 			oos.close();
@@ -199,7 +199,7 @@ public class NeuralDecider extends QDecider {
 		} 
 	}
 
-	protected void updateBrain(NeuralDecider parent) {
+	protected void updateBrain(NeuralDecider<A> parent) {
 		this.brain = parent.brain;
 		setName(parent.toString());
 	}
@@ -234,7 +234,7 @@ public class NeuralDecider extends QDecider {
 	 *  as long as the action and variable Sets are identical
 	 *  (or at least have the same number of items across the two Deciders)
 	 */
-	public Decider crossWith(Decider otherDecider) {
+	public Decider<A> crossWith(Decider<A> otherDecider) {
 		if (!(otherDecider instanceof NeuralDecider))
 			return super.crossWith(otherDecider);
 		if (this.variableSet.size() != otherDecider.getVariables().size())
@@ -243,7 +243,7 @@ public class NeuralDecider extends QDecider {
 			return super.crossWith(otherDecider);
 		if (this == otherDecider) return this;
 
-		NeuralDecider retValue = new NeuralDecider(actionSet, variableSet);
+		NeuralDecider<A> retValue = new NeuralDecider<A>(actionSet, variableSet);
 		retValue.setTeacher(this.getTeacher());
 		BasicNetwork[] newBrain = new BasicNetwork[actionSet.size()];
 		for (int n = 0; n < actionSet.size(); n++) {
@@ -251,7 +251,7 @@ public class NeuralDecider extends QDecider {
 			if (Math.random() < 0.5) {
 				newBrain[n] = this.brain.get(actionSet.get(n).toString());
 			} else {
-				newBrain[n] = ((NeuralDecider)otherDecider).brain.get(actionSet.get(n).toString());
+				newBrain[n] = ((NeuralDecider<A>)otherDecider).brain.get(actionSet.get(n).toString());
 			}
 		}
 
@@ -264,10 +264,10 @@ public class NeuralDecider extends QDecider {
 		return maxNoise;
 	}
 
-	public void addDecision(ActionEnum option) {
+	public void addDecision(ActionEnum<A> option) {
 		if (decisionCounter >= 100) {
 			previous100Choices = last100Choices;
-			last100Choices = new HashMap<ActionEnum, Integer>();
+			last100Choices = new HashMap<ActionEnum<A>, Integer>();
 			decisionCounter = 0;
 		}
 		Integer number = last100Choices.get(option);
@@ -278,13 +278,13 @@ public class NeuralDecider extends QDecider {
 	}
 
 	@Override
-	public ActionEnum decide(Agent decidingAgent) {
-		ActionEnum retValue = super.decide(decidingAgent);
+	public ActionEnum<A> decide(A decidingAgent) {
+		ActionEnum<A> retValue = super.decide(decidingAgent);
 		addDecision(retValue);
 		return retValue;
 	}
 
-	public double getPercentageOfOption(ActionEnum option) {
+	public double getPercentageOfOption(ActionEnum<A> option) {
 		Integer number1 = last100Choices.get(option);
 		if (number1 == null) number1 = 0;
 		Integer number2 = previous100Choices.get(option);
@@ -296,7 +296,7 @@ public class NeuralDecider extends QDecider {
 	}
 	
 	@Override
-	public void learnFrom(ExperienceRecord exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		BasicNetwork brainToTrain = brain.get(exp.getActionTaken().toString());
 		if (exp.getVariables().size() != brainToTrain.getInputCount()) {
 			logger.severe("Input data in ExperienceRecord not the same as input neurons " 

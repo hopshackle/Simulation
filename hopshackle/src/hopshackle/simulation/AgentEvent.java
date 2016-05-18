@@ -4,6 +4,7 @@ import java.awt.AWTEvent;
 
 public class AgentEvent extends AWTEvent {
 
+	private static final long serialVersionUID = 1L;
 	private Agent agent;
 	private AgentEvents event;
 	

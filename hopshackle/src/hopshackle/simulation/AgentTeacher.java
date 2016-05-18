@@ -4,13 +4,13 @@ import java.awt.AWTEvent;
 import java.awt.event.AWTEventListener;
 import java.util.*;
 
-public class AgentTeacher implements Teacher<Agent>, AWTEventListener {
+public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListener {
 
-	private HashMap<Agent, List<ExperienceRecord>> tdArrayHash = new HashMap<Agent, List<ExperienceRecord>>();
-	private HashMap<Agent, Double> lastScoresOfAgents = new HashMap<Agent, Double>();
+	private HashMap<A, List<ExperienceRecord<A>>> tdArrayHash = new HashMap<A, List<ExperienceRecord<A>>>();
+	private HashMap<A, Double> lastScoresOfAgents = new HashMap<A, Double>();
 
 	@Override
-	public synchronized boolean registerDecision(Agent a, ExperienceRecord td) {
+	public synchronized boolean registerDecision(A a, ExperienceRecord<A> td) {
 		if (!agentAlreadySeen(a)) {
 			addAgentToList(a);
 			listenToAgent(a);
@@ -25,34 +25,34 @@ public class AgentTeacher implements Teacher<Agent>, AWTEventListener {
 		return false;
 	}
 
-	private void addAgentToList(Agent a) {
-		List<ExperienceRecord> tdList = new ArrayList<ExperienceRecord>();
+	private void addAgentToList(A a) {
+		List<ExperienceRecord<A>> tdList = new ArrayList<ExperienceRecord<A>>();
 		tdArrayHash.put(a, tdList);
 		lastScoresOfAgents.put(a, a.getScore());
 	}
 
-	private void addDecisionToHash(Agent a, ExperienceRecord td) {
-		List<ExperienceRecord> tdListForAgent = tdArrayHash.get(a);
+	private void addDecisionToHash(Agent a, ExperienceRecord<A> td) {
+		List<ExperienceRecord<A>> tdListForAgent = tdArrayHash.get(a);
 		tdListForAgent.add(td);
 	}
 
-	private void listenToAgent(Agent a) {
+	private void listenToAgent(A a) {
 		a.addListener(this);
 	}
 
 	@Override
-	public List<ExperienceRecord> getExperienceRecords(Agent a) {
+	public List<ExperienceRecord<A>> getExperienceRecords(A a) {
 		if (agentAlreadySeen(a)) {
-			List<ExperienceRecord> tdArray = tdArrayHash.get(a);
+			List<ExperienceRecord<A>> tdArray = tdArrayHash.get(a);
 			return HopshackleUtilities.cloneList(tdArray);
 		}
-		return new ArrayList<ExperienceRecord>();
+		return new ArrayList<ExperienceRecord<A>>();
 	}
 
 	@Override
 	public synchronized void eventDispatched(AWTEvent event) {
 		if (event instanceof AgentEvent) {
-			Agent a = ((AgentEvent)event).getAgent();
+			A a = (A) ((AgentEvent)event).getAgent();
 			switch (((AgentEvent) event).getEvent()) {
 			case DEATH:
 				processDecisionsForAgent(a);
@@ -65,24 +65,24 @@ public class AgentTeacher implements Teacher<Agent>, AWTEventListener {
 		}
 	} 
 
-	private void processDecisionsForAgent(Agent a) {
-		List<ExperienceRecord> tdArray = tdArrayHash.get(a);
+	private void processDecisionsForAgent(A a) {
+		List<ExperienceRecord<A>> tdArray = tdArrayHash.get(a);
 		double reward = a.getScore() - lastScoresOfAgents.get(a);
-		Decider agentDecider = a.getDecider();
+		Decider<A> agentDecider = (Decider<A>) a.getDecider();
 		if (agentDecider != null) {
-			for (ExperienceRecord td : tdArray) {
-				Decider d = a.getDecider();
+			for (ExperienceRecord<A> td : tdArray) {
+				Decider<A> d = (Decider<A>) a.getDecider();
 				double[] newState = d.getCurrentState(a, a);
-				List<ActionEnum> possibleActions = a.getDecider().getChooseableOptions(a, a);
+				List<ActionEnum<A>> possibleActions = d.getChooseableOptions(a, a);
 				td.updateWithResults(reward, newState, possibleActions, a.isDead());
 				agentDecider.learnFrom(td, a.getMaxScore());
 			}
 		}
 		lastScoresOfAgents.put(a, a.getScore());
-		tdArrayHash.put(a, new ArrayList<ExperienceRecord>());
+		tdArrayHash.put(a, new ArrayList<ExperienceRecord<A>>());
 	}
 
-	private void stopListeningToAgent(Agent a) {
+	private void stopListeningToAgent(A a) {
 		tdArrayHash.remove(a);
 		lastScoresOfAgents.remove(a);
 	}

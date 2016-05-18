@@ -6,7 +6,7 @@ public interface ActionEnum<A extends Agent> {
 	
 	public Action<A> getAction(A a);
 	
-	public Action<A> getAction(A a1, A a2);
+	public <B extends Agent> Action<A> getAction(A a1, B a2);
 	
 	/* 
 	 * The isChooseable method returns true if the pre-conditions are met

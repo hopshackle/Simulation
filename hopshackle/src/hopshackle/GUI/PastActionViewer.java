@@ -43,7 +43,7 @@ public class PastActionViewer extends JPanel implements Observer {
 	                "Action Number",
 	                "Total %age"};
 			
-			private List<Action> actionNames;
+			private List<Action<?>> actionNames;
 		    
 		    public PastActionTableModel(Agent c)  {
 		    	actionNames = c.getExecutedActions();

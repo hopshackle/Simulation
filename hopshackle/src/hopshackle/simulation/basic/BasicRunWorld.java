@@ -146,7 +146,7 @@ public class BasicRunWorld {
 	//	variablesToUse.remove(BasicVariables.GENDER);
 	//	variablesToUse.remove(BasicVariables.MARRIED_STATUS);
 
-		ArrayList<ActionEnum> actionsToUse = new ArrayList<ActionEnum>(EnumSet.allOf(BasicActions.class));
+		ArrayList<ActionEnum<BasicAgent>> actionsToUse = new ArrayList<ActionEnum<BasicAgent>>(EnumSet.allOf(BasicActions.class));
 		actionsToUse.remove(BasicActions.FIND_WATER);
 
 		//		final StateDecider basicDecider = new StateOffPolicyDecider(
@@ -155,9 +155,9 @@ public class BasicRunWorld {
 		//		basicDecider.setStateType("BASIC");
 		//		basicDecider.setPigeonHoles(7);
 
-		final GeneralLinearQDecider basicDecider = new GeneralLinearQDecider(actionsToUse, variablesToUse);
+		final GeneralLinearQDecider<BasicAgent> basicDecider = new GeneralLinearQDecider<BasicAgent>(actionsToUse, variablesToUse);
 
-		basicDecider.setTeacher(new AgentTeacher());
+		basicDecider.setTeacher(new AgentTeacher<BasicAgent>());
 
 		class AddPopulation extends TimerTask {
 			public void run() {
@@ -181,7 +181,7 @@ public class BasicRunWorld {
 			@Override
 			public void run() {
 				double largestWeight = basicDecider.getLargestWeight();
-				for (ActionEnum ae : basicDecider.getActions()) {
+				for (ActionEnum<BasicAgent> ae : basicDecider.getActions()) {
 					System.out.println(ae + ":");
 					for (GeneticVariable gv1 : basicDecider.getVariables()) {
 							double arr = basicDecider.getWeightOf(gv1, ae);

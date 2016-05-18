@@ -19,6 +19,12 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 	FIND_HUT,
 	FIND_CIVILISATION;
 
+
+	@Override
+	public <B extends Agent> Action<BasicAgent> getAction(BasicAgent a1, B a2) {
+		return getAction(a1);
+	}
+	
 	@Override
 	public BasicAction getAction(BasicAgent a) {
 		BasicAgent ba = (BasicAgent)a;
@@ -63,10 +69,7 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 		return null;
 	}
 
-	@Override
-	public Action<BasicAgent> getAction(BasicAgent a1, BasicAgent a2) {
-		return getAction(a1);
-	}
+
 
 	@Override
 	public String getChromosomeDesc() {

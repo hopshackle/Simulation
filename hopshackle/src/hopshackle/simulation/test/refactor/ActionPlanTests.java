@@ -16,7 +16,7 @@ public class ActionPlanTests {
 	List<TestAgent> allAgents = new ArrayList<TestAgent>();
 	List<Agent> emptyList = new ArrayList<Agent>();
 	TestActionFactory taf;
-	Agent one, two, three;
+	TestAgent one, two, three;
 	
 	TestActionPolicy actionPolicy = new TestActionPolicy("action");
 	
@@ -35,27 +35,27 @@ public class ActionPlanTests {
 
 	@Test
 	public void overlappingLowPriorityActionIsRejected() {
-		Action a = taf.factory(1, 0, 500, 1000);
+		TestAction a = taf.factory(1, 0, 500, 1000);
 		assertEquals(a.getAllConfirmedParticipants().size(), 0);
 		a.addToAllPlans();
 		
-		Action b = taf.factory(1, 0, 500, 1000);
+		TestAction b = taf.factory(1, 0, 500, 1000);
 		b.addToAllPlans();
 		assertEquals(b.getAllConfirmedParticipants().size(), 0);
 		assertTrue(b.getState() == Action.State.CANCELLED);
 		
-		Action c = taf.factory(1, 0, 0, 1000);
+		TestAction c = taf.factory(1, 0, 0, 1000);
 		actionPolicy.setValue(c, -2.0);
 		c.addToAllPlans();
 		assertTrue(c.getState() == Action.State.CANCELLED);
 	}
 	@Test
 	public void overlappingHighPriorityActionIsAccepted() {
-		Action a = taf.factory(1, 0, 500, 1000);
+		TestAction a = taf.factory(1, 0, 500, 1000);
 		assertEquals(a.getAllConfirmedParticipants().size(), 0);
 		a.addToAllPlans();
 		
-		Action b = taf.factory(1, 0, 500, 1000);
+		TestAction b = taf.factory(1, 0, 500, 1000);
 		actionPolicy.setValue(b, 2.0);
 		b.addToAllPlans();
 		assertEquals(b.getAllConfirmedParticipants().size(), 1);
@@ -63,7 +63,7 @@ public class ActionPlanTests {
 		assertEquals(a.getAllConfirmedParticipants().size(), 0);
 		assertTrue(a.getState() == Action.State.CANCELLED);
 		
-		Action c = taf.factory(1, 0, 0, 1000);
+		TestAction c = taf.factory(1, 0, 0, 1000);
 		actionPolicy.setValue(c, 3.0);
 		c.addToAllPlans();
 		assertTrue(c.getState() == Action.State.PLANNED);
@@ -72,30 +72,30 @@ public class ActionPlanTests {
 	}
 	@Test
 	public void nonOverlappingActionIsAccepted() {
-		Action a = taf.factory(1, 0, 0, 1000);
+		TestAction a = taf.factory(1, 0, 0, 1000);
 		assertEquals(a.getAllConfirmedParticipants().size(), 0);
 		a.addToAllPlans();
 		assertEquals(a.getAllConfirmedParticipants().size(), 1);
 		assertTrue(a.getState() == Action.State.PLANNED);
 		
-		Action b = taf.factory(1, 0, 2000, 1000);
+		TestAction b = taf.factory(1, 0, 2000, 1000);
 		b.addToAllPlans();
 		assertEquals(b.getAllConfirmedParticipants().size(), 1);
 		assertTrue(b.getState() == Action.State.PLANNED);
 		
-		Action c = taf.factory(1, 0, 3000, 1000);
+		TestAction c = taf.factory(1, 0, 3000, 1000);
 		c.addToAllPlans();
 		assertTrue(c.getState() == Action.State.PLANNED);
 	}
 	@Test
 	public void overLappingHighPriorityActionIsRejectedIfOverlapIsEXECUTING() {
-		Action a = taf.factory(1, 0, 500, 1000);
+		TestAction a = taf.factory(1, 0, 500, 1000);
 		assertEquals(a.getAllConfirmedParticipants().size(), 0);
 		a.addToAllPlans();
 		a.start();
 		assertTrue(a.getState() == Action.State.EXECUTING);
 		
-		Action b = taf.factory(1, 0, 500, 1000);
+		TestAction b = taf.factory(1, 0, 500, 1000);
 		actionPolicy.setValue(b, 2.0);
 		b.addToAllPlans();
 		assertEquals(b.getAllConfirmedParticipants().size(), 0);
@@ -106,7 +106,7 @@ public class ActionPlanTests {
 	@Test
 	public void runActionCorrectlyUpdatesTheExecutedActionListInActionPlan() {
 		one.setDecider(null);
-		Action a = taf.factory(1, 0, 500, 1000);
+		TestAction a = taf.factory(1, 0, 500, 1000);
 		a.addToAllPlans();
 		a.start();
 		assertEquals(one.getExecutedActions().size(), 0);
@@ -118,7 +118,7 @@ public class ActionPlanTests {
 	}
 	@Test
 	public void cancellingAnActionRemovesItFromActionQueuesOfAllAgents() {
-		Action a = taf.factory(2, 1, 500, 1000);
+		TestAction a = taf.factory(2, 1, 500, 1000);
 		one.getActionPlan().addAction(a);
 		three.getActionPlan().addAction(a);
 		assertTrue(a.getState() == Action.State.PROPOSED);
@@ -136,9 +136,9 @@ public class ActionPlanTests {
 	}
 	@Test
 	public void purgeActionsRemovesAllPROPOSEDAndPLANNEDActionsFromQueue() {
-		Action a = taf.factory(2, 1, 500, 1000);
-		Action b = taf.factory(1, 0, 1500, 1000);
-		Action c = taf.factory(1, 1, 2500, 1000);
+		TestAction a = taf.factory(2, 1, 500, 1000);
+		TestAction b = taf.factory(1, 0, 1500, 1000);
+		TestAction c = taf.factory(1, 1, 2500, 1000);
 		one.getActionPlan().addAction(a);
 		one.getActionPlan().addAction(b);
 		one.getActionPlan().addAction(c);
@@ -151,8 +151,8 @@ public class ActionPlanTests {
 	}
 	@Test
 	public void purgeActionsCanOverrideEXECUTINGActions() {
-		Action a = taf.factory(2, 1, 500, 1000);
-		Action b = taf.factory(1, 0, 1500, 1000);
+		TestAction a = taf.factory(2, 1, 500, 1000);
+		TestAction b = taf.factory(1, 0, 1500, 1000);
 		one.getActionPlan().addAction(a);
 		one.getActionPlan().addAction(b);
 		b.start();
@@ -168,10 +168,10 @@ public class ActionPlanTests {
 	}
 	@Test
 	public void purgeActionsCancelsMandatoryActionsOnly() {
-		Action a = taf.factory(2, 1, 500, 1000);
-		Action b = taf.factory(1, 0, 1500, 1000);
-		Action c = taf.factory(1, 1, 2500, 1000);
-		Action d = taf.factory(4, 0, 3500, 1000);
+		TestAction a = taf.factory(2, 1, 500, 1000);
+		TestAction b = taf.factory(1, 0, 1500, 1000);
+		TestAction c = taf.factory(1, 1, 2500, 1000);
+		TestAction d = taf.factory(4, 0, 3500, 1000);
 		one.getActionPlan().addAction(a);
 		one.getActionPlan().addAction(b);
 		one.getActionPlan().addAction(c);
@@ -195,12 +195,12 @@ public class ActionPlanTests {
 	public void decisionRequiredIfThereIsAGapUpToSpecifiedTime() {
 		one.setDecider(null);
 		assertEquals(one.getActionPlan().timeToNextActionStarts(), Long.MAX_VALUE);
-		Action a = taf.factory(1, 0, 0, 1000);
+		TestAction a = taf.factory(1, 0, 0, 1000);
 		one.getActionPlan().addAction(a);
 		assertEquals(one.getActionPlan().timeToNextActionStarts(), 0);
 		a.cancel();
 		assertEquals(one.getActionPlan().timeToNextActionStarts(), Long.MAX_VALUE);
-		Action b = taf.factory(1, 0, 500, 1000);
+		TestAction b = taf.factory(1, 0, 500, 1000);
 		one.getActionPlan().addAction(b);
 		assertEquals(one.getActionPlan().timeToNextActionStarts(), 500);
 	}
@@ -208,17 +208,17 @@ public class ActionPlanTests {
 	@Test
 	public void agentMakesNoDecisionIfGapIsNotLargeEnough() {
 		assertTrue(one.decide() != null);
-		Action a = taf.factory(1, 1, 1000, 1000);
+		TestAction a = taf.factory(1, 1, 1000, 1000);
 		one.getActionPlan().addAction(a);
 		assertTrue(one.decide() != null);
-		Action b = taf.factory(1, 1, 200, 500);
+		TestAction b = taf.factory(1, 1, 200, 500);
 		one.getActionPlan().addAction(b);
 		assertTrue(one.decide() == null);
 	}
 	
 	@Test
 	public void addingActionOnceForAgentAddsForAllParticipants() {
-		Action a = taf.factory(1, 1, 1000, 1000);
+		TestAction a = taf.factory(1, 1, 1000, 1000);
 		assertEquals(one.getActionPlan().timeToEndOfQueue(), 0);
 		assertEquals(two.getActionPlan().timeToEndOfQueue(), 0);
 		a.addToAllPlans();
@@ -227,7 +227,7 @@ public class ActionPlanTests {
 	}
 	@Test
 	public void addingActionAgainDoesNotCauseItToBeCancelled() {
-		Action a = taf.factory(1, 1, 1000, 1000);
+		TestAction a = taf.factory(1, 1, 1000, 1000);
 		a.addToAllPlans();
 		assertTrue(a.getState() == Action.State.PLANNED);
 		assertEquals(one.getActionPlan().timeToEndOfQueue(), 2000);
@@ -241,10 +241,10 @@ public class ActionPlanTests {
 	@Test
 	public void timeUntilAllAvailableReturnsMaxEndQueueTime() {
 		assertEquals(ActionPlan.timeUntilAllAvailable(allAgents), 0);
-		Action a = taf.factory(1, 1, 0, 1000);
+		TestAction a = taf.factory(1, 1, 0, 1000);
 		a.addToAllPlans();
 		assertEquals(ActionPlan.timeUntilAllAvailable(allAgents), 1000);
-		Action b = taf.factory(1, 0, 3000, 3000);
+		TestAction b = taf.factory(1, 0, 3000, 3000);
 		b.addToAllPlans();
 		assertEquals(ActionPlan.timeUntilAllAvailable(allAgents), 6000);
 	}

@@ -2,11 +2,11 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class GeneralQuadraticQDecider extends GeneralLinearQDecider {
+public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDecider<A> {
 
 	private int gvLength;
 
-	public GeneralQuadraticQDecider(List<? extends ActionEnum> actions, List<GeneticVariable> variables) {
+	public GeneralQuadraticQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables) {
 		super(actions, variables);
 		actionLength = actions.size();
 		gvLength = variables.size();
@@ -20,7 +20,7 @@ public class GeneralQuadraticQDecider extends GeneralLinearQDecider {
 	}
 
 	@Override
-	public double valueOption(ActionEnum option, Agent decidingAgent, Agent contextAgent) {
+	public double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent) {
 		double[] stateDescriptor = new double[variableLength];
 		for (int i = 0; i < gvLength; i++) {
 			GeneticVariable var1 = variableSet.get(i);
@@ -30,7 +30,7 @@ public class GeneralQuadraticQDecider extends GeneralLinearQDecider {
 	}
 
 	@Override
-	public double valueOption(ActionEnum option, double[] state) {
+	public double valueOption(ActionEnum<A> option, double[] state) {
 		int optionIndex = actionSet.indexOf(option)+1;
 		double retValue = 0.0;
 
@@ -44,14 +44,14 @@ public class GeneralQuadraticQDecider extends GeneralLinearQDecider {
 		return retValue;
 	}
 
-	public void updateWeight(GeneticVariable var1, GeneticVariable var2, ActionEnum option, double delta) {
+	public void updateWeight(GeneticVariable var1, GeneticVariable var2, ActionEnum<A> option, double delta) {
 		int optionIndex = actionSet.indexOf(option)+1;
 		int varIndex = variableSet.indexOf(var1) * gvLength + variableSet.indexOf(var2);
 		weights[0][varIndex] += delta - weights[0][varIndex] * lambda;
 		weights[optionIndex][varIndex] += delta - weights[optionIndex][varIndex] * lambda;
 	}
 
-	public double[] getWeightOf(GeneticVariable input1, GeneticVariable input2, ActionEnum option) {
+	public double[] getWeightOf(GeneticVariable input1, GeneticVariable input2, ActionEnum<A> option) {
 		int optionIndex = actionSet.indexOf(option)+1;
 		int varIndex = variableSet.indexOf(input1) * gvLength + variableSet.indexOf(input2);
 		double[] retValue = new double[2];
@@ -61,9 +61,9 @@ public class GeneralQuadraticQDecider extends GeneralLinearQDecider {
 	}
 	
 	@Override
-	public void learnFrom(ExperienceRecord exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		double bestNextAction = valueOfBestAction(exp);
-		ActionEnum actionTaken = exp.getActionTaken();
+		ActionEnum<A> actionTaken = exp.getActionTaken();
 		double[] startState = exp.getStartState();
 		double observedResult = exp.getReward();
 		double predictedValue = valueOption(actionTaken, startState);

@@ -14,7 +14,7 @@ public abstract class Agent extends Observable {
 	
 	protected Location location;
 	protected World world;
-	protected Decider decider;
+	protected Decider<?> decider;
 	protected ActionPlan actionPlan;
 	protected static Logger errorLogger = Logger.getLogger("hopshackle.simulation");
 	protected Genome genome;
@@ -58,7 +58,7 @@ public abstract class Agent extends Observable {
 		cacheOfTheLiving.put(uniqueID, this);
 	}
 
-	public Agent (Location l, Decider d, World world) {
+	public Agent (Location l, Decider<?> d, World world) {
 		this(world);
 		setLocation(l);
 		setDecider(d);
@@ -92,14 +92,15 @@ public abstract class Agent extends Observable {
 		genome = g;
 	}
 
-	public Decider getDecider() {
+	public Decider<?> getDecider() {
 		return decider;
 	}
 
-	public void setDecider(Decider decider) {
+	public void setDecider(Decider<?> decider) {
 		this.decider = decider;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Action<?> decide(Decider deciderOverride) {
 		Action<?> retArray = null;
 		long chosenDuration = 0;
@@ -125,6 +126,7 @@ public abstract class Agent extends Observable {
 		return retArray;
 	}
 
+	@SuppressWarnings("rawtypes")
 	public Action decide() {
 		if (getDecider() == null)
 			errorLogger.severe("No decider in Agent.decide() for " + this.toString());
@@ -385,7 +387,7 @@ public abstract class Agent extends Observable {
 		}
 	}
 
-	public List<Action> getExecutedActions() {
+	public List<Action<?>> getExecutedActions() {
 		return actionPlan.executedActions;
 	}
 

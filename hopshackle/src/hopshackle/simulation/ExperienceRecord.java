@@ -2,23 +2,23 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class ExperienceRecord {
+public class ExperienceRecord<A extends Agent> {
 
 	protected double[] startState, endState;
-	protected ActionEnum actionTaken;
-	protected List<ActionEnum> possibleActionsFromEndState, possibleActionsFromStartState;
+	protected ActionEnum<A> actionTaken;
+	protected List<ActionEnum<A>> possibleActionsFromEndState, possibleActionsFromStartState;
 	protected double reward;
 	protected List<GeneticVariable> variables;
 	protected boolean isFinalState;
 	
-	public ExperienceRecord(List<GeneticVariable> var, double[] state, ActionEnum action, List<ActionEnum> possibleActions) {
+	public ExperienceRecord(List<GeneticVariable> var, double[] state, ActionEnum<A> action, List<ActionEnum<A>> possibleActions) {
 		actionTaken = action;
 		startState = state;
 		variables = HopshackleUtilities.cloneList(var);
 		possibleActionsFromStartState = HopshackleUtilities.cloneList(possibleActions);
 	}
 
-	public void updateWithResults(double reward, double[] newState, List<ActionEnum> actions, boolean endOfRun) {
+	public void updateWithResults(double reward, double[] newState, List<ActionEnum<A>> actions, boolean endOfRun) {
 		endState = newState;
 		possibleActionsFromEndState = HopshackleUtilities.cloneList(actions);
 		this.reward = reward;
@@ -50,15 +50,15 @@ public class ExperienceRecord {
 		return endState;
 	}
 
-	public ActionEnum getActionTaken() {
+	public ActionEnum<A> getActionTaken() {
 		return actionTaken;
 	}
 
-	public List<ActionEnum> getPossibleActionsFromEndState() {
+	public List<ActionEnum<A>> getPossibleActionsFromEndState() {
 		return possibleActionsFromEndState;
 	}
 	
-	public List<ActionEnum> getPossibleActionsFromStartState() {
+	public List<ActionEnum<A>> getPossibleActionsFromStartState() {
 		return possibleActionsFromStartState;
 	}
 
