@@ -45,8 +45,8 @@ public class Marriage implements Persistent {
 		
 		marriageWriter.write(this, getWorld().toString());
 		
-		juniorPartner.updatePlan();
-		seniorPartner.updatePlan();
+		juniorPartner.decide();
+		seniorPartner.decide();
 		
 		this.seniorPartner = null;
 		this.juniorPartner = null;

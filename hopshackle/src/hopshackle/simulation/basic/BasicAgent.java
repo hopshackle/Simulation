@@ -188,11 +188,11 @@ public class BasicAgent extends Agent implements Persistent {
 	}
 	
 	@Override
-	public BasicAction decide(Decider decider) {
+	public void decide() {
 		if (isMarried() && isFemale()) {
-			return null;
+			//
 		}
-		return (BasicAction) super.decide(decider);
+		super.decide();
 	}
 	
 	public void dissolveMarriage() {

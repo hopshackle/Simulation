@@ -190,8 +190,8 @@ public class BasicMarriageTest {
 	public void onDissolutionSpouseTakesActionsAgain() {
 		new Hut(maleAgent1);
 		maleAgent1.setDecider(new HardCodedDecider(BasicActions.MARRY));
-		femaleAgent2.updatePlan();
-		maleAgent1.updatePlan();
+		femaleAgent2.decide();
+		maleAgent1.decide();
 		ap.processActionsInQueue(4);
 		assertTrue(maleAgent1.isMarried());
 		assertTrue(femaleAgent2.isMarried());

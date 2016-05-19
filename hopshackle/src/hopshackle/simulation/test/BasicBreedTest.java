@@ -128,7 +128,7 @@ public class BasicBreedTest {
 		// this will never currently happen given that BREED cannot be selected unless married.
 		// However the functionality can be re-enabled easily, and hence is tested
 		testAgent2.setDecider(new HardCodedDecider(BasicActions.FORAGE));
-		testAgent2.updatePlan();
+		testAgent2.decide();
 		assertEquals(testAgent1.getActionPlan().timeToEndOfQueue(), 0);
 		assertEquals(testAgent2.getActionPlan().timeToEndOfQueue(), 1000);
 		Action breed = new Breed(testAgent1, testAgent2);

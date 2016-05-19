@@ -55,7 +55,7 @@ public class CivilisationMatcherTest {
 		new Hut(builder);
 		testAgent.setLocation(locations[2]);
 		testAgent.setDecider(new HardCodedDecider(BasicActions.FIND_CIVILISATION));
-		testAgent.updatePlan();
+		testAgent.decide();
 		synchronized (ap) {
 			validateAndRunNextAction(BasicMove.class);
 			JourneyPlan jPlan = testAgent.getJourneyPlan();

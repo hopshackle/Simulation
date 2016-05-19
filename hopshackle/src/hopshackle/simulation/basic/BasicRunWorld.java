@@ -167,7 +167,7 @@ public class BasicRunWorld {
 					b = new BasicAgent(w);
 					b.setLocation(defaultStartLocation);
 					b.setDecider(basicDecider);
-					b.updatePlan();
+					b.decide();
 				}
 			} 
 		}

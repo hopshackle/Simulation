@@ -100,25 +100,14 @@ public abstract class Agent extends Observable {
 		this.decider = decider;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public Action<?> decide(Decider deciderOverride) {
-		if (deciderOverride == null) 
-			deciderOverride = this.getDecider();
-
-		if (deciderOverride != null) {
-			// then we make the next decision
-			if (!isDead()) {
-				return deciderOverride.decide(this);
-			}
-		}
-		return null;
-	}
-
-	@SuppressWarnings("rawtypes")
-	public Action decide() {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void decide() {
 		if (getDecider() == null)
 			errorLogger.severe("No decider in Agent.decide() for " + this.toString());
-		return decide(getDecider());
+		if (!isDead() && getDecider() != null) {
+			Decider decider = getDecider();
+			decider.decide(this);
+		}
 	}
 
 	public void die(String reason) {
@@ -152,24 +141,6 @@ public abstract class Agent extends Observable {
 		log("Closing log file.");
 		if (logger != null)
 			logger.close();
-	}
-	
-	public void updatePlan() {
-		updatePlan(1);	// a single forward action
-	}
-
-	public void updatePlan(long forwardWindow) {
-		if (isDead()) return;
-		int emergencyCount = 0;
-		while (actionPlan.timeToEndOfQueue() < forwardWindow && emergencyCount <= 100) {
-			Action<?> newAction = decide();
-			if (newAction == null) break;
-			emergencyCount++;
-			if (emergencyCount > 99) {
-				errorLogger.warning("Too many actions being added in Agent.updatePlan for forwardWindow " + forwardWindow);
-				errorLogger.warning(actionPlan.toString());
-			}
-		}
 	}
 	
 	public void purgeActions(boolean overrideExecuting){

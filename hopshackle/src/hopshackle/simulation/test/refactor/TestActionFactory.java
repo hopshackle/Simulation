@@ -78,9 +78,9 @@ class TestAgent extends Agent {
 		setDecider(new TestDecider());
 	}
 	@Override
-	public Action<?> decide() {
+	public void decide() {
 		decisionsTaken++;
-		return super.decide();
+		super.decide();
 	}
 }
 

@@ -27,7 +27,7 @@ public class Breed extends BasicAction {
 		child = new BasicAgent(father, mother);
 		int childGeneration = Math.min(father.getGeneration(), mother.getGeneration()) + 1;
 		child.setGeneration(childGeneration);
-		child.updatePlan();
+		child.decide();
 	}
 
 	public String toString() {
