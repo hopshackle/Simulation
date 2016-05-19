@@ -17,23 +17,22 @@ public class TestActionProcessor {
 		ap.setTestingMode(true);
 	}
 
-	public void makeValidateAndRunFirstDecision(Agent testAgent, Class<? extends Action> classType) {
+	public void makeValidateAndRunFirstDecision(Agent testAgent, Class<? extends Action<?>> classType) {
 		assertTrue(testAgent.getNextAction() == null);
-		Action nextAction = testAgent.decide();
-		validateAndRunAction(nextAction, classType);
+		testAgent.decide();
+		validateAndRunAction(classType);
 	}
 
-	public void validateAndRunAction(Action nextAction, Class<? extends Action> classType) {
-		nextAction.addToAllPlans();
+	public void validateAndRunAction(Class<? extends Action<?>> classType) {
 		validateAndRunNextAction(classType);
 	}
 	
-	public Action getNextAction() {
+	public Action<?> getNextAction() {
 		return ap.getNextUndeletedAction();
 	}
 
 	public void clearQueue() {
-		Action retAction = null;
+		Action<?> retAction = null;
 		do {
 			retAction = ap.getNextUndeletedAction(1, TimeUnit.MILLISECONDS);
 			System.out.println(retAction);
@@ -54,10 +53,10 @@ public class TestActionProcessor {
 		}
 	}
 	
-	public void validateAndRunNextAction(Class<? extends Action> classType) {
+	public void validateAndRunNextAction(Class<? extends Action<?>> classType) {
 		try {
 			synchronized (ap) {
-				Action next = ap.processNextAction();	//start
+				Action<?> next = ap.processNextAction();	//start
 				assertTrue(classType.isInstance(next));
 				ap.wait();
 				next = ap.processNextAction();	// run

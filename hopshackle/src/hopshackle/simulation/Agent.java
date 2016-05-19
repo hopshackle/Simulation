@@ -102,28 +102,16 @@ public abstract class Agent extends Observable {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Action<?> decide(Decider deciderOverride) {
-		Action<?> retArray = null;
-		long chosenDuration = 0;
-		long availableTime = actionPlan.timeToNextActionStarts();
-		if (availableTime > 0) {
-			if (deciderOverride == null) 
-				deciderOverride = this.getDecider();
+		if (deciderOverride == null) 
+			deciderOverride = this.getDecider();
 
-			if (deciderOverride != null) {
-				// first of all we learn from last decision
-				dispatchLearningEvent();
-
-				// then we make the next decision
-				if (!isDead()) {
-					ActionEnum action = deciderOverride.decide(this);
-					if (action != null)
-						retArray = action.getAction(this);
-				}
+		if (deciderOverride != null) {
+			// then we make the next decision
+			if (!isDead()) {
+				return deciderOverride.decide(this);
 			}
-			if (retArray != null) chosenDuration = retArray.getEndTime() - world.getCurrentTime();
 		}
-		if (chosenDuration > availableTime) retArray = null;
-		return retArray;
+		return null;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -131,11 +119,6 @@ public abstract class Agent extends Observable {
 		if (getDecider() == null)
 			errorLogger.severe("No decider in Agent.decide() for " + this.toString());
 		return decide(getDecider());
-	}
-
-	protected void dispatchLearningEvent() {
-		AgentEvent learningEvent = new AgentEvent(this, AgentEvents.DECISION_STEP_COMPLETE);
-		eventDispatch(learningEvent);
 	}
 
 	public void die(String reason) {
@@ -155,7 +138,6 @@ public abstract class Agent extends Observable {
 		queueForTheFerryman.offer(this);
 
 		death = getWorld().getCurrentTime();
-		dispatchLearningEvent();
 		deathLocation = getLocation();
 		purgeActions(true);
 		
@@ -182,7 +164,6 @@ public abstract class Agent extends Observable {
 		while (actionPlan.timeToEndOfQueue() < forwardWindow && emergencyCount <= 100) {
 			Action<?> newAction = decide();
 			if (newAction == null) break;
-			actionPlan.addActionToAllPlans(newAction);
 			emergencyCount++;
 			if (emergencyCount > 99) {
 				errorLogger.warning("Too many actions being added in Agent.updatePlan for forwardWindow " + forwardWindow);
@@ -194,7 +175,7 @@ public abstract class Agent extends Observable {
 	public void purgeActions(boolean overrideExecuting){
 		actionPlan.purgeActions(overrideExecuting);
 	}
-	public Action<?> getNextAction() {
+	public Action<? extends Agent> getNextAction() {
 		return actionPlan.getNextAction();
 	}
 
@@ -465,7 +446,7 @@ public abstract class Agent extends Observable {
 	public void removeListener(AWTEventListener el) {
 		listeners.remove(el);
 	}
-	private void eventDispatch(AgentEvent ae) {
+	protected void eventDispatch(AgentEvent ae) {
 		for (AWTEventListener el : listeners) {
 			el.eventDispatched(ae);
 		}

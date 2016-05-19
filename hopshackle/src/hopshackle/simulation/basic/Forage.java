@@ -5,7 +5,7 @@ import hopshackle.simulation.*;
 public class Forage extends BasicAction {
 
 	public Forage(BasicAgent agent) {
-		super(agent, 1000, true);
+		super(BasicActions.FORAGE, agent, 1000, true);
 	}
 
 	public void doStuff() {

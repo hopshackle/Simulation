@@ -41,11 +41,13 @@ public class ActorCriticDeciderTest {
 
 	@Test
 	public void stateBrainIsTaughtAsWellAsMainBrain() {
+		agent.maintenance();	// essential to set lastMaintainedTime for later results
 		double startValue = decider.valueState(agent);
 		double forageValue = decider.valueOption(BasicActions.FORAGE, agent, agent);
 		double restValue = decider.valueOption(BasicActions.REST, agent, agent);
 
-		ActionEnum<BasicAgent> decisionTaken = decider.decide(agent, agent);
+		Action<BasicAgent> actionTaken = decider.decide(agent, agent);
+		ActionEnum<BasicAgent> decisionTaken = actionTaken.getType();
 		ActionEnum<BasicAgent> decisionNotTaken = BasicActions.REST;
 		double decisionTakenValue = forageValue;
 		double decisionNotTakenValue = restValue; 
@@ -58,6 +60,7 @@ public class ActorCriticDeciderTest {
 		ExperienceRecord<BasicAgent> exp = agentTeacher.getExperienceRecords(agent).get(0);
 		exp.updateWithResults(1.0, decider.getCurrentState(agent, agent), actions, false);
 		decider.learnFrom(exp, 1.0);
+		
 		double laterValue = decider.valueState(agent);
 		assertTrue(laterValue > startValue);
 		double updatedDValue = decider.valueOption(decisionTaken, agent, agent);
@@ -75,8 +78,13 @@ public class ActorCriticDeciderTest {
 			decisionTakenValue = forageValue;
 			decisionNotTakenValue = restValue;
 		}
-		
-		decisionTaken = decider.decide(agent, agent);
+	//	decisionTaken = decider.decide(agent, agent).getType();
+		actionTaken.cancel();	// this will make a follow-up decision - but without changing the state
+								// It will also invoke update results on the AgentTeacher ... but there are no 
+								// open ExperienceRecords, so this should have no effect.
+								// Well...it does call maintenance() via doCleanUp(), which is
+								// why we call maintenance() at the start of this test!
+								// God this is kludgy.
 		exp = agentTeacher.getExperienceRecords(agent).get(0);
 		exp.updateWithResults(0.0, decider.getCurrentState(agent, agent), actions, false);
 		decider.learnFrom(exp, 1.0);

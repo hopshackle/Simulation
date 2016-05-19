@@ -5,7 +5,7 @@ import hopshackle.simulation.*;
 public class BuildHut extends BasicAction {
 
 	public BuildHut(BasicAgent a) {
-		super(a, 5000, true);
+		super(BasicActions.BUILD, a, 5000, true);
 		Location hutLocation = a.getLocation();
 		if (hutLocation instanceof BasicHex) {
 			BasicHex hex = (BasicHex) hutLocation;

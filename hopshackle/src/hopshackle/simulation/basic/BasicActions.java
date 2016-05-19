@@ -54,17 +54,17 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 				return new Rest(a);
 			}
 		case FIND_WATER:
-			return new BasicMove(a, new TerrainMatcher(TerrainType.OCEAN));
+			return new BasicMove(BasicActions.FIND_WATER, a, new TerrainMatcher(TerrainType.OCEAN));
 		case FIND_PLAINS:
-			return new BasicMove(a, new WildernessMatcher(a));
+			return new BasicMove(BasicActions.FIND_PLAINS, a, new WildernessMatcher(a));
 		case FIND_FOREST:
-			return new BasicMove(a, new TerrainMatcher(TerrainType.FOREST));
+			return new BasicMove(BasicActions.FIND_FOREST, a, new TerrainMatcher(TerrainType.FOREST));
 		case FIND_UNKNOWN:
-			return new BasicMove(a, new UnexploredLocationMatcher(a.getMapKnowledge()));
+			return new BasicMove(BasicActions.FIND_UNKNOWN, a, new UnexploredLocationMatcher(a.getMapKnowledge()));
 		case FIND_HUT:
-			return new BasicMove(a, new HutsOwnedByMatcher(a));
+			return new BasicMove(BasicActions.FIND_HUT, a, new HutsOwnedByMatcher(a));
 		case FIND_CIVILISATION:
-			return new BasicMove(a, new CivilisationMatcher(a));
+			return new BasicMove(BasicActions.FIND_CIVILISATION, a, new CivilisationMatcher(a));
 		}
 		return null;
 	}

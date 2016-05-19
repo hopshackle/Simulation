@@ -195,8 +195,11 @@ public class BasicMarriageTest {
 		ap.processActionsInQueue(4);
 		assertTrue(maleAgent1.isMarried());
 		assertTrue(femaleAgent2.isMarried());
-		assertTrue(maleAgent1.getNextAction() instanceof Rest);
-		assertTrue(femaleAgent2.getNextAction() == null);
+		Action nextMaleAction = maleAgent1.getNextAction();
+		assertTrue(nextMaleAction instanceof Rest);
+		assertEquals(nextMaleAction.getAllConfirmedParticipants().size(), 2);
+		assertEquals(maleAgent1.getActionPlan().sizeOfQueue(), 1);
+		assertTrue(femaleAgent2.getNextAction() == nextMaleAction);
 		maleAgent1.die("Oops");
 		assertTrue(femaleAgent2.getNextAction() instanceof Rest);// i.e. not ObeySpouse
 	}

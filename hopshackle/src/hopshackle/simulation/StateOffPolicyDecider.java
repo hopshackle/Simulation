@@ -32,13 +32,6 @@ public class StateOffPolicyDecider extends StateDecider {
 	}
 
 	@Override
-	public ActionEnum decide(Agent decidingAgent, Agent contextAgent) {
-		ActionEnum actionChosen = decideWithoutLearning(decidingAgent, contextAgent);
-		learnFromDecision(decidingAgent, contextAgent, actionChosen);
-		return actionChosen;
-	}
-
-	@Override
 	public void learnFrom(ExperienceRecord exp, double maxResult) {
 		// Differs from parent in NOT calling updateStateValue if we have acted off policy
 		ActionEnum bestAction = GreedyDecider.getBestActionFrom(exp.getPossibleActionsFromStartState(), exp.getStartState());

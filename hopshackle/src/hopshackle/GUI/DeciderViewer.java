@@ -61,7 +61,7 @@ public class DeciderViewer extends JPanel implements Observer {
 		    	ActionEnum choice;
 		    	choices.clear();
 		    	for (int n = 0; n < 100; n++) {
-		    		choice = d.decide(a);
+		    		choice = d.decideWithoutLearning(a, a);
 		    		Integer currentValue = choices.get(choice);
 		    		if (currentValue == null) currentValue = new Integer(0);
 		    		choices.put(choice, currentValue + 1);

@@ -75,19 +75,21 @@ public abstract class Action<A extends Agent> implements Delayed {
 	protected long plannedStartTime;
 	protected State currentState = State.PROPOSED;
 	protected int value = 0;
+	protected ActionEnum<A> actionType;
 
-	public Action(A a, boolean recordAction) {
-		this(a, 1000, recordAction);
+	public Action(ActionEnum<A> type, A a, boolean recordAction) {
+		this(type, a, 1000, recordAction);
 	}
 
-	public Action(A a, long duration, boolean recordAction) {
-		this(a, 0l, duration, recordAction);
+	public Action(ActionEnum<A> type, A a, long duration, boolean recordAction) {
+		this(type, a, 0l, duration, recordAction);
 	}
-	public Action(A a, long startOffset, long duration, boolean recordAction) {
-		this(HopshackleUtilities.listFromInstance(a), new ArrayList<A>(), startOffset, duration, recordAction);
+	public Action(ActionEnum<A> type, A a, long startOffset, long duration, boolean recordAction) {
+		this(type, HopshackleUtilities.listFromInstance(a), new ArrayList<A>(), startOffset, duration, recordAction);
 	}
 
-	public Action(List<A> mandatory, List<A> optional, long startOffset, long duration, boolean recordAction) {
+	public Action(ActionEnum<A> type, List<A> mandatory, List<A> optional, long startOffset, long duration, boolean recordAction) {
+		this.actionType = type;
 		mandatoryActors = HopshackleUtilities.cloneList(mandatory);
 		optionalActors = HopshackleUtilities.cloneList(optional);
 		if (!mandatory.isEmpty()) {
@@ -231,8 +233,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 	}
 	protected void doNextDecision(A actor) {
 		if (!actor.isDead()) {
-			Action<A> newAction = actor.decide();
-			if (newAction != null) newAction.addToAllPlans();
+			actor.decide();
 		}
 	}
 
@@ -324,5 +325,8 @@ public abstract class Action<A extends Agent> implements Delayed {
 			}
 			actor.getWorld().addAction(this);
 		}
+	}
+	public ActionEnum<A> getType() {
+		return actionType;
 	}
 }

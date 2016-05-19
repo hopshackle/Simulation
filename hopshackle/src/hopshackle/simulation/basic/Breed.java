@@ -12,7 +12,7 @@ public class Breed extends BasicAction {
 	}
 
 	public Breed(List<BasicAgent> parents) {
-		super(parents, new ArrayList<BasicAgent>(), ActionPlan.timeUntilAllAvailable(parents), 5000, true);
+		super(BasicActions.BREED, parents, new ArrayList<BasicAgent>(), ActionPlan.timeUntilAllAvailable(parents), 5000, true);
 		for (int i = 0; i < mandatoryActors.size(); i++) {
 			BasicAgent parent = (BasicAgent) mandatoryActors.get(i);
 			if (parent.isFemale()) {

@@ -154,9 +154,8 @@ public class BasicAgent extends Agent implements Persistent {
 			return;
 		}
 		agentWriter.write(this, getWorld().toString());
-		
-		dissolveMarriage();
 		super.die(reason);
+		dissolveMarriage();
 	}
 
 	public static AgentWriter<BasicAgent> getAgentWriter() {
@@ -189,11 +188,11 @@ public class BasicAgent extends Agent implements Persistent {
 	}
 	
 	@Override
-	public Action decide(Decider decider) {
+	public BasicAction decide(Decider decider) {
 		if (isMarried() && isFemale()) {
 			return null;
 		}
-		return super.decide(decider);
+		return (BasicAction) super.decide(decider);
 	}
 	
 	public void dissolveMarriage() {

@@ -7,10 +7,10 @@ import java.util.List;
 public class Rest extends BasicAction {
 
 	public Rest(BasicAgent a) {
-		super(a, 1000, false);
+		this(a, 1000);
 	}
 	public Rest(BasicAgent a, long time) {
-		super(a, time, true);
+		super(BasicActions.REST, a, time, true);
 	}
 
 	public void doStuff() {

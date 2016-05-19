@@ -6,17 +6,17 @@ import hopshackle.simulation.*;
 
 public class BasicAction extends Action<BasicAgent> {
 
-	public BasicAction(BasicAgent a, long duration, boolean recordAction) {
-		this(a, 0l, duration, recordAction);
+	public BasicAction(ActionEnum<BasicAgent> type, BasicAgent a, long duration, boolean recordAction) {
+		this(type, a, 0l, duration, recordAction);
 	}
 
-	public BasicAction(BasicAgent a, long start, long duration, boolean recordAction) {
-		this(HopshackleUtilities.listFromInstance(a), new ArrayList<BasicAgent>(), start, duration, recordAction);
+	public BasicAction(ActionEnum<BasicAgent> type, BasicAgent a, long start, long duration, boolean recordAction) {
+		this(type, HopshackleUtilities.listFromInstance(a), new ArrayList<BasicAgent>(), start, duration, recordAction);
 	}
 
-	public BasicAction(List<BasicAgent> mandatory, List<BasicAgent> optional, long startOffset, 
+	public BasicAction(ActionEnum<BasicAgent> type, List<BasicAgent> mandatory, List<BasicAgent> optional, long startOffset, 
 			long duration, boolean recordAction) {
-		super(mandatory, includeSpouseAsAgent(optional, mandatory), startOffset, duration, recordAction);
+		super(type, mandatory, includeSpouseAsAgent(optional, mandatory), startOffset, duration, recordAction);
 	}
 	
 	private static List<BasicAgent> includeSpouseAsAgent(List<BasicAgent> startingList, List<BasicAgent> mandatoryParticipants) {

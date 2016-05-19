@@ -52,17 +52,36 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	 */
 
 	@Override
-	public ActionEnum<A> decide(A decidingAgent) {
-		ActionEnum<A> retValue = decide(decidingAgent, null);
+	public Action<A> decide(A decidingAgent) {
+		Action<A> retValue = decide(decidingAgent, null);
 		return retValue;
 	}
 
 	@Override
-	public ActionEnum<A> decide(A decidingAgent, Agent contextAgent) {
+	public Action<A> decide(A decidingAgent, Agent contextAgent) {
 		ActionEnum<A> decisionMade = makeDecision(decidingAgent, contextAgent);
-		learnFromDecision(decidingAgent, contextAgent, decisionMade);
-
-		return decisionMade;
+		Action<A> action = null;
+		long chosenDuration = 0;
+		long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
+		if (availableTime > 0) {
+			if (decisionMade != null)
+				action = decisionMade.getAction(decidingAgent);
+			if (action != null) 
+				chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
+			if (chosenDuration > availableTime) {
+				action = null;
+			} else {
+				// learn from last decision unless there is still stuff in the action queue from the last decision
+				dispatchLearningEvent(decidingAgent);
+				learnFromDecision(decidingAgent, contextAgent, decisionMade);
+			}
+		}
+		decidingAgent.actionPlan.addActionToAllPlans(action);
+		return action;
+	}
+	protected void dispatchLearningEvent(A agent) {
+		AgentEvent learningEvent = new AgentEvent(agent, AgentEvents.DECISION_STEP_COMPLETE);
+		agent.eventDispatch(learningEvent);
 	}
 
 	protected ActionEnum<A> makeDecision(A decidingAgent, Agent contextAgent) {

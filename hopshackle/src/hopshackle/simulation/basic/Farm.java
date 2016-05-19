@@ -5,7 +5,7 @@ import hopshackle.simulation.*;
 public class Farm extends BasicAction {
 
 	public Farm(BasicAgent a) {
-		super(a, 4000, true);
+		super(BasicActions.FARM, a, 4000, true);
 	}
 	
 	public void doStuff() {

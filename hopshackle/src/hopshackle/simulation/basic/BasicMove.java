@@ -8,8 +8,8 @@ public class BasicMove extends BasicAction {
 
 	private GoalMatcher locationMatcher;
 
-	public BasicMove(BasicAgent agent, GoalMatcher locationMatcher) {
-		super(agent, 400, false);
+	public BasicMove(ActionEnum<BasicAgent> type, BasicAgent agent, GoalMatcher locationMatcher) {
+		super(type, agent, 400, false);
 		this.locationMatcher = locationMatcher;
 		world.recordAction(this); // bit of a hack - as locationMatcher provides part of the name of the action to be recorded
 	}

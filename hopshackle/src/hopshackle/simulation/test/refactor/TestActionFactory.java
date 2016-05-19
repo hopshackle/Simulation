@@ -7,7 +7,7 @@ import java.util.*;
 class TestAction extends Action<TestAgent> {
 	boolean dieInMiddle = false;
 	public TestAction(List<TestAgent> mandatory, List<TestAgent> optional, long startOffset, long duration, boolean recordAction) {
-		super(mandatory, optional, startOffset, duration, recordAction);
+		super(TestActionEnum.TEST, mandatory, optional, startOffset, duration, recordAction);
 	}
 	
 	@Override
@@ -36,7 +36,9 @@ class TestAction extends Action<TestAgent> {
 	}
 }
 
-class TestActionEnum implements ActionEnum<TestAgent> {
+enum TestActionEnum implements ActionEnum<TestAgent> {
+	
+	TEST;
 
 	@Override
 	public String getChromosomeDesc() {
@@ -62,7 +64,7 @@ class TestActionEnum implements ActionEnum<TestAgent> {
 
 	@Override
 	public Enum getEnum() {
-		return null;
+		return this;
 	}
 	
 }
@@ -86,7 +88,7 @@ class TestDecider extends BaseDecider<TestAgent> {
 	
 	static List<ActionEnum<TestAgent>> actionList = new ArrayList<ActionEnum<TestAgent>>();
 	static {
-		actionList.add(new TestActionEnum());
+		actionList.add(TestActionEnum.TEST);
 	}
 
 	public TestDecider() {

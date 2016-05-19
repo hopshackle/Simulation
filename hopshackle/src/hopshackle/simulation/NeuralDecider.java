@@ -264,7 +264,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		return maxNoise;
 	}
 
-	public void addDecision(ActionEnum<A> option) {
+	public void addDecision(Action<A> option) {
 		if (decisionCounter >= 100) {
 			previous100Choices = last100Choices;
 			last100Choices = new HashMap<ActionEnum<A>, Integer>();
@@ -273,13 +273,13 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		Integer number = last100Choices.get(option);
 		if (number == null) number = 0;
 		number++;
-		last100Choices.put(option, number);
+		last100Choices.put(option.getType(), number);
 		decisionCounter++;
 	}
 
 	@Override
-	public ActionEnum<A> decide(A decidingAgent) {
-		ActionEnum<A> retValue = super.decide(decidingAgent);
+	public Action<A> decide(A decidingAgent) {
+		Action<A> retValue = super.decide(decidingAgent);
 		addDecision(retValue);
 		return retValue;
 	}

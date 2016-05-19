@@ -206,12 +206,17 @@ public class ActionPlanTests {
 	}
 	
 	@Test
-	public void agentMakesNoDecisionIfGapIsNotLargeEnough() {
-		assertTrue(one.decide() != null);
+	public void agentMakesDecisionIfGapIsLargeEnough() {
 		TestAction a = taf.factory(1, 1, 1000, 1000);
 		one.getActionPlan().addAction(a);
 		assertTrue(one.decide() != null);
+		assertTrue(one.decide() == null);
+	}
+	@Test
+	public void agentMakesNoDecisionIfGapIsNotLargeEnough() {
+		TestAction a = taf.factory(1, 1, 1000, 1000);
 		TestAction b = taf.factory(1, 1, 200, 500);
+		one.getActionPlan().addAction(a);
 		one.getActionPlan().addAction(b);
 		assertTrue(one.decide() == null);
 	}

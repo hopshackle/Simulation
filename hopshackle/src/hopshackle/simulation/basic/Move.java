@@ -8,7 +8,7 @@ public class Move extends BasicAction {
 	private long duration;
 
 	public Move(BasicAgent a, long start, long duration, Location destination) {
-		super(a, start, duration, false);
+		super(null, a, start, duration, false);
 		this.duration = duration;
 		this.destination = destination;
 		if (!actor.getLocation().hasRouteTo(destination)) {
