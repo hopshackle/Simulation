@@ -55,19 +55,15 @@ public class WildernessMatcherTest {
 		testAgent.setLocation(locations[3]);
 		testAgent.setDecider(new HardCodedDecider(BasicActions.FIND_PLAINS));
 		ap.makeValidateAndRunFirstDecision(testAgent, BasicMove.class);
-		ap.validateAndRunNextAction(Move.class);
 		JourneyPlan jPlan = testAgent.getJourneyPlan();
 		assertTrue(jPlan.getLocationMatcher() instanceof WildernessMatcher);
 		assertTrue(testAgent.getLocation() == locations[2]);
 		
 		ap.validateAndRunNextAction(BasicMove.class);
-		ap.validateAndRunNextAction(Move.class);
 		assertTrue(jPlan == testAgent.getJourneyPlan());
 		assertTrue(testAgent.getLocation() == locations[1]);
 		
 		ap.validateAndRunNextAction(BasicMove.class);
-		assertTrue(jPlan == testAgent.getJourneyPlan());
-		ap.validateAndRunNextAction(Move.class);
 		assertTrue(testAgent.getLocation() == locations[0]);
 		assertTrue(testAgent.getJourneyPlan() == null);
 	}

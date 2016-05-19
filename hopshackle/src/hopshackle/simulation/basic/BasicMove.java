@@ -6,24 +6,34 @@ import hopshackle.simulation.*;
 
 public class BasicMove extends BasicAction {
 
-	private GoalMatcher locationMatcher;
+	private GoalMatcher<Location> locationMatcher;
+	private Location destination;
+	private long duration;
 
-	public BasicMove(ActionEnum<BasicAgent> type, BasicAgent agent, GoalMatcher locationMatcher) {
-		super(type, agent, 400, false);
+	public BasicMove(ActionEnum<BasicAgent> type, BasicAgent agent, GoalMatcher<Location> locationMatcher) {
+		super(type, agent, 1000, false);	// we override the finishing time during initialisation
 		this.locationMatcher = locationMatcher;
 		world.recordAction(this); // bit of a hack - as locationMatcher provides part of the name of the action to be recorded
 	}
 	@Override
-	public void doStuff() {
-		Location nextMove = getNextMove();
-		
+	public void initialisation() {
+		destination = getNextMove();
 		TerrainType terrain = TerrainType.MOUNTAINS;
-		if (nextMove instanceof Hex) {
-			terrain = ((Hex)nextMove).getTerrainType();
+		if (destination instanceof Hex) {
+			terrain = ((Hex)destination).getTerrainType();
 		}
-		int timeTakenToMove = (int) (terrain.getPointsToEnter() * 1000);
-		BasicAction moveAction = new Move(actor, 100, timeTakenToMove - 500, nextMove);
-		moveAction.addToAllPlans();
+		duration = (long) (terrain.getPointsToEnter() * 1000);
+		plannedEndTime = plannedStartTime + duration;
+	}
+
+
+	@Override
+	public void doStuff() {
+		for (BasicAgent ba : getAllConfirmedParticipants()) {
+			ba.recordSpendOfMovementPoints((int) duration/1000);
+			ba.setLocation(destination);
+			ba.addHealth(- (double)duration / 1000.0);
+		}
 	}
 
 	private Location getNextMove() {
@@ -38,7 +48,7 @@ public class BasicMove extends BasicAction {
 
 		JourneyPlan jPlan = new JourneyPlan(mover, locationMatcher, new TerrainMovementCalculator());
 		if (jPlan.isEmpty() && mover.hasUnexploredLocations()) {
-			GoalMatcher defaultMatcher = new UnexploredLocationMatcher(mover.getMapKnowledge());
+			GoalMatcher<?> defaultMatcher = new UnexploredLocationMatcher(mover.getMapKnowledge());
 			jPlan = new JourneyPlan(mover, defaultMatcher, new TerrainMovementCalculator());
 		}
 		if (!jPlan.isEmpty()) {
@@ -61,10 +71,6 @@ public class BasicMove extends BasicAction {
 	}
 
 	public String toString() {
-		if (locationMatcher != null) 
-			return "MOVE_" + locationMatcher.toString() + " (" + plannedStartTime + "-" + plannedEndTime + ")";
-		else 
-			return "MOVE_NULL";
-
+		return "MOVE_" + getType() + " (" + plannedStartTime + "-" + plannedEndTime + ")";
 	}
 }

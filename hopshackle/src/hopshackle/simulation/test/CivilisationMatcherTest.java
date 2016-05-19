@@ -2,8 +2,6 @@ package hopshackle.simulation.test;
 import static org.junit.Assert.*;
 import hopshackle.simulation.*;
 import hopshackle.simulation.basic.*;
-
-import org.hamcrest.core.IsInstanceOf;
 import org.junit.*;
 public class CivilisationMatcherTest {
 	private World w;
@@ -60,19 +58,16 @@ public class CivilisationMatcherTest {
 		testAgent.updatePlan();
 		synchronized (ap) {
 			validateAndRunNextAction(BasicMove.class);
-			validateAndRunNextAction(Move.class);
 			JourneyPlan jPlan = testAgent.getJourneyPlan();
 			assertTrue(jPlan.getLocationMatcher() instanceof CivilisationMatcher);
 			assertTrue(testAgent.getLocation() == locations[3]);
 			
 			validateAndRunNextAction(BasicMove.class);
-			validateAndRunNextAction(Move.class);
 			assertTrue(jPlan == testAgent.getJourneyPlan());
 			assertTrue(testAgent.getLocation() == locations[4]);
 			
-			validateAndRunNextAction(BasicMove.class);
 			assertTrue(jPlan == testAgent.getJourneyPlan());
-			validateAndRunNextAction(Move.class);
+			validateAndRunNextAction(BasicMove.class);
 			assertTrue(testAgent.getLocation() == locations[5]);
 			assertTrue(testAgent.getJourneyPlan() == null);
 		}

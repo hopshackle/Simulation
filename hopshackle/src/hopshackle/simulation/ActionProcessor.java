@@ -115,19 +115,21 @@ public class ActionProcessor {
 	public Action processNextAction() {
 		if (stepping) {
 			Action nextAction = steppingBuffer.poll();
-			try {
-				if (!q.offer(nextAction, 2, TimeUnit.SECONDS)) {
-					logger.severe("Action dropped as queue is blocked ");
+			if (nextAction != null) {
+				try {
+					if (!q.offer(nextAction, 2, TimeUnit.SECONDS)) {
+						logger.severe("Action dropped as queue is blocked ");
+					}
+				} catch (InterruptedException e) {
+					logger.severe("Action Processor add function: " + e.toString());
+					e.printStackTrace();
 				}
-			} catch (InterruptedException e) {
-				logger.severe("Action Processor add function: " + e.toString());
-				e.printStackTrace();
+				return nextAction;
 			}
-			return nextAction;
 		}
 		return null;
 	}
-	
+
 	class ActionThread implements Runnable {
 		ActionProcessor ap;
 		public ActionThread(ActionProcessor parent) {

@@ -45,7 +45,7 @@ public class JourneyPlan {
 		} 
 	}
 
-	public GoalMatcher getLocationMatcher() {
+	public GoalMatcher<?> getLocationMatcher() {
 		return locationMatcher;
 	}
 

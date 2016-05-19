@@ -35,7 +35,7 @@ public class TestActionProcessor {
 		Action<?> retAction = null;
 		do {
 			retAction = ap.getNextUndeletedAction(1, TimeUnit.MILLISECONDS);
-			System.out.println(retAction);
+	//		System.out.println(retAction);
 		} while (retAction != null);
 	}
 	
@@ -57,6 +57,9 @@ public class TestActionProcessor {
 		try {
 			synchronized (ap) {
 				Action<?> next = ap.processNextAction();	//start
+				if (!classType.isInstance(next)) { 
+					System.out.println(next);
+				}
 				assertTrue(classType.isInstance(next));
 				ap.wait();
 				next = ap.processNextAction();	// run

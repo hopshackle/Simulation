@@ -144,7 +144,7 @@ public class BasicMarriageTest {
 		hex2.setParentLocation(world);
 		homeHex.addAccessibleLocation(hex2);
 		new Marriage(maleAgent1, femaleAgent2);
-		BasicAction move = new Move(maleAgent1, 0, 0, hex2);
+		BasicAction move = new BasicMove(BasicActions.FIND_UNKNOWN, maleAgent1, new TerrainMatcher(TerrainType.OCEAN));
 		run(move);
 		assertTrue(maleAgent1.getLocation() == hex2);
 		assertTrue(femaleAgent2.getLocation() == hex2);

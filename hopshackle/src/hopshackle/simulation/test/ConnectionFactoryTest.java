@@ -49,7 +49,6 @@ public class ConnectionFactoryTest {
 		for (int loop = 0; loop<50; loop++) {
 			c[loop] = ConnectionFactory.getConnection();
 			assertTrue(c[loop] !=null);
-			System.out.println(loop);
 		}
 		try {
 			for (int loop = 0; loop<50; loop++) {

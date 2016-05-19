@@ -174,8 +174,10 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 					return false;
 			}
 			return true;
+		case REST:
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	@Override

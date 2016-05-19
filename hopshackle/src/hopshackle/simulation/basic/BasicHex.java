@@ -13,8 +13,8 @@ public class BasicHex extends Hex {
 	protected static long HEX_MAINTENANCE_CONSTANT = 5000;
 	private static Font villageFont = new Font("Arial", Font.PLAIN, 9);
 	private static HexFactory hexFactory = new BasicHexFactory();
-	private static double REFORESTATION_RATE = SimProperties.getPropertyAsDouble("ReforestationRate", "0.0");
-	private static double REFORESTATION_RATE_WITHOUT_ADJACENT_FOREST = SimProperties.getPropertyAsDouble("ForestationRate", "0.0");
+	private double REFORESTATION_RATE = SimProperties.getPropertyAsDouble("ReforestationRate", "0.0");
+	private double REFORESTATION_RATE_WITHOUT_ADJACENT_FOREST = SimProperties.getPropertyAsDouble("ForestationRate", "0.0");
 	private long lastMaintenance = 0;
 
 	public BasicHex(int row, int column) {
