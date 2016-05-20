@@ -75,8 +75,8 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 				dispatchLearningEvent(decidingAgent);
 				learnFromDecision(decidingAgent, contextAgent, decisionMade);
 			}
+			decidingAgent.actionPlan.addActionToAllPlans(action);
 		}
-		decidingAgent.actionPlan.addActionToAllPlans(action);
 		return action;
 	}
 	protected void dispatchLearningEvent(A agent) {
@@ -221,7 +221,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	protected ExperienceRecord<A> getExperienceRecord(A decidingAgent, Agent contextAgent, ActionEnum<A> option) {
 		ExperienceRecord<A> output = new ExperienceRecord<A>(variableSet, getCurrentState(decidingAgent, contextAgent), option, 
-				getChooseableOptions(decidingAgent, contextAgent));
+				getChooseableOptions(decidingAgent, contextAgent), this);
 		return output;
 	}
 

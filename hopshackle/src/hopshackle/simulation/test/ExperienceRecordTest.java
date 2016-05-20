@@ -28,7 +28,7 @@ public class ExperienceRecordTest {
 		for (int i = 0; i < startState.length; i++)
 			startState[i] = i;
 
-		er = new ExperienceRecord(varList, startState, BasicActions.FARM, possibleActions);
+		er = new ExperienceRecord(varList, startState, BasicActions.FARM, possibleActions, null);
 
 		assertFalse(er.isInFinalState());
 		assertTrue(er.getEndState() == null);

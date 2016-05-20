@@ -68,14 +68,12 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListen
 	protected void processDecisionsForAgent(A a) {
 		List<ExperienceRecord<A>> tdArray = tdArrayHash.get(a);
 		double reward = a.getScore() - lastScoresOfAgents.get(a);
-		Decider agentDecider = a.getDecider();
-		if (agentDecider != null) {
-			for (ExperienceRecord<A> td : tdArray) {
-				double[] newState = agentDecider.getCurrentState(a, a);
-				List<ActionEnum<A>> possibleActions = agentDecider.getChooseableOptions(a, a);
-				td.updateWithResults(reward, newState, possibleActions, a.isDead());
-				agentDecider.learnFrom(td, a.getMaxScore());
-			}
+		for (ExperienceRecord<A> td : tdArray) {
+			Decider<A> agentDecider = td.getDecider();
+			double[] newState = agentDecider.getCurrentState(a, a);
+			List<ActionEnum<A>> possibleActions = agentDecider.getChooseableOptions(a, a);
+			td.updateWithResults(reward, newState, possibleActions, a.isDead());
+			agentDecider.learnFrom(td, a.getMaxScore());
 		}
 		lastScoresOfAgents.put(a, a.getScore());
 		tdArrayHash.put(a, new ArrayList<ExperienceRecord<A>>());

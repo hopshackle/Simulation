@@ -10,12 +10,14 @@ public class ExperienceRecord<A extends Agent> {
 	protected double reward;
 	protected List<GeneticVariable> variables;
 	protected boolean isFinalState;
+	protected Decider<A> sourceDecider;
 	
-	public ExperienceRecord(List<GeneticVariable> var, double[] state, ActionEnum<A> action, List<ActionEnum<A>> possibleActions) {
+	public ExperienceRecord(List<GeneticVariable> var, double[] state, ActionEnum<A> action, List<ActionEnum<A>> possibleActions, Decider<A> decider) {
 		actionTaken = action;
 		startState = state;
 		variables = HopshackleUtilities.cloneList(var);
 		possibleActionsFromStartState = HopshackleUtilities.cloneList(possibleActions);
+		sourceDecider = decider;
 	}
 
 	public void updateWithResults(double reward, double[] newState, List<ActionEnum<A>> actions, boolean endOfRun) {
@@ -72,5 +74,8 @@ public class ExperienceRecord<A extends Agent> {
 	
 	public boolean isInFinalState() {
 		return isFinalState;
+	}
+	public Decider<A> getDecider() {
+		return sourceDecider;
 	}
 }

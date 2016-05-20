@@ -86,6 +86,8 @@ class TestAgent extends Agent {
 
 class TestDecider extends BaseDecider<TestAgent> {
 	
+	public int learningEpisodes = 0;
+	
 	static List<ActionEnum<TestAgent>> actionList = new ArrayList<ActionEnum<TestAgent>>();
 	static {
 		actionList.add(TestActionEnum.TEST);
@@ -99,6 +101,11 @@ class TestDecider extends BaseDecider<TestAgent> {
 	public double valueOption(ActionEnum<TestAgent> option, TestAgent decidingAgent, Agent contextAgent) {
 		return 0;
 	}
+	@Override
+	public void learnFrom(ExperienceRecord<TestAgent> exp, double maxResult) {
+		learningEpisodes++;
+	}
+
 
 }
 
