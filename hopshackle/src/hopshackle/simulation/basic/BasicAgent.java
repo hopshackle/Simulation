@@ -291,4 +291,5 @@ public class BasicAgent extends Agent implements Persistent {
 			errorLogger.severe("Invalid number format in breeding age ranges. Defaulting to no breeding. " + e.getMessage());
 		}
 	}
+
 }

@@ -6,15 +6,17 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.*;
 import java.util.logging.Logger;
 
+@SuppressWarnings("rawtypes")
 public abstract class Agent extends Observable {
 
 	protected static boolean debug = false;
 	protected static boolean fullDebug = false;
 	private static AtomicLong idFountain = new AtomicLong(1);
-	
+	protected static Teacher doNothingTeacher = new AgentTeacher();
+
 	protected Location location;
 	protected World world;
-	protected Decider<?> decider;
+	protected Decider decider, doNothingDecider;
 	protected ActionPlan actionPlan;
 	protected static Logger errorLogger = Logger.getLogger("hopshackle.simulation");
 	protected Genome genome;

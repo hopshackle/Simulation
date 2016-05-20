@@ -23,6 +23,8 @@ public class GeneralQDeciderTest {
 		public Action getAction(Agent a1, Agent a2) {return getAction(a1);}
 		@Override
 		public Action getAction(Agent a) {return null;}
+		@Override 
+		public boolean isDummy() {return false;}
 	};
 	public static ActionEnum left = new ActionEnum() {
 		@Override
@@ -35,6 +37,8 @@ public class GeneralQDeciderTest {
 		public Action getAction(Agent a1, Agent a2) {return getAction(a1);}
 		@Override
 		public Action getAction(Agent a) {return null;}
+		@Override 
+		public boolean isDummy() {return false;}
 	};
 
 	public static GeneticVariable gold = new GeneticVariable() {

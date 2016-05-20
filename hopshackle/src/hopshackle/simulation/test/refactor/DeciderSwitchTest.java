@@ -1,11 +1,8 @@
 package hopshackle.simulation.test.refactor;
 
 import static org.junit.Assert.*;
-
 import java.util.*;
-
 import hopshackle.simulation.*;
-
 import org.junit.*;
 
 public class DeciderSwitchTest {
@@ -45,6 +42,7 @@ public class DeciderSwitchTest {
 		agent.getNextAction().start();
 		agent.getNextAction().run();
 		assertEquals(teacher1.getExperienceRecords(agent).size(), 1);
+		assertEquals(agent.getActionPlan().sizeOfQueue(), 1); 
 		ExperienceRecord<TestAgent> er2 = teacher1.getExperienceRecords(agent).get(0);
 		assertEquals(decider1.learningEpisodes, 1);
 		assertTrue(er1 != er2);
@@ -85,6 +83,7 @@ public class DeciderSwitchTest {
 		agent.setDecider(decider3);
 		agent.getNextAction().start();
 		agent.getNextAction().run();
+		assertEquals(agent.decisionsTaken, 2);
 		assertEquals(decider1.learningEpisodes, 1);
 		assertEquals(decider3.learningEpisodes, 0);
 		assertEquals(teacher1.getExperienceRecords(agent).size(), 0);
@@ -97,4 +96,27 @@ public class DeciderSwitchTest {
 		assertTrue(er2.getPossibleActionsFromEndState() == null);
 	}
 
+	@Test
+	public void doNothingUpdatesPreviousExperienceRecord() {
+		agent.setDecider(decider1);
+		agent.decide();
+		assertEquals(teacher1.getExperienceRecords(agent).size(), 1);
+		ExperienceRecord<TestAgent> er1 = teacher1.getExperienceRecords(agent).get(0);
+		assertTrue(er1.getPossibleActionsFromStartState() != null);
+		assertTrue(er1.getPossibleActionsFromEndState() == null);
+		TestActionEnum.dummyMode = true;
+		agent.getNextAction().start();
+		agent.getNextAction().run();
+		assertEquals(agent.decisionsTaken, 2); // new decision made
+		assertEquals(agent.getActionPlan().sizeOfQueue(), 0); // but nothing added to action queue
+		assertEquals(decider1.learningEpisodes, 1);	// old decision has been learnt from
+		assertEquals(teacher1.getExperienceRecords(agent).size(), 1);	// but er created
+		ExperienceRecord<TestAgent> er2 = teacher1.getExperienceRecords(agent).get(0);
+		assertTrue(er1 != er2);
+		assertTrue(er1.getPossibleActionsFromStartState() != null);
+		assertTrue(er1.getPossibleActionsFromEndState() != null);
+		assertTrue(er2.getPossibleActionsFromStartState() != null);
+		assertTrue(er2.getPossibleActionsFromEndState() == null);
+		assertEquals(er2.getPossibleActionsFromStartState().size(), 1);
+	}
 }

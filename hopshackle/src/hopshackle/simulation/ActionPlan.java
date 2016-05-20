@@ -36,7 +36,7 @@ public class ActionPlan {
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void addAction(Action newAction) {
+	public synchronized void addAction(Action newAction) {
 		if (!agent.isDead() && (agent.getWorld() != null) && newAction != null) {
 			List<Action> overriddenActions = new ArrayList<Action>();
 			Policy<Action<?>> actionPolicy = (Policy<Action<?>>) agent.getPolicy("action");

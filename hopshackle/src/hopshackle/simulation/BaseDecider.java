@@ -61,6 +61,10 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	public Action<A> decide(A decidingAgent, Agent contextAgent) {
 		ActionEnum<A> decisionMade = makeDecision(decidingAgent, contextAgent);
 		Action<A> action = null;
+		if (decisionMade.isDummy()) {
+			dispatchLearningEvent(decidingAgent);
+			learnFromDecision(decidingAgent, contextAgent, decisionMade);
+		} else {
 		long chosenDuration = 0;
 		long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
 		if (availableTime > 0) {
@@ -77,8 +81,10 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			}
 			decidingAgent.actionPlan.addActionToAllPlans(action);
 		}
+		}
 		return action;
 	}
+
 	protected void dispatchLearningEvent(A agent) {
 		AgentEvent learningEvent = new AgentEvent(agent, AgentEvents.DECISION_STEP_COMPLETE);
 		agent.eventDispatch(learningEvent);

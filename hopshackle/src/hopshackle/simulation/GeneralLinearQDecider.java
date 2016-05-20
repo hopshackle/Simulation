@@ -9,12 +9,12 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 
 	public GeneralLinearQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables) {
 		super(actions, variables);
-		actionLength = actions.size();
-		variableLength = variables.size();
+		actionLength = actionSet.size();
+		variableLength = variableSet.size();
 		weights = new double[actionLength][variableLength];
 		for (int i=0; i<actionLength; i++)
 			for (int j=0; j<variableLength; j++) 
-				weights[i][j] = 1.0;		// initialise to 1.0 to promote optimistic exploration
+				weights[i][j] = 0.0;	
 	}
 
 	@Override

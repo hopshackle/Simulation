@@ -5,7 +5,7 @@ import java.util.*;
 import hopshackle.simulation.*;
 
 public class BasicAction extends Action<BasicAgent> {
-
+	
 	public BasicAction(ActionEnum<BasicAgent> type, BasicAgent a, long duration, boolean recordAction) {
 		this(type, a, 0l, duration, recordAction);
 	}
@@ -31,13 +31,4 @@ public class BasicAction extends Action<BasicAgent> {
 		return retValue;
 	}
 	
-	@Override
-	protected void doNextDecision(BasicAgent agent) {
-		if (agent.isMarried() && agent.isFemale()) {
-			// Do nothing
-		} else {
-			super.doNextDecision(actor);
-		}
-	}
-
 }

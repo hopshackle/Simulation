@@ -37,9 +37,11 @@ class TestAction extends Action<TestAgent> {
 }
 
 enum TestActionEnum implements ActionEnum<TestAgent> {
-	
-	TEST;
 
+	TEST;
+	
+	public static boolean dummyMode = false;
+	
 	@Override
 	public String getChromosomeDesc() {
 		return "TEST";
@@ -66,6 +68,9 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 	public Enum getEnum() {
 		return this;
 	}
+	
+	@Override 
+	public boolean isDummy() {return dummyMode;}
 	
 }
 
@@ -105,7 +110,6 @@ class TestDecider extends BaseDecider<TestAgent> {
 	public void learnFrom(ExperienceRecord<TestAgent> exp, double maxResult) {
 		learningEpisodes++;
 	}
-
 
 }
 

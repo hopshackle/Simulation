@@ -17,6 +17,7 @@ public interface ActionEnum<A extends Agent> {
 	 */
 	public boolean isChooseable(A a);
 	
-	@SuppressWarnings("unchecked")
+	public boolean isDummy();
+	
 	public Enum getEnum();
 }
