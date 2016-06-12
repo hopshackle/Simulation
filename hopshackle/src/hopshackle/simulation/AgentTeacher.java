@@ -69,12 +69,12 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListen
 				break;
 			case DECISION_STEP_COMPLETE:
 				Action<A> action = (Action<A>)ae.getAction();
-				if (!actionPreviouslySeen(a, action)) {
+				if (action!= null && !actionPreviouslySeen(a, action)) {
 					// we need to create a new ER first
 					Decider<A> agentDecider = (Decider<A>) a.getDecider();
 					List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 					chooseableOptions.add(action.getType());
-					ExperienceRecord newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
+					ExperienceRecord<A> newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
 							 agentDecider.getCurrentState(a, a), action, chooseableOptions, agentDecider);
 					registerDecision(a, newER);
 				}

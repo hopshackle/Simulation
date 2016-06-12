@@ -56,6 +56,12 @@ public class ActionLearningTests {
 	
 	@Test
 	public void unseenEventThisActionAgentKnown() {
+		TestAction oldAction = taf.factory(1, 0, 0, 1000);
+		testAgent.getActionPlan().addAction(oldAction);
+		oldAction.start();
+		oldAction.run();
+		// We set an old action in executed actions first
+		
 		ExperienceRecord<TestAgent> er1 = getNewER();
 		ExperienceRecord<TestAgent> er2 = getNewER();
 		ExperienceRecord<TestAgent> er3 = getNewER();
@@ -64,6 +70,7 @@ public class ActionLearningTests {
 		testAgent.getActionPlan().addAction(er3.getActionTaken()); // this ensures ER3 action is the one referenced on Learning Event
 		List<ExperienceRecord<TestAgent>> allER = teacher.getExperienceRecords(testAgent);
 		assertEquals(allER.size(), 1);
+		testAgent.getActionPlan().actionCompleted(oldAction);
 		dispatchLearningEvent(testAgent);
 		// Should create a new ExperienceRecord with a status of ACTION_COMPLETED
 		allER = teacher.getExperienceRecords(testAgent);
@@ -90,22 +97,10 @@ public class ActionLearningTests {
 		assertTrue(teacher.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.State.UNSEEN);
 		testAgent.getActionPlan().addAction(er3.getActionTaken()); // this ensures ER3 action is the one referenced on Learning Event
 		List<ExperienceRecord<TestAgent>> allER = teacher.getExperienceRecords(testAgent);
-		assertEquals(allER.size(), 1);
+		assertEquals(allER.size(), 0);
 		dispatchLearningEvent(testAgent);
-		// Should create a new ExperienceRecord with a status of ACTION_COMPLETED
 		allER = teacher.getExperienceRecords(testAgent);
-		assertEquals(allER.size(), 2);
-		for (ExperienceRecord<TestAgent> er : allER) {
-			Action<TestAgent> a = er.getActionTaken();
-			if (a.equals(er2.getActionTaken())) {
-				assertTrue(teacher.agentActionState(testAgent, a) == ExperienceRecord.State.UNSEEN);
-			} else if (a.equals(er3.getActionTaken())) {
-				assertTrue(teacher.agentActionState(testAgent, a) == ExperienceRecord.State.UNSEEN);
-			} else { 
-				// the added one
-				assertTrue(teacher.agentActionState(testAgent, a) == ExperienceRecord.State.UNSEEN);
-			}
-		}
+		assertEquals(allER.size(), 0);
 	}	
 	
 	@Test
