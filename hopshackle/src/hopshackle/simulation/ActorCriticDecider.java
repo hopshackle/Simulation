@@ -109,7 +109,7 @@ public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
 			return;	// no learning to take place
 
 		double output = exp.getReward()/maxResult;
-		double modifiedLearningCoefficient = baseLearningCoefficient / (double)brain.size() / getPercentageOfOption(exp.getActionTaken());
+		double modifiedLearningCoefficient = baseLearningCoefficient / (double)brain.size() / getPercentageOfOption(exp.getActionTaken().getType());
 
 		BasicNeuralData endState = new BasicNeuralData(exp.getEndState());
 		double currentValue = (stateEvaluationBrain.compute(endState)).getData()[0];

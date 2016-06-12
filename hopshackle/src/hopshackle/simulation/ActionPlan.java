@@ -107,6 +107,12 @@ public class ActionPlan {
 	public Action<?> getNextAction() {
 		return actionQueue.peek();
 	}
+	public Action<?> getLastAction() {
+		if (!executedActions.isEmpty()) 
+			return executedActions.get(executedActions.size()-1);
+		else
+			return null;
+	}
 	public int sizeOfQueue() {
 		return actionQueue.size();
 	}

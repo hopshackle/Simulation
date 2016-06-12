@@ -63,24 +63,26 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		Action<A> action = null;
 		if (decisionMade.isDummy()) {
 			dispatchLearningEvent(decidingAgent);
-			learnFromDecision(decidingAgent, contextAgent, decisionMade);
+			// TODO: this instantiatoin of an action is temporary while refactoring is in progress
+			// The whole isDummy method is coming out shortly
+			learnFromDecision(decidingAgent, contextAgent, decisionMade.getAction(decidingAgent));
 		} else {
-		long chosenDuration = 0;
-		long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
-		if (availableTime > 0) {
-			if (decisionMade != null)
-				action = decisionMade.getAction(decidingAgent);
-			if (action != null) 
-				chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
-			if (chosenDuration > availableTime) {
-				action = null;
-			} else {
-				// learn from last decision unless there is still stuff in the action queue from the last decision
-				dispatchLearningEvent(decidingAgent);
-				learnFromDecision(decidingAgent, contextAgent, decisionMade);
+			long chosenDuration = 0;
+			long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
+			if (availableTime > 0) {
+				if (decisionMade != null)
+					action = decisionMade.getAction(decidingAgent);
+				if (action != null) 
+					chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
+				if (chosenDuration > availableTime) {
+					action = null;
+				} else {
+					// learn from last decision unless there is still stuff in the action queue from the last decision
+					dispatchLearningEvent(decidingAgent);
+					learnFromDecision(decidingAgent, contextAgent, action);
+				}
+				decidingAgent.actionPlan.addActionToAllPlans(action);
 			}
-			decidingAgent.actionPlan.addActionToAllPlans(action);
-		}
 		}
 		return action;
 	}
@@ -220,13 +222,13 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 
 
-	protected void learnFromDecision(A decidingAgent, Agent contextAgent, ActionEnum<A> decisionMade) {
+	protected void learnFromDecision(A decidingAgent, Agent contextAgent, Action<A> decisionMade) {
 		if (teacher != null) 
 			teacher.registerDecision(decidingAgent, getExperienceRecord(decidingAgent, contextAgent, decisionMade));
 	}
 
-	protected ExperienceRecord<A> getExperienceRecord(A decidingAgent, Agent contextAgent, ActionEnum<A> option) {
-		ExperienceRecord<A> output = new ExperienceRecord<A>(variableSet, getCurrentState(decidingAgent, contextAgent), option, 
+	protected ExperienceRecord<A> getExperienceRecord(A decidingAgent, Agent contextAgent, Action<A> option) {
+		ExperienceRecord<A> output = new ExperienceRecord<A>(decidingAgent, variableSet, getCurrentState(decidingAgent, contextAgent), option, 
 				getChooseableOptions(decidingAgent, contextAgent), this);
 		return output;
 	}

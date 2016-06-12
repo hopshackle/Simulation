@@ -73,7 +73,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		double bestNextAction = valueOfBestAction(exp);
 		ActionEnum<A> nextAction = getBestActionFrom(exp.getPossibleActionsFromEndState(), exp.getEndState());
 		double[] startState = exp.getStartState();
-		double predictedValue = valueOption(exp.getActionTaken(), startState);
+		double predictedValue = valueOption(exp.getActionTaken().actionType, startState);
 		double delta = exp.getReward() + gamma * bestNextAction - predictedValue;
 		if (localDebug) {
 			log(String.format("Learning:\t%-15sReward: %.2f, NextValue: %.2f, Predicted: %.2f, Delta: %.4f, NextAction: %s", 
@@ -94,8 +94,8 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 			GeneticVariable input = variableSet.get(i);
 			double weightChange = value * delta * alpha;
 			if (localDebug) log(String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f", input.toString(), value, weightChange, 
-					getWeightOf(input, exp.getActionTaken())));
-			updateWeight(input, exp.getActionTaken(), weightChange);
+					getWeightOf(input, exp.getActionTaken().actionType)));
+			updateWeight(input, exp.getActionTaken().actionType, weightChange);
 		}
 	}
 }

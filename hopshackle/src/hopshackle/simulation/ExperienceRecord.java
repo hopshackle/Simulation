@@ -3,28 +3,56 @@ package hopshackle.simulation;
 import java.util.*;
 
 public class ExperienceRecord<A extends Agent> {
+	
+	public enum State {
+		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
+	}
 
+	protected A actor;
 	protected double[] startState, endState;
-	protected ActionEnum<A> actionTaken;
+	protected Action<A> actionTaken;
 	protected List<ActionEnum<A>> possibleActionsFromEndState, possibleActionsFromStartState;
-	protected double reward;
+	protected double startScore, endScore, reward;
 	protected List<GeneticVariable> variables;
 	protected boolean isFinalState;
 	protected Decider<A> sourceDecider;
+	protected State ERState = State.UNSEEN;
 	
-	public ExperienceRecord(List<GeneticVariable> var, double[] state, ActionEnum<A> action, List<ActionEnum<A>> possibleActions, Decider<A> decider) {
+	public ExperienceRecord(A actor, List<GeneticVariable> var, double[] state, Action<A> action, List<ActionEnum<A>> possibleActions, Decider<A> decider) {
+		this.actor = actor;
 		actionTaken = action;
 		startState = state;
 		variables = HopshackleUtilities.cloneList(var);
 		possibleActionsFromStartState = HopshackleUtilities.cloneList(possibleActions);
 		sourceDecider = decider;
+		ERState = State.DECISION_TAKEN;
+		startScore = actor.getScore();
 	}
 
-	public void updateWithResults(double reward, double[] newState, List<ActionEnum<A>> actions, boolean endOfRun) {
+	public void updateWithResults(double reward, double[] newState) {
 		endState = newState;
-		possibleActionsFromEndState = HopshackleUtilities.cloneList(actions);
 		this.reward = reward;
-		isFinalState = endOfRun;
+		ERState = State.ACTION_COMPLETED;
+	}
+	
+	public void updateNextActions(List<ActionEnum<A>> actions) {
+		possibleActionsFromEndState = HopshackleUtilities.cloneList(actions);
+		endScore = actor.getScore();
+		ERState = State.NEXT_ACTION_TAKEN;
+	}
+	
+	public void setIsFinal() {
+		isFinalState = true;
+		endScore = 0.0;
+		ERState = State.NEXT_ACTION_TAKEN;
+	}
+	
+	public void apply(ExperienceRecord<A> newER) {
+		if (getState() == State.ACTION_COMPLETED && 
+				newER.getActionTaken() != actionTaken && newER.getActionTaken().getActor() == actionTaken.getActor()) {
+			// A different action, but with the same deciding agent
+			updateNextActions(newER.possibleActionsFromStartState);
+		}
 	}
 	
 	public double[][] getValues(List<GeneticVariable> gvList) {
@@ -52,7 +80,7 @@ public class ExperienceRecord<A extends Agent> {
 		return endState;
 	}
 
-	public ActionEnum<A> getActionTaken() {
+	public Action<A> getActionTaken() {
 		return actionTaken;
 	}
 
@@ -65,6 +93,8 @@ public class ExperienceRecord<A extends Agent> {
 	}
 
 	public double getReward() {
+		if (getState() == State.NEXT_ACTION_TAKEN) 
+			return (reward + endScore - startScore);
 		return reward;
 	}
 
@@ -77,5 +107,8 @@ public class ExperienceRecord<A extends Agent> {
 	}
 	public Decider<A> getDecider() {
 		return sourceDecider;
+	}
+	public State getState() {
+		return ERState;
 	}
 }

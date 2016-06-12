@@ -1,7 +1,9 @@
 package hopshackle.simulation.test.refactor;
 
 import hopshackle.simulation.*;
+import hopshackle.simulation.ExperienceRecord.State;
 
+import java.awt.event.AWTEventListener;
 import java.util.*;
 
 class TestAction extends Action<TestAgent> {
@@ -87,6 +89,10 @@ class TestAgent extends Agent {
 		decisionsTaken++;
 		super.decide();
 	}
+	@Override
+	public void eventDispatch(AgentEvent ae) {
+		super.eventDispatch(ae);
+	}
 }
 
 class TestDecider extends BaseDecider<TestAgent> {
@@ -143,6 +149,24 @@ class TestActionPolicy extends Policy<TestAction> {
 	}
 	public void setValue(TestAction a, double value) {
 		actionValues.put(a, value);
+	}
+	
+}
+
+class TestAgentTeacher extends AgentTeacher<TestAgent> {
+
+	public boolean agentKnown(TestAgent testAgent) {
+		return agentAlreadySeen(testAgent);
+	}
+
+	public State agentActionState(TestAgent testAgent, Action<TestAgent> actionTaken) {
+		List<ExperienceRecord<TestAgent>> allER = getExperienceRecords(testAgent);
+		for (ExperienceRecord<TestAgent> er : allER) {
+			if (er.getActionTaken().equals(actionTaken)) {
+				return er.getState();
+			}
+		}
+		return State.UNSEEN;
 	}
 	
 }

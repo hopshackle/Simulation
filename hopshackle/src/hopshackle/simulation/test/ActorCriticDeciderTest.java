@@ -58,7 +58,8 @@ public class ActorCriticDeciderTest {
 		}
 
 		ExperienceRecord<BasicAgent> exp = agentTeacher.getExperienceRecords(agent).get(0);
-		exp.updateWithResults(1.0, decider.getCurrentState(agent, agent), actions, false);
+		exp.updateWithResults(1.0, decider.getCurrentState(agent, agent));
+		exp.updateNextActions(actions);
 		decider.learnFrom(exp, 1.0);
 		
 		double laterValue = decider.valueState(agent);
@@ -86,7 +87,8 @@ public class ActorCriticDeciderTest {
 								// why we call maintenance() at the start of this test!
 								// God this is kludgy.
 		exp = agentTeacher.getExperienceRecords(agent).get(0);
-		exp.updateWithResults(0.0, decider.getCurrentState(agent, agent), actions, false);
+		exp.updateWithResults(0.0, decider.getCurrentState(agent, agent));
+		exp.updateNextActions(actions);
 		decider.learnFrom(exp, 1.0);
 		laterValue = decider.valueState(agent);
 		updatedNonDValue = decider.valueOption(decisionNotTaken, agent, agent);

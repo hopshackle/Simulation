@@ -97,7 +97,7 @@ public class StateDecider extends QDecider {
 
 	@Override
 	public void learnFrom(ExperienceRecord exp, double maxResult) {
-		ActionEnum actionTaken = exp.getActionTaken();
+		ActionEnum actionTaken = exp.getActionTaken().actionType;
 		double observedResult = exp.getReward();
 		HopshackleState startState = getState(exp.getStartState());
 		HopshackleState endState = getState(exp.getEndState());

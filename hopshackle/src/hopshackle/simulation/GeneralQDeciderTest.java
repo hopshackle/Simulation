@@ -117,8 +117,9 @@ public class GeneralQDeciderTest {
 
 	@Test
 	public void teachingDecisionUpdatesWeights() {
-		ExperienceRecord exp = decider.getExperienceRecord(testAgent, testAgent, right);
-		exp.updateWithResults(2.0, decider.getCurrentState(testAgent, testAgent), actions, false);
+		ExperienceRecord exp = decider.getExperienceRecord(testAgent, testAgent, right.getAction(testAgent));
+		exp.updateWithResults(2.0, decider.getCurrentState(testAgent, testAgent));
+		exp.updateNextActions(actions);
 		decider.learnFrom(exp, 10.0);
 		// reward of 2.0 versus an expected 0.0
 		// we have no information, so both actions give an expectation of 0.0
@@ -128,9 +129,10 @@ public class GeneralQDeciderTest {
 		assertEquals(decider.getWeightOf(constantTerm, right), 0.4, 0.001);
 		assertEquals(decider.getWeightOf(constantTerm, left), 0.0, 0.001);
 		
-		exp = decider.getExperienceRecord(testAgent, testAgent, left);
+		exp = decider.getExperienceRecord(testAgent, testAgent, left.getAction(testAgent));
 		testAgent.addGold(-2.0);
-		exp.updateWithResults(-2.0, decider.getCurrentState(testAgent, testAgent), actions, false);
+		exp.updateWithResults(-2.0, decider.getCurrentState(testAgent, testAgent));
+		exp.updateNextActions(actions);
 		decider.learnFrom(exp, 10.0);
 		// prediction would be 0.4
 		// reward of -2.0. Value of left is 0.4, and value of right is 0.8. So max is 0.8.
@@ -140,9 +142,10 @@ public class GeneralQDeciderTest {
 		assertEquals(decider.getWeightOf(constantTerm, right), 0.4, 0.001);
 		assertEquals(decider.getWeightOf(constantTerm, left), -0.336, 0.001);
 		
-		exp = decider.getExperienceRecord(testAgent, testAgent, right);
+		exp = decider.getExperienceRecord(testAgent, testAgent, right.getAction(testAgent));
 		testAgent.addGold(1.0);
-		exp.updateWithResults(1.0, decider.getCurrentState(testAgent, testAgent), actions, false);
+		exp.updateWithResults(1.0, decider.getCurrentState(testAgent, testAgent));
+		exp.updateNextActions(actions);
 		decider.learnFrom(exp, 10.0);
 		// prediction would be 0.464
 		// reward of 1.0. Value of left is -0.272, and value of right is 0.464. So max is 0.464
@@ -155,8 +158,9 @@ public class GeneralQDeciderTest {
 	
 	@Test
 	public void teachingDecisionWithNoDifferenceDoesNotUpdateWeights() {
-		ExperienceRecord exp = decider.getExperienceRecord(testAgent, testAgent, right);
-		exp.updateWithResults(0.0, decider.getCurrentState(testAgent, testAgent), actions, false);
+		ExperienceRecord exp = decider.getExperienceRecord(testAgent, testAgent, right.getAction(testAgent));
+		exp.updateWithResults(0.0, decider.getCurrentState(testAgent, testAgent));
+		exp.updateNextActions(actions);
 		decider.learnFrom(exp, 10.0);
 		// reward of 0.0, with value of best action = 0.0, so difference = 0.0 + gamma * 0.0 - 0.0 = 0.00
 		assertEquals(decider.getWeightOf(gold, right), 0.0, 0.001);

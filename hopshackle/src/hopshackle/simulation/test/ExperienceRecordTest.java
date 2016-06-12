@@ -12,11 +12,15 @@ public class ExperienceRecordTest {
 
 	private List<GeneticVariable> varList = new ArrayList<GeneticVariable>();
 	private ExperienceRecord er;
+	private BasicAgent agent;
+	private World w;
 
 	@Before
 	public void setUp() throws Exception {
 		for (GeneticVariable gv : BasicVariables.values())
 			varList.add(gv);
+		w = new World();
+		agent = new BasicAgent(w);
 	}
 
 	@Test
@@ -28,11 +32,11 @@ public class ExperienceRecordTest {
 		for (int i = 0; i < startState.length; i++)
 			startState[i] = i;
 
-		er = new ExperienceRecord(varList, startState, BasicActions.FARM, possibleActions, null);
+		er = new ExperienceRecord(agent, varList, startState, BasicActions.FARM.getAction(agent), possibleActions, null);
 
 		assertFalse(er.isInFinalState());
 		assertTrue(er.getEndState() == null);
-		assertTrue(er.getActionTaken() == BasicActions.FARM);
+		assertTrue(er.getActionTaken().getType() == BasicActions.FARM);
 		assertEquals(er.getReward(), 0.0, 0.01);
 		assertTrue(er.getPossibleActionsFromEndState() == null);
 		assertEquals(er.getPossibleActionsFromStartState().size(), 2);
@@ -41,10 +45,11 @@ public class ExperienceRecordTest {
 		for (int i = 0; i < endState.length; i++)
 			endState[i] = Math.sqrt(i);
 		possibleActions.add(BasicActions.BREED);
-		er.updateWithResults(10.0, endState, possibleActions, true);
+		er.updateWithResults(10.0, endState);
+		er.setIsFinal();
 		assertTrue(er.isInFinalState());
 		assertFalse(er.getEndState() == null);
-		assertTrue(er.getActionTaken() == BasicActions.FARM);
+		assertTrue(er.getActionTaken().getType() == BasicActions.FARM);
 		assertEquals(er.getReward(), 10.0, 0.01);
 		assertEquals(er.getPossibleActionsFromEndState().size(), 3);
 		assertEquals(er.getPossibleActionsFromStartState().size(), 2);

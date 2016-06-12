@@ -63,7 +63,7 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		double bestNextAction = valueOfBestAction(exp);
-		ActionEnum<A> actionTaken = exp.getActionTaken();
+		ActionEnum<A> actionTaken = exp.getActionTaken().actionType;
 		double[] startState = exp.getStartState();
 		double observedResult = exp.getReward();
 		double predictedValue = valueOption(actionTaken, startState);

@@ -1,6 +1,7 @@
 package hopshackle.simulation;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 import java.util.*;
 
@@ -62,6 +63,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		PROPOSED, PLANNED, EXECUTING, FINISHED, CANCELLED;
 	}
 
+	private static AtomicLong idFountain = new AtomicLong(1);
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	
 	protected List<A> mandatoryActors;
@@ -74,8 +76,8 @@ public abstract class Action<A extends Agent> implements Delayed {
 	protected long plannedEndTime;
 	protected long plannedStartTime;
 	protected State currentState = State.PROPOSED;
-	protected int value = 0;
 	protected ActionEnum<A> actionType;
+	private long uniqueId = idFountain.getAndIncrement();
 
 	public Action(ActionEnum<A> type, A a, boolean recordAction) {
 		this(type, a, 1000, recordAction);
@@ -329,4 +331,20 @@ public abstract class Action<A extends Agent> implements Delayed {
 	public ActionEnum<A> getType() {
 		return actionType;
 	}
+	public long getId() {
+		return uniqueId;
+	}
+	@Override
+    public int hashCode() {
+		return (int) uniqueId;
+	}
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Action) {
+			return ((Action<?>)o).getId() == getId();
+		} else {
+			return false;
+		}
+	}
+	
 }

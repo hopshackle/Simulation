@@ -40,7 +40,7 @@ public class StateOffPolicyDecider extends StateDecider {
 		} else {
 			HopshackleState startState = getState(exp.getStartState());
 			HopshackleState endState = getState(exp.getEndState());
-			startState.addExperience(exp.getActionTaken(), endState, exp.getReward());
+			startState.addExperience(exp.getActionTaken().actionType, endState, exp.getReward());
 			// but we omit the updateStateValue section
 		}
 	}
