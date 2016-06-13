@@ -47,14 +47,6 @@ public class ExperienceRecord<A extends Agent> {
 		ERState = State.NEXT_ACTION_TAKEN;
 	}
 	
-	public void apply(ExperienceRecord<A> newER) {
-		if (getState() == State.ACTION_COMPLETED && 
-				newER.getActionTaken() != actionTaken && newER.getActionTaken().getActor() == actionTaken.getActor()) {
-			// A different action, but with the same deciding agent
-			updateNextActions(newER.possibleActionsFromStartState);
-		}
-	}
-	
 	public double[][] getValues(List<GeneticVariable> gvList) {
 		double[][] retValue = new double[2][gvList.size()];		// start Values, then end values
 		int count = 0;

@@ -2,8 +2,6 @@ package hopshackle.simulation.test.refactor;
 
 import hopshackle.simulation.*;
 import hopshackle.simulation.ExperienceRecord.State;
-
-import java.awt.event.AWTEventListener;
 import java.util.*;
 
 class TestAction extends Action<TestAgent> {
@@ -76,6 +74,25 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 	
 }
 
+enum TestGenVar implements GeneticVariable {
+	TEST;
+
+	@Override
+	public double getValue(Object a, double var) {return 1.0;}
+
+	@Override
+	public double getValue(Object a1, Object a2) {return 1.0;}
+
+	@Override
+	public String getDescriptor() {
+		return "TEST_GV";
+	}
+
+	@Override
+	public boolean unitaryRange() {return true;}
+	
+}
+
 class TestAgent extends Agent {
 	
 	int decisionsTaken = 0;
@@ -99,13 +116,15 @@ class TestDecider extends BaseDecider<TestAgent> {
 	
 	public int learningEpisodes = 0;
 	
-	static List<ActionEnum<TestAgent>> actionList = new ArrayList<ActionEnum<TestAgent>>();
+	public static List<ActionEnum<TestAgent>> actionList = new ArrayList<ActionEnum<TestAgent>>();
+	public static List<GeneticVariable> gvList = new ArrayList<GeneticVariable>();
 	static {
 		actionList.add(TestActionEnum.TEST);
+		gvList.add(TestGenVar.TEST);
 	}
 
 	public TestDecider() {
-		super(actionList, new ArrayList<GeneticVariable>());
+		super(actionList, gvList);
 	}
 
 	@Override

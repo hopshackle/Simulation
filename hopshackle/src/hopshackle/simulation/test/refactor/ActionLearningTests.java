@@ -31,7 +31,7 @@ public class ActionLearningTests {
 	}
 	
 	public ExperienceRecord<TestAgent> getNewER() {
-		 return new ExperienceRecord<TestAgent>(testAgent, new ArrayList<GeneticVariable>(), 
+		 return new ExperienceRecord<TestAgent>(testAgent, TestDecider.gvList,
 				 decider.getCurrentState(testAgent, testAgent), TestActionEnum.TEST.getAction(testAgent), 
 					decider.getChooseableOptions(testAgent, testAgent), decider);
 	}
@@ -47,15 +47,22 @@ public class ActionLearningTests {
 	}
 
 	@Test
-	public void unseenERForOtherAction() {
+	public void unseenandDTERForOtherAction() {
 		ExperienceRecord<TestAgent> er1 = getNewER();
 		ExperienceRecord<TestAgent> er2 = getNewER();
+		ExperienceRecord<TestAgent> er3 = getNewER();
 		teacher.registerDecision(testAgent, er1);
+		assertTrue(teacher.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.DECISION_TAKEN);
 		assertTrue(teacher.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.State.UNSEEN);
+		assertTrue(teacher.agentActionState(testAgent, er3.getActionTaken()) == ExperienceRecord.State.UNSEEN);
+		teacher.registerDecision(testAgent, er2);
+		assertTrue(teacher.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(teacher.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(teacher.agentActionState(testAgent, er3.getActionTaken()) == ExperienceRecord.State.UNSEEN);
 	}	
 	
 	@Test
-	public void unseenEventThisActionAgentKnown() {
+	public void unseenEventAgentKnown() {
 		TestAction oldAction = taf.factory(1, 0, 0, 1000);
 		testAgent.getActionPlan().addAction(oldAction);
 		oldAction.start();
@@ -101,44 +108,98 @@ public class ActionLearningTests {
 		dispatchLearningEvent(testAgent);
 		allER = teacher.getExperienceRecords(testAgent);
 		assertEquals(allER.size(), 0);
+		assertTrue(teacher.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.State.UNSEEN);
+		assertTrue(teacher.agentActionState(testAgent, er3.getActionTaken()) == ExperienceRecord.State.UNSEEN);
 	}	
 	
 	@Test
-	public void unseenEventOtherAction() {
-		fail("Not yet implemented");
+	public void unseenAndDTDeath() {
+		ExperienceRecord<TestAgent> er1 = getNewER();
+		ExperienceRecord<TestAgent> er2 = getNewER();
+		teacher.registerDecision(testAgent, er1);
+		assertTrue(teacher.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.DECISION_TAKEN);
+		assertFalse(er1.isInFinalState());
+		testAgent.die("Ooops");
+		assertTrue(er1.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
+		assertTrue(er1.isInFinalState());
+		assertTrue(er2.getState() == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(teacher.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.State.UNSEEN);
+	}		
+	
+	@Test
+	public void decisionTakenEventThisAndOtherAction() {
+		ExperienceRecord<TestAgent> er1 = getNewER();
+		ExperienceRecord<TestAgent> er2 = getNewER();
+		teacher.registerDecision(testAgent, er1);
+		teacher.registerDecision(testAgent, er2);
+		testAgent.getActionPlan().addAction(er1.getActionTaken());
+		er1.getActionTaken().start();
+		assertTrue(teacher.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(teacher.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.State.DECISION_TAKEN);
+		er1.getActionTaken().run();
+		
+		assertTrue(teacher.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.ACTION_COMPLETED);
+		assertTrue(teacher.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(er1.getEndState().length > 0);
+		assertTrue(er2.getEndState() == null);
 	}	
 	
 	@Test
-	public void unseenDeath() {
-		fail("Not yet implemented");
-	}	
-	
+	public void actionCompletedOtherER() {
+		ExperienceRecord<TestAgent> er1 = getNewER();
+		ExperienceRecord<TestAgent> er2 = getNewER();
+		teacher.registerDecision(testAgent, er1);
+		testAgent.getActionPlan().addAction(er1.getActionTaken());
+		er1.getActionTaken().start();
+		er1.getActionTaken().run();
 
+		assertTrue(teacher.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.ACTION_COMPLETED);
+		assertTrue(teacher.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.State.UNSEEN);
+		assertTrue(er1.getPossibleActionsFromEndState() == null);
+		assertTrue(er2.getPossibleActionsFromEndState() == null);
+		teacher.registerDecision(testAgent, er2);
+		assertTrue(teacher.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.UNSEEN);	
+		// now removed from AgentTeacher, so UNSEEN in that context
+		assertTrue(er1.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
+		assertTrue(teacher.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(er1.getPossibleActionsFromEndState().size() > 0);
+		assertTrue(er2.getPossibleActionsFromEndState() == null);
+	}
+	
+	@SuppressWarnings("unchecked")
 	@Test
-	public void decisionTakenERThisAction() {
-		fail("Not yet implemented");
+	public void actionCompletedOtherEvent() {
+		ExperienceRecord<TestAgent> er1 = getNewER();
+		teacher.registerDecision(testAgent, er1);
+		testAgent.getActionPlan().addAction(er1.getActionTaken());
+		er1.getActionTaken().start();
+		er1.getActionTaken().run();
+		assertTrue(teacher.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.ACTION_COMPLETED);
+		assertTrue(er1.getPossibleActionsFromEndState() == null);
+		
+		Action<TestAgent> nextAction = (Action<TestAgent>) testAgent.getActionPlan().getNextAction();
+		nextAction.start();
+		nextAction.run();
+		assertTrue(er1.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
+		assertTrue(er1.getPossibleActionsFromEndState().size() > 0);
 	}
 
 	@Test
-	public void decisionTakenEROtherAction() {
-		fail("Not yet implemented");
-	}	
-	
-	@Test
-	public void decisionTakenEventThisAction() {
-		fail("Not yet implemented");
-	}	
-	
-	@Test
-	public void decisionTakenEventOtherAction() {
-		fail("Not yet implemented");
-	}	
-	
-	@Test
-	public void decisionTakenDeath() {
-		fail("Not yet implemented");
-	}	
-	
+	public void actionCompletedDeath() {
+		ExperienceRecord<TestAgent> er1 = getNewER();
+		teacher.registerDecision(testAgent, er1);
+		testAgent.getActionPlan().addAction(er1.getActionTaken());
+		er1.getActionTaken().start();
+		er1.getActionTaken().run();
+		assertTrue(teacher.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.ACTION_COMPLETED);
+		assertTrue(er1.getPossibleActionsFromEndState() == null);
+		
+		testAgent.die("Ooops");
+		assertTrue(er1.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
+		assertTrue(er1.getPossibleActionsFromEndState().size() == 0);
+		assertTrue(er1.isInFinalState());
+	}
+
 	private void dispatchLearningEvent(TestAgent agent) {
 		AgentEvent learningEvent = new AgentEvent(agent, AgentEvents.DECISION_STEP_COMPLETE);
 		agent.eventDispatch(learningEvent);

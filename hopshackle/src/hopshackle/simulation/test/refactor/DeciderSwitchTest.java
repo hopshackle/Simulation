@@ -84,10 +84,16 @@ public class DeciderSwitchTest {
 		agent.getNextAction().start();
 		agent.getNextAction().run();
 		assertEquals(agent.decisionsTaken, 2);
-		assertEquals(decider1.learningEpisodes, 1);
+		assertEquals(decider1.learningEpisodes, 0);
 		assertEquals(decider3.learningEpisodes, 0);
-		assertEquals(teacher1.getExperienceRecords(agent).size(), 0);
-		assertEquals(teacher2.getExperienceRecords(agent).size(), 1);
+		// We need another event to trigger learning on the old decider (as it does not listen to registerDecision)
+		agent.getNextAction().start();
+		agent.getNextAction().run();
+		assertEquals(agent.decisionsTaken, 3);
+		assertEquals(decider1.learningEpisodes, 1);		// triggered by second learning event
+		assertEquals(decider3.learningEpisodes, 1);		// triggered by registerDecision after learning event
+		assertEquals(teacher1.getExperienceRecords(agent).size(), 1);	// and now both teachers keep track of progress
+		assertEquals(teacher2.getExperienceRecords(agent).size(), 1);	// both listen ... both create ER for each new cycle
 		ExperienceRecord<TestAgent> er2 = teacher2.getExperienceRecords(agent).get(0);
 		assertTrue(er1 != er2);
 		assertTrue(er1.getPossibleActionsFromStartState() != null);

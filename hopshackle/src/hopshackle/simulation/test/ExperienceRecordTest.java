@@ -45,13 +45,12 @@ public class ExperienceRecordTest {
 		for (int i = 0; i < endState.length; i++)
 			endState[i] = Math.sqrt(i);
 		possibleActions.add(BasicActions.BREED);
-		er.updateWithResults(10.0, endState);
+		er.updateWithResults(30.0, endState);
 		er.setIsFinal();
 		assertTrue(er.isInFinalState());
 		assertFalse(er.getEndState() == null);
 		assertTrue(er.getActionTaken().getType() == BasicActions.FARM);
-		assertEquals(er.getReward(), 10.0, 0.01);
-		assertEquals(er.getPossibleActionsFromEndState().size(), 3);
+		assertEquals(er.getReward(), 10.0, 0.01);	// -20 in change of score from full health to dead, plus 30 reward
 		assertEquals(er.getPossibleActionsFromStartState().size(), 2);
 	}
 

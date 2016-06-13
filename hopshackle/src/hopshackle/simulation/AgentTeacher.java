@@ -1,6 +1,6 @@
 package hopshackle.simulation;
 
-import hopshackle.simulation.test.refactor.*;
+import hopshackle.simulation.ExperienceRecord.State;
 
 import java.awt.AWTEvent;
 import java.awt.event.AWTEventListener;
@@ -17,6 +17,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListen
 			listenToAgent(a);
 		}
 		updateWithExperienceRecord(a, td);
+		removeCompletedER(a);
 		return true;
 	}
 
@@ -31,16 +32,28 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListen
 		tdArrayHash.put(a, tdList);
 	}
 
-	private void updateWithExperienceRecord(Agent a, ExperienceRecord<A> td) {
+	private void updateWithExperienceRecord(A a, ExperienceRecord<A> newlyRegisteredER) {
 		List<ExperienceRecord<A>> tdListForAgent = tdArrayHash.get(a);
-		List<ExperienceRecord<A>> newTdListForAgent = new ArrayList<ExperienceRecord<A>>();
-		for (ExperienceRecord<A> er : tdListForAgent) {
-			er.apply(td);
-			if (er.getState() != ExperienceRecord.State.NEXT_ACTION_TAKEN) {
-				newTdListForAgent.add(er);
+		for (ExperienceRecord<A> existingER : tdListForAgent) {
+			if (existingER.getState() == State.ACTION_COMPLETED && !newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken()) && 
+					newlyRegisteredER.getActionTaken().getActor().equals(existingER.getActionTaken().getActor())) {
+				// A different action, but with the same deciding agent
+				existingER.updateNextActions(newlyRegisteredER.possibleActionsFromStartState);
+				Decider<A> agentDecider = existingER.getDecider();
+				agentDecider.learnFrom(existingER, a.getMaxScore());
 			}
 		}
-		tdListForAgent.add(td);
+		tdListForAgent.add(newlyRegisteredER);
+	}
+	
+	private void removeCompletedER(A agent) {
+		List<ExperienceRecord<A>> ERForAgent = tdArrayHash.get(agent);
+		List<ExperienceRecord<A>> newERForAgent = new ArrayList<ExperienceRecord<A>>();
+		for (ExperienceRecord<A> er : ERForAgent) {
+			if (er.getState() != ExperienceRecord.State.NEXT_ACTION_TAKEN)
+				newERForAgent.add(er);
+		}
+		tdArrayHash.put(agent, newERForAgent);
 	}
 
 	private void listenToAgent(A a) {
@@ -79,6 +92,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListen
 					registerDecision(a, newER);
 				}
 				processDecisionForAgent(a, action);
+				removeCompletedER(a);
 				break;
 			}
 		}
@@ -107,7 +121,6 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListen
 					Decider<A> agentDecider = td.getDecider();
 					double[] newState = agentDecider.getCurrentState(agent, agent);
 					td.updateWithResults(0.0, newState);
-					agentDecider.learnFrom(td, agent.getMaxScore());
 				case ACTION_COMPLETED:
 				case NEXT_ACTION_TAKEN:
 					// Do nothing
@@ -115,9 +128,11 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListen
 			} else {
 				switch (td.getState()) {
 				case ACTION_COMPLETED:
+					Decider<A> agentDecider = td.getDecider();
 					List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 					chooseableOptions.add(action.getType());
 					td.updateNextActions(chooseableOptions);
+					agentDecider.learnFrom(td, agent.getMaxScore());
 				case UNSEEN:
 				case DECISION_TAKEN:
 				case NEXT_ACTION_TAKEN:
@@ -135,9 +150,11 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListen
 					Decider<A> agentDecider = td.getDecider();
 					double[] newState = agentDecider.getCurrentState(agent, agent);
 					td.updateWithResults(0.0, newState);
-					agentDecider.learnFrom(td, agent.getMaxScore());
 				case ACTION_COMPLETED:
+					agentDecider = td.getDecider();
+					td.updateNextActions(new ArrayList<ActionEnum<A>>());
 					td.setIsFinal();
+					agentDecider.learnFrom(td, agent.getMaxScore());
 				case NEXT_ACTION_TAKEN:
 				case UNSEEN:
 					// Do nothing
