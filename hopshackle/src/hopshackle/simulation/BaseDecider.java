@@ -61,35 +61,21 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	public Action<A> decide(A decidingAgent, Agent contextAgent) {
 		ActionEnum<A> decisionMade = makeDecision(decidingAgent, contextAgent);
 		Action<A> action = null;
-		if (decisionMade.isDummy()) {
-			dispatchLearningEvent(decidingAgent);
-			// TODO: this instantiatoin of an action is temporary while refactoring is in progress
-			// The whole isDummy method is coming out shortly
-			learnFromDecision(decidingAgent, contextAgent, decisionMade.getAction(decidingAgent));
-		} else {
-			long chosenDuration = 0;
-			long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
-			if (availableTime > 0) {
-				if (decisionMade != null)
-					action = decisionMade.getAction(decidingAgent);
-				if (action != null) 
-					chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
-				if (chosenDuration > availableTime) {
-					action = null;
-				} else {
-					// learn from last decision unless there is still stuff in the action queue from the last decision
-					dispatchLearningEvent(decidingAgent);
-					learnFromDecision(decidingAgent, contextAgent, action);
-				}
-				decidingAgent.actionPlan.addActionToAllPlans(action);
+		long chosenDuration = 0;
+		long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
+		if (availableTime > 0) {
+			if (decisionMade != null)
+				action = decisionMade.getAction(decidingAgent);
+			if (action != null) 
+				chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
+			if (chosenDuration > availableTime) {
+				action = null;
+			} else {
+				registerDecisionWithTeacher(decidingAgent, contextAgent, action);
 			}
+			decidingAgent.actionPlan.addActionToAllPlans(action);
 		}
 		return action;
-	}
-
-	protected void dispatchLearningEvent(A agent) {
-		AgentEvent learningEvent = new AgentEvent(agent, AgentEvents.DECISION_STEP_COMPLETE);
-		agent.eventDispatch(learningEvent);
 	}
 
 	protected ActionEnum<A> makeDecision(A decidingAgent, Agent contextAgent) {
@@ -221,8 +207,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		return baseValuesPerOption;
 	}
 
-
-	protected void learnFromDecision(A decidingAgent, Agent contextAgent, Action<A> decisionMade) {
+	protected void registerDecisionWithTeacher(A decidingAgent, Agent contextAgent, Action<A> decisionMade) {
 		if (teacher != null) 
 			teacher.registerDecision(decidingAgent, getExperienceRecord(decidingAgent, contextAgent, decisionMade));
 	}

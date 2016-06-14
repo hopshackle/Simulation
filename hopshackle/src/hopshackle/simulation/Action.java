@@ -68,7 +68,8 @@ public abstract class Action<A extends Agent> implements Delayed {
 	
 	protected List<A> mandatoryActors;
 	protected List<A> optionalActors;
-	protected Map<Long, Boolean> agentAgreement = new HashMap<Long, Boolean>();
+	protected Map<A, Double> startScores = new HashMap<A, Double>();
+	protected Map<A, Boolean> agentAgreement = new HashMap<A, Boolean>();
 	protected A actor; // currently left in for backwards compatibility
 	protected World world;
 	protected long startTime = -1;
@@ -143,12 +144,13 @@ public abstract class Action<A extends Agent> implements Delayed {
 	}
 
 	private void updateAgreement(A a, boolean choice) {
-		agentAgreement.put(a.getUniqueID(), choice);
+		agentAgreement.put(a, choice);
+		startScores.put(a, a.getScore());
 		// Now check for change of state
 		boolean changeState = (currentState == State.PROPOSED);
 		for (A m : mandatoryActors) {
-			if (agentAgreement.containsKey(m.getUniqueID())) {
-				if (agentAgreement.get(m.getUniqueID()) == false) {
+			if (agentAgreement.containsKey(m)) {
+				if (agentAgreement.get(m) == false) {
 					this.cancel();
 					changeState = false;
 					break;
@@ -235,6 +237,8 @@ public abstract class Action<A extends Agent> implements Delayed {
 	}
 	protected void doNextDecision(A actor) {
 		if (!actor.isDead()) {
+			AgentEvent learningEvent = new AgentEvent(actor, AgentEvents.DECISION_STEP_COMPLETE);
+			actor.eventDispatch(learningEvent);
 			actor.decide();
 		}
 	}
@@ -307,9 +311,9 @@ public abstract class Action<A extends Agent> implements Delayed {
 	@SuppressWarnings("unchecked")
 	public List<A> getAllConfirmedParticipants() {
 		List<A> retValue = new ArrayList<A>();
-		for (long id : agentAgreement.keySet()) {
-			if (agentAgreement.get(id)) {
-				retValue.add((A) Agent.getAgent(id));
+		for (Agent a : agentAgreement.keySet()) {
+			if (agentAgreement.get(a)) {
+				retValue.add((A) a);
 			}
 		}
 		return retValue;

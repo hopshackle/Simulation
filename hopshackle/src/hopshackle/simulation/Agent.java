@@ -512,4 +512,17 @@ public abstract class Agent extends Observable {
 	public ActionPlan getActionPlan() {
 		return actionPlan;
 	}
+	@Override
+    public int hashCode() {
+		return (int) uniqueID;
+	}
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Agent) {
+			return ((Agent)o).getUniqueID() == getUniqueID();
+		} else {
+			return false;
+		}
+	}
+	
 }

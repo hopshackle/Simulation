@@ -36,6 +36,11 @@ public class ExperienceRecord<A extends Agent> {
 	}
 	
 	public void updateNextActions(List<ActionEnum<A>> actions) {
+		if (!actor.isDead() && (actions == null || actions.size() == 0)) {
+			System.out.println("No next actions in Experience Record.");
+			System.out.println("Agent " + actor + " took action " + actionTaken);
+			System.out.println("Initial actions: " + possibleActionsFromStartState);
+		}
 		possibleActionsFromEndState = HopshackleUtilities.cloneList(actions);
 		endScore = actor.getScore();
 		ERState = State.NEXT_ACTION_TAKEN;

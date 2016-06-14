@@ -29,7 +29,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 	@Override
 	public double valueOption(ActionEnum<A> option, double[] state) {
 		int optionIndex = actionSet.indexOf(option);
-		assert (optionIndex != -1) : option + " not found in actionSet in GLQDecider.valueOption";
+		if (optionIndex == -1) logger.severe(option + " not found in actionSet in GLQDecider.valueOption");
 		double retValue = 0.0;
 
 		for (int i = 0; i < variableLength; i++) {
@@ -76,25 +76,35 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		double predictedValue = valueOption(exp.getActionTaken().actionType, startState);
 		double delta = exp.getReward() + gamma * bestNextAction - predictedValue;
 		if (localDebug) {
-			log(String.format("Learning:\t%-15sReward: %.2f, NextValue: %.2f, Predicted: %.2f, Delta: %.4f, NextAction: %s", 
-					exp.getActionTaken(), exp.getReward(), bestNextAction, predictedValue, delta, nextAction.toString()));
+			String message = String.format("Learning:\t%-15sReward: %.2f, NextValue: %.2f, Predicted: %.2f, Delta: %.4f, NextAction: %s", 
+					exp.getActionTaken(), exp.getReward(), bestNextAction, predictedValue, delta, nextAction == null ? "NULL" : nextAction.toString());
+			log(message);
+			exp.actor.log(message);
 			StringBuffer logMessage = new StringBuffer("Start state: ");
 			double[] state = exp.getStartState();
 			for (int i = 0; i < state.length; i++) 
 				logMessage.append(String.format(" [%.2f] ", state[i]));
-			log(logMessage.toString());
+			message = logMessage.toString();
+			log(message);
+			exp.actor.log(message);
 			logMessage = new StringBuffer("End state:   ");
 			state = exp.getEndState();
 			for (int i = 0; i < state.length; i++) 
 				logMessage.append(String.format(" [%.2f] ", state[i]));
-			log(logMessage.toString());
+			message = logMessage.toString();
+			log(message);
+			exp.actor.log(message);
 		}
 		for (int i = 0; i < variableSet.size(); i++) {
 			double value = startState[i];
 			GeneticVariable input = variableSet.get(i);
 			double weightChange = value * delta * alpha;
-			if (localDebug) log(String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f", input.toString(), value, weightChange, 
-					getWeightOf(input, exp.getActionTaken().actionType)));
+			if (localDebug) {
+				String message = String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f", input.toString(), value, weightChange, 
+					getWeightOf(input, exp.getActionTaken().actionType));
+				log(message);
+				exp.actor.log(message);
+			}
 			updateWeight(input, exp.getActionTaken().actionType, weightChange);
 		}
 	}

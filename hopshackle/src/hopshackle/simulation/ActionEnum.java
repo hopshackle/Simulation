@@ -17,7 +17,5 @@ public interface ActionEnum<A extends Agent> {
 	 */
 	public boolean isChooseable(A a);
 	
-	public boolean isDummy();
-	
 	public Enum getEnum();
 }

@@ -68,10 +68,6 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 	public Enum getEnum() {
 		return this;
 	}
-	
-	@Override 
-	public boolean isDummy() {return dummyMode;}
-	
 }
 
 enum TestGenVar implements GeneticVariable {

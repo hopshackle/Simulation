@@ -17,8 +17,7 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 	FIND_WATER,
 	FIND_UNKNOWN,
 	FIND_HUT,
-	FIND_CIVILISATION,
-	OBEY_SPOUSE;
+	FIND_CIVILISATION;
 
 
 	@Override
@@ -66,8 +65,6 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 			return new BasicMove(BasicActions.FIND_HUT, a, new HutsOwnedByMatcher(a));
 		case FIND_CIVILISATION:
 			return new BasicMove(BasicActions.FIND_CIVILISATION, a, new CivilisationMatcher(a));
-		case OBEY_SPOUSE:
-			break;
 		default:
 			break;
 		}
@@ -88,7 +85,7 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 		boolean marriedFemale = a.isMarried() && a.isFemale();
 		switch (this) {
 		case FORAGE:
-			if (marriedFemale || h.getCarryingCapacity() < 1) 
+			if (h.getCarryingCapacity() < 1) 
 				return false;
 			switch (h.getTerrainType()) {
 			case PLAINS:
@@ -98,7 +95,7 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 				return false;
 			}
 		case BUILD:
-			if (marriedFemale || h.getTerrainType() != TerrainType.PLAINS)
+			if (h.getTerrainType() != TerrainType.PLAINS)
 				return false;
 			if (a.getNumberInInventoryOf(Resource.WOOD) < 3)
 				return false;
@@ -106,7 +103,7 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 				return true;
 			return false;
 		case FARM:
-			if (marriedFemale || h.getTerrainType() != TerrainType.PLAINS)
+			if (h.getTerrainType() != TerrainType.PLAINS)
 				return false;
 			boolean hasAHutInTheHex = false;
 			for (Artefact item : inventory) {
@@ -119,7 +116,7 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 			}
 			return hasAHutInTheHex;
 		case BREED:
-			if (marriedFemale || !a.isMarried())
+			if (!a.isMarried())
 				return false;
 			if (!FARM.isChooseable(a)) 
 				return false;
@@ -134,24 +131,23 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 				return false;
 			return true;
 		case MARRY:
-			if (marriedFemale || a.isFemale())
+			if (a.isFemale())
 				return false;
 			if (a.isMarried()) 
 				return false;
 			return true;
 		case FIND_FOREST:
-			if (marriedFemale || h.getTerrainType() == TerrainType.FOREST)
+			if (h.getTerrainType() == TerrainType.FOREST)
 				return false;
 			if (BasicVariables.FOREST.getProximityToTerrain(a) < 0.01)
 				return false;
 			return true;
 		case FIND_PLAINS:
-			if (marriedFemale) return false;
 			if (h.getTerrainType() == TerrainType.PLAINS && h.getHuts().size() == 0)
 				return false;
 			return true;
 		case FIND_WATER:
-			if (marriedFemale || h.getTerrainType() == TerrainType.OCEAN)
+			if (h.getTerrainType() == TerrainType.OCEAN)
 				return false;
 			for (Location adjacentLocation : h.getAccessibleLocations()) {
 				Hex adjacentHex = (Hex) adjacentLocation;
@@ -162,10 +158,8 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 				return false;
 			return true;
 		case FIND_UNKNOWN:
-			if (marriedFemale) return false;
 			return a.hasUnexploredLocations();
 		case FIND_HUT:
-			if (marriedFemale) return false;
 			boolean hasHut = false;
 			for (Artefact item : inventory) {
 				if (item instanceof Hut) {
@@ -177,7 +171,6 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 			}
 			return hasHut;
 		case FIND_CIVILISATION:
-			if (marriedFemale) return false;
 			List<Location> potentialVillages = h.getChildLocations();
 			for (Location l : potentialVillages) {
 				if (l instanceof Village) 
@@ -185,10 +178,7 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 			}
 			return true;
 		case REST:
-			if (marriedFemale) return false;
 			return true;
-		case OBEY_SPOUSE:
-			return marriedFemale;
 		}
 		return false;
 	}
@@ -196,16 +186,6 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 	@Override
 	public Enum<BasicActions> getEnum() {
 		return this;
-	}
-
-	@Override 
-	public boolean isDummy() {
-		switch (this) {
-		case OBEY_SPOUSE:
-			return true;
-		default:
-			return false;
-		}
 	}
 
 }

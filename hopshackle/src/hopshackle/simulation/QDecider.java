@@ -27,8 +27,6 @@ public abstract class QDecider<A extends Agent> extends BaseDecider<A> {
 				bestAction = option;
 			}
 		}
-		if (bestAction == null)
-			throw new AssertionError("Null best action should not be possible.");
 		return bestAction;
 	}
 

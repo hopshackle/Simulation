@@ -191,8 +191,9 @@ public class BasicAgent extends Agent implements Persistent {
 	public void decide() {
 		if (isMarried() && isFemale()) {
 			//
+		} else {
+			super.decide();
 		}
-		super.decide();
 	}
 	
 	public void dissolveMarriage() {
@@ -259,6 +260,8 @@ public class BasicAgent extends Agent implements Persistent {
 		if (surname != "")
 			temp.append(" " + surname);
 		temp.append(" [" + getUniqueID() + "]");
+		if (isMarried()) 
+			temp.append(" married to " + getPartner().forename);
 		return temp.toString();
 	}
 
