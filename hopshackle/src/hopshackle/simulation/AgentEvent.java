@@ -1,23 +1,44 @@
 package hopshackle.simulation;
 
-import java.awt.AWTEvent;
+import java.util.List;
 
-public class AgentEvent extends AWTEvent {
-
-	private static final long serialVersionUID = 1L;
-	private Agent agent;
-	private AgentEvents event;
-	private Action<?> action;
+public class AgentEvent {
 	
-	public AgentEvent(Agent a, AgentEvents e) {
-		super(a, e.getID());
-		agent = a;
-		event = e;
-		action = agent.getActionPlan().getLastAction();
+	public enum Type {
+		DEATH,
+		DECISION_TAKEN,
+		ACTION_AGREED,
+		ACTION_REJECTED,
+		ACTION_CANCELLED,
+		DECISION_STEP_COMPLETE;
+	}
+
+	private Agent agent;
+	private Type event;
+	private Action action;
+	private Decider decider;
+	
+	public AgentEvent(Agent agent, Type eventType) {
+		this.agent = agent;
+		event = eventType;
+		this.decider = agent.getDecider();
+	}
+	public AgentEvent(Agent agent, Type eventType, Action contextAction) {
+		this.agent = agent;
+		event = eventType;
+		action = contextAction;
+		this.decider = agent.getDecider();
+	}
+	public AgentEvent(Agent agent, Type eventType, Action contextAction, Decider decider) {
+		this.agent = agent;
+		event = eventType;
+		action = contextAction;
+		this.decider = decider;
 	}
 	
-	public AgentEvents getEvent() {return event;}
+	public Type getEvent() {return event;}
 	public Agent getAgent() {return agent;}
-	public Action<?> getAction() {return action;}
+	public Action getAction() {return action;}
+	public Decider getDecider() {return decider;}
 }
 

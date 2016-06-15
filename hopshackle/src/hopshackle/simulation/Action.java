@@ -68,7 +68,6 @@ public abstract class Action<A extends Agent> implements Delayed {
 	
 	protected List<A> mandatoryActors;
 	protected List<A> optionalActors;
-	protected Map<A, Double> startScores = new HashMap<A, Double>();
 	protected Map<A, Boolean> agentAgreement = new HashMap<A, Boolean>();
 	protected A actor; // currently left in for backwards compatibility
 	protected World world;
@@ -113,6 +112,8 @@ public abstract class Action<A extends Agent> implements Delayed {
 		case PROPOSED:
 		case PLANNED:
 			updateAgreement(a, true);
+			AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_AGREED, this);
+			a.eventDispatch(learningEvent);
 			break;
 		default:
 			a.log("Attempts to agree to Action: " + a + " irrelevant from " + currentState);
@@ -136,6 +137,8 @@ public abstract class Action<A extends Agent> implements Delayed {
 		case PROPOSED:
 		case PLANNED:
 			updateAgreement(a, false);
+			AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_REJECTED, this);
+			a.eventDispatch(learningEvent);
 			a.actionPlan.actionQueue.remove(this);
 			break;
 		default:
@@ -145,7 +148,6 @@ public abstract class Action<A extends Agent> implements Delayed {
 
 	private void updateAgreement(A a, boolean choice) {
 		agentAgreement.put(a, choice);
-		startScores.put(a, a.getScore());
 		// Now check for change of state
 		boolean changeState = (currentState == State.PROPOSED);
 		for (A m : mandatoryActors) {
@@ -217,11 +219,19 @@ public abstract class Action<A extends Agent> implements Delayed {
 
 	protected void doCleanUp() {
 		for (A a : mandatoryActors) {
+			if (getState() == State.CANCELLED) {
+				AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_CANCELLED, this);
+				a.eventDispatch(learningEvent);
+			}
 			a.actionPlan.actionCompleted(this);
 			a.maintenance();
 		}
 		for (A a : optionalActors) {
-			if (agentAgreement.getOrDefault(a.getUniqueID(), false)) {
+			if (agentAgreement.getOrDefault(a, false)) {
+				if (getState() == State.CANCELLED) {
+					AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_CANCELLED, this);
+					a.eventDispatch(learningEvent);
+				}
 				a.actionPlan.actionCompleted(this);
 				a.maintenance();
 			}
@@ -231,14 +241,16 @@ public abstract class Action<A extends Agent> implements Delayed {
 	protected void doNextDecision() {
 		List<A> allActors = HopshackleUtilities.cloneList(mandatoryActors);
 		allActors.addAll(optionalActors);
+		for (A actor : allActors) {		
+			AgentEvent learningEvent = new AgentEvent(actor, AgentEvent.Type.DECISION_STEP_COMPLETE, this);
+			actor.eventDispatch(learningEvent);		
+		}
 		for (A actor : allActors) {
 			doNextDecision(actor);
 		}
 	}
 	protected void doNextDecision(A actor) {
 		if (!actor.isDead()) {
-			AgentEvent learningEvent = new AgentEvent(actor, AgentEvents.DECISION_STEP_COMPLETE);
-			actor.eventDispatch(learningEvent);
 			actor.decide();
 		}
 	}

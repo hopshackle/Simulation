@@ -2,7 +2,6 @@ package hopshackle.simulation.basic;
 
 import hopshackle.GUI.*;
 import hopshackle.simulation.*;
-import hopshackle.simulation.Action;
 
 import java.io.IOException;
 import java.util.*;
@@ -156,8 +155,6 @@ public class BasicRunWorld {
 		//		basicDecider.setPigeonHoles(7);
 
 		final GeneralLinearQDecider<BasicAgent> basicDecider = new GeneralLinearQDecider<BasicAgent>(actionsToUse, variablesToUse);
-
-		basicDecider.setTeacher(new AgentTeacher<BasicAgent>());
 
 		class AddPopulation extends TimerTask {
 			public void run() {

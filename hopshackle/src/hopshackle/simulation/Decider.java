@@ -16,10 +16,6 @@ public interface Decider<A extends Agent> {
 
 	public double[] getCurrentState(A decidingAgent, Agent contextAgent);
 
-	public void setTeacher(Teacher<A> teacher);
-
-	public Teacher<A> getTeacher();
-
 	public List<ActionEnum<A>> getChooseableOptions(A a, Agent a2);
 
 	public Decider<A> crossWith(Decider<A> decider);

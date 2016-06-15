@@ -244,7 +244,6 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		if (this == otherDecider) return this;
 
 		NeuralDecider<A> retValue = new NeuralDecider<A>(actionSet, variableSet);
-		retValue.setTeacher(this.getTeacher());
 		BasicNetwork[] newBrain = new BasicNetwork[actionSet.size()];
 		for (int n = 0; n < actionSet.size(); n++) {
 			// 50:50 chance for each action which Network we take

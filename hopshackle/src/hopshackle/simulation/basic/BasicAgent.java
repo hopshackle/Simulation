@@ -11,25 +11,28 @@ import java.util.*;
  */
 public class BasicAgent extends Agent implements Persistent {
 
-	private double health;
-	private long lastMaintenance;
-	private static AgentWriter<BasicAgent> agentWriter = new AgentWriter<BasicAgent>(new BasicAgentDAO());
-	private static BasicAgentRetriever masterAgentRetriever = new BasicAgentRetriever();
-	private static double debugChance = 0.005;
-	private int movementPointsSpent;
-	private Marriage marriage;
-	private List<Long> allPartners = new ArrayList<Long>();
-	private boolean isMale = true;
-	public final static double FULL_HEALTH = 20.0;
-	protected static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
-	protected static Name maleNamer = new Name(new File(baseDir + "\\MaleNames.txt"));
-	protected static Name femaleNamer = new Name(new File(baseDir + "\\FemaleNames.txt"));
-	private String forename = "";
-	private String surname = "";
 	private static String MALE_AGE_RANGE;
 	private static String FEMALE_AGE_RANGE;
 	public static double MINIMUM_HEALTH_FOR_BREEDING;
 	public static long MIN_MALE_AGE, MAX_MALE_AGE, MIN_FEMALE_AGE, MAX_FEMALE_AGE;
+	public final static double FULL_HEALTH = 20.0;
+	protected static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
+	protected static Name maleNamer = new Name(new File(baseDir + "\\MaleNames.txt"));
+	protected static Name femaleNamer = new Name(new File(baseDir + "\\FemaleNames.txt"));
+	private static AgentWriter<BasicAgent> agentWriter = new AgentWriter<BasicAgent>(new BasicAgentDAO());
+	private static BasicAgentRetriever masterAgentRetriever = new BasicAgentRetriever();
+	private static double debugChance = 0.05;
+	private static AgentTeacher<BasicAgent> teacher = new AgentTeacher<BasicAgent>();
+	
+	private double health;
+	private long lastMaintenance;
+	private int movementPointsSpent;
+	private Marriage marriage;
+	private List<Long> allPartners = new ArrayList<Long>();
+	private boolean isMale = true;
+	private String forename = "";
+	private String surname = "";
+
 
 	static {
 		refreshBreedingAges();
@@ -49,6 +52,7 @@ public class BasicAgent extends Agent implements Persistent {
 			setDebugLocal(true);
 		setPolicy(new BasicInheritance<BasicAgent>());
 		agentRetriever = masterAgentRetriever;
+		teacher.registerAgent(this);
 	}
 
 	public BasicAgent(BasicAgent parent1, BasicAgent parent2) {

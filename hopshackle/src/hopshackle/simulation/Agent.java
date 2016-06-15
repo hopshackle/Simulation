@@ -1,6 +1,7 @@
 package hopshackle.simulation;
 
-import java.awt.event.AWTEventListener;
+import hopshackle.simulation.AgentEvent.Type;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.*;
@@ -12,7 +13,6 @@ public abstract class Agent extends Observable {
 	protected static boolean debug = false;
 	protected static boolean fullDebug = false;
 	private static AtomicLong idFountain = new AtomicLong(1);
-	protected static Teacher doNothingTeacher = new AgentTeacher();
 
 	protected Location location;
 	protected World world;
@@ -38,7 +38,7 @@ public abstract class Agent extends Observable {
 	protected List<Artefact> inventoryOnMarket = new ArrayList<Artefact>();
 	protected double gold;
 
-	protected List<AWTEventListener> listeners;
+	protected List<AgentListener> listeners;
 	protected double maxAge = SimProperties.getPropertyAsDouble("MaximumAgentAgeInSeconds", "100");
 	protected static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
 
@@ -83,7 +83,7 @@ public abstract class Agent extends Observable {
 		actionPlan = new ActionPlan(this);
 		parents = new ArrayList<Long>();
 		children = new ArrayList<Long>();
-		listeners = new ArrayList<AWTEventListener>();
+		listeners = new ArrayList<AgentListener>();
 		knowledgeOfLocations = new MapKnowledge(this);
 	}
 
@@ -130,13 +130,12 @@ public abstract class Agent extends Observable {
 
 		death = getWorld().getCurrentTime();
 		deathLocation = getLocation();
-		purgeActions(true);
-		
-		AgentEvent deathEvent = new AgentEvent(this, AgentEvents.DEATH);
+		AgentEvent deathEvent = new AgentEvent(this, Type.DEATH);
 		eventDispatch(deathEvent);
 
 		// then tidy-up
 		listeners.clear();
+		purgeActions(true);
 		setLocation(null);
 		inventory.clear();
 
@@ -412,16 +411,16 @@ public abstract class Agent extends Observable {
 			die("World has ended");
 	}
 
-	public void addListener(AWTEventListener el) {
+	public void addListener(AgentListener el) {
 		if (!listeners.contains(el))
 			listeners.add(el);
 	}
-	public void removeListener(AWTEventListener el) {
+	public void removeListener(AgentListener el) {
 		listeners.remove(el);
 	}
 	protected void eventDispatch(AgentEvent ae) {
-		for (AWTEventListener el : listeners) {
-			el.eventDispatched(ae);
+		for (AgentListener el : listeners) {
+			el.processEvent(ae);
 		}
 	}
 

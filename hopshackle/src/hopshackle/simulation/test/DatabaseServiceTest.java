@@ -110,7 +110,7 @@ public class DatabaseServiceTest {
 		int firstRecord = getCurrentRecordWritten();
 		wasteTime();
 		int secondRecord = getCurrentRecordWritten();
-		assertTrue(secondRecord > firstRecord + 20);
+		assertTrue(secondRecord > firstRecord);
 	}
 	
 	private int getCurrentRecordWritten() {

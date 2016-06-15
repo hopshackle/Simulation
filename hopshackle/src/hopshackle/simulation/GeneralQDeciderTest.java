@@ -11,6 +11,7 @@ public class GeneralQDeciderTest {
 	private GeneralLinearQDecider decider;
 	private Agent testAgent;
 	private List<ActionEnum> actions;
+	private List<GeneticVariable> variables;
 	
 	public static ActionEnum right = new ActionEnum() {
 		@Override
@@ -70,7 +71,7 @@ public class GeneralQDeciderTest {
 		actions.add(right);
 		actions.add(left);
 
-		List<GeneticVariable> variables = new ArrayList<GeneticVariable>();
+		variables = new ArrayList<GeneticVariable>();
 		variables.add(constantTerm);
 		variables.add(gold);
 
@@ -113,7 +114,8 @@ public class GeneralQDeciderTest {
 
 	@Test
 	public void teachingDecisionUpdatesWeights() {
-		ExperienceRecord exp = decider.getExperienceRecord(testAgent, testAgent, right.getAction(testAgent));
+		ExperienceRecord exp = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent), right.getAction(testAgent), 
+				decider.getChooseableOptions(testAgent, testAgent), decider);
 		exp.updateWithResults(2.0, decider.getCurrentState(testAgent, testAgent));
 		exp.updateNextActions(actions);
 		decider.learnFrom(exp, 10.0);
@@ -125,7 +127,8 @@ public class GeneralQDeciderTest {
 		assertEquals(decider.getWeightOf(constantTerm, right), 0.4, 0.001);
 		assertEquals(decider.getWeightOf(constantTerm, left), 0.0, 0.001);
 		
-		exp = decider.getExperienceRecord(testAgent, testAgent, left.getAction(testAgent));
+		exp = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent), left.getAction(testAgent), 
+				decider.getChooseableOptions(testAgent, testAgent), decider);
 		testAgent.addGold(-2.0);
 		exp.updateWithResults(-2.0, decider.getCurrentState(testAgent, testAgent));
 		exp.updateNextActions(actions);
@@ -138,7 +141,8 @@ public class GeneralQDeciderTest {
 		assertEquals(decider.getWeightOf(constantTerm, right), 0.4, 0.001);
 		assertEquals(decider.getWeightOf(constantTerm, left), -0.336, 0.001);
 		
-		exp = decider.getExperienceRecord(testAgent, testAgent, right.getAction(testAgent));
+		exp = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent), right.getAction(testAgent), 
+				decider.getChooseableOptions(testAgent, testAgent), decider);
 		testAgent.addGold(1.0);
 		exp.updateWithResults(1.0, decider.getCurrentState(testAgent, testAgent));
 		exp.updateNextActions(actions);
@@ -154,7 +158,8 @@ public class GeneralQDeciderTest {
 	
 	@Test
 	public void teachingDecisionWithNoDifferenceDoesNotUpdateWeights() {
-		ExperienceRecord exp = decider.getExperienceRecord(testAgent, testAgent, right.getAction(testAgent));
+		ExperienceRecord exp = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent), right.getAction(testAgent), 
+				decider.getChooseableOptions(testAgent, testAgent), decider);
 		exp.updateWithResults(0.0, decider.getCurrentState(testAgent, testAgent));
 		exp.updateNextActions(actions);
 		decider.learnFrom(exp, 10.0);

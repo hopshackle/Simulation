@@ -33,7 +33,6 @@ public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
 		if (this == otherDecider) return this;
 
 		ActorCriticDecider<A> retValue = new ActorCriticDecider<A>(actionSet, variableSet);
-		retValue.setTeacher(this.getTeacher());
 		BasicNetwork[] newBrain = new BasicNetwork[actionSet.size()];
 		BasicNetwork newStateBrain = null;
 		for (int n = 0; n < actionSet.size(); n++) {

@@ -9,7 +9,6 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	protected List<ActionEnum<A>> actionSet = new ArrayList<ActionEnum<A>>();
 	protected List<GeneticVariable> variableSet = new ArrayList<GeneticVariable>();
-	protected Teacher<A> teacher;
 	protected String name = "DEFAULT";
 	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMinChance", "0.0");
@@ -71,9 +70,10 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			if (chosenDuration > availableTime) {
 				action = null;
 			} else {
-				registerDecisionWithTeacher(decidingAgent, contextAgent, action);
+				AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, this);
+				decidingAgent.eventDispatch(learningEvent);
+				decidingAgent.actionPlan.addActionToAllPlans(action);
 			}
-			decidingAgent.actionPlan.addActionToAllPlans(action);
 		}
 		return action;
 	}
@@ -122,15 +122,22 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		List<Double> optionValues = getValuesPerOption(optionList, decidingAgent, contextAgent);
 		double highestScore = Double.NEGATIVE_INFINITY;
 		for (int i = 0; i<optionList.size(); i++) {
-			if (localDebug) 
-				log(String.format("Option %-20s has value %.3f", optionList.get(i).toString(), optionValues.get(i)));
+			if (localDebug) {
+				String message = String.format("Option %-20s has value %.3f", optionList.get(i).toString(), optionValues.get(i));
+				log(message);
+				decidingAgent.log(message);
+			}
 			if (optionValues.get(i) > highestScore) {
 				highestScore = optionValues.get(i);
 				winningChoice = optionList.get(i);
 			}
 		}
 
-		if (localDebug) log("Winning choice is " + winningChoice);
+		if (localDebug) {
+			String message = "Winning choice is " + winningChoice;
+			log(message);
+			decidingAgent.log(message);
+		}
 
 		if (winningChoice == null) {
 			String logString = "No option chosen in Decider " + this.toString() + ". ";
@@ -151,8 +158,11 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			runningSum += optionWeightings.get(loop);
 			if (runningSum > randomNumber) {
 				winningChoice = optionList.get(loop);
-				if (localDebug)
-					log(String.format("Boltzmann choice is %s", optionList.get(loop).toString()));
+				if (localDebug) {
+					String message = String.format("Boltzmann choice is %s", optionList.get(loop).toString());
+					log(message);
+					decidingAgent.log(message);
+				}
 				break;
 			}
 		}
@@ -189,7 +199,11 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			baseValue = 0.01;
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		if (temperature < 0.01) temperature = 0.01;
-		if (localDebug) log("Base Value is " + baseValue);
+		if (localDebug) {
+			String message = "Base Value is " + baseValue;
+			log(message);
+			decidingAgent.log(message);
+		}
 
 		double sumOfActionValues = 0.0;
 		for (int i = 0; i < optionList.size(); i++) {
@@ -197,25 +211,22 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			double boltzmannValue = Math.exp(val);
 			sumOfActionValues += boltzmannValue;
 			baseValuesPerOption.set(i, boltzmannValue);
-			if (localDebug) log(String.format("Option %d, %s, has weight %.4g", i, optionList.get(i).toString(), boltzmannValue));
+			if (localDebug) {
+				String message = String.format("Option %d, %s, has weight %.4g", i, optionList.get(i).toString(), boltzmannValue);
+				log(message);
+				decidingAgent.log(message);
+			}
 		}
 		for (int i = 0; i < optionList.size(); i++) {
 			double normalisedValue = baseValuesPerOption.get(i) / sumOfActionValues;
 			baseValuesPerOption.set(i, normalisedValue);
-			if (localDebug) log(String.format("Option %-20s has normalised value %.4g", optionList.get(i).toString(), normalisedValue));
+			if (localDebug) {
+				String message = String.format("Option %-20s has normalised value %.4g", optionList.get(i).toString(), normalisedValue);
+				log(message);
+				decidingAgent.log(message);
+			}
 		}
 		return baseValuesPerOption;
-	}
-
-	protected void registerDecisionWithTeacher(A decidingAgent, Agent contextAgent, Action<A> decisionMade) {
-		if (teacher != null) 
-			teacher.registerDecision(decidingAgent, getExperienceRecord(decidingAgent, contextAgent, decisionMade));
-	}
-
-	protected ExperienceRecord<A> getExperienceRecord(A decidingAgent, Agent contextAgent, Action<A> option) {
-		ExperienceRecord<A> output = new ExperienceRecord<A>(decidingAgent, variableSet, getCurrentState(decidingAgent, contextAgent), option, 
-				getChooseableOptions(decidingAgent, contextAgent), this);
-		return output;
 	}
 
 	@Override
@@ -252,15 +263,6 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		for (GeneticVariable gv : variableList) {
 			variableSet.add(gv);
 		}
-	}
-
-	@Override
-	public void setTeacher(Teacher<A> teacher) {
-		this.teacher = teacher;
-	}
-	@Override
-	public Teacher<A> getTeacher() {
-		return teacher;
 	}
 
 	/* 

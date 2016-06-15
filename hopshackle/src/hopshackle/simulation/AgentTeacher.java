@@ -2,23 +2,17 @@ package hopshackle.simulation;
 
 import hopshackle.simulation.ExperienceRecord.State;
 
-import java.awt.AWTEvent;
-import java.awt.event.AWTEventListener;
 import java.util.*;
 
-public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListener {
+public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener {
 
 	private HashMap<A, List<ExperienceRecord<A>>> tdArrayHash = new HashMap<A, List<ExperienceRecord<A>>>();
 
-	@Override
-	public synchronized boolean registerDecision(A a, ExperienceRecord<A> td) {
+	public void registerAgent(A a) {
 		if (!agentAlreadySeen(a)) {
 			addAgentToList(a);
 			listenToAgent(a);
 		}
-		updateWithExperienceRecord(a, td);
-		removeCompletedER(a);
-		return true;
 	}
 
 	protected boolean agentAlreadySeen(Agent a) {
@@ -32,7 +26,13 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListen
 		tdArrayHash.put(a, tdList);
 	}
 
-	private void updateWithExperienceRecord(A a, ExperienceRecord<A> newlyRegisteredER) {
+	private void processNewER(ExperienceRecord<A> er) {
+		updateWithExperienceRecord(er);
+		removeCompletedER(er.actor);
+	}
+	
+	private void updateWithExperienceRecord(ExperienceRecord<A> newlyRegisteredER) {
+		A a = newlyRegisteredER.actor;
 		List<ExperienceRecord<A>> tdListForAgent = tdArrayHash.get(a);
 		for (ExperienceRecord<A> existingER : tdListForAgent) {
 			if (existingER.getState() == State.ACTION_COMPLETED && !newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken()) && 
@@ -71,30 +71,39 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AWTEventListen
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public synchronized void eventDispatched(AWTEvent event) {
-		if (event instanceof AgentEvent) {
-			AgentEvent ae = (AgentEvent)event;
-			A a = (A) ae.getAgent();
-			switch (((AgentEvent) event).getEvent()) {
-			case DEATH:
-				processDeathOfAgent(a);
-				stopListeningToAgent(a);
-				break;
-			case DECISION_STEP_COMPLETE:
-				Action<A> action = (Action<A>)ae.getAction();
-				if (action!= null && !actionPreviouslySeen(a, action)) {
-					// we need to create a new ER first
-					Decider<A> agentDecider = (Decider<A>) a.getDecider();
-					List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
-					chooseableOptions.add(action.getType());
-					ExperienceRecord<A> newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
-							 agentDecider.getCurrentState(a, a), action, chooseableOptions, agentDecider);
-					registerDecision(a, newER);
-				}
-				processDecisionForAgent(a, action);
-				removeCompletedER(a);
-				break;
+	public synchronized void processEvent(AgentEvent event) {
+		A a = (A) event.getAgent();
+		Action<A> action = (Action<A>)event.getAction();
+		Decider<A> agentDecider = (Decider<A>) event.getDecider();
+		ExperienceRecord<A> newER = null;
+		switch (event.getEvent()) {
+		case DEATH:
+			processDeathOfAgent(a);
+			stopListeningToAgent(a);
+			break;
+		case DECISION_TAKEN:
+			newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
+					agentDecider.getCurrentState(a, a), action, agentDecider.getChooseableOptions(a, a), agentDecider);
+			processNewER(newER);
+			break;
+		case ACTION_AGREED:
+			if (action!= null && !actionPreviouslySeen(a, action)) {
+				// we need to create a new ER first
+				List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
+				chooseableOptions.add(action.getType());
+				newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
+						agentDecider.getCurrentState(a, a), action, chooseableOptions, agentDecider);
+				processNewER(newER);
 			}
+			break;
+		case ACTION_REJECTED:
+		case ACTION_CANCELLED:
+			// Cancelling, or Deciding not to proceed with an action is equivalent to completing the action
+			// albeit with a different end state
+		case DECISION_STEP_COMPLETE:
+			processDecisionForAgent(a, action);
+			removeCompletedER(a);
+			break;
 		}
 	} 
 	
