@@ -19,14 +19,12 @@ public class Marry extends BasicAction {
 	}
 
 	@Override
-	public void initialisation() {
+	public void doStuff() {
 		if (!p1.isMarried() && !p2.isMarried()) {
 			new Marriage(p1, p2);
 			if (p1.isFemale()) p1.purgeActions(false);
 			if (p2.isFemale()) p2.purgeActions(false);
-		} else {
-			this.cancel();
-		}
+		} 
 	}
 	
 	public String toString() {

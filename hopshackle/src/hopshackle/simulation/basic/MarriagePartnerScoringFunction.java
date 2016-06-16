@@ -14,6 +14,8 @@ public class MarriagePartnerScoringFunction implements ScoringFunction {
 	public <T extends Agent> double getScore(T a) {
 		if (lonelyHeart.isMarried()) 
 			return -1;
+		if (lonelyHeart.getActionPlan().contains(BasicActions.MARRY)) 
+			return -1;
 		if (!(a instanceof BasicAgent))
 			return -1;
 		BasicAgent possiblePartner = (BasicAgent) a;

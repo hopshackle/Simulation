@@ -12,9 +12,11 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		actionLength = actionSet.size();
 		variableLength = variableSet.size();
 		weights = new double[actionLength][variableLength];
-		for (int i=0; i<actionLength; i++)
-			for (int j=0; j<variableLength; j++) 
+		for (int i=0; i<actionLength; i++) {
+			weights[i][0] = 1.0;	// the constant term. To slightly encourage exploration
+			for (int j=1; j<variableLength; j++) 
 				weights[i][j] = 0.0;	
+		}
 	}
 
 	@Override

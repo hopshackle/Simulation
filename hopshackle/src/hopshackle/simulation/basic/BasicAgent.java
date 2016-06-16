@@ -22,7 +22,8 @@ public class BasicAgent extends Agent implements Persistent {
 	private static AgentWriter<BasicAgent> agentWriter = new AgentWriter<BasicAgent>(new BasicAgentDAO());
 	private static BasicAgentRetriever masterAgentRetriever = new BasicAgentRetriever();
 	private static double debugChance = 0.05;
-	private static AgentTeacher<BasicAgent> teacher = new AgentTeacher<BasicAgent>();
+	private static AgentTeacher<BasicAgent> femaleTeacher = new AgentTeacher<BasicAgent>();
+	private static AgentTeacher<BasicAgent> maleTeacher = new AgentTeacher<BasicAgent>();
 	
 	private double health;
 	private long lastMaintenance;
@@ -52,7 +53,11 @@ public class BasicAgent extends Agent implements Persistent {
 			setDebugLocal(true);
 		setPolicy(new BasicInheritance<BasicAgent>());
 		agentRetriever = masterAgentRetriever;
-		teacher.registerAgent(this);
+		if (isMale()) {
+			maleTeacher.registerAgent(this);
+		} else {
+			femaleTeacher.registerAgent(this);
+		}
 	}
 
 	public BasicAgent(BasicAgent parent1, BasicAgent parent2) {

@@ -38,6 +38,7 @@ public class ActionPlan {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public synchronized void addAction(Action newAction) {
 		if (!agent.isDead() && (agent.getWorld() != null) && newAction != null) {
+			if (actionQueue.contains(newAction)) return;
 			List<Action> overriddenActions = new ArrayList<Action>();
 			Policy<Action<?>> actionPolicy = (Policy<Action<?>>) agent.getPolicy("action");
 			if (actionPolicy == null) actionPolicy = defaultActionPolicy;
@@ -132,6 +133,14 @@ public class ActionPlan {
 			retValue.append(a.toString() + "\n");
 		}
 		return retValue.toString();
+	}
+	
+	public boolean contains(ActionEnum<?> forwardAction) {
+		for (Action<?> a : actionQueue) {
+			if (a.actionType == forwardAction)
+				return true;
+		}
+		return false;
 	}
 }
 

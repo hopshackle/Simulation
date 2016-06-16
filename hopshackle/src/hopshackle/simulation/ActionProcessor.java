@@ -115,6 +115,7 @@ public class ActionProcessor {
 	public Action processNextAction() {
 		if (stepping) {
 			Action nextAction = steppingBuffer.poll();
+	//		System.out.println(nextAction + " : " + nextAction.getState());
 			if (nextAction != null) {
 				try {
 					if (!q.offer(nextAction, 2, TimeUnit.SECONDS)) {

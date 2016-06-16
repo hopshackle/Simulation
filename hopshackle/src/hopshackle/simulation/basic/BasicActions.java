@@ -11,6 +11,7 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 	BUILD,
 	FARM,
 	BREED,
+	LOOK_FOR_PARTNER,
 	MARRY,
 	FIND_PLAINS,
 	FIND_FOREST,
@@ -38,21 +39,14 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 		case FARM:
 			return new Farm(a);
 		case BREED:
-			ba = (BasicAgent) a;
 			PartnerFinder advertBreed = new PartnerFinder(ba, new BreedingPartnerScoringFunction(ba));
 			if (advertBreed.getPartner() != null) {
 				return new Breed(ba, advertBreed.getPartner());
 			} else {
 				return new Rest(a);
 			}
-		case MARRY:
-			ba = (BasicAgent) a;
-			PartnerFinder advertMarry = new PartnerFinder(ba, new MarriagePartnerScoringFunction(ba));
-			if (advertMarry.getPartner() != null) {
-				return new Marry(ba, advertMarry.getPartner());
-			} else {
-				return new Rest(a);
-			}
+		case LOOK_FOR_PARTNER:
+			return new LookForPartner(ba);
 		case FIND_WATER:
 			return new BasicMove(BasicActions.FIND_WATER, a, new TerrainMatcher(TerrainType.OCEAN));
 		case FIND_PLAINS:
@@ -82,7 +76,6 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 	public boolean isChooseable(BasicAgent a) {
 		BasicHex h = (BasicHex)a.getLocation();
 		List<Artefact> inventory = a.getInventory();
-		boolean marriedFemale = a.isMarried() && a.isFemale();
 		switch (this) {
 		case FORAGE:
 			if (h.getCarryingCapacity() < 1) 
@@ -130,12 +123,15 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 			if (a.getNumberInInventoryOf(Resource.FOOD) == 0) 
 				return false;
 			return true;
-		case MARRY:
+		case LOOK_FOR_PARTNER:
 			if (a.isFemale())
 				return false;
-			if (a.isMarried()) 
+			if (a.isMarried() || a.getActionPlan().contains(BasicActions.MARRY)) 
 				return false;
 			return true;
+		case MARRY:
+			return false;
+			// Only ever created after LOOK_FOR_PARTNER
 		case FIND_FOREST:
 			if (h.getTerrainType() == TerrainType.FOREST)
 				return false;

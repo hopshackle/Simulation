@@ -94,6 +94,12 @@ public class ExperienceRecord<A extends Agent> {
 			return (reward + endScore - startScore);
 		return reward;
 	}
+	public double getStartScore() {
+		return startScore;
+	}
+	public double getEndScore() {
+		return endScore;
+	}
 
 	public List<GeneticVariable> getVariables() {
 		return variables;

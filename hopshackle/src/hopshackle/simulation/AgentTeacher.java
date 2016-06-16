@@ -87,7 +87,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 			processNewER(newER);
 			break;
 		case ACTION_AGREED:
-			if (action!= null && !actionPreviouslySeen(a, action)) {
+			if (action!= null && !actionPreviouslySeen(a, action) && agentDecider != null) {
 				// we need to create a new ER first
 				List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 				chooseableOptions.add(action.getType());

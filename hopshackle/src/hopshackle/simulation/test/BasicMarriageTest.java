@@ -27,6 +27,7 @@ public class BasicMarriageTest {
 		actions.add(BasicActions.REST);
 		actions.add(BasicActions.FORAGE);
 		actions.add(BasicActions.MARRY);
+		actions.add(BasicActions.LOOK_FOR_PARTNER);
 		baseDecider = new GeneralLinearQDecider<BasicAgent>(actions, variables);
 		ap = new TestActionProcessor();
 		world = ap.w;
@@ -82,11 +83,11 @@ public class BasicMarriageTest {
 	public void cannotMarryUnlessSingleAndMale() {
 		new Hut(maleAgent1);
 		new Hut(femaleAgent2);
-		assertTrue(BasicActions.MARRY.isChooseable(maleAgent1));
-		assertFalse(BasicActions.MARRY.isChooseable(femaleAgent2));
+		assertTrue(BasicActions.LOOK_FOR_PARTNER.isChooseable(maleAgent1));
+		assertFalse(BasicActions.LOOK_FOR_PARTNER.isChooseable(femaleAgent2));
 		new Marriage(maleAgent1, femaleAgent2);
-		assertFalse(BasicActions.MARRY.isChooseable(maleAgent1));
-		assertFalse(BasicActions.MARRY.isChooseable(femaleAgent2));
+		assertFalse(BasicActions.LOOK_FOR_PARTNER.isChooseable(maleAgent1));
+		assertFalse(BasicActions.LOOK_FOR_PARTNER.isChooseable(femaleAgent2));
 
 		try {
 			new Marriage(maleAgent3, femaleAgent2);
@@ -107,7 +108,11 @@ public class BasicMarriageTest {
 		createAgent(20, fullHealth, false);
 		createAgent(20, fullHealth-5, false);
 		new Marriage (maleAgent3, marriedAgent1);
-		BasicAction marryAction = BasicActions.MARRY.getAction(maleAgent1);
+		BasicAction lookForPartner = new LookForPartner(maleAgent1);
+		world.setCurrentTime(500l); // otherwise we have time to REST again
+		run(lookForPartner);
+		BasicAction marryAction = (BasicAction) maleAgent1.getActionPlan().getNextAction();
+		assertTrue(marryAction instanceof Marry);
 		run(marryAction);
 		assertTrue(maleAgent1.isMarried());
 		assertEquals(maleAgent1.getPartner().getAge()/1000, 10);
@@ -206,7 +211,11 @@ public class BasicMarriageTest {
 		femaleAgent2.decide();
 		Action ifa = femaleAgent2.getActionPlan().getNextAction();
 		assertEquals(ifa.getAllConfirmedParticipants().size(), 1);
-		BasicAction marryAction = BasicActions.MARRY.getAction(maleAgent1);
+		BasicAction lookForPartner = new LookForPartner(maleAgent1);
+		world.setCurrentTime(500l); // otherwise we have time to REST again
+		run(lookForPartner);
+		BasicAction marryAction = (BasicAction) maleAgent1.getActionPlan().getNextAction();
+		assertTrue(marryAction instanceof Marry);
 		run(marryAction);
 		Action nfa = femaleAgent2.getActionPlan().getNextAction();
 		assertFalse(ifa.equals(nfa));
@@ -228,6 +237,7 @@ public class BasicMarriageTest {
 	}
 	@Test
 	public void experienceRecordsUpdatedIndependentlyForSpousalAction() {
+		homeHex.setTerrain(TerrainType.FOREST);		// otherwise Foraging gives FOOD, which spoils score tests
 		teacher.registerAgent(femaleAgent2);
 		teacher.registerAgent(maleAgent1);
 		femaleAgent2.setDecider(baseDecider);
@@ -235,11 +245,14 @@ public class BasicMarriageTest {
 		ExperienceRecord<BasicAgent> initialFemaleER = teacher.getExperienceRecords(femaleAgent2).get(0);
 		assertTrue(initialFemaleER.getState() == ExperienceRecord.State.DECISION_TAKEN);
 		maleAgent1.setDecider(baseDecider);
-		BasicAction marryAction = BasicActions.MARRY.getAction(maleAgent1);
 		assertTrue(initialFemaleER.getState() == ExperienceRecord.State.DECISION_TAKEN);
-		marryAction.addToAllPlans();
+		BasicAction lookForPartner = new LookForPartner(maleAgent1);
+		world.setCurrentTime(600l); // otherwise we have time to REST again
+		run(lookForPartner);
+		BasicAction marryAction = (BasicAction) maleAgent1.getActionPlan().getNextAction();
 		ExperienceRecord<BasicAgent> femaleMarryER = teacher.getExperienceRecords(femaleAgent2).get(1);
 		assertTrue(femaleMarryER.getActionTaken().equals(marryAction));
+		assertTrue(marryAction instanceof Marry);
 		run(marryAction); 	// this agrees for all participants, then start, then run
 		// male will decide after action execution. Decision should bind spouse as well.
 		// The cancellation of the unexecuted female action will move ER to ACTION_COMPLETED
@@ -280,10 +293,11 @@ public class BasicMarriageTest {
 	@Test
 	public void onDissolutionSpouseTakesActionsAgain() {
 		new Hut(maleAgent1);
-		maleAgent1.setDecider(new HardCodedDecider(BasicActions.MARRY));
+		maleAgent1.setDecider(new HardCodedDecider(BasicActions.LOOK_FOR_PARTNER));
 		femaleAgent2.decide();
 		maleAgent1.decide();
-		ap.processActionsInQueue(4);
+		maleAgent1.setDecider(new HardCodedDecider(BasicActions.REST));
+		ap.processActionsInQueue(6);	// REST, LOOK_FOR_PARTNER, then MARRY
 		assertTrue(maleAgent1.isMarried());
 		assertTrue(femaleAgent2.isMarried());
 		Action nextMaleAction = maleAgent1.getNextAction();
@@ -304,10 +318,17 @@ public class BasicMarriageTest {
 		assertEquals(BasicVariables.MARRIED_STATUS.getValue(femaleAgent3, femaleAgent3), 0.0, 0.001);
 	}
 	
+	@Test
+	public void lookForPartnerNotEligibleIfMarriageIsPlanned() {
+		assertTrue(BasicActions.LOOK_FOR_PARTNER.isChooseable(maleAgent1));
+		BasicAction marryAction = new Marry(maleAgent1, femaleAgent2);
+		marryAction.addToAllPlans();
+		assertFalse(BasicActions.LOOK_FOR_PARTNER.isChooseable(maleAgent1));
+	}
+	
 	private void run(BasicAction a) {
-		for (BasicAgent agent : a.getAllInvitedParticipants()) {
-			a.agree(agent);
-		}
+		for (BasicAgent participant : a.getAllInvitedParticipants())
+			a.agree(participant);
 		a.start();
 		a.run();
 	}
