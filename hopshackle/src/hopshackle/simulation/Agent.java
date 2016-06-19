@@ -138,6 +138,7 @@ public abstract class Agent extends Observable {
 		purgeActions(true);
 		setLocation(null);
 		inventory.clear();
+		clearMapKnowledge();
 
 		log("Closing log file.");
 		if (logger != null)

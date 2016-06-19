@@ -1,4 +1,5 @@
 package hopshackle.simulation;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -18,15 +19,15 @@ public class ActionProcessor {
 	private Hashtable<String, Integer> actionCount;
 	private String logFile;
 	private boolean debug = false;
-	private boolean delayQueue, done, stepping;
+	private boolean delayQueue, stepping;
 	private Queue<Action> steppingBuffer = new PriorityQueue<Action>();
-	
+
 	public ActionProcessor() {
 		this("", true);
 	}
+
 	public ActionProcessor(String suffix, Boolean realtime) {
 		delayQueue = realtime;
-		done = false;
 		if (delayQueue) {
 			q = new DelayQueue<Action>();
 		} else {
@@ -37,7 +38,8 @@ public class ActionProcessor {
 		actionCount = new Hashtable<String, Integer>();
 		lastRecordedTime = 0L;
 		delayCount = 0l;
-		String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
+		String baseDir = SimProperties.getProperty("BaseDirectory",
+				"C:\\Simulations");
 		logFile = baseDir + "\\logs\\ActionProcessorRecord_" + suffix + ".log";
 		actionThread = new ActionThread(this);
 		t = new Thread(actionThread, "Action Thread");
@@ -47,12 +49,15 @@ public class ActionProcessor {
 	public void start() {
 		t.start();
 	}
+
 	public void stop() {
-		done = true;
+		actionThread.stop();
 	}
 
 	public void add(Action a) {
-		if (debug) logger.info("Adding action " + a + " (" + a.getState() + ") with delay of " + a.getDelay(TimeUnit.MILLISECONDS));
+		if (debug)
+			logger.info("Adding action " + a + " (" + a.getState()
+					+ ") with delay of " + a.getDelay(TimeUnit.MILLISECONDS));
 		if (a == null) {
 			logger.severe("Null action sent to ActionProcessor");
 			return;
@@ -72,8 +77,8 @@ public class ActionProcessor {
 	}
 
 	/*
-	 * Useful for unit testing only by allowing actions to be pulled from 
-	 * queue in a controlled fashion (and executed off it)
+	 * Useful for unit testing only by allowing actions to be pulled from queue
+	 * in a controlled fashion (and executed off it)
 	 */
 	public Action getNextUndeletedAction(long wait1, TimeUnit wait2) {
 		try {
@@ -89,6 +94,7 @@ public class ActionProcessor {
 
 		return currentAction;
 	}
+
 	private boolean validAction(Action currentAction2) {
 		if (currentAction2 == null)
 			return false;
@@ -100,29 +106,32 @@ public class ActionProcessor {
 		case PLANNED:
 		case EXECUTING:
 			return true;
-		default: 
+		default:
 			return false;
 		}
 	}
+
 	// Only used in testing?
 	public Action getNextUndeletedAction() {
 		return getNextUndeletedAction(1, TimeUnit.MILLISECONDS);
 	}
-	
+
 	public void setTestingMode(boolean state) {
 		stepping = state;
 	}
+
 	public Action processNextAction() {
 		if (stepping) {
 			Action nextAction = steppingBuffer.poll();
-	//		System.out.println(nextAction + " : " + nextAction.getState());
+			// System.out.println(nextAction + " : " + nextAction.getState());
 			if (nextAction != null) {
 				try {
 					if (!q.offer(nextAction, 2, TimeUnit.SECONDS)) {
 						logger.severe("Action dropped as queue is blocked ");
 					}
 				} catch (InterruptedException e) {
-					logger.severe("Action Processor add function: " + e.toString());
+					logger.severe("Action Processor add function: "
+							+ e.toString());
 					e.printStackTrace();
 				}
 				return nextAction;
@@ -133,64 +142,86 @@ public class ActionProcessor {
 
 	class ActionThread implements Runnable {
 		ActionProcessor ap;
+		private volatile boolean done;
+
 		public ActionThread(ActionProcessor parent) {
 			ap = parent;
 		}
+		
+		public void stop() {
+			done = true;
+		}
+
 		public void run() {
 			Long startTime, endTime;
 			try {
-				do while (!done) { 
+				do {
 					currentAction = q.poll(10, TimeUnit.SECONDS);
-					// If we ever have to wait for more than 10 seconds, then exit
-					if (currentAction != null) {
+					// If we ever have to wait for more than 10 seconds,
+					// then exit
+					if (currentAction != null && !done) {
 
 						synchronized (ap) {
-							if (debug) logger.info("started action: " + currentAction.toString() + " in state of " + currentAction.getState() + 
-									" at " + world.getCurrentTime() + " with delay of " + currentAction.getDelay(TimeUnit.MILLISECONDS));
+							if (debug) logger.info("started action: " + currentAction.toString() + " in state of " + currentAction.getState()
+									+ " at " + world.getCurrentTime() + " with delay of " + currentAction.getDelay(TimeUnit.MILLISECONDS));
 							startTime = System.currentTimeMillis();
-							
+
 							switch (currentAction.getState()) {
 							case PROPOSED:
 								updateWorldTime(currentAction.getStartTime());
-								currentAction.cancel();	// To late
+								currentAction.cancel(); // To late
 							case FINISHED:
 							case CANCELLED:
 								break;
 							case PLANNED:
 								updateWorldTime(currentAction.getStartTime());
-								currentAction.start();
-								add(currentAction);		// This will queue up the actual action execution
+								// We have a slight race condition, in that as a result of moving the world time on
+								// we may stop the ActionProcessor
+								if (!done) currentAction.start();
+								add(currentAction); // This will queue up the actual action execution
 								break;
 							case EXECUTING:
 								updateWorldTime(currentAction.getEndTime());
-								currentAction.run();
+								if (!done) currentAction.run();
 								break;
 							}
 							endTime = System.currentTimeMillis();
 							if (debug) {
-								logger.info("processed action: " + currentAction.toString() + " to state of " + currentAction.getState() + 
-										" at world time " + world.getCurrentTime());
+								logger.info("processed action: "
+										+ currentAction.toString()
+										+ " to state of "
+										+ currentAction.getState()
+										+ " at world time "
+										+ world.getCurrentTime());
 								if (currentAction.getState() == Action.State.FINISHED)
-									recordAction(currentAction.toString(), endTime - startTime);
+									recordAction(
+											currentAction.toString(),
+											endTime - startTime);
 							}
 							if ((endTime - startTime) > 1000) {
-								logger.warning(currentAction.toString() + " takes " + (endTime-startTime) + " ms");
+								logger.warning(currentAction.toString()
+										+ " takes "
+										+ (endTime - startTime) + " ms");
 							}
 							ap.notifyAll();
 						}
-						
-					} else {done = true;}
+
+					} else {
+						ap.stop();
+					}
 
 				} while (!done);
 
-				logger.info("Action Processor exiting with time-out");
+				logger.info("Action Processor exiting with time-out at "
+						+ world.getCurrentTime());
+				world.worldDeath();
 			} catch (InterruptedException ex) {
 				logger.severe("Action Processor: " + ex.toString());
 				ex.printStackTrace();
 			}
 		}
 	}
-	
+
 	private void updateWorldTime(long timeAtCompletion) {
 		long worldStartTime = world.getCurrentTime();
 		if (delayQueue) {
@@ -205,7 +236,8 @@ public class ActionProcessor {
 			if (world != null) {
 				if (world.getCurrentTime() < timeAtCompletion) {
 					world.setCurrentTime(timeAtCompletion);
-			//		if (debug) logger.info("Setting world time to " + timeAtCompletion);
+					// if (debug) logger.info("Setting world time to " +
+					// timeAtCompletion);
 				}
 			}
 		}
@@ -214,8 +246,10 @@ public class ActionProcessor {
 	public Long getDelay() {
 		return delay;
 	}
+
 	private void recordAction(String s, Long t) {
-		if (s==null) return;
+		if (s == null)
+			return;
 		Long i = 0l;
 		int count = 0;
 		if (actionTimes.containsKey(s)) {
@@ -223,23 +257,23 @@ public class ActionProcessor {
 			count = actionCount.get(s);
 		}
 		count++;
-		i+=t;
+		i += t;
 		actionTimes.put(s, i);
 		actionCount.put(s, count);
 
 		if (System.currentTimeMillis() - lastRecordedTime > 60000) {
-			int minute = (int)((System.currentTimeMillis() - originalStartTime)/60000);
+			int minute = (int) ((System.currentTimeMillis() - originalStartTime) / 60000);
 			lastRecordedTime = System.currentTimeMillis();
 			try {
 				FileWriter logWriter = new FileWriter(logFile, true);
 				String logData;
 
-				for(String temp : actionTimes.keySet()) {
-					logData = minute + ", " + 
-					temp + ", " + actionTimes.get(temp) +
-					", " + actionCount.get(temp) + 
-					", " + actionTimes.get(temp)/actionCount.get(temp);
-					logWriter.write(logData+newline);
+				for (String temp : actionTimes.keySet()) {
+					logData = minute + ", " + temp + ", "
+							+ actionTimes.get(temp) + ", "
+							+ actionCount.get(temp) + ", "
+							+ actionTimes.get(temp) / actionCount.get(temp);
+					logWriter.write(logData + newline);
 				}
 				logWriter.close();
 			} catch (IOException e) {
@@ -251,9 +285,11 @@ public class ActionProcessor {
 			actionTimes.clear();
 		}
 	}
+
 	public World getWorld() {
 		return world;
 	}
+
 	public void setWorld(World world) {
 		this.world = world;
 	}

@@ -41,8 +41,6 @@ public class BasicRunWorld {
 			e.printStackTrace();
 		}
 
-		System.out.println("Starting BasicRunWorld");
-
 		this.showGUI = showGUI;
 		endTime = runTime;
 		w = w1;
@@ -95,7 +93,7 @@ public class BasicRunWorld {
 				simlog.info("Starting WorldDeath: " + w.toString());
 				if (frame != null)
 					frame.dispose();
-
+				w.getActionProcessor().stop();
 				HopshackleState.recordStates(w.toString());
 				simlog.removeHandler(fh);
 				w.worldDeath();
@@ -107,7 +105,7 @@ public class BasicRunWorld {
 			}
 		}, endTime + maxLife);
 	}
-
+	
 	private void createAndShowGUI() {
 		//Create and set up the window.
 		frame = new JFrame(suffix);
@@ -131,7 +129,6 @@ public class BasicRunWorld {
 		populationSpawner = new BasicPopulationSpawner(w, freq, maxInc, minPop);
 		populationThread = new Thread(populationSpawner, "Population Spawner");
 		populationThread.start();
-		System.out.println("Started PopulationSpawner");
 
 		agentRecorder = new AgentRecorder(w, 60000, new BasicAgentRecorder(w.toString()));
 		recordingThread = new Thread(agentRecorder, "BasicAgent recorder");
@@ -141,9 +138,10 @@ public class BasicRunWorld {
 	private void initiallyPopulate() {		
 
 		ArrayList<GeneticVariable> variablesToUse = new ArrayList<GeneticVariable>(EnumSet.allOf(BasicVariables.class));
-		variablesToUse.remove(BasicVariables.WATER);
-	//	variablesToUse.remove(BasicVariables.GENDER);
-	//	variablesToUse.remove(BasicVariables.MARRIED_STATUS);
+		String[] variablesToRemove = SimProperties.getProperty("BasicVariableFilter", "").split(",");
+		for (String toRemove : variablesToRemove) {
+			variablesToUse.remove(BasicVariables.valueOf(toRemove));
+		}
 
 		ArrayList<ActionEnum<BasicAgent>> actionsToUse = new ArrayList<ActionEnum<BasicAgent>>(EnumSet.allOf(BasicActions.class));
 		actionsToUse.remove(BasicActions.FIND_WATER);
@@ -172,7 +170,7 @@ public class BasicRunWorld {
 
 		for (int n = 0; n < 59; n++) 
 			w.setScheduledTask(new AddPopulation(), 1000 * n);
-
+/*
 		w.setScheduledTask(new TimerTask() {
 
 			@Override
@@ -188,7 +186,7 @@ public class BasicRunWorld {
 				}
 			}
 		}, 0, 1000 * 60);
-
+*/
 	}
 
 	class StopWorld extends TimerTask {

@@ -26,6 +26,7 @@ public class RunBasicWorldGUI {
 	private DatabaseAccessUtility databaseUtility;
 	boolean loadStateSpace = "true".equals(SimProperties.getProperty("LoadStateSpaceAtStart", "false"));
 	String stateSpaceToLoad = SimProperties.getProperty("StateSpaceToLoad", "");
+	String defaultMap = SimProperties.getProperty("BasicDefaultMap", "1_Rooting_Out_A_Mage.map");
 
 	private static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
 	private static File defaultDirectory = new File(baseDir + "\\Maps");
@@ -44,12 +45,26 @@ public class RunBasicWorldGUI {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		new RunBasicWorldGUI();
+		if (args.length > 0 && args[0].equals("-noGUI")) {
+			new RunBasicWorldGUI(false);
+		} else {
+			new RunBasicWorldGUI(true);
+		}
 		logger.removeHandler(fh);
 	}
 
-	private RunBasicWorldGUI() {
-		createAndShowGUI();
+	private RunBasicWorldGUI(boolean showGUI) {
+		selectedFile = new File(baseDir + "\\Maps\\" + defaultMap);
+		if (showGUI) {
+			createAndShowGUI();
+		} else {
+			int iterationNumber = SimProperties.getPropertyAsInteger("BasicIterations", "30");
+			int endTime = SimProperties.getPropertyAsInteger("BasicEndTime", "60");
+			boolean realTime = SimProperties.getProperty("BasicRealTime", "false").equals("true");
+			String runName = SimProperties.getProperty("BasicRunName", "default");
+			startDatabaseThread();
+			runWorld(runName, iterationNumber, endTime, realTime, false);
+		}
 	}
 
 	private void createAndShowGUI() {
@@ -70,7 +85,6 @@ public class RunBasicWorldGUI {
 	private JPanel startPanel() {
 		JButton selectFileButton = new JButton("File");
 
-		selectedFile = new File(baseDir + "\\Maps\\1_Rooting_Out_A_Mage.map");
 		fileLabel = new JLabel(selectedFile.toString());
 
 		selectFileButton.addActionListener(new ActionListener() {
@@ -90,9 +104,14 @@ public class RunBasicWorldGUI {
 
 		startButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
-				HopshackleState.clear();	// always clear to start. This will be loaded later based on settings.
+				int endTime = Integer.valueOf(endTimeField.getText());
+				if (endTime < 0) endTime = 60;
+				if (endTime > 1000) endTime = 1000;
+				String runName = suffixField.getText();
+				String runNumber = iterations.getText().trim();
+				int iterationNumber = Integer.valueOf(runNumber);
 				startDatabaseThread();
-				runWorld();
+				runWorld(runName, iterationNumber, endTime, true, showGUIButton.isSelected());
 			}
 		});
 
@@ -130,6 +149,7 @@ public class RunBasicWorldGUI {
 	}
 
 	private void startDatabaseThread() {
+		HopshackleState.clear();
 		if (databaseUtility != null) databaseUtility.addUpdate("EXIT");
 		databaseUtility = new DatabaseAccessUtility();
 
@@ -137,18 +157,12 @@ public class RunBasicWorldGUI {
 		t.start();
 	}
 
-	void runWorld() {
-		if (iterations.getText().trim().equals("0"))
+	void runWorld(String runName, int iterationNumber, int endTime, boolean realTime, boolean showGUI) {
+		if (iterationNumber == 0)
 			return;
 
-		int endTime = Integer.valueOf(endTimeField.getText());
-		if (endTime < 0) endTime = 60;
-		if (endTime > 1000) endTime = 1000;
-
-		boolean realTime = true;
-
-		World w = new World(new ActionProcessor(suffixField.getText(), realTime), 
-				suffixField.getText() + iterations.getText().trim(),
+		World w = new World(new ActionProcessor(runName, realTime), 
+				runName + "_" + iterationNumber,
 				((long)endTime) * 60l * 1000l);
 		w.initialiseMarket();
 		if (realTime) {
@@ -159,21 +173,19 @@ public class RunBasicWorldGUI {
 		w.setLocationMap(new HexMap<BasicHex>(selectedFile, BasicHex.getHexFactory()));
 		w.setDatabaseAccessUtility(databaseUtility);
 		
-		int iterationNumber = Integer.valueOf(iterations.getText());
-		
 		if (loadStateSpace && stateSpaceToLoad.matches(".*\\*\\*")) {
 			String amendedStateSpace = stateSpaceToLoad.replace("**", String.format("%d", iterationNumber));
 			SimProperties.setProperty("StateSpaceToLoad", amendedStateSpace);
 		}
 		
-		new BasicRunWorld(w, showGUIButton.isSelected(), ((long)endTime) * 60l * 1000l);
-		iterations.setText(String.valueOf(iterationNumber-1));
+		new BasicRunWorld(w, showGUI, ((long)endTime) * 60l * 1000l);
 
 		w.addListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				// start next world
 				if(arg0.getActionCommand().equals("Death")) {
-					runWorld();
+					Agent.clearAndResetCacheBuffer(500);
+					runWorld(runName, iterationNumber - 1, endTime, realTime, showGUI);
 				}
 			}
 		});	

@@ -52,7 +52,7 @@ public class AgentRecorder implements Runnable {
 					key.wait();
 				} catch (InterruptedException e) {}
 
-				logger.info("Starting Agent Recorder: " + dataExtractor.toString());
+	//			logger.info("Starting Agent Recorder: " + dataExtractor.toString());
 				dataExtractor.initialiseLoopVariables();
 				List<Agent> agentArray = world.getAgents();
 				for (Agent a : agentArray) 

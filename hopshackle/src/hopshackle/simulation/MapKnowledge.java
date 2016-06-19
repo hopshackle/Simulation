@@ -82,4 +82,20 @@ public class MapKnowledge {
 		newLocationsSinceLastUpdate.clear();
 	}
 
+	public int getSize() {
+		return knownLocations.size();
+	}
+	public void prune() {
+		Set<Location> toPrune = new HashSet<Location>();
+		for (Location l : knownLocations) {
+			if (Math.random() < 0.05 ) {
+				toPrune.add(l);
+			}
+		}
+		knownLocations.removeAll(toPrune);
+		newLocationsSinceLastUpdate.clear();
+		journeyTrackers.clear();
+		agent.log("Pruned " + toPrune.size() + " locations from memory. " + knownLocations.size() + " remaining.");
+	}
+
 }

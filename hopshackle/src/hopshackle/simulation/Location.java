@@ -1,10 +1,13 @@
 package hopshackle.simulation;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 public class Location implements Persistent, State {
 
+	private static AtomicLong idFountain = new AtomicLong(1);
+	
 	protected List<Location> childLocations;
 	protected Location parentLocation;
 	protected List<Location> accessibleLocations;
@@ -12,12 +15,14 @@ public class Location implements Persistent, State {
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	protected String name;
 	protected World world;
+	private long uniqueID;
 
 	public Location() {
 		childLocations = new ArrayList<Location>();
 		parentLocation = null;
 		accessibleLocations = new ArrayList<Location>();
 		agentsInLocation = new ArrayList<Agent>();
+		uniqueID = idFountain.getAndIncrement();
 	}
 
 	public Location(Location parent) {
@@ -159,4 +164,18 @@ public class Location implements Persistent, State {
 		}
 		return retValue;
 	}
+	
+	@Override
+    public int hashCode() {
+		return (int) uniqueID;
+	}
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Location) {
+			return ((Location)o).uniqueID == uniqueID;
+		} else {
+			return false;
+		}
+	}
+	
 }

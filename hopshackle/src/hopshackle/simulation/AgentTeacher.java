@@ -33,7 +33,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 	
 	private void updateWithExperienceRecord(ExperienceRecord<A> newlyRegisteredER) {
 		A a = newlyRegisteredER.actor;
-		List<ExperienceRecord<A>> tdListForAgent = tdArrayHash.get(a);
+		List<ExperienceRecord<A>> tdListForAgent = tdArrayHash.getOrDefault(a, new ArrayList<ExperienceRecord<A>>());
 		for (ExperienceRecord<A> existingER : tdListForAgent) {
 			if (existingER.getState() == State.ACTION_COMPLETED && !newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken()) && 
 					newlyRegisteredER.getActionTaken().getActor().equals(existingER.getActionTaken().getActor())) {
@@ -47,7 +47,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 	}
 	
 	private void removeCompletedER(A agent) {
-		List<ExperienceRecord<A>> ERForAgent = tdArrayHash.get(agent);
+		List<ExperienceRecord<A>> ERForAgent = tdArrayHash.getOrDefault(agent, new ArrayList<ExperienceRecord<A>>());
 		List<ExperienceRecord<A>> newERForAgent = new ArrayList<ExperienceRecord<A>>();
 		for (ExperienceRecord<A> er : ERForAgent) {
 			if (er.getState() != ExperienceRecord.State.NEXT_ACTION_TAKEN)

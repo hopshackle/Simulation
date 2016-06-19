@@ -193,6 +193,7 @@ public class World extends Location {
 			listeners.remove(oldListener);
 	}
 	public void worldDeath() {
+		if (isDead()) return;
 		isAlive = false;
 		if (calendar != null)
 			actualEndOfWorldTime = calendar.getTime();

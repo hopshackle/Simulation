@@ -64,7 +64,7 @@ public class BasicPopulationSpawner implements Runnable{
 				} catch (InterruptedException e) {
 					logger.info("Population Spawner has been interrupted");
 				}
-				logger.info("Population Spawner started");
+	//			logger.info("Population Spawner started");
 
 				tempArr = world.getAgents();
 				for (Agent a : tempArr) {

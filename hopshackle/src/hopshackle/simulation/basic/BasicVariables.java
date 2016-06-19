@@ -18,7 +18,7 @@ public enum BasicVariables implements GeneticVariable {
 	FOOD_LEVEL,
 	WOOD_LEVEL,
 	CIV_LEVEL,
-//	GENDER,
+	MALE,
 	MARRIED_STATUS,
 	ENGAGED,
 	AGE;
@@ -87,10 +87,10 @@ public enum BasicVariables implements GeneticVariable {
 		case CIV_LEVEL:
 			int huts = agentLocation.getHuts().size();
 			return ((double)huts) / 10.0;
-/*		case GENDER:
+		case MALE:
 			if (agent.isMale())
 				return 1.0;
-			return -1.0;		*/
+			return 0.0;		
 		case MARRIED_STATUS:
 			if (agent.isMarried())
 				return 1.0;

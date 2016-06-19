@@ -15,5 +15,4 @@ public interface WorldCalendar {
 	public void removeScheduledTask(TimerTask task);
 
 	public String getDate();
-
 }

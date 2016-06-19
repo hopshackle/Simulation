@@ -21,9 +21,11 @@ public class BasicAgent extends Agent implements Persistent {
 	protected static Name femaleNamer = new Name(new File(baseDir + "\\FemaleNames.txt"));
 	private static AgentWriter<BasicAgent> agentWriter = new AgentWriter<BasicAgent>(new BasicAgentDAO());
 	private static BasicAgentRetriever masterAgentRetriever = new BasicAgentRetriever();
-	private static double debugChance = 0.05;
+	private static double debugChance = 0.01;
 	private static AgentTeacher<BasicAgent> femaleTeacher = new AgentTeacher<BasicAgent>();
 	private static AgentTeacher<BasicAgent> maleTeacher = new AgentTeacher<BasicAgent>();
+	private static boolean genderSpecificTeacher = SimProperties.getProperty("BasicGenderSpecificTeacher", "true").equals("true");
+	private static int locationMemoryLimit = SimProperties.getPropertyAsInteger("BasicLocationMemory", "100");
 	
 	private double health;
 	private long lastMaintenance;
@@ -53,7 +55,7 @@ public class BasicAgent extends Agent implements Persistent {
 			setDebugLocal(true);
 		setPolicy(new BasicInheritance<BasicAgent>());
 		agentRetriever = masterAgentRetriever;
-		if (isMale()) {
+		if (isMale() && genderSpecificTeacher) {
 			maleTeacher.registerAgent(this);
 		} else {
 			femaleTeacher.registerAgent(this);
@@ -120,6 +122,10 @@ public class BasicAgent extends Agent implements Persistent {
 			} else {
 				addHealth(-5.0);
 				log("No Food so starves");
+			}
+			
+			if (knowledgeOfLocations.getSize() > locationMemoryLimit) {
+				knowledgeOfLocations.prune();
 			}
 		}
 	}
