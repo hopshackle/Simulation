@@ -3,6 +3,7 @@ package hopshackle.simulation.basic;
 import hopshackle.GUI.*;
 import hopshackle.simulation.*;
 
+import java.awt.event.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.*;
@@ -25,6 +26,7 @@ public class BasicRunWorld {
 	private AgentRecorder agentRecorder;
 	private Thread recordingThread;
 	private int freq, maxInc;
+	private static volatile boolean simulationComplete; 
 
 	public BasicRunWorld(World w1, boolean showGUI, long runTime) {
 		simlog = Logger.getLogger("hopshackle.simulation");
@@ -71,7 +73,6 @@ public class BasicRunWorld {
 
 		startSimulation();
 
-		BasicAgent death = new BasicAgent(w);
 		try {
 			synchronized (this) {
 				this.wait(1000);
@@ -81,29 +82,48 @@ public class BasicRunWorld {
 		}
 
 		simlog.info("End Time is " + endTime);
-		w.setScheduledTask(new StopWorld(), endTime);
+		w.setScheduledTask(new StopWorld(), endTime - w.getCurrentTime());
 		// this stops the population spawner to let population die off
 
-		long maxLife = death.getMaxAge();
+		long maxLife = 1000 * SimProperties.getPropertyAsInteger("MaximumAgentAgeInSeconds", "180");
 		simlog.info("Max Life is " + maxLife);
 		w.setScheduledTask(new TimerTask() {
 
 			@Override
 			public void run() {
-				simlog.info("Starting WorldDeath: " + w.toString());
+				simlog.info("Forcing WorldDeath: " + w.toString());
 				if (frame != null)
 					frame.dispose();
 				w.getActionProcessor().stop();
-				HopshackleState.recordStates(w.toString());
 				simlog.removeHandler(fh);
 				w.worldDeath();
 				simlog = null;
 				if (fh!= null)
 					fh.close();
-				fh = null;
-				w = null;	
 			}
-		}, endTime + maxLife);
+		}, endTime + maxLife - w.getCurrentTime());
+		
+		w.addListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (e.getActionCommand().equals("Death")) {
+					simulationComplete = true;
+					synchronized (w) {
+						w.notifyAll();
+					}
+				}
+			}
+		});
+
+		do {
+			try {
+				synchronized (w) {
+					w.wait();
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		} while (!simulationComplete);
 	}
 	
 	private void createAndShowGUI() {
@@ -191,8 +211,6 @@ public class BasicRunWorld {
 
 	class StopWorld extends TimerTask {
 		private Logger simLog = Logger.getLogger("hopshackle.simulation");
-		public StopWorld() {
-		}
 		public void run() {
 			// stage I is to stop spawning new population
 			simLog.info("Sending Stop message to Population Spawner");

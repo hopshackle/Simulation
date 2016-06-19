@@ -63,7 +63,9 @@ public class RunBasicWorldGUI {
 			boolean realTime = SimProperties.getProperty("BasicRealTime", "false").equals("true");
 			String runName = SimProperties.getProperty("BasicRunName", "default");
 			startDatabaseThread();
-			runWorld(runName, iterationNumber, endTime, realTime, false);
+			for (int iter = 1; iter <= iterationNumber; iter++) {
+				runWorld(runName, iter, endTime, realTime, false);
+			}
 		}
 	}
 
@@ -111,7 +113,9 @@ public class RunBasicWorldGUI {
 				String runNumber = iterations.getText().trim();
 				int iterationNumber = Integer.valueOf(runNumber);
 				startDatabaseThread();
-				runWorld(runName, iterationNumber, endTime, true, showGUIButton.isSelected());
+				for (int iter = 1; iter <= iterationNumber; iter++) {
+					runWorld(runName, iter, endTime, true, showGUIButton.isSelected());
+				}
 			}
 		});
 
@@ -179,15 +183,6 @@ public class RunBasicWorldGUI {
 		}
 		
 		new BasicRunWorld(w, showGUI, ((long)endTime) * 60l * 1000l);
-
-		w.addListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				// start next world
-				if(arg0.getActionCommand().equals("Death")) {
-					Agent.clearAndResetCacheBuffer(500);
-					runWorld(runName, iterationNumber - 1, endTime, realTime, showGUI);
-				}
-			}
-		});	
+		Agent.clearAndResetCacheBuffer(500);
 	}
 }

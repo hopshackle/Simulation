@@ -207,6 +207,7 @@ public class World extends Location {
 			al.actionPerformed(new ActionEvent(this, 1, "Death"));
 		}
 		listeners.clear();
+		actionProcessor = null;
 		maintenance(); // will clean up
 	}
 	public boolean isDead() {

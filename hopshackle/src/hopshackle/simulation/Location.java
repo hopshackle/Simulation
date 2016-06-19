@@ -7,12 +7,12 @@ import java.util.logging.Logger;
 public class Location implements Persistent, State {
 
 	private static AtomicLong idFountain = new AtomicLong(1);
+	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	
 	protected List<Location> childLocations;
 	protected Location parentLocation;
 	protected List<Location> accessibleLocations;
 	protected List<Agent> agentsInLocation;
-	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	protected String name;
 	protected World world;
 	private long uniqueID;
@@ -166,7 +166,7 @@ public class Location implements Persistent, State {
 	}
 	
 	@Override
-    public int hashCode() {
+	public int hashCode() {
 		return (int) uniqueID;
 	}
 	@Override

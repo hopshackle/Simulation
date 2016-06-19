@@ -9,7 +9,7 @@ public class DatabaseAccessUtility implements Runnable{
 	private Connection mainConnection;
 	private BlockingQueue<String> queue;
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
-	private boolean done = false;
+	private volatile boolean done = false;
 	private long startTime = System.currentTimeMillis();
 
 	public DatabaseAccessUtility() {

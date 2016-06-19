@@ -13,14 +13,20 @@ public abstract class Agent extends Observable {
 	protected static boolean debug = false;
 	protected static boolean fullDebug = false;
 	private static AtomicLong idFountain = new AtomicLong(1);
+	public static String newline = System.getProperty("line.separator");
+	protected static Logger errorLogger = Logger.getLogger("hopshackle.simulation");
+	protected static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
+	
+	private static HashMap<Long, Agent> cacheOfTheLiving = new HashMap<Long, Agent>();
+	private static HashMap<Long, String> cacheOfTheDead = new HashMap<Long, String>();
+	private static Queue<Agent> queueForTheFerryman = new LinkedList<Agent>();
+	private static int deadAgentsToHoldInLivingCache = 1000;
 
 	protected Location location;
 	protected World world;
 	protected Decider decider, doNothingDecider;
 	protected ActionPlan actionPlan;
-	protected static Logger errorLogger = Logger.getLogger("hopshackle.simulation");
 	protected Genome genome;
-	public static String newline = System.getProperty("line.separator");
 	protected int generation;
 	protected boolean culled = false;
 	protected Location birthLocation, deathLocation;
@@ -37,19 +43,11 @@ public abstract class Agent extends Observable {
 	protected List<Artefact> inventory;
 	protected List<Artefact> inventoryOnMarket = new ArrayList<Artefact>();
 	protected double gold;
-
 	protected List<AgentListener> listeners;
 	protected double maxAge = SimProperties.getPropertyAsDouble("MaximumAgentAgeInSeconds", "100");
-	protected static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
-
 	protected MapKnowledge knowledgeOfLocations;
 	protected JourneyPlan currentJourneyPlan;
 	private boolean knowsOfUnexploredLocations = true;
-
-	private static HashMap<Long, Agent> cacheOfTheLiving = new HashMap<Long, Agent>();
-	private static HashMap<Long, String> cacheOfTheDead = new HashMap<Long, String>();
-	private static Queue<Agent> queueForTheFerryman = new LinkedList<Agent>();
-	private static int deadAgentsToHoldInLivingCache = 1000;
 	protected AgentRetriever<?> agentRetriever;	// to be set up by implementing subclass
 	protected EntityLog logger;
 
@@ -136,6 +134,7 @@ public abstract class Agent extends Observable {
 		// then tidy-up
 		listeners.clear();
 		purgeActions(true);
+		actionPlan.executedActions.clear();
 		setLocation(null);
 		inventory.clear();
 		clearMapKnowledge();

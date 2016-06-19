@@ -8,12 +8,13 @@ import java.util.logging.Logger;
 public class ActionProcessor {
 
 	public static String newline = System.getProperty("line.separator");
+	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
+	
 	private BlockingQueue<Action> q;
 	private Action currentAction;
 	private Thread t;
 	private ActionThread actionThread;
 	private World world;
-	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	private Long delay, delayCount, originalStartTime, lastRecordedTime;
 	private Hashtable<String, Long> actionTimes;
 	private Hashtable<String, Integer> actionCount;
