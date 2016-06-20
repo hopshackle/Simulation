@@ -7,7 +7,8 @@ import java.util.logging.Logger;
 public class HopshackleUtilities {
 
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
-
+	public static String newline = System.getProperty("line.separator");
+	
 	public static <T> List<T> cloneList(Collection<T> listToClone) {
 		List<T> retValue = new ArrayList<T>();
 		if (listToClone == null) return retValue;

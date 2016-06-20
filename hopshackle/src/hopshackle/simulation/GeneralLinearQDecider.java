@@ -6,6 +6,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 
 	protected double[][] weights;
 	protected int actionLength, variableLength;
+	public static String newline = System.getProperty("line.separator");
 
 	public GeneralLinearQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables) {
 		super(actions, variables);
@@ -75,6 +76,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		double bestNextAction = valueOfBestAction(exp);
 		ActionEnum<A> nextAction = getBestActionFrom(exp.getPossibleActionsFromEndState(), exp.getEndState());
 		double[] startState = exp.getStartState();
+		double[] endState = exp.getEndState();
 		double predictedValue = valueOption(exp.getActionTaken().actionType, startState);
 		double delta = exp.getReward() + gamma * bestNextAction - predictedValue;
 		if (localDebug) {
@@ -82,23 +84,18 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 					exp.getActionTaken(), exp.getReward(), bestNextAction, predictedValue, delta, nextAction == null ? "NULL" : nextAction.toString());
 			log(message);
 			exp.actor.log(message);
-			StringBuffer logMessage = new StringBuffer("Start state: ");
-			double[] state = exp.getStartState();
-			for (int i = 0; i < state.length; i++) 
-				logMessage.append(String.format(" [%.2f] ", state[i]));
-			message = logMessage.toString();
-			log(message);
-			exp.actor.log(message);
-			logMessage = new StringBuffer("End state:   ");
-			state = exp.getEndState();
-			for (int i = 0; i < state.length; i++) 
-				logMessage.append(String.format(" [%.2f] ", state[i]));
+			StringBuffer logMessage = new StringBuffer("StartState -> EndState :" + newline);
+			for (int i = 0; i < startState.length; i++) {
+				if (startState[i] != 0.0 || endState[i] != 0.0)
+					logMessage.append(String.format("\t%.2f -> %.2f %s %s", startState[i], endState[i], variableSet.get(i).toString(), newline));
+			}
 			message = logMessage.toString();
 			log(message);
 			exp.actor.log(message);
 		}
 		for (int i = 0; i < variableSet.size(); i++) {
 			double value = startState[i];
+			if (value == 0.0) continue;
 			GeneticVariable input = variableSet.get(i);
 			double weightChange = value * delta * alpha;
 			if (localDebug) {
