@@ -20,14 +20,15 @@ public class RunBasicWorldGUI {
 	private JTextField iterations;
 	private JRadioButton showGUIButton;
 
-	private File selectedFile;
+
 	private JLabel fileLabel;
 	private static Logger logger;
 	private DatabaseAccessUtility databaseUtility;
 	boolean loadStateSpace = "true".equals(SimProperties.getProperty("LoadStateSpaceAtStart", "false"));
-	String stateSpaceToLoad = SimProperties.getProperty("StateSpaceToLoad", "");
-	String defaultMap = SimProperties.getProperty("BasicDefaultMap", "1_Rooting_Out_A_Mage.map");
-
+	private String stateSpaceToLoad = SimProperties.getProperty("StateSpaceToLoad", "");
+	private String defaultMap = SimProperties.getProperty("BasicDefaultMap", "1_Rooting_Out_A_Mage.map");
+	private File selectedFile = new File(baseDir + "\\Maps\\" + defaultMap);
+	
 	private static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
 	private static File defaultDirectory = new File(baseDir + "\\Maps");
 
@@ -54,7 +55,6 @@ public class RunBasicWorldGUI {
 	}
 
 	private RunBasicWorldGUI(boolean showGUI) {
-		selectedFile = new File(baseDir + "\\Maps\\" + defaultMap);
 		if (showGUI) {
 			createAndShowGUI();
 		} else {

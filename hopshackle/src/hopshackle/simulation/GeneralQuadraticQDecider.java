@@ -8,73 +8,98 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 
 	public GeneralQuadraticQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables) {
 		super(actions, variables);
+		// Note that we then override everything that the super constructor does
 		actionLength = actions.size();
 		gvLength = variables.size();
 		variableLength = gvLength * gvLength;
-		weights = new double[actionLength+1][variableLength];
+		weights = new double[actionLength][variableLength];
 		// convention is that the first V entries are for all variables * first variable
 		// then the V+1 to 2V for all variables * second variable etc....
-		for (int i=0; i<actionLength+1; i++)
-			for (int j=0; j<variableLength; j++) 
-				weights[i][j] = 1.0;		// initialise to 1.0 to promote optimistic exploration
+		// With additional caveat that the 'diagonal' entries are the plain variables
+		// So 1 is just the first variable, V+2 is just the second, 2V+3 the third ... and so on
+		initialiseWeights();
 	}
 
 	@Override
-	public double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent) {
+	protected double[] getState(A decidingAgent, Agent contextAgent) {
+		double[] base = super.getState(decidingAgent, contextAgent);
+		return convertStateToQuadraticRepresentation(base);
+	}
+	
+	private double[] convertStateToQuadraticRepresentation(double[] baseState) {
 		double[] stateDescriptor = new double[variableLength];
 		for (int i = 0; i < gvLength; i++) {
-			GeneticVariable var1 = variableSet.get(i);
-			stateDescriptor[i] = var1.getValue(decidingAgent, contextAgent);
-		}
-		return valueOption(option, stateDescriptor);
-	}
-
-	@Override
-	public double valueOption(ActionEnum<A> option, double[] state) {
-		int optionIndex = actionSet.indexOf(option)+1;
-		double retValue = 0.0;
-
-		for (int i = 0; i < gvLength; i++) {
-			for (int j = i; j < gvLength; j++){
-				retValue += weights[0][i*gvLength + j] * state[i] * state[j];
-				retValue += weights[optionIndex][i*gvLength + j] * state[i] * state[j];
+			double val1 = baseState[i];
+			for (int j = i; j < gvLength; j++) {
+				if (j == i) {
+					stateDescriptor[i + j] = val1;
+				} else {
+					stateDescriptor[i + j] = val1 * baseState[j];
+				}
 			}
 		}
-
-		return retValue;
+		return stateDescriptor;
 	}
 
 	public void updateWeight(GeneticVariable var1, GeneticVariable var2, ActionEnum<A> option, double delta) {
-		int optionIndex = actionSet.indexOf(option)+1;
+		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(var1) * gvLength + variableSet.indexOf(var2);
-		weights[0][varIndex] += delta - weights[0][varIndex] * lambda;
 		weights[optionIndex][varIndex] += delta - weights[optionIndex][varIndex] * lambda;
 	}
 
-	public double[] getWeightOf(GeneticVariable input1, GeneticVariable input2, ActionEnum<A> option) {
-		int optionIndex = actionSet.indexOf(option)+1;
+	public double getWeightOf(GeneticVariable input1, GeneticVariable input2, ActionEnum<A> option) {
+		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(input1) * gvLength + variableSet.indexOf(input2);
-		double[] retValue = new double[2];
-		retValue[0] = weights[0][varIndex];
-		retValue[1] = weights[optionIndex][varIndex];
-		return retValue;
+		return weights[optionIndex][varIndex];
 	}
 	
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		double bestNextAction = valueOfBestAction(exp);
 		ActionEnum<A> actionTaken = exp.getActionTaken().actionType;
-		double[] startState = exp.getStartState();
+		double[] startState = convertStateToQuadraticRepresentation(exp.getStartState());
+		double[] endState = convertStateToQuadraticRepresentation(exp.getEndState());
 		double observedResult = exp.getReward();
 		double predictedValue = valueOption(actionTaken, startState);
 		double delta = observedResult + gamma * bestNextAction - predictedValue;
-		for (int i = 0; i < gvLength; i++) {
-			GeneticVariable var1 = variableSet.get(i);
-			for (int j = i; j < gvLength; j++) {
-				GeneticVariable var2 = variableSet.get(j);
-				double value = startState[i] * startState[j];
-				updateWeight(var1, var2, actionTaken, value * delta * alpha);
+		if (localDebug) {
+			String message = String.format("Learning:\t%-15sReward: %.2f, NextValue: %.2f, Predicted: %.2f, Delta: %.4f, NextAction: %s", 
+					exp.getActionTaken(), exp.getReward(), bestNextAction, predictedValue, delta, actionTaken == null ? "NULL" : actionTaken.toString());
+			log(message);
+			exp.actor.log(message);
+			StringBuffer logMessage = new StringBuffer("StartState -> EndState :" + newline);
+			for (int i = 0; i < startState.length; i++) {
+				if (startState[i] != 0.0 || endState[i] != 0.0) {
+					int firstVarComponent = i / gvLength;
+					int secondVarComponent = i % gvLength;
+					String variableName = variableSet.get(firstVarComponent).toString() + ":" + variableSet.get(secondVarComponent);
+					if (firstVarComponent == secondVarComponent)
+						variableName = variableSet.get(firstVarComponent).toString();
+					logMessage.append(String.format("\t%.2f -> %.2f %s %s", startState[i], endState[i], variableName, newline));
+				}
 			}
+			message = logMessage.toString();
+			log(message);
+			exp.actor.log(message);
+		}
+		for (int i = 0; i < variableLength; i++) {
+			double value = startState[i];
+			if (value == 0.0) continue;
+			int firstVarComponent = i / gvLength;
+			int secondVarComponent = i % gvLength;
+			GeneticVariable var1 = variableSet.get(firstVarComponent);
+			GeneticVariable var2 = variableSet.get(secondVarComponent);
+			String variableName = variableSet.get(firstVarComponent).toString() + ":" + variableSet.get(secondVarComponent);
+			if (firstVarComponent == secondVarComponent)
+				variableName = variableSet.get(firstVarComponent).toString();
+			double weightChange = value * delta * alpha;
+			if (localDebug) {
+				String message = String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f", variableName, value, weightChange, 
+					getWeightOf(var1, var2, exp.getActionTaken().actionType));
+				log(message);
+				exp.actor.log(message);
+			}
+			updateWeight(var1, var2, exp.getActionTaken().actionType, weightChange);
 		}
 	}
 }

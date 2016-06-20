@@ -13,19 +13,28 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		actionLength = actionSet.size();
 		variableLength = variableSet.size();
 		weights = new double[actionLength][variableLength];
+		initialiseWeights();
+	}
+
+	protected void initialiseWeights() {
 		for (int i=0; i<actionLength; i++) {
 			weights[i][0] = 1.0;	// the constant term. To slightly encourage exploration
 			for (int j=1; j<variableLength; j++) 
 				weights[i][j] = 0.0;	
 		}
 	}
-
-	@Override
-	public double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent) {
+	
+	protected double[] getState(A decidingAgent, Agent contextAgent) {
 		double[] stateDescriptor = new double[variableLength];
 		for (int i = 0; i < variableLength; i++) {
 			stateDescriptor[i] = variableSet.get(i).getValue(decidingAgent, contextAgent);
 		}
+		return stateDescriptor;
+	}
+
+	@Override
+	public double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent) {
+		double[] stateDescriptor = getState(decidingAgent, contextAgent);
 		return valueOption(option, stateDescriptor);
 	}
 
@@ -36,7 +45,6 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		double retValue = 0.0;
 
 		for (int i = 0; i < variableLength; i++) {
-			//		retValue += weights[0][i] * state[i];
 			retValue += weights[optionIndex][i] * state[i];
 		}
 		return retValue;
@@ -45,7 +53,6 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 	public void updateWeight(GeneticVariable input, ActionEnum<A> option, double delta) {
 		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(input);
-		//		weights[0][varIndex] += delta - weights[0][varIndex] * lambda;
 		weights[optionIndex][varIndex] += delta - weights[optionIndex][varIndex] * lambda;
 	}
 	
@@ -93,7 +100,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 			log(message);
 			exp.actor.log(message);
 		}
-		for (int i = 0; i < variableSet.size(); i++) {
+		for (int i = 0; i < variableLength; i++) {
 			double value = startState[i];
 			if (value == 0.0) continue;
 			GeneticVariable input = variableSet.get(i);
