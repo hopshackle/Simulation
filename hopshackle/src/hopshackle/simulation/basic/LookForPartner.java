@@ -12,7 +12,7 @@ public class LookForPartner extends BasicAction {
 	public void doStuff() {
 		BasicAgent ba = (BasicAgent) actor;
 		PartnerFinder advertMarry = new PartnerFinder(ba, new MarriagePartnerScoringFunction(ba));
-		if (advertMarry.getPartner() != null && !ba.getActionPlan().contains(BasicActions.MARRY)) {
+		if (advertMarry.getPartner() != null) {
 			marriageAction = new Marry(ba, advertMarry.getPartner());
 			marriageAction.addToAllPlans();
 		} else {

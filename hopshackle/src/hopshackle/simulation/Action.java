@@ -131,7 +131,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 			if (overrideExecuting) {
 				a.log("Withdraws from " + this + " early.");
 			} else {
-				a.log("Attempts to reject Action: " + a + " irrelevant from " + currentState);
+				a.log("Attempts to reject Action: " + this + " irrelevant from " + currentState + " for " + a);
 				break;
 			}
 		case PROPOSED:
@@ -142,7 +142,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 			a.actionPlan.actionQueue.remove(this);
 			break;
 		default:
-			a.log("Attempts to reject Action: " + a + " irrelevant from " + currentState);
+			a.log("Attempts to reject Action: " + this + " irrelevant from " + currentState + " for " + a);
 		}
 	}
 

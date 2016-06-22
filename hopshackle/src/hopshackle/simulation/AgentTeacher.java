@@ -31,9 +31,19 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 		removeCompletedER(er.actor);
 	}
 	
+	private List<ExperienceRecord<A>> getERForAgent(A agent) {
+		if (agentAlreadySeen(agent)) {
+			return tdArrayHash.get(agent);
+		} else {
+			System.out.println("No ExperienceRecords found for Agent " + agent);
+			agent.log("Not found in AgentTeacher");
+			return new ArrayList<ExperienceRecord<A>>();
+		}
+	}
+	
 	private void updateWithExperienceRecord(ExperienceRecord<A> newlyRegisteredER) {
 		A a = newlyRegisteredER.actor;
-		List<ExperienceRecord<A>> tdListForAgent = tdArrayHash.getOrDefault(a, new ArrayList<ExperienceRecord<A>>());
+		List<ExperienceRecord<A>> tdListForAgent = getERForAgent(a);
 		for (ExperienceRecord<A> existingER : tdListForAgent) {
 			if (existingER.getState() == State.ACTION_COMPLETED && !newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken()) && 
 					newlyRegisteredER.getActionTaken().getActor().equals(existingER.getActionTaken().getActor())) {
@@ -47,7 +57,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 	}
 	
 	private void removeCompletedER(A agent) {
-		List<ExperienceRecord<A>> ERForAgent = tdArrayHash.getOrDefault(agent, new ArrayList<ExperienceRecord<A>>());
+		List<ExperienceRecord<A>> ERForAgent = getERForAgent(agent);
 		List<ExperienceRecord<A>> newERForAgent = new ArrayList<ExperienceRecord<A>>();
 		for (ExperienceRecord<A> er : ERForAgent) {
 			if (er.getState() != ExperienceRecord.State.NEXT_ACTION_TAKEN)
@@ -108,7 +118,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 	} 
 	
 	private boolean actionPreviouslySeen(A agent, Action<A> action) {
-		List<ExperienceRecord<A>> tdArray = tdArrayHash.get(agent);
+		List<ExperienceRecord<A>> tdArray = getERForAgent(agent);
 		for (ExperienceRecord<A> er : tdArray) {
 			Action<A> act = er.getActionTaken();
 			if (act.equals(action))
@@ -117,9 +127,8 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 		return false;
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void processDecisionForAgent(A agent, Action<A> action) {
-		List<ExperienceRecord<A>> tdArray = tdArrayHash.get(agent);
+		List<ExperienceRecord<A>> tdArray = getERForAgent(agent);
 		for (ExperienceRecord<A> td : tdArray) {
 			if (td.getActionTaken().equals(action)) {
 				switch (td.getState()) {
@@ -152,7 +161,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 	}
 	
 	private void processDeathOfAgent(A agent) {
-		List<ExperienceRecord<A>> tdArray = tdArrayHash.get(agent);
+		List<ExperienceRecord<A>> tdArray = getERForAgent(agent);
 		for (ExperienceRecord<A> td : tdArray) {
 				switch (td.getState()) {
 				case DECISION_TAKEN:

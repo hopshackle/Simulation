@@ -106,16 +106,21 @@ public class RunBasicWorldGUI {
 
 		startButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
-				int endTime = Integer.valueOf(endTimeField.getText());
-				if (endTime < 0) endTime = 60;
-				if (endTime > 1000) endTime = 1000;
-				String runName = suffixField.getText();
-				String runNumber = iterations.getText().trim();
-				int iterationNumber = Integer.valueOf(runNumber);
 				startDatabaseThread();
-				for (int iter = 1; iter <= iterationNumber; iter++) {
-					runWorld(runName, iter, endTime, true, showGUIButton.isSelected());
-				}
+				Thread worldThread = new Thread() {
+					public void run() {
+						int endTime = Integer.valueOf(endTimeField.getText());
+						if (endTime < 0) endTime = 60;
+						if (endTime > 1000) endTime = 1000;
+						String runName = suffixField.getText();
+						String runNumber = iterations.getText().trim();
+						int iterationNumber = Integer.valueOf(runNumber);
+						for (int iter = 1; iter <= iterationNumber; iter++) {
+							runWorld(runName, iter, endTime, true, showGUIButton.isSelected());
+						}
+					}
+				};
+				worldThread.start();
 			}
 		});
 

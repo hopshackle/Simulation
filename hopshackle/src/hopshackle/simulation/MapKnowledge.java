@@ -95,7 +95,7 @@ public class MapKnowledge {
 		knownLocations.removeAll(toPrune);
 		newLocationsSinceLastUpdate.clear();
 		journeyTrackers.clear();
-		agent.log("Pruned " + toPrune.size() + " locations from memory. " + knownLocations.size() + " remaining.");
+//		agent.log("Pruned " + toPrune.size() + " locations from memory. " + knownLocations.size() + " remaining.");
 	}
 
 }

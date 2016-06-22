@@ -25,6 +25,8 @@ public class MarriagePartnerScoringFunction implements ScoringFunction {
 			return -1;
 		if (possiblePartner.isMarried())
 			return -1;
+		if (possiblePartner.getActionPlan().contains(BasicActions.MARRY)) 
+			return -1;
 		if (possiblePartner.getAge() < 1000)
 			return -1;
 		return possiblePartner.getHealth() + breedingYearsRemaining(possiblePartner);

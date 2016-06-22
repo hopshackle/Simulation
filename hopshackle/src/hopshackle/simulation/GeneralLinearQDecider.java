@@ -5,7 +5,8 @@ import java.util.*;
 public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 
 	protected double[][] weights;
-	protected int actionLength, variableLength;
+	private int variableLength;
+	protected int actionLength;
 	public static String newline = System.getProperty("line.separator");
 
 	public GeneralLinearQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables) {

@@ -326,6 +326,15 @@ public class BasicMarriageTest {
 		assertFalse(BasicActions.LOOK_FOR_PARTNER.isChooseable(maleAgent1));
 	}
 	
+	@Test
+	public void partnerNotEligibleIfMarriagePlanned() {
+		PartnerFinder advertMarry = new PartnerFinder(maleAgent1, new MarriagePartnerScoringFunction(maleAgent1));
+		assertTrue(advertMarry.getPartner() == femaleAgent2);
+		BasicAction marryAction = new Marry(maleAgent2, femaleAgent2);
+		marryAction.addToAllPlans();
+		assertTrue(advertMarry.getPartner() != femaleAgent2);
+	}
+	
 	private void run(BasicAction a) {
 		for (BasicAgent participant : a.getAllInvitedParticipants())
 			a.agree(participant);

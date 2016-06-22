@@ -5,18 +5,17 @@ import java.util.*;
 public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDecider<A> {
 
 	private int gvLength;
+	private int quadraticVariableLength;
 
 	public GeneralQuadraticQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables) {
 		super(actions, variables);
 		// Note that we then override everything that the super constructor does
 		actionLength = actions.size();
 		gvLength = variables.size();
-		variableLength = gvLength * gvLength;
-		weights = new double[actionLength][variableLength];
+		quadraticVariableLength = gvLength * gvLength;
+		weights = new double[actionLength][quadraticVariableLength];
 		// convention is that the first V entries are for all variables * first variable
 		// then the V+1 to 2V for all variables * second variable etc....
-		// With additional caveat that the 'diagonal' entries are the plain variables
-		// So 1 is just the first variable, V+2 is just the second, 2V+3 the third ... and so on
 		initialiseWeights();
 	}
 
@@ -26,16 +25,12 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 		return convertStateToQuadraticRepresentation(base);
 	}
 	
-	private double[] convertStateToQuadraticRepresentation(double[] baseState) {
-		double[] stateDescriptor = new double[variableLength];
+	public double[] convertStateToQuadraticRepresentation(double[] baseState) {
+		double[] stateDescriptor = new double[quadraticVariableLength];
 		for (int i = 0; i < gvLength; i++) {
 			double val1 = baseState[i];
 			for (int j = i; j < gvLength; j++) {
-				if (j == i) {
-					stateDescriptor[i + j] = val1;
-				} else {
-					stateDescriptor[i + j] = val1 * baseState[j];
-				}
+				stateDescriptor[i * gvLength + j] = val1 * baseState[j];
 			}
 		}
 		return stateDescriptor;
@@ -82,7 +77,7 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 			log(message);
 			exp.actor.log(message);
 		}
-		for (int i = 0; i < variableLength; i++) {
+		for (int i = 0; i < quadraticVariableLength; i++) {
 			double value = startState[i];
 			if (value == 0.0) continue;
 			int firstVarComponent = i / gvLength;
@@ -101,5 +96,17 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 			}
 			updateWeight(var1, var2, exp.getActionTaken().actionType, weightChange);
 		}
+	}
+	
+	@Override
+	public double getLargestWeight() {
+		double retValue = 0.0;
+		for (int i = 0; i < actionLength; i++) {
+			for (int j = 0; j < quadraticVariableLength; j++) {
+				if (Math.abs(weights[i][j]) > retValue) 
+					retValue = Math.abs(weights[i][j]);
+			}
+		}
+		return retValue;
 	}
 }

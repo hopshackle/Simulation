@@ -275,8 +275,6 @@ public class BasicAgent extends Agent implements Persistent {
 		if (surname != "")
 			temp.append(" " + surname);
 		temp.append(" [" + getUniqueID() + "]");
-		if (isMarried()) 
-			temp.append(" married to " + getPartner().forename);
 		return temp.toString();
 	}
 

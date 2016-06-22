@@ -172,7 +172,7 @@ public class BasicRunWorld {
 		//		basicDecider.setStateType("BASIC");
 		//		basicDecider.setPigeonHoles(7);
 
-		final GeneralLinearQDecider<BasicAgent> basicDecider = new GeneralLinearQDecider<BasicAgent>(actionsToUse, variablesToUse);
+		final GeneralQuadraticQDecider<BasicAgent> basicDecider = new GeneralQuadraticQDecider<BasicAgent>(actionsToUse, variablesToUse);
 
 		class AddPopulation extends TimerTask {
 			public void run() {
