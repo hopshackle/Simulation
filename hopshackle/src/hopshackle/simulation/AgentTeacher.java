@@ -38,7 +38,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 					newlyRegisteredER.getActionTaken().getActor().equals(existingER.getActionTaken().getActor())) {
 				// A different action, but with the same deciding agent
 				existingER.updateNextActions(newlyRegisteredER.possibleActionsFromStartState, newlyRegisteredER.getStartScore());
-				Decider<A> agentDecider = existingER.getDecider();
+				Decider<A> agentDecider = (Decider<A>) agent.getDecider();
 				agentDecider.learnFrom(existingER, agent.getMaxScore());
 			}
 		}
@@ -115,6 +115,12 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 		}
 		return false;
 	}
+	
+	@SuppressWarnings("unchecked")
+	private Decider<A> getDecider(A agent) {
+		Decider<A> agentDecider = (Decider<A>) agent.getDecider();
+		return agentDecider;
+	}
 
 	protected void processDecisionForAgent(A agent, Action<A> action) {
 		List<ExperienceRecord<A>> tdArray = tdArrayHash.get(agent);
@@ -125,8 +131,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 					assert false : "Should not be reachable";
 					break;
 				case DECISION_TAKEN:
-					Decider<A> agentDecider = td.getDecider();
-					double[] newState = agentDecider.getCurrentState(agent, agent);
+					double[] newState = BaseDecider.getState(agent, agent, td.variables);
 					td.updateWithResults(0.0, newState);
 				case ACTION_COMPLETED:
 				case NEXT_ACTION_TAKEN:
@@ -135,11 +140,12 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 			} else {
 				switch (td.getState()) {
 				case ACTION_COMPLETED:
-					Decider<A> agentDecider = td.getDecider();
+					Decider<A> agentDecider = getDecider(agent);
 					List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 					chooseableOptions.add(action.getType());
 					td.updateNextActions(chooseableOptions, agent.getScore());
-					agentDecider.learnFrom(td, agent.getMaxScore());
+					if (agentDecider != null)
+						agentDecider.learnFrom(td, agent.getMaxScore());
 				case UNSEEN:
 				case DECISION_TAKEN:
 				case NEXT_ACTION_TAKEN:
@@ -148,24 +154,24 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 			}
 		}
 	}
-	
+
 	private void processDeathOfAgent(A agent) {
 		List<ExperienceRecord<A>> tdArray = tdArrayHash.get(agent);
 		for (ExperienceRecord<A> td : tdArray) {
-				switch (td.getState()) {
-				case DECISION_TAKEN:
-					Decider<A> agentDecider = td.getDecider();
-					double[] newState = agentDecider.getCurrentState(agent, agent);
-					td.updateWithResults(0.0, newState);
-				case ACTION_COMPLETED:
-					agentDecider = td.getDecider();
-					td.updateNextActions(new ArrayList<ActionEnum<A>>(), agent.getScore());
-					td.setIsFinal();
+			switch (td.getState()) {
+			case DECISION_TAKEN:
+				double[] newState = BaseDecider.getState(agent, agent, td.variables);
+				td.updateWithResults(0.0, newState);
+			case ACTION_COMPLETED:
+				Decider<A> agentDecider = getDecider(agent);
+				td.updateNextActions(new ArrayList<ActionEnum<A>>(), agent.getScore());
+				td.setIsFinal();
+				if (agentDecider != null)
 					agentDecider.learnFrom(td, agent.getMaxScore());
-				case NEXT_ACTION_TAKEN:
-				case UNSEEN:
-					// Do nothing
-				}
+			case NEXT_ACTION_TAKEN:
+			case UNSEEN:
+				// Do nothing
+			}
 		}
 	}
 
