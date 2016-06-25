@@ -8,7 +8,6 @@ public class ExperienceRecord<A extends Agent> {
 		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
 	}
 
-	protected A actor;
 	protected double[] startState, endState;
 	protected Action<A> actionTaken;
 	protected List<ActionEnum<A>> possibleActionsFromEndState, possibleActionsFromStartState;
@@ -18,15 +17,14 @@ public class ExperienceRecord<A extends Agent> {
 	protected Decider<A> sourceDecider;
 	protected State ERState = State.UNSEEN;
 	
-	public ExperienceRecord(A actor, List<GeneticVariable> var, double[] state, Action<A> action, List<ActionEnum<A>> possibleActions, Decider<A> decider) {
-		this.actor = actor;
+	public ExperienceRecord(double score, List<GeneticVariable> var, double[] state, Action<A> action, List<ActionEnum<A>> possibleActions, Decider<A> decider) {
 		actionTaken = action;
 		startState = state;
 		variables = HopshackleUtilities.cloneList(var);
 		possibleActionsFromStartState = HopshackleUtilities.cloneList(possibleActions);
 		sourceDecider = decider;
 		ERState = State.DECISION_TAKEN;
-		startScore = actor.getScore();
+		startScore = score;
 	}
 
 	public void updateWithResults(double reward, double[] newState) {
@@ -35,14 +33,9 @@ public class ExperienceRecord<A extends Agent> {
 		ERState = State.ACTION_COMPLETED;
 	}
 	
-	public void updateNextActions(List<ActionEnum<A>> actions) {
-		if (!actor.isDead() && (actions == null || actions.size() == 0)) {
-			System.out.println("No next actions in Experience Record.");
-			System.out.println("Agent " + actor + " took action " + actionTaken);
-			System.out.println("Initial actions: " + possibleActionsFromStartState);
-		}
+	public void updateNextActions(List<ActionEnum<A>> actions, double finalScore) {
 		possibleActionsFromEndState = HopshackleUtilities.cloneList(actions);
-		endScore = actor.getScore();
+		endScore = finalScore;
 		ERState = State.NEXT_ACTION_TAKEN;
 	}
 	

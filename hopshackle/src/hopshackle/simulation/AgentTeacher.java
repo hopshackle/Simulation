@@ -20,27 +20,26 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 			return true;
 		return false;
 	}
-
+	
 	private void addAgentToList(A a) {
 		List<ExperienceRecord<A>> tdList = new ArrayList<ExperienceRecord<A>>();
 		tdArrayHash.put(a, tdList);
 	}
 
-	private void processNewER(ExperienceRecord<A> er) {
-		updateWithExperienceRecord(er);
-		removeCompletedER(er.actor);
+	private void processNewER(ExperienceRecord<A> er, A agent) {
+		updateWithExperienceRecord(er, agent);
+		removeCompletedER(agent);
 	}
 	
-	private void updateWithExperienceRecord(ExperienceRecord<A> newlyRegisteredER) {
-		A a = newlyRegisteredER.actor;
-		List<ExperienceRecord<A>> tdListForAgent = tdArrayHash.getOrDefault(a, new ArrayList<ExperienceRecord<A>>());
+	private void updateWithExperienceRecord(ExperienceRecord<A> newlyRegisteredER, A agent) {
+		List<ExperienceRecord<A>> tdListForAgent = tdArrayHash.getOrDefault(agent, new ArrayList<ExperienceRecord<A>>());
 		for (ExperienceRecord<A> existingER : tdListForAgent) {
 			if (existingER.getState() == State.ACTION_COMPLETED && !newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken()) && 
 					newlyRegisteredER.getActionTaken().getActor().equals(existingER.getActionTaken().getActor())) {
 				// A different action, but with the same deciding agent
-				existingER.updateNextActions(newlyRegisteredER.possibleActionsFromStartState);
+				existingER.updateNextActions(newlyRegisteredER.possibleActionsFromStartState, newlyRegisteredER.getStartScore());
 				Decider<A> agentDecider = existingER.getDecider();
-				agentDecider.learnFrom(existingER, a.getMaxScore());
+				agentDecider.learnFrom(existingER, agent.getMaxScore());
 			}
 		}
 		tdListForAgent.add(newlyRegisteredER);
@@ -82,18 +81,18 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 			stopListeningToAgent(a);
 			break;
 		case DECISION_TAKEN:
-			newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
+			newER = new ExperienceRecord<A>(a.getScore(), (List<GeneticVariable>) agentDecider.getVariables(), 
 					agentDecider.getCurrentState(a, a), action, agentDecider.getChooseableOptions(a, a), agentDecider);
-			processNewER(newER);
+			processNewER(newER, a);
 			break;
 		case ACTION_AGREED:
 			if (action!= null && !actionPreviouslySeen(a, action) && agentDecider != null) {
 				// we need to create a new ER first
 				List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 				chooseableOptions.add(action.getType());
-				newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
+				newER = new ExperienceRecord<A>(a.getScore(), (List<GeneticVariable>) agentDecider.getVariables(), 
 						agentDecider.getCurrentState(a, a), action, chooseableOptions, agentDecider);
-				processNewER(newER);
+				processNewER(newER, a);
 			}
 			break;
 		case ACTION_REJECTED:
@@ -117,7 +116,6 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 		return false;
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void processDecisionForAgent(A agent, Action<A> action) {
 		List<ExperienceRecord<A>> tdArray = tdArrayHash.get(agent);
 		for (ExperienceRecord<A> td : tdArray) {
@@ -140,7 +138,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 					Decider<A> agentDecider = td.getDecider();
 					List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 					chooseableOptions.add(action.getType());
-					td.updateNextActions(chooseableOptions);
+					td.updateNextActions(chooseableOptions, agent.getScore());
 					agentDecider.learnFrom(td, agent.getMaxScore());
 				case UNSEEN:
 				case DECISION_TAKEN:
@@ -161,7 +159,7 @@ public class AgentTeacher<A extends Agent> implements Teacher<A>, AgentListener 
 					td.updateWithResults(0.0, newState);
 				case ACTION_COMPLETED:
 					agentDecider = td.getDecider();
-					td.updateNextActions(new ArrayList<ActionEnum<A>>());
+					td.updateNextActions(new ArrayList<ActionEnum<A>>(), agent.getScore());
 					td.setIsFinal();
 					agentDecider.learnFrom(td, agent.getMaxScore());
 				case NEXT_ACTION_TAKEN:
