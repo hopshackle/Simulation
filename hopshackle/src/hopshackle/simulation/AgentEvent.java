@@ -1,7 +1,5 @@
 package hopshackle.simulation;
 
-import java.util.List;
-
 public class AgentEvent {
 	
 	public enum Type {
