@@ -22,9 +22,14 @@ public class Marry extends BasicAction {
 	public void doStuff() {
 		if (!p1.isMarried() && !p2.isMarried()) {
 			new Marriage(p1, p2);
-			if (p1.isFemale()) p1.purgeActions(false);
-			if (p2.isFemale()) p2.purgeActions(false);
 		} 
+	}
+	
+	@Override 
+	public void doCleanUp() {
+		super.doCleanUp();
+		if (p1.isFemale()) p1.purgeActions(false);
+		if (p2.isFemale()) p2.purgeActions(false);
 	}
 	
 	public String toString() {
