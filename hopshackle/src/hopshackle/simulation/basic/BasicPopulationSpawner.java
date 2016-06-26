@@ -12,22 +12,18 @@ import java.util.logging.Logger;
 public class BasicPopulationSpawner implements Runnable{
 
 	private World world;
+	private BasicRunWorld parent;
 	private Location defaultStartLocation = null;
 	private int maxIncrement, minimumWorldPopulation;
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	private Object key;
 	private TimerTask newTask;
 	boolean done;
-	private ScoringFunction breedingScore = new ScoringFunction() {
-		@Override
-		public <T extends Agent> double getScore(T a) {
-			return a.getScore();
-		}
-	};
 
-	public BasicPopulationSpawner(World w, long freq, int maxIncrement, int minimumWorldPopulation) {
-		world = w;
-		LocationMap worldMap = w.getLocationMap();
+	public BasicPopulationSpawner(BasicRunWorld brw, long freq, int maxIncrement, int minimumWorldPopulation) {
+		world = brw.w;
+		parent = brw;
+		LocationMap worldMap = world.getLocationMap();
 		if (worldMap instanceof HexMap) {
 			defaultStartLocation = ((HexMap)worldMap).getHexAt(0, 0);
 		} else {
@@ -43,7 +39,7 @@ public class BasicPopulationSpawner implements Runnable{
 				}
 			}
 		};
-		w.setScheduledTask(newTask, freq, freq);
+		world.setScheduledTask(newTask, freq, freq);
 		this.maxIncrement = maxIncrement;
 		this.minimumWorldPopulation = minimumWorldPopulation;
 	}
@@ -83,25 +79,25 @@ public class BasicPopulationSpawner implements Runnable{
 						logger.info("Throttled number of agents to add: " + agentsToAdd);
 					}
 
-					double sampleSize = SimProperties.getPropertyAsDouble("SampleSize", "10");
-
 					for (int loop = 0; loop<agentsToAdd; loop++) {
-
-						BasicAgent seedChr = AgentExemplar.getExemplar(allAgents, sampleSize, breedingScore);
-
 						BasicAgent newC = new BasicAgent(world);
+						newC.setLocation(defaultStartLocation);
+						if (newC.isMale() && parent.genderSpecificTeacher) {
+							newC.setDecider(parent.maleBasicDecider);
+							parent.maleERCollector.registerAgent(newC);
+						} else {
+							newC.setDecider(parent.femaleBasicDecider);
+							parent.femaleERCollector.registerAgent(newC);
+						}
 
 						Genome newGenome = newC.getGenome();
-						Decider newDecider = seedChr.getDecider();
 
 						newGenome.mutate();
 						newC.setGenome(newGenome);
-						newC.setDecider(newDecider);
 
 						newC.setGeneration(0);
-						newC.setLocation(defaultStartLocation);
 
-						Action firstAction = BasicActions.REST.getAction(newC);
+						Action<BasicAgent> firstAction = BasicActions.REST.getAction(newC);
 						firstAction.addToAllPlans();
 					}
 				}

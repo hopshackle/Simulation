@@ -22,9 +22,6 @@ public class BasicAgent extends Agent implements Persistent {
 	private static AgentWriter<BasicAgent> agentWriter = new AgentWriter<BasicAgent>(new BasicAgentDAO());
 	private static BasicAgentRetriever masterAgentRetriever = new BasicAgentRetriever();
 	private static double debugChance = 0.01;
-	private static AgentTeacher<BasicAgent> femaleTeacher = new AgentTeacher<BasicAgent>();
-	private static AgentTeacher<BasicAgent> maleTeacher = new AgentTeacher<BasicAgent>();
-	private static boolean genderSpecificTeacher = SimProperties.getProperty("BasicGenderSpecificTeacher", "true").equals("true");
 	private static int locationMemoryLimit = SimProperties.getPropertyAsInteger("BasicLocationMemory", "100");
 	
 	private double health;
@@ -55,11 +52,6 @@ public class BasicAgent extends Agent implements Persistent {
 			setDebugLocal(true);
 		setPolicy(new BasicInheritance<BasicAgent>());
 		agentRetriever = masterAgentRetriever;
-		if (isMale() && genderSpecificTeacher) {
-			maleTeacher.registerAgent(this);
-		} else {
-			femaleTeacher.registerAgent(this);
-		}
 	}
 
 	public BasicAgent(BasicAgent parent1, BasicAgent parent2) {

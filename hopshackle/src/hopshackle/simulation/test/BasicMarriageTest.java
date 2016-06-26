@@ -15,7 +15,7 @@ public class BasicMarriageTest {
 	private BasicAgent maleAgent1, maleAgent2, maleAgent3;
 	private BasicAgent femaleAgent1, femaleAgent2, femaleAgent3;
 	private TestActionProcessor ap;
-	private AgentTeacher<BasicAgent> teacher = new AgentTeacher<BasicAgent>();
+	private ExperienceRecordCollector<BasicAgent> teacher = new ExperienceRecordCollector<BasicAgent>();
 	private List<ActionEnum<BasicAgent>> actions;
 	private List<GeneticVariable> variables = new ArrayList<GeneticVariable>(EnumSet.allOf(BasicVariables.class));
 	private Decider<BasicAgent> baseDecider;

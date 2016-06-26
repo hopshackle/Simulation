@@ -168,7 +168,7 @@ class TestActionPolicy extends Policy<TestAction> {
 	
 }
 
-class TestAgentTeacher extends AgentTeacher<TestAgent> {
+class TestERCollector extends ExperienceRecordCollector<TestAgent> {
 
 	public boolean agentKnown(TestAgent testAgent) {
 		return agentAlreadySeen(testAgent);

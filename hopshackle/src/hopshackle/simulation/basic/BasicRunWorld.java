@@ -12,7 +12,16 @@ import javax.swing.*;
 
 public class BasicRunWorld {
 
-	private World w;
+	private static volatile boolean simulationComplete; 
+	
+	protected RealTimeTeacher<BasicAgent> femaleTeacher = new RealTimeTeacher<BasicAgent>();
+	protected RealTimeTeacher<BasicAgent> maleTeacher = new RealTimeTeacher<BasicAgent>();
+	protected ExperienceRecordCollector<BasicAgent> femaleERCollector = new ExperienceRecordCollector<BasicAgent>();
+	protected ExperienceRecordCollector<BasicAgent> maleERCollector = new ExperienceRecordCollector<BasicAgent>();
+	protected boolean genderSpecificTeacher = SimProperties.getProperty("BasicGenderSpecificTeacher", "true").equals("true");
+	protected Decider<BasicAgent> maleBasicDecider, femaleBasicDecider;
+
+	public World w;
 	private Location defaultStartLocation;
 	private JFrame frame;
 	private String suffix;
@@ -26,8 +35,7 @@ public class BasicRunWorld {
 	private AgentRecorder agentRecorder;
 	private Thread recordingThread;
 	private int freq, maxInc;
-	private static volatile boolean simulationComplete; 
-
+	
 	public BasicRunWorld(World w1, boolean showGUI, long runTime) {
 		simlog = Logger.getLogger("hopshackle.simulation");
 		try {
@@ -146,7 +154,7 @@ public class BasicRunWorld {
 		maxInc = (int) SimProperties.getPropertyAsDouble("MaxPopulationIncrement", "10");
 		int minPop = (int) SimProperties.getPropertyAsDouble("MinimumWorldPopulation", "100");
 
-		populationSpawner = new BasicPopulationSpawner(w, freq, maxInc, minPop);
+		populationSpawner = new BasicPopulationSpawner(this, freq, maxInc, minPop);
 		populationThread = new Thread(populationSpawner, "Population Spawner");
 		populationThread.start();
 
@@ -162,17 +170,15 @@ public class BasicRunWorld {
 		for (String toRemove : variablesToRemove) {
 			variablesToUse.remove(BasicVariables.valueOf(toRemove));
 		}
+		
+		femaleTeacher.registerToERStream(femaleERCollector);
+		maleTeacher.registerToERStream(maleERCollector);
 
 		ArrayList<ActionEnum<BasicAgent>> actionsToUse = new ArrayList<ActionEnum<BasicAgent>>(EnumSet.allOf(BasicActions.class));
 		actionsToUse.remove(BasicActions.FIND_WATER);
 
-		//		final StateDecider basicDecider = new StateOffPolicyDecider(
-		//				actionsToUse,
-		//				variablesToUse);
-		//		basicDecider.setStateType("BASIC");
-		//		basicDecider.setPigeonHoles(7);
-
-		final GeneralLinearQDecider<BasicAgent> basicDecider = new GeneralLinearQDecider<BasicAgent>(actionsToUse, variablesToUse);
+		maleBasicDecider = new GeneralLinearQDecider<BasicAgent>(actionsToUse, variablesToUse);
+		femaleBasicDecider = new GeneralLinearQDecider<BasicAgent>(actionsToUse, variablesToUse);
 
 		class AddPopulation extends TimerTask {
 			public void run() {
@@ -181,7 +187,13 @@ public class BasicRunWorld {
 					BasicAgent b = null;
 					b = new BasicAgent(w);
 					b.setLocation(defaultStartLocation);
-					b.setDecider(basicDecider);
+					if (b.isMale() && genderSpecificTeacher) {
+						b.setDecider(maleBasicDecider);
+						maleERCollector.registerAgent(b);
+					} else {
+						b.setDecider(femaleBasicDecider);
+						femaleERCollector.registerAgent(b);
+					}
 					b.decide();
 				}
 			} 

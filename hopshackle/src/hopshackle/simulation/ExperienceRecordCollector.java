@@ -52,12 +52,13 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			erListMap.get(agent).remove(er);
 		}
 	}
-	public void removeAllERForAgent(A agent) {
-		erListMap.put(agent, new ArrayList<ExperienceRecord<A>>());
+	
+	public void removeAgent(A agent) {
+		erListMap.remove(agent);
+		agent.removeListener(this);
 	}
 
-
-	private boolean agentAlreadySeen(Agent a) {
+	protected boolean agentAlreadySeen(Agent a) {
 		if (erListMap.containsKey(a))
 			return true;
 		return false;

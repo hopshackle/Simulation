@@ -15,7 +15,7 @@ public class ActionLearningTests {
 	TestActionFactory taf;
 	TestAgent testAgent;
 	Decider<TestAgent> decider;
-	TestAgentTeacher teacher = new TestAgentTeacher();
+	TestERCollector teacher = new TestERCollector();
 	
 	@SuppressWarnings("unchecked")
 	@Before
