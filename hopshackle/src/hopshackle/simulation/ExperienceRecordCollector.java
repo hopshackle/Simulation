@@ -7,7 +7,7 @@ import java.util.*;
 public class ExperienceRecordCollector<A extends Agent> implements AgentListener {
 
 	private HashMap<A, List<ExperienceRecord<A>>> erListMap = new HashMap<A, List<ExperienceRecord<A>>>();
-	private List<AgentListener> listeners;
+	private List<AgentListener> listeners = new ArrayList<AgentListener>();
 
 	public void registerAgent(A a) {
 		if (!agentAlreadySeen(a)) {
@@ -100,6 +100,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		Decider<A> agentDecider = (Decider<A>) event.getDecider();
 		ExperienceRecord<A> newER = null;
 		boolean passOnEvent = false;
+	//	System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
 		switch (event.getEvent()) {
 		case DEATH:
 			processDeathOfAgent(a);
@@ -127,7 +128,10 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			break;
 		}
 		
-		if (passOnEvent) passOnEventAfterExperienceRecordsUpdated(event);
+		if (passOnEvent) {
+	//		System.out.println("Event passed on");
+			passOnEventAfterExperienceRecordsUpdated(event);
+		}
 	} 
 	
 	private boolean actionPreviouslySeen(A agent, Action<A> action) {
@@ -141,6 +145,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	}
 	
 	protected boolean processDecisionForAgent(A agent, Action<A> action) {
+		boolean passOnEvent = false;
 		List<ExperienceRecord<A>> tdArray = erListMap.get(agent);
 		for (ExperienceRecord<A> td : tdArray) {
 			if (td.getActionTaken().equals(action)) {
@@ -161,7 +166,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 					List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 					chooseableOptions.add(action.getType());
 					td.updateNextActions(chooseableOptions, agent.getScore());
-					return true;
+					passOnEvent = true;
 				case UNSEEN:
 				case DECISION_TAKEN:
 				case NEXT_ACTION_TAKEN:
@@ -169,7 +174,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 				}
 			}
 		}
-		return false;
+		return passOnEvent;
 	}
 
 	private void processDeathOfAgent(A agent) {

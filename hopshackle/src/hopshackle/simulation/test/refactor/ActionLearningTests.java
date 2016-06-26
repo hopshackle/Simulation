@@ -170,8 +170,6 @@ public class ActionLearningTests {
 		testAgent.setDecider(decider);
 		testAgent.decide();		// this will now make a new decision...which should close off the completed action
 		
-		assertTrue(teacher.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.UNSEEN);	
-		// now removed from AgentTeacher, so UNSEEN in that context
 		assertTrue(er1.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
 		assertTrue(teacher.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.State.DECISION_TAKEN);
 		assertTrue(er1.getPossibleActionsFromEndState().size() > 0);
@@ -222,7 +220,7 @@ public class ActionLearningTests {
 		twoParticipants.start();
 		allAgents.get(1).setDecider(null);
 		twoParticipants.run();
-		assertTrue(teacher.agentActionState(testAgent, twoParticipants) == ExperienceRecord.State.UNSEEN);
+		assertTrue(teacher.agentActionState(testAgent, twoParticipants) == ExperienceRecord.State.NEXT_ACTION_TAKEN);
 		assertTrue(er1.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
 		assertTrue(teacher.agentActionState(allAgents.get(1), twoParticipants) == ExperienceRecord.State.ACTION_COMPLETED);
 	}

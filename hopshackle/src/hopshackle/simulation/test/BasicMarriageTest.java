@@ -258,15 +258,16 @@ public class BasicMarriageTest {
 		// The cancellation of the unexecuted female action will move ER to ACTION_COMPLETED
 		// and then when female agrees to male action, this creates a new dummy ER, which
 		// moves the earlier ER to NEXT_ACTION_TAKEN
-		// The same thing happens with the Marry action
+		// The same thing happens with the Marry action: Marry.run() should move to ACTION_COMPLETED
+		// Then agreement to the next male action takes us to NEXT_ACTION_TAKEN
 		assertTrue(initialFemaleER.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
 		assertTrue(femaleMarryER.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
 		BasicAction sa = (BasicAction) maleAgent1.getActionPlan().getNextAction();
 		assertEquals(sa.getAllConfirmedParticipants().size(), 2);
-		assertEquals(teacher.getExperienceRecords(femaleAgent2).size(), 1); // Rest
-		assertEquals(teacher.getExperienceRecords(maleAgent1).size(), 1); // Rest
-		ExperienceRecord<BasicAgent> maleER = teacher.getExperienceRecords(maleAgent1).get(0);
-		ExperienceRecord<BasicAgent> femaleRestER = teacher.getExperienceRecords(femaleAgent2).get(0);
+		assertEquals(teacher.getExperienceRecords(femaleAgent2).size(), 3); 
+		assertEquals(teacher.getExperienceRecords(maleAgent1).size(), 3); 
+		ExperienceRecord<BasicAgent> maleER = teacher.getExperienceRecords(maleAgent1).get(2);
+		ExperienceRecord<BasicAgent> femaleRestER = teacher.getExperienceRecords(femaleAgent2).get(2);
 		assertTrue(maleER.getActionTaken() == sa);
 		assertTrue(femaleRestER.getActionTaken() == sa);
 		assertTrue(maleER.getState() == ExperienceRecord.State.DECISION_TAKEN);
@@ -277,8 +278,8 @@ public class BasicMarriageTest {
 		maleAgent1.addHealth(-2.0);
 		femaleAgent2.addHealth(-4.0);
 		run(sa);
-		assertEquals(teacher.getExperienceRecords(femaleAgent2).size(), 1); // Rest 
-		ExperienceRecord<BasicAgent> femaleNewRestER = teacher.getExperienceRecords(femaleAgent2).get(0);
+		assertEquals(teacher.getExperienceRecords(femaleAgent2).size(), 4); // Rest 
+		ExperienceRecord<BasicAgent> femaleNewRestER = teacher.getExperienceRecords(femaleAgent2).get(3);
 		assertTrue(maleER.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
 		assertTrue(femaleRestER.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
 		assertTrue(femaleNewRestER.getState() == ExperienceRecord.State.DECISION_TAKEN);
