@@ -2,6 +2,7 @@ package hopshackle.simulation.test.refactor;
 
 import hopshackle.simulation.*;
 import hopshackle.simulation.ExperienceRecord.State;
+
 import java.util.*;
 
 class TestAction extends Action<TestAgent> {
@@ -182,6 +183,16 @@ class TestERCollector extends ExperienceRecordCollector<TestAgent> {
 			}
 		}
 		return State.UNSEEN;
+	}
+}
+
+class TestTeacher extends Teacher<TestAgent> {
+	
+	public List<AgentEvent> eventsReceived = new ArrayList<AgentEvent>();
+
+	@Override
+	public void processEvent(AgentEvent event) {
+		eventsReceived.add(event);
 	}
 	
 }
