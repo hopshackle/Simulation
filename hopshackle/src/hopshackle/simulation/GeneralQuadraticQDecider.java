@@ -54,6 +54,7 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 		ActionEnum<A> actionTaken = exp.getActionTaken().actionType;
 		double[] startState = convertStateToQuadraticRepresentation(exp.getStartState());
 		double[] endState = convertStateToQuadraticRepresentation(exp.getEndState());
+		double[] featureTrace = convertStateToQuadraticRepresentation(exp.getFeatureTrace());
 		double observedResult = exp.getReward();
 		double predictedValue = valueOption(actionTaken, startState);
 		double delta = observedResult + gamma * bestNextAction - predictedValue;
@@ -61,22 +62,22 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 			String message = String.format("Learning:\t%-15sReward: %.2f, NextValue: %.2f, Predicted: %.2f, Delta: %.4f, NextAction: %s", 
 					exp.getActionTaken(), exp.getReward(), bestNextAction, predictedValue, delta, actionTaken == null ? "NULL" : actionTaken.toString());
 			log(message);
-			StringBuffer logMessage = new StringBuffer("StartState -> EndState :" + newline);
+			StringBuffer logMessage = new StringBuffer("StartState -> EndState (FeatureTrace) :" + newline);
 			for (int i = 0; i < startState.length; i++) {
-				if (startState[i] != 0.0 || endState[i] != 0.0) {
+				if (startState[i] != 0.0 || endState[i] != 0.0 || Math.abs(featureTrace[i]) >= 0.01) {
 					int firstVarComponent = i / gvLength;
 					int secondVarComponent = i % gvLength;
 					String variableName = variableSet.get(firstVarComponent).toString() + ":" + variableSet.get(secondVarComponent);
 					if (firstVarComponent == secondVarComponent)
 						variableName = variableSet.get(firstVarComponent).toString();
-					logMessage.append(String.format("\t%.2f -> %.2f %s %s", startState[i], endState[i], variableName, newline));
+					logMessage.append(String.format("\t%.2f -> %.2f (%.2f) %s %s", startState[i], endState[i], featureTrace[i], variableName, newline));
 				}
 			}
 			message = logMessage.toString();
 			log(message);
 		}
 		for (int i = 0; i < quadraticVariableLength; i++) {
-			double value = startState[i];
+			double value = featureTrace[i];
 			if (value == 0.0) continue;
 			int firstVarComponent = i / gvLength;
 			int secondVarComponent = i % gvLength;

@@ -24,6 +24,7 @@ public class ExperienceRecord<A extends Agent> {
 			List<ActionEnum<A>> possibleActions) {
 		actionTaken = action;
 		startState = state;
+		featureTrace = state;
 		variables = HopshackleUtilities.cloneList(var);
 		possibleActionsFromStartState = HopshackleUtilities.cloneList(possibleActions);
 		ERState = State.DECISION_TAKEN;
@@ -48,10 +49,15 @@ public class ExperienceRecord<A extends Agent> {
 		ERState = State.ACTION_COMPLETED;
 	}
 	
-	public void updateNextActions(List<ActionEnum<A>> actions, double finalScore, ExperienceRecord<A> nextER) {
-		if (nextER != null) nextER.constructFeatureTrace(this);
-		possibleActionsFromEndState = HopshackleUtilities.cloneList(actions);
-		endScore = finalScore;
+	public void updateNextActions(ExperienceRecord<A> nextER) {
+		if (nextER != null) {
+			nextER.constructFeatureTrace(this);
+			possibleActionsFromEndState = nextER.getPossibleActionsFromStartState();
+			endScore = nextER.getStartScore();
+		} else {
+			possibleActionsFromStartState = new ArrayList<ActionEnum<A>>();
+			endScore = 0.0;
+		}
 		ERState = State.NEXT_ACTION_TAKEN;
 	}
 	

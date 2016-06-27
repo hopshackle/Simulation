@@ -75,7 +75,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	//		System.out.println("\tProcessing: " + existingER.getActionTaken().actionType + "(" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
 			if (existingER.getState() == State.ACTION_COMPLETED && 
 					!newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken())) {
-				existingER.updateNextActions(newlyRegisteredER.possibleActionsFromStartState, newlyRegisteredER.getStartScore(), newlyRegisteredER);
+				existingER.updateNextActions(newlyRegisteredER);
 				passOnEvent = true;
 			}
 		}
@@ -167,7 +167,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 				case ACTION_COMPLETED:
 					List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 					chooseableOptions.add(action.getType());
-					td.updateNextActions(chooseableOptions, agent.getScore(), ERForActionReceived);
+					td.updateNextActions(ERForActionReceived);
 					passOnEvent = true;
 				case UNSEEN:
 				case DECISION_TAKEN:
@@ -187,7 +187,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 				double[] newState = BaseDecider.getState(agent, agent, td.variables);
 				td.updateWithResults(0.0, newState);
 			case ACTION_COMPLETED:
-				td.updateNextActions(new ArrayList<ActionEnum<A>>(), agent.getScore(), null);
+				td.updateNextActions(null);
 				td.setIsFinal();
 			case NEXT_ACTION_TAKEN:
 			case UNSEEN:

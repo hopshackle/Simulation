@@ -85,22 +85,23 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		ActionEnum<A> nextAction = getBestActionFrom(exp.getPossibleActionsFromEndState(), exp.getEndState());
 		double[] startState = exp.getStartState();
 		double[] endState = exp.getEndState();
+		double[] featureTrace = exp.getFeatureTrace();
 		double predictedValue = valueOption(exp.getActionTaken().actionType, startState);
 		double delta = exp.getReward() + gamma * bestNextAction - predictedValue;
 		if (localDebug) {
 			String message = String.format("Learning:\t%-15sReward: %.2f, NextValue: %.2f, Predicted: %.2f, Delta: %.4f, NextAction: %s", 
 					exp.getActionTaken(), exp.getReward(), bestNextAction, predictedValue, delta, nextAction == null ? "NULL" : nextAction.toString());
 			log(message);
-			StringBuffer logMessage = new StringBuffer("StartState -> EndState :" + newline);
+			StringBuffer logMessage = new StringBuffer("StartState -> EndState (FeatureTrace) :" + newline);
 			for (int i = 0; i < startState.length; i++) {
-				if (startState[i] != 0.0 || endState[i] != 0.0)
-					logMessage.append(String.format("\t%.2f -> %.2f %s %s", startState[i], endState[i], variableSet.get(i).toString(), newline));
+				if (startState[i] != 0.0 || endState[i] != 0.0 || Math.abs(featureTrace[i]) >= 0.01)
+					logMessage.append(String.format("\t%.2f -> %.2f (%.2f) %s %s", startState[i], endState[i], featureTrace[i], variableSet.get(i).toString(), newline));
 			}
 			message = logMessage.toString();
 			log(message);
 		}
 		for (int i = 0; i < variableLength; i++) {
-			double value = startState[i];
+			double value = featureTrace[i];
 			if (value == 0.0) continue;
 			GeneticVariable input = variableSet.get(i);
 			double weightChange = value * delta * alpha;
