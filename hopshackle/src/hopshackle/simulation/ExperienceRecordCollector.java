@@ -55,7 +55,6 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	
 	public void removeAgent(A agent) {
 		erListMap.remove(agent);
-		agent.removeListener(this);
 	}
 
 	protected boolean agentAlreadySeen(Agent a) {
