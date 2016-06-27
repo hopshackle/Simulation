@@ -4,20 +4,8 @@ import hopshackle.simulation.AgentEvent.Type;
 
 import java.util.*;
 
-public class RealTimeTeacher<A extends Agent> implements AgentListener {
+public class RealTimeTeacher<A extends Agent> extends Teacher<A> implements AgentListener {
 
-	private List<Decider<A>> decidersToTeach = new ArrayList<Decider<A>>();
-	private ExperienceRecordCollector<A> experienceRecordCollector;
-
-	public void registerToERStream(ExperienceRecordCollector<A> erc) {
-		experienceRecordCollector = erc;
-		experienceRecordCollector.addListener(this);
-	}
-	public void registerDecider(Decider<A> decider) {
-		if (!decidersToTeach.contains(decider))
-			decidersToTeach.add(decider);
-	}
-	
 	@SuppressWarnings("unchecked")
 	@Override
 	public synchronized void processEvent(AgentEvent event) {

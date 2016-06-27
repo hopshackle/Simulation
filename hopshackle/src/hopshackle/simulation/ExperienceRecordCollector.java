@@ -68,18 +68,14 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		List<ExperienceRecord<A>> tdList = new ArrayList<ExperienceRecord<A>>();
 		erListMap.put(a, tdList);
 	}
-
-	private boolean processNewER(ExperienceRecord<A> er, A agent) {
-		return updateWithExperienceRecord(er, agent);
-	}
 	
-	private boolean updateWithExperienceRecord(ExperienceRecord<A> newlyRegisteredER, A agent) {
+	private boolean processNewER(ExperienceRecord<A> newlyRegisteredER, A agent) {
 		boolean passOnEvent = false;
 		List<ExperienceRecord<A>> tdListForAgent = erListMap.getOrDefault(agent, new ArrayList<ExperienceRecord<A>>());
 		for (ExperienceRecord<A> existingER : tdListForAgent) {
-			if (existingER.getState() == State.ACTION_COMPLETED && !newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken()) && 
-					newlyRegisteredER.getActionTaken().getActor().equals(existingER.getActionTaken().getActor())) {
-				// A different action, but with the same deciding agent
+	//		System.out.println("\tProcessing: " + existingER.getActionTaken().actionType + "(" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
+			if (existingER.getState() == State.ACTION_COMPLETED && 
+					!newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken())) {
 				existingER.updateNextActions(newlyRegisteredER.possibleActionsFromStartState, newlyRegisteredER.getStartScore());
 				passOnEvent = true;
 			}
@@ -100,7 +96,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		Decider<A> agentDecider = (Decider<A>) event.getDecider();
 		ExperienceRecord<A> newER = null;
 		boolean passOnEvent = false;
-	//	System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
+//		System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
 		switch (event.getEvent()) {
 		case DEATH:
 			processDeathOfAgent(a);

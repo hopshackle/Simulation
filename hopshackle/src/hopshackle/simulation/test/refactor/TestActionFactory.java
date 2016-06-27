@@ -185,3 +185,14 @@ class TestERCollector extends ExperienceRecordCollector<TestAgent> {
 	}
 	
 }
+
+class TestTeacher extends Teacher<TestAgent> {
+	
+	public List<AgentEvent> eventsReceived = new ArrayList<AgentEvent>();
+
+	@Override
+	public void processEvent(AgentEvent event) {
+		eventsReceived.add(event);
+	}
+	
+}
