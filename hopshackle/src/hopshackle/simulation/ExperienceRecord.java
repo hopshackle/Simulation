@@ -55,7 +55,7 @@ public class ExperienceRecord<A extends Agent> {
 			possibleActionsFromEndState = nextER.getPossibleActionsFromStartState();
 			endScore = nextER.getStartScore();
 		} else {
-			possibleActionsFromStartState = new ArrayList<ActionEnum<A>>();
+			possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
 			endScore = 0.0;
 		}
 		ERState = State.NEXT_ACTION_TAKEN;

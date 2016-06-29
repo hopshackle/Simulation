@@ -91,9 +91,9 @@ public class ActionLearningTests {
 		dispatchLearningEvent(allAgents.get(1), unknownAction);
 
 		allER = erc.getExperienceRecords(testAgent);
-		assertEquals(allER.size(), 0);
+		assertEquals(allER.size(), 1);
 		allER.addAll(erc.getExperienceRecords(allAgents.get(1)));
-		assertEquals(allER.size(), 0);
+		assertEquals(allER.size(), 2);
 		assertEquals(teacher.eventsReceived.size(), 0);
 	}
 	
@@ -201,6 +201,7 @@ public class ActionLearningTests {
 		assertTrue(erc.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.State.ACTION_COMPLETED);
 		assertTrue(er1.getPossibleActionsFromEndState() == null);
 		testAgent.setDecider(decider);
+		System.out.println("About to dispatch event");
 		dispatchLearningEvent(testAgent, taf.factory(1, 0, 0, 1000));
 		assertEquals(teacher.eventsReceived.size(), 1);
 		assertTrue(er1.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);

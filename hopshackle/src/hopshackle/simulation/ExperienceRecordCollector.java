@@ -72,7 +72,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		boolean passOnEvent = false;
 		List<ExperienceRecord<A>> tdListForAgent = erListMap.getOrDefault(agent, new ArrayList<ExperienceRecord<A>>());
 		for (ExperienceRecord<A> existingER : tdListForAgent) {
-	//		System.out.println("\tProcessing: " + existingER.getActionTaken().actionType + "(" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
+			System.out.println("\tProcessing: " + existingER.getActionTaken().actionType + "(" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
 			if (existingER.getState() == State.ACTION_COMPLETED && 
 					!newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken())) {
 				existingER.updateNextActions(newlyRegisteredER);
@@ -95,7 +95,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		Decider<A> agentDecider = (Decider<A>) event.getDecider();
 		ExperienceRecord<A> newER = null;
 		boolean passOnEvent = false;
-//		System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
+		if (!a.isDead()) System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
 		switch (event.getEvent()) {
 		case DEATH:
 			processDeathOfAgent(a);
@@ -107,24 +107,19 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			passOnEvent = processNewER(newER, a);
 			break;
 		case ACTION_AGREED:
-			if (action!= null && !actionPreviouslySeen(a, action) && agentDecider != null) {
-				// we need to create a new ER first
-				List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
-				chooseableOptions.add(action.getType());
-				newER = new ExperienceRecord<A>(a.getScore(), (List<GeneticVariable>) agentDecider.getVariables(), 
-						agentDecider.getCurrentState(a, a), action, chooseableOptions);
-				passOnEvent = processNewER(newER, a);
-			}
+			passOnEvent = createAndProcessNewERIfNeeded(a, action, agentDecider);
 			break;
 		case ACTION_REJECTED:
 		case ACTION_CANCELLED:
 		case DECISION_STEP_COMPLETE:
+			boolean passOn1 = createAndProcessNewERIfNeeded(a, action, agentDecider);
 			passOnEvent = processDecisionForAgent(a, action);
+			passOnEvent = passOnEvent || passOn1;
 			break;
 		}
 		
 		if (passOnEvent) {
-	//		System.out.println("Event passed on");
+			System.out.println("Event passed on");
 			passOnEventAfterExperienceRecordsUpdated(event);
 		}
 	} 
@@ -135,6 +130,19 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			Action<A> act = er.getActionTaken();
 			if (act.equals(action))
 				return true;
+		}
+		return false;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private boolean createAndProcessNewERIfNeeded(A a, Action<A> action, Decider<A> agentDecider) {
+		if (action!= null && !actionPreviouslySeen(a, action) && agentDecider != null) {
+			// we need to create a new ER first
+			List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
+			chooseableOptions.add(action.getType());
+			ExperienceRecord<A> newER = new ExperienceRecord<A>(a.getScore(), (List<GeneticVariable>) agentDecider.getVariables(), 
+					agentDecider.getCurrentState(a, a), action, chooseableOptions);
+			return processNewER(newER, a);
 		}
 		return false;
 	}
