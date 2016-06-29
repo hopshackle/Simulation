@@ -8,9 +8,8 @@ public class ExperienceRecord<A extends Agent> {
 		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
 	}
 
-	private static double lambda = SimProperties.getPropertyAsDouble("QTraceLambda", "0.0");
-	private static double gamma = SimProperties.getPropertyAsDouble("Gamma", "1.0");
-	private static double traceCap = SimProperties.getPropertyAsDouble("QTraceMaximum", "10.0");
+	private static double lambda, gamma, traceCap;
+	static {refreshProperties();}
 	protected double[] startState, endState;
 	protected double[] featureTrace;
 	protected Action<A> actionTaken;
@@ -19,7 +18,13 @@ public class ExperienceRecord<A extends Agent> {
 	protected List<GeneticVariable> variables;
 	protected boolean isFinalState;
 	protected State ERState = State.UNSEEN;
-	
+
+	public static void refreshProperties() {
+		lambda = SimProperties.getPropertyAsDouble("QTraceLambda", "0.0");
+		gamma = SimProperties.getPropertyAsDouble("Gamma", "1.0");
+		traceCap = SimProperties.getPropertyAsDouble("QTraceMaximum", "10.0");
+	}
+
 	public ExperienceRecord(double score, List<GeneticVariable> var, double[] state, Action<A> action, 
 			List<ActionEnum<A>> possibleActions) {
 		actionTaken = action;
