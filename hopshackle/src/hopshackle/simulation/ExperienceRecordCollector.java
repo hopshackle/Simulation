@@ -5,9 +5,14 @@ import hopshackle.simulation.ExperienceRecord.State;
 import java.util.*;
 
 public class ExperienceRecordCollector<A extends Agent> implements AgentListener {
+	
+	interface ERCAllocationPolicy<A> {
+		public void apply(A agent);
+	}
 
 	private HashMap<A, List<ExperienceRecord<A>>> erListMap = new HashMap<A, List<ExperienceRecord<A>>>();
 	private List<AgentListener> listeners = new ArrayList<AgentListener>();
+	private ERCAllocationPolicy<A> birthPolicy;
 
 	public void registerAgent(A a) {
 		if (!agentAlreadySeen(a)) {
@@ -97,6 +102,11 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		boolean passOnEvent = false;
 //		if (!a.isDead()) System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
 		switch (event.getEvent()) {
+		case BIRTH:
+			if (birthPolicy != null) {
+				birthPolicy.apply(a);
+			}
+			break;
 		case DEATH:
 			processDeathOfAgent(a);
 			passOnEvent = true;
@@ -215,6 +225,9 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		for (AgentListener el : listeners) {
 			el.processEvent(ae);
 		}
+	}
+	public void setAllocationPolicy(ERCAllocationPolicy<A> newPolicy) {
+		birthPolicy = newPolicy;
 	}
 	
 }

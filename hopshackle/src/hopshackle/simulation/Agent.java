@@ -375,6 +375,8 @@ public abstract class Agent extends Observable {
 		if (!parents.contains(parentID)) {
 			parents.add(parentID);
 			parent.addChild(this);
+			AgentEvent birthEvent = new AgentEvent(this, Type.BIRTH);
+			parent.eventDispatch(birthEvent);
 		}
 	}
 	private void addChild(Agent child) {
