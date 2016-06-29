@@ -112,4 +112,37 @@ public class HopshackleUtilities {
 
 		return retValue;
 	}
+
+	public static String formatArray(double[] array, String delimiter, String format) {
+		StringBuilder retValue = new StringBuilder();
+		for (int i = 0; i < array.length; i++) {
+			if (i > 0) retValue.append(delimiter);
+			retValue.append(String.format(format, array[i]));
+		}
+		return retValue.toString();
+	}
+
+	public interface Formatter {
+		public String format(Object o);
+	}
+
+	public static String formatList(List<?> inputList, String delimiter, Formatter prettifier) {
+		StringBuilder retValue = new StringBuilder();
+		if (inputList != null) {
+			boolean firstItemProcessed = false;
+			for (Object o : inputList) {
+				if (firstItemProcessed) {
+					retValue.append(delimiter);
+				} else {
+					firstItemProcessed = true;
+				}
+				if (prettifier == null) {
+					retValue.append(o.toString());
+				} else {
+					retValue.append(prettifier.format(o));
+				}
+			}
+		}
+		return retValue.toString();
+	}
 }

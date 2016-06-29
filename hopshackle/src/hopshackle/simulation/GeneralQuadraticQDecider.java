@@ -62,6 +62,7 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 			String message = String.format("Learning:\t%-15sReward: %.2f, NextValue: %.2f, Predicted: %.2f, Delta: %.4f, NextAction: %s", 
 					exp.getActionTaken(), exp.getReward(), bestNextAction, predictedValue, delta, actionTaken == null ? "NULL" : actionTaken.toString());
 			log(message);
+			exp.getAgent().log(message);
 			StringBuffer logMessage = new StringBuffer("StartState -> EndState (FeatureTrace) :" + newline);
 			for (int i = 0; i < startState.length; i++) {
 				if (startState[i] != 0.0 || endState[i] != 0.0 || Math.abs(featureTrace[i]) >= 0.01) {
@@ -75,6 +76,7 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 			}
 			message = logMessage.toString();
 			log(message);
+			exp.getAgent().log(message);
 		}
 		for (int i = 0; i < quadraticVariableLength; i++) {
 			double value = featureTrace[i];
@@ -91,6 +93,7 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 				String message = String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f", variableName, value, weightChange, 
 					getWeightOf(var1, var2, exp.getActionTaken().actionType));
 				log(message);
+				exp.getAgent().log(message);
 			}
 			updateWeight(var1, var2, exp.getActionTaken().actionType, weightChange);
 		}

@@ -4,7 +4,7 @@ import hopshackle.simulation.*;
 
 import java.util.List;
 
-public class BasicAgentDAO implements AgentDAO<BasicAgent> {
+public class BasicAgentDAO implements DAO<BasicAgent> {
 
 	@Override
 	public String getTableCreationSQL(String tableSuffix) {
@@ -45,7 +45,7 @@ public class BasicAgentDAO implements AgentDAO<BasicAgent> {
 	}
 
 	@Override
-	public String getValuesForAgent(BasicAgent agent) {
+	public String getValues(BasicAgent agent) {
 
 		Long father, mother;
 		father = 0l;

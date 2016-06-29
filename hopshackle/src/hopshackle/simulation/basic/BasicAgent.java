@@ -19,7 +19,7 @@ public class BasicAgent extends Agent implements Persistent {
 	protected static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
 	protected static Name maleNamer = new Name(new File(baseDir + "\\MaleNames.txt"));
 	protected static Name femaleNamer = new Name(new File(baseDir + "\\FemaleNames.txt"));
-	private static AgentWriter<BasicAgent> agentWriter = new AgentWriter<BasicAgent>(new BasicAgentDAO());
+	private static DatabaseWriter<BasicAgent> agentWriter = new DatabaseWriter<BasicAgent>(new BasicAgentDAO());
 	private static BasicAgentRetriever masterAgentRetriever = new BasicAgentRetriever();
 	private static double debugChance = 0.01;
 	private static int locationMemoryLimit = SimProperties.getPropertyAsInteger("BasicLocationMemory", "100");
@@ -165,7 +165,7 @@ public class BasicAgent extends Agent implements Persistent {
 		dissolveMarriage();
 	}
 
-	public static AgentWriter<BasicAgent> getAgentWriter() {
+	public static DatabaseWriter<BasicAgent> getAgentWriter() {
 		return agentWriter;
 	}
 
