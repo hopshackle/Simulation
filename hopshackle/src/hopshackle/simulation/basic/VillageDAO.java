@@ -1,8 +1,8 @@
 package hopshackle.simulation.basic;
 
-import hopshackle.simulation.AgentDAO;
+import hopshackle.simulation.DAO;
 
-public class VillageDAO implements AgentDAO<Village> {
+public class VillageDAO implements DAO<Village> {
 
 	@Override
 	public String getTableCreationSQL(String tableSuffix) {
@@ -29,7 +29,7 @@ public class VillageDAO implements AgentDAO<Village> {
 	}
 
 	@Override
-	public String getValuesForAgent(Village village) {
+	public String getValues(Village village) {
 		return String.format(" (%d, '%s', %d, %d, '%s', %d, '%s')",
 				village.getId(),
 				village.toString(),

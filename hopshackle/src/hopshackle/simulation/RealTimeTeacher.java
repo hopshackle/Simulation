@@ -5,7 +5,7 @@ import hopshackle.simulation.AgentEvent.Type;
 import java.util.*;
 
 public class RealTimeTeacher<A extends Agent> extends Teacher<A> implements AgentListener {
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public synchronized void processEvent(AgentEvent event) {

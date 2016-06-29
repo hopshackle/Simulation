@@ -3,35 +3,35 @@ package hopshackle.simulation;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-public class AgentWriter<T extends Persistent> {
+public class DatabaseWriter<T extends Persistent> {
 
 	private String lastSuffix;
 	private StringBuffer buffer;
 	private int numberInBuffer, bufferLimit;
 	private ArrayList<World> worlds;
-	private AgentDAO<T> agentDAO;
+	private DAO<T> DAO;
 
-	public AgentWriter(AgentDAO<T> agentDAO) {
-		this.agentDAO = agentDAO;
+	public DatabaseWriter(DAO<T> DAO) {
+		this.DAO = DAO;
 		numberInBuffer = 0;
 		bufferLimit = 10;
 		worlds = new ArrayList<World>();
 	}
 
-	public void write(T agent, String tableSuffix) {
+	public void write(T thing, String tableSuffix) {
 
 		if (lastSuffix == null || !lastSuffix.equals(tableSuffix)) {
 			lastSuffix = tableSuffix;
-			updateWorldListeners(agent.getWorld());
-			writeBuffer(agent.getWorld());
+			updateWorldListeners(thing.getWorld());
+			writeBuffer(thing.getWorld());
 
-			String sqlDelete = agentDAO.getTableDeletionSQL(tableSuffix);
-			agent.getWorld().updateDatabase(sqlDelete);
-			String sqlQuery = agentDAO.getTableCreationSQL(tableSuffix);
-			agent.getWorld().updateDatabase(sqlQuery);
+			String sqlDelete = DAO.getTableDeletionSQL(tableSuffix);
+			thing.getWorld().updateDatabase(sqlDelete);
+			String sqlQuery = DAO.getTableCreationSQL(tableSuffix);
+			thing.getWorld().updateDatabase(sqlQuery);
 		}
 
-		addToBuffer(agent);
+		addToBuffer(thing);
 	}
 
 	private void updateWorldListeners(World world) {
@@ -53,14 +53,14 @@ public class AgentWriter<T extends Persistent> {
 	}
 
 
-	private void addToBuffer(T agent) {
+	private void addToBuffer(T thing) {
 		if (!buffer.substring(buffer.length()-6).equals("VALUES"))
 			buffer.append(",");
 		
-		buffer.append(agentDAO.getValuesForAgent(agent));
+		buffer.append(DAO.getValues(thing));
 		numberInBuffer++;
 		if (numberInBuffer >= bufferLimit) 
-			writeBuffer(agent.getWorld());
+			writeBuffer(thing.getWorld());
 	}
 
 	public void writeBuffer(World w) {
@@ -70,7 +70,7 @@ public class AgentWriter<T extends Persistent> {
 		}
 
 		// initialise new buffer
-		buffer = new StringBuffer(agentDAO.getTableUpdateSQL(lastSuffix));
+		buffer = new StringBuffer(DAO.getTableUpdateSQL(lastSuffix));
 
 		numberInBuffer = 0;
 	}

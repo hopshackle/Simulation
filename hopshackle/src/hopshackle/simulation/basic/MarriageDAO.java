@@ -4,7 +4,7 @@ import hopshackle.simulation.*;
 
 import java.util.List;
 
-public class MarriageDAO implements AgentDAO<Marriage> {
+public class MarriageDAO implements DAO<Marriage> {
 
 	@Override
 	public String getTableCreationSQL(String tableSuffix) {
@@ -34,7 +34,7 @@ public class MarriageDAO implements AgentDAO<Marriage> {
 	}
 
 	@Override
-	public String getValuesForAgent(Marriage marriage) {
+	public String getValues(Marriage marriage) {
 
 		BasicAgent husband = marriage.getSeniorPartner();
 		BasicAgent wife = marriage.getPartnerOf(husband);

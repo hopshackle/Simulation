@@ -3,6 +3,7 @@ package hopshackle.simulation;
 public class AgentEvent {
 	
 	public enum Type {
+		BIRTH,
 		DEATH,
 		DECISION_TAKEN,
 		ACTION_AGREED,

@@ -179,6 +179,9 @@ public class BasicRunWorld {
 
 		maleBasicDecider = new GeneralLinearQDecider<BasicAgent>(actionsToUse, variablesToUse);
 		femaleBasicDecider = new GeneralLinearQDecider<BasicAgent>(actionsToUse, variablesToUse);
+		
+		femaleTeacher.registerDecider(femaleBasicDecider);
+		maleTeacher.registerDecider(maleBasicDecider);
 
 		class AddPopulation extends TimerTask {
 			public void run() {

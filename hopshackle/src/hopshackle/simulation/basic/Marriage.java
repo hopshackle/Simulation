@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Marriage implements Persistent {
 
-	private static AgentWriter<Marriage> marriageWriter = new AgentWriter<Marriage>(new MarriageDAO());
+	private static DatabaseWriter<Marriage> marriageWriter = new DatabaseWriter<Marriage>(new MarriageDAO());
 	private BasicAgent seniorPartner, juniorPartner;
 	private long startDate, dissolutionDate;
 	private World world;

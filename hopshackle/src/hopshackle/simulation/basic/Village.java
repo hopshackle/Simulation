@@ -11,7 +11,7 @@ public class Village extends Location implements Artefact {
 	protected static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
 	protected static Name villageNamer = new Name(new File(baseDir + "\\VillageNames.txt"));
 	private static AtomicLong idFountain = new AtomicLong(1);
-	private static AgentWriter<Village> villageWriter = new AgentWriter<Village>(new VillageDAO());
+	private static DatabaseWriter<Village> villageWriter = new DatabaseWriter<Village>(new VillageDAO());
 	private BuildingType typeOfBuilding;
 	private BasicAgent currentLeader;
 	private List<Long> allLeaders = new ArrayList<Long>();
