@@ -2,10 +2,13 @@ package hopshackle.simulation;
 
 public interface GeneticVariable {
 
-	public double getValue(Object a, double var);
-	// If it is just the context of this Agent, with a variable as 'x' for complex polynomials
-	
-	public double getValue(Object a1, Object a2);
+	public double getValue(Agent a1, Agent a2);
+	// If it it the context of this Agent a1 with another agent a2
+		
+	public double getValue(Agent a1, Action a2);
+	// If it it the context of this Agent a1 with another agent a2
+		
+	public double getValue(Agent a1, Artefact a2);
 	// If it it the context of this Agent a1 with another agent a2
 		
 	public String getDescriptor();

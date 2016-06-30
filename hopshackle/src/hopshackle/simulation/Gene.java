@@ -151,14 +151,7 @@ public class Gene {
 	}
 
 	public Double getValue(Agent a) {
-		return getValue(a, 0.00);
-	}
-	public Double getValue(Agent a, double var) {
-		double retValue = base;
-		for (Codon c : codons) {
-			retValue += c.getValue(a, var);
-		}
-		return retValue;
+		return getValue(a, a);
 	}
 	public Double getValue(Agent a1, Agent a2) {
 		double retValue = base;

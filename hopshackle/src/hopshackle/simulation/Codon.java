@@ -117,15 +117,7 @@ public class Codon implements Comparable {
 		}
 		return tempString.toString();
 	}
-	
-	public double getValue(Agent a, double var) {
-		double retValue = modifier;
-		for (GeneticTerm gt : codon) {
-			retValue *= gt.getValue(a, var);
-		}
-		if (codon.isEmpty()) retValue = 0.0;
-		return retValue;
-	}
+
 	public double getValue(Agent a1, Agent a2) {
 		double retValue = modifier;
 		for (GeneticTerm gt : codon) {

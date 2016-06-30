@@ -17,11 +17,17 @@ public class GeneralQDeciderTest {
 
 	public static GeneticVariable gold = new GeneticVariable() {
 		@Override
-		public double getValue(Object a, double var) {return getValue(a, a);}
-		@Override
-		public double getValue(Object a1, Object a2) {
+		public double getValue(Agent a1, Agent a2) {
 			Agent agent = (Agent) a1;
 			return agent.getGold();
+		}
+		@Override 
+		public double getValue(Agent a1, Artefact a2) {
+			return getValue(a1, a1);
+		}
+		@Override 
+		public double getValue(Agent a1, Action a2) {
+			return getValue(a1, a1);
 		}
 		@Override
 		public String getDescriptor() {return null;}
@@ -31,9 +37,15 @@ public class GeneralQDeciderTest {
 
 	public static GeneticVariable constantTerm = new GeneticVariable() {
 		@Override
-		public double getValue(Object a, double var) {return getValue(a, a);}
-		@Override
-		public double getValue(Object a1, Object a2) {return 1.0;}
+		public double getValue(Agent a1, Agent a2) {return 1.0;}
+		@Override 
+		public double getValue(Agent a1, Artefact a2) {
+			return getValue(a1, a1);
+		}
+		@Override 
+		public double getValue(Agent a1, Action a2) {
+			return getValue(a1, a1);
+		}
 		@Override
 		public String getDescriptor() {return null;}
 		@Override

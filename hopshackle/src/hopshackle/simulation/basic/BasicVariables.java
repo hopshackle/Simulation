@@ -27,8 +27,7 @@ public enum BasicVariables implements GeneticVariable {
 
 	public String getDescriptor() {return descriptor;}
 
-	@Override
-	public double getValue(Object o, double var) {
+	public double getValue(Agent o) {
 		if (!(o instanceof BasicAgent)) return 0.00;
 		BasicAgent agent = (BasicAgent)o;
 		BasicHex agentLocation = (BasicHex)agent.getLocation();
@@ -141,9 +140,19 @@ public enum BasicVariables implements GeneticVariable {
 	}
 
 	@Override
-	public double getValue(Object a1, Object a2) {
-		return getValue(a1, 0.00);
+	public double getValue(Agent a1, Agent a2) {
+		return getValue(a1);
 	}
+	@Override
+	public double getValue(Agent a1, Artefact a2) {
+		return getValue(a1);
+	}
+
+	@Override
+	public double getValue(Agent a1, Action a2) {
+		return getValue(a1);
+	}
+
 
 	@Override
 	public boolean unitaryRange() {

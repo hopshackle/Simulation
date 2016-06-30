@@ -72,14 +72,6 @@ class GeneticTerm implements Comparable {
 		return operator + " " + gv.toString();
 	}
 	
-	public double getValue(Agent a, double var){
-		double retValue =  gv.getValue(a, var);
-		if (operator.equals("/")) {
-			if (retValue == 0.0) retValue = 0.01;
-			retValue = 1.0 / retValue;
-		} 
-		return retValue;
-	}
 	public double getValue(Agent a1, Agent a2){
 		double retValue =  gv.getValue(a1, a2);
 		if (operator.equals("/")) {

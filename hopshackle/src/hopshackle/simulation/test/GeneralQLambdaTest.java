@@ -15,30 +15,8 @@ public class GeneralQLambdaTest {
 	private List<ActionEnum<Agent>> actions;
 	private List<GeneticVariable> variables;
 
-	public static GeneticVariable gold = new GeneticVariable() {
-		@Override
-		public double getValue(Object a, double var) {return getValue(a, a);}
-		@Override
-		public double getValue(Object a1, Object a2) {
-			Agent agent = (Agent) a1;
-			return agent.getGold();
-		}
-		@Override
-		public String getDescriptor() {return null;}
-		@Override
-		public boolean unitaryRange() {return false;}
-	};
-
-	public static GeneticVariable constantTerm = new GeneticVariable() {
-		@Override
-		public double getValue(Object a, double var) {return getValue(a, a);}
-		@Override
-		public double getValue(Object a1, Object a2) {return 1.0;}
-		@Override
-		public String getDescriptor() {return null;}
-		@Override
-		public boolean unitaryRange() {return false;}
-	};
+	public static GeneticVariable gold = GeneralQDeciderTest.gold;
+	public static GeneticVariable constantTerm = GeneralQDeciderTest.constantTerm;
 	
 	@Before
 	public void setup() {

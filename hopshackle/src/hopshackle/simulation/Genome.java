@@ -184,14 +184,6 @@ public class Genome {
 		}
 	}
 
-	public double getValue(ActionEnum ae, Agent a, double var, List<GeneticVariable> varSet) {
-		double retValue = 0.0;
-		Gene g = getGene(ae, varSet);
-		if (g != null) {
-			retValue = g.getValue(a, var);
-		}
-		return retValue;
-	}
 	public double getValue(ActionEnum ae, Agent a, Artefact item, List<GeneticVariable> varSet) {
 		double retValue = 0.0;
 		Gene g = getGene(ae, varSet);

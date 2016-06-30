@@ -234,18 +234,18 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		return baseValuesPerOption;
 	}
 	
-	public static double[] getState(Agent decidingAgent, Agent contextAgent, List<GeneticVariable> variableSet) {
+	public static double[] getState(Agent decidingAgent, Agent contextAgent, Action<?> action, List<GeneticVariable> variableSet) {
 		double[] inputs = new double[variableSet.size()];
 		for (int i = 0; i < variableSet.size(); i ++) {
 			GeneticVariable gv = variableSet.get(i);
-			inputs[i] = gv.getValue(decidingAgent, contextAgent);
+			inputs[i] = gv.getValue(decidingAgent, action);
 		}
 		return inputs;
 	}
 
 	@Override
 	public double[] getCurrentState(A decidingAgent, Agent contextAgent, Action<A> action) {
-		return getState(decidingAgent, contextAgent, variableSet);
+		return getState(decidingAgent, contextAgent, action, variableSet);
 	}
 
 	@Override

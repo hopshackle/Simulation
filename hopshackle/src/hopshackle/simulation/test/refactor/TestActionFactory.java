@@ -66,7 +66,7 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 	}
 
 	@Override
-	public Enum getEnum() {
+	public Enum<TestActionEnum> getEnum() {
 		return this;
 	}
 }
@@ -75,11 +75,11 @@ enum TestGenVar implements GeneticVariable {
 	TEST;
 
 	@Override
-	public double getValue(Object a, double var) {return 1.0;}
-
+	public double getValue(Agent a1, Agent a2) {return 1.0;}
 	@Override
-	public double getValue(Object a1, Object a2) {return 1.0;}
-
+	public double getValue(Agent a1, Artefact a2) {return 1.0;}	
+	@Override
+	public double getValue(Agent a1, Action a2) {return 1.0;}
 	@Override
 	public String getDescriptor() {
 		return "TEST_GV";

@@ -175,7 +175,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 					assert false : "Should not be reachable";
 				break;
 				case DECISION_TAKEN:
-					double[] newState = BaseDecider.getState(agent, agent, td.variables);
+					double[] newState = BaseDecider.getState(agent, agent, action, td.variables);
 					td.updateWithResults(0.0, newState);
 				case ACTION_COMPLETED:
 				case NEXT_ACTION_TAKEN:
@@ -206,7 +206,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		for (ExperienceRecord<A> td : tdArray) {
 			switch (td.getState()) {
 			case DECISION_TAKEN:
-				double[] newState = BaseDecider.getState(agent, agent, td.variables);
+				double[] newState = BaseDecider.getState(agent, agent, null, td.variables);
 				td.updateWithResults(0.0, newState);
 			case ACTION_COMPLETED:
 				td.updateNextActions(null);
