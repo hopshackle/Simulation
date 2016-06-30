@@ -52,6 +52,10 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		return retList;
 	}
 	
+	public void clearAllExperienceRecord() {
+		erListMap.clear();
+	}
+	
 	public void removeER(A agent, ExperienceRecord<A> er) {
 		if (agentAlreadySeen(agent)) {
 			erListMap.get(agent).remove(er);

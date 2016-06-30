@@ -41,6 +41,11 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	public void learnFromBatch(ExperienceRecord<A>[] exp, double maxResult) {
 		// no default implementation - requires override
 	}
+	@SuppressWarnings("unchecked")
+	@Override
+	public void learnFromBatch(List<ExperienceRecord<A>> exp, double maxResult) {
+		learnFromBatch((ExperienceRecord<A>[]) exp.toArray(), maxResult);
+	}
 
 	/*
 	 *  getExperienceRecord() is called immediately after a decision is made, and returns

@@ -10,6 +10,8 @@ public interface Decider<A extends Agent> {
 	
 	public void learnFromBatch(ExperienceRecord<A>[] exp, double maxResult);
 
+	public void learnFromBatch(List<ExperienceRecord<A>> exp, double maxResult);
+	
 	public Action<A> decide(A decidingAgent);
 
 	public Action<A> decide(A decidingAgent, Agent contextAgent);
