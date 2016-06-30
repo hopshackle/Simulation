@@ -117,7 +117,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			break;
 		case DECISION_TAKEN:
 			newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
-					agentDecider.getCurrentState(a, a), action, agentDecider.getChooseableOptions(a, a));
+					agentDecider.getCurrentState(a, a, action), action, agentDecider.getChooseableOptions(a, a));
 			passOnEvent = processNewER(newER, a);
 			break;
 		case ACTION_AGREED:
@@ -157,7 +157,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 			chooseableOptions.add(action.getType());
 			ExperienceRecord<A> newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
-					agentDecider.getCurrentState(a, a), action, chooseableOptions);
+					agentDecider.getCurrentState(a, a, action), action, chooseableOptions);
 			return processNewER(newER, a);
 		}
 		return false;

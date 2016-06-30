@@ -65,10 +65,10 @@ public class GeneralQLambdaTest {
 
 	@Test
 	public void teachingDecisionUpdatesWeights() {
-		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent), RightLeft.RIGHT.getAction(testAgent), 
+		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent, null), RightLeft.RIGHT.getAction(testAgent), 
 				decider.getChooseableOptions(testAgent, testAgent));
-		exp.updateWithResults(2.0, decider.getCurrentState(testAgent, testAgent));
-		ExperienceRecord<Agent> exp2 = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent), RightLeft.LEFT.getAction(testAgent), 
+		exp.updateWithResults(2.0, decider.getCurrentState(testAgent, testAgent, null));
+		ExperienceRecord<Agent> exp2 = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent, null), RightLeft.LEFT.getAction(testAgent), 
 				decider.getChooseableOptions(testAgent, testAgent));
 		exp.updateNextActions(exp2);
 		decider.learnFrom(exp, 10.0);
@@ -81,8 +81,8 @@ public class GeneralQLambdaTest {
 		assertEquals(decider.getWeightOf(constantTerm, RightLeft.LEFT), 0.0, 0.001);
 		
 		testAgent.addGold(-2.0);
-		exp2.updateWithResults(-2.0, decider.getCurrentState(testAgent, testAgent));
-		ExperienceRecord<Agent> exp3 = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent), RightLeft.RIGHT.getAction(testAgent), 
+		exp2.updateWithResults(-2.0, decider.getCurrentState(testAgent, testAgent, null));
+		ExperienceRecord<Agent> exp3 = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent, null), RightLeft.RIGHT.getAction(testAgent), 
 				decider.getChooseableOptions(testAgent, testAgent));
 		exp2.updateNextActions(exp3);
 		decider.learnFrom(exp2, 10.0);
@@ -96,8 +96,8 @@ public class GeneralQLambdaTest {
 		assertEquals(decider.getWeightOf(constantTerm, RightLeft.LEFT), -0.328 * 1.45, 0.001);
 		
 		testAgent.addGold(1.0);
-		exp3.updateWithResults(1.0, decider.getCurrentState(testAgent, testAgent));
-		ExperienceRecord<Agent> exp4 = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent), RightLeft.RIGHT.getAction(testAgent), 
+		exp3.updateWithResults(1.0, decider.getCurrentState(testAgent, testAgent, null));
+		ExperienceRecord<Agent> exp4 = new ExperienceRecord<Agent>(testAgent, variables, decider.getCurrentState(testAgent, testAgent, null), RightLeft.RIGHT.getAction(testAgent), 
 				decider.getChooseableOptions(testAgent, testAgent));
 		exp3.updateNextActions(exp4);
 		decider.learnFrom(exp3, 10.0);

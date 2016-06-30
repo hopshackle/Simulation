@@ -244,7 +244,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 
 	@Override
-	public double[] getCurrentState(A decidingAgent, Agent contextAgent) {
+	public double[] getCurrentState(A decidingAgent, Agent contextAgent, Action<A> action) {
 		return getState(decidingAgent, contextAgent, variableSet);
 	}
 

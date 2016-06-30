@@ -79,7 +79,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent) {
-		double[] state = getCurrentState(decidingAgent, contextAgent);
+		double[] state = getCurrentState(decidingAgent, contextAgent, null);
 		double retValue = valueOption(option, state);
 		if (nd_debug)
 			decidingAgent.log("Option " + option.toString() + " has base Value of " + retValue);

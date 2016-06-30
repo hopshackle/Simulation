@@ -16,7 +16,7 @@ public interface Decider<A extends Agent> {
 
 	public Action<A> decide(A decidingAgent, Agent contextAgent);
 
-	public double[] getCurrentState(A decidingAgent, Agent contextAgent);
+	public double[] getCurrentState(A decidingAgent, Agent contextAgent, Action<A> action);
 
 	public List<ActionEnum<A>> getChooseableOptions(A a, Agent a2);
 

@@ -89,7 +89,7 @@ public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
 	}
 
 	public double valueState(A agent) {
-		BasicNeuralData inputData = new BasicNeuralData(getCurrentState(agent, agent));
+		BasicNeuralData inputData = new BasicNeuralData(getCurrentState(agent, agent, null));
 		double retValue = stateEvaluationBrain.compute(inputData).getData()[0];
 
 		temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");

@@ -48,7 +48,7 @@ public class StateDecider extends QDecider {
 	
 	public HopshackleState getState(Agent decidingAgent, Agent contextAgent) {
 		if (decidingAgent.isDead()) return HopshackleState.getState(stateType + ":DEAD");
-		double[] stateDesc = getCurrentState(decidingAgent, contextAgent);
+		double[] stateDesc = getCurrentState(decidingAgent, contextAgent, null);
 		return getState(stateDesc);
 	}
 
