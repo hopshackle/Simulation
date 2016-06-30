@@ -20,6 +20,18 @@ public class BasicRunWorld {
 	protected ExperienceRecordCollector<BasicAgent> maleERCollector = new ExperienceRecordCollector<BasicAgent>();
 	protected boolean genderSpecificTeacher = SimProperties.getProperty("BasicGenderSpecificTeacher", "true").equals("true");
 	protected Decider<BasicAgent> maleBasicDecider, femaleBasicDecider;
+	protected ExperienceRecordCollector.ERCAllocationPolicy<BasicAgent> ercPolicy = new ExperienceRecordCollector.ERCAllocationPolicy<BasicAgent>() {
+		@Override
+		public void apply(BasicAgent agent) {
+			if (agent.isMale() && genderSpecificTeacher) {
+				agent.setDecider(maleBasicDecider);
+				maleERCollector.registerAgent(agent);
+			} else {
+				agent.setDecider(femaleBasicDecider);
+				femaleERCollector.registerAgent(agent);
+			}
+		}
+	};
 
 	public World w;
 	private Location defaultStartLocation;
@@ -171,6 +183,9 @@ public class BasicRunWorld {
 			variablesToUse.remove(BasicVariables.valueOf(toRemove));
 		}
 		
+		femaleERCollector.setAllocationPolicy(ercPolicy);
+		maleERCollector.setAllocationPolicy(ercPolicy);
+		
 		femaleTeacher.registerToERStream(femaleERCollector);
 		maleTeacher.registerToERStream(maleERCollector);
 
@@ -187,16 +202,9 @@ public class BasicRunWorld {
 			public void run() {
 				int totalPopPerRun = 1;
 				for (int n = 0; n < totalPopPerRun; n++) {
-					BasicAgent b = null;
-					b = new BasicAgent(w);
+					BasicAgent b = new BasicAgent(w);
 					b.setLocation(defaultStartLocation);
-					if (b.isMale() && genderSpecificTeacher) {
-						b.setDecider(maleBasicDecider);
-						maleERCollector.registerAgent(b);
-					} else {
-						b.setDecider(femaleBasicDecider);
-						femaleERCollector.registerAgent(b);
-					}
+					ercPolicy.apply(b);
 					b.decide();
 				}
 			} 

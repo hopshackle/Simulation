@@ -11,7 +11,7 @@ import org.junit.*;
 public class ExperienceRecordTest {
 
 	private List<GeneticVariable> varList = new ArrayList<GeneticVariable>();
-	private ExperienceRecord er;
+	private ExperienceRecord<?> er;
 	private BasicAgent agent;
 	private World w;
 
@@ -25,14 +25,14 @@ public class ExperienceRecordTest {
 
 	@Test
 	public void experienceRecordInitialisation() {
-		List<ActionEnum> possibleActions = new ArrayList<ActionEnum>();
+		List<ActionEnum<BasicAgent>> possibleActions = new ArrayList<ActionEnum<BasicAgent>>();
 		possibleActions.add(BasicActions.FARM);
 		possibleActions.add(BasicActions.FIND_UNKNOWN);
 		double[] startState = new double[varList.size()];
 		for (int i = 0; i < startState.length; i++)
 			startState[i] = i;
 
-		er = new ExperienceRecord(agent, varList, startState, BasicActions.FARM.getAction(agent), possibleActions);
+		er = new ExperienceRecord<BasicAgent>(agent, varList, startState, BasicActions.FARM.getAction(agent), possibleActions);
 
 		assertFalse(er.isInFinalState());
 		assertTrue(er.getEndState() == null);

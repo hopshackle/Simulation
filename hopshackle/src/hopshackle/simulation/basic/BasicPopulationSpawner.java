@@ -82,13 +82,7 @@ public class BasicPopulationSpawner implements Runnable{
 					for (int loop = 0; loop<agentsToAdd; loop++) {
 						BasicAgent newC = new BasicAgent(world);
 						newC.setLocation(defaultStartLocation);
-						if (newC.isMale() && parent.genderSpecificTeacher) {
-							newC.setDecider(parent.maleBasicDecider);
-							parent.maleERCollector.registerAgent(newC);
-						} else {
-							newC.setDecider(parent.femaleBasicDecider);
-							parent.femaleERCollector.registerAgent(newC);
-						}
+						parent.ercPolicy.apply(newC);
 
 						Genome newGenome = newC.getGenome();
 

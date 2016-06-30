@@ -6,7 +6,7 @@ import java.util.*;
 
 public class ExperienceRecordCollector<A extends Agent> implements AgentListener {
 	
-	interface ERCAllocationPolicy<A> {
+	public interface ERCAllocationPolicy<A> {
 		public void apply(A agent);
 	}
 

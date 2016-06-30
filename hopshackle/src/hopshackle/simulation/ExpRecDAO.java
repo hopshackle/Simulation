@@ -25,13 +25,13 @@ public class ExpRecDAO implements DAO<ExperienceRecord<?>> {
 	public String getTableUpdateSQL(String tableSuffix) {
 		return "INSERT INTO ExperienceRecords_" + tableSuffix + 
 				" (agent, startScore, endScore, reward, startState, endState, featureTrace, actionTaken, " +
-				"actionsFromStart, actionsFromEnd) VALUES";
+				"actionsFromStart, actionsFromEnd, variables) VALUES";
 	}
 
 	@Override
 	public String getValues(ExperienceRecord<?> er) {
 		
-		return String.format(" (%d, %.5f, %.5f, %.5f, '%s', '%s', '%s', '%s', '%s', '%s')",
+		return String.format(" (%d, %.5f, %.5f, %.5f, '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
 				er.getAgent().getUniqueID(),
 				er.getStartScore(),
 				er.getEndScore(),
@@ -41,7 +41,8 @@ public class ExpRecDAO implements DAO<ExperienceRecord<?>> {
 				HopshackleUtilities.formatArray(er.getFeatureTrace(), ",", "%.2f"),
 				er.getActionTaken().getType(),
 				HopshackleUtilities.formatList(er.getPossibleActionsFromStartState(), ",", null),
-				HopshackleUtilities.formatList(er.getPossibleActionsFromEndState(), ",", null)
+				HopshackleUtilities.formatList(er.getPossibleActionsFromEndState(), ",", null),
+				HopshackleUtilities.formatList(er.getVariables(), ",", null)
 		);
 	}
 

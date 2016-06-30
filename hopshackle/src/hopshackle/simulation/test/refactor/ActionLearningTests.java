@@ -283,6 +283,37 @@ public class ActionLearningTests {
 		assertTrue(er2.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);	
 		assertEquals(teacher.eventsReceived.size(), 2);
 	}
+	
+	@Test
+	public void ercPolicyIsCalledOnBirth() {
+		class TestERCPolicy implements ExperienceRecordCollector.ERCAllocationPolicy<TestAgent> {
+			private Map<TestAgent, Integer> map = new HashMap<TestAgent, Integer>();
+			@Override
+			public void apply(TestAgent agent) {
+				int currentCount = map.getOrDefault(agent, 0);
+				map.put(agent, currentCount + 1);
+				erc.registerAgent(agent);
+			}
+			public int getCalls(TestAgent agent) {
+				return map.getOrDefault(agent, 0);
+			}
+		};
+
+		TestERCPolicy ercPolicy = new TestERCPolicy();
+
+		erc.setAllocationPolicy(ercPolicy);
+		TestAgent parent = new TestAgent(w);
+		erc.registerAgent(parent);
+		TestAgent child = new TestAgent(w);
+		assertEquals(ercPolicy.getCalls(parent), 0);
+		assertEquals(ercPolicy.getCalls(child), 0);
+		assertFalse(erc.agentKnown(child));
+		assertTrue(erc.agentKnown(parent));
+		child.addParent(parent);
+		assertEquals(ercPolicy.getCalls(parent), 0);
+		assertEquals(ercPolicy.getCalls(child), 1);
+		assertTrue(erc.agentKnown(child));
+	}
 
 	private void dispatchLearningEvent(TestAgent agent, Action actionToUse) {
 		AgentEvent learningEvent = new AgentEvent(agent, AgentEvent.Type.DECISION_STEP_COMPLETE, actionToUse);
