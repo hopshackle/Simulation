@@ -12,7 +12,7 @@ public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
 	protected BasicNetwork stateEvaluationBrain;
 	private static double gamma = SimProperties.getPropertyAsDouble("Gamma", "0.99");
 
-	public ActorCriticDecider(List<ActionEnum<A>> actions, List<GeneticVariable> variables) {
+	public ActorCriticDecider(List<ActionEnum<A>> actions, List<GeneticVariable<A>> variables) {
 		super(actions, variables);
 		stateEvaluationBrain = initialiseBrain(variables);
 	}

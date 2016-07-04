@@ -9,7 +9,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 	protected int actionLength;
 	public static String newline = System.getProperty("line.separator");
 
-	public GeneralLinearQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables) {
+	public GeneralLinearQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A>> variables) {
 		super(actions, variables);
 		actionLength = actionSet.size();
 		variableLength = variableSet.size();
@@ -51,7 +51,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		return retValue;
 	}
 
-	public void updateWeight(GeneticVariable input, ActionEnum<A> option, double delta) {
+	public void updateWeight(GeneticVariable<A> input, ActionEnum<A> option, double delta) {
 		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(input);
 		weights[optionIndex][varIndex] += delta - weights[optionIndex][varIndex] * lambda;
@@ -62,7 +62,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		weights = newWeights;
 	}
 
-	public double getWeightOf(GeneticVariable input, ActionEnum<A> option) {
+	public double getWeightOf(GeneticVariable<A> input, ActionEnum<A> option) {
 		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(input);
 		return weights[optionIndex][varIndex];
@@ -105,7 +105,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		for (int i = 0; i < variableLength; i++) {
 			double value = featureTrace[i];
 			if (value == 0.0) continue;
-			GeneticVariable input = variableSet.get(i);
+			GeneticVariable<A> input = variableSet.get(i);
 			double weightChange = value * delta * alpha;
 			if (localDebug) {
 				String message = String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f", input.toString(), value, weightChange, 

@@ -13,10 +13,10 @@ public class GeneralQLambdaTest {
 	private TestLinearQDecider decider;
 	private Agent testAgent;
 	private List<ActionEnum<Agent>> actions;
-	private List<GeneticVariable> variables;
+	private List<GeneticVariable<Agent>> variables;
 
-	public static GeneticVariable gold = GeneralQDeciderTest.gold;
-	public static GeneticVariable constantTerm = GeneralQDeciderTest.constantTerm;
+	public static GeneticVariable<Agent> gold = GeneralQDeciderTest.gold;
+	public static GeneticVariable<Agent> constantTerm = GeneralQDeciderTest.constantTerm;
 	
 	@Before
 	public void setup() {
@@ -29,7 +29,7 @@ public class GeneralQLambdaTest {
 		actions.add(RightLeft.RIGHT);
 		actions.add(RightLeft.LEFT);
 
-		variables = new ArrayList<GeneticVariable>();
+		variables = new ArrayList<GeneticVariable<Agent>>();
 		variables.add(constantTerm);
 		variables.add(gold);
 

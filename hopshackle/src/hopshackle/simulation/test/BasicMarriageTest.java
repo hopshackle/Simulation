@@ -17,7 +17,7 @@ public class BasicMarriageTest {
 	private TestActionProcessor ap;
 	private ExperienceRecordCollector<BasicAgent> teacher = new ExperienceRecordCollector<BasicAgent>();
 	private List<ActionEnum<BasicAgent>> actions;
-	private List<GeneticVariable> variables = new ArrayList<GeneticVariable>(EnumSet.allOf(BasicVariables.class));
+	private List<GeneticVariable<BasicAgent>> variables = new ArrayList<GeneticVariable<BasicAgent>>(EnumSet.allOf(BasicVariables.class));
 	private Decider<BasicAgent> baseDecider;
 	private Decider<BasicAgent> restDecider = new HardCodedDecider(BasicActions.REST);
 

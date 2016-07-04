@@ -4,7 +4,7 @@ import java.util.List;
 
 public abstract class QDecider<A extends Agent> extends BaseDecider<A> {
 
-	public QDecider(List<? extends ActionEnum<A>> actions,	List<GeneticVariable> variables) {
+	public QDecider(List<? extends ActionEnum<A>> actions,	List<GeneticVariable<A>> variables) {
 		super(actions, variables);
 	}
 

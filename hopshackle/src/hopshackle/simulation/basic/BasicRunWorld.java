@@ -177,7 +177,7 @@ public class BasicRunWorld {
 
 	private void initiallyPopulate() {		
 
-		ArrayList<GeneticVariable> variablesToUse = new ArrayList<GeneticVariable>(EnumSet.allOf(BasicVariables.class));
+		ArrayList<GeneticVariable<BasicAgent>> variablesToUse = new ArrayList<GeneticVariable<BasicAgent>>(EnumSet.allOf(BasicVariables.class));
 		String[] variablesToRemove = SimProperties.getProperty("BasicVariableFilter", "").split(",");
 		for (String toRemove : variablesToRemove) {
 			variablesToUse.remove(BasicVariables.valueOf(toRemove));

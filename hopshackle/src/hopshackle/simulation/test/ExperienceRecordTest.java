@@ -10,14 +10,14 @@ import org.junit.*;
 
 public class ExperienceRecordTest {
 
-	private List<GeneticVariable> varList = new ArrayList<GeneticVariable>();
-	private ExperienceRecord<?> er;
+	private List<GeneticVariable<BasicAgent>> varList = new ArrayList<GeneticVariable<BasicAgent>>();
+	private ExperienceRecord<BasicAgent> er;
 	private BasicAgent agent;
 	private World w;
 
 	@Before
 	public void setUp() throws Exception {
-		for (GeneticVariable gv : BasicVariables.values())
+		for (GeneticVariable<BasicAgent> gv : BasicVariables.values())
 			varList.add(gv);
 		w = new World();
 		agent = new BasicAgent(w);
@@ -57,7 +57,7 @@ public class ExperienceRecordTest {
 	@Test
 	public void experienceRecordGetValuesReturnsJustThoseGenVarValuesRequired() {
 		experienceRecordInitialisation();
-		List<GeneticVariable> reducedList = new ArrayList<GeneticVariable>();
+		List<GeneticVariable<BasicAgent>> reducedList = new ArrayList<GeneticVariable<BasicAgent>>();
 		reducedList.add(BasicVariables.FOOD_LEVEL);
 		reducedList.add(BasicVariables.FOREST);
 		reducedList.add(BasicVariables.AGE);

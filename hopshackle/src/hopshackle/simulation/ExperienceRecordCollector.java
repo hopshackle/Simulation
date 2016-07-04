@@ -116,7 +116,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			passOnEvent = true;
 			break;
 		case DECISION_TAKEN:
-			newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
+			newER = new ExperienceRecord<A>(a, (List<GeneticVariable<A>>) agentDecider.getVariables(), 
 					agentDecider.getCurrentState(a, a, action), action, agentDecider.getChooseableOptions(a, a));
 			passOnEvent = processNewER(newER, a);
 			break;
@@ -156,7 +156,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			// we need to create a new ER first
 			List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 			chooseableOptions.add(action.getType());
-			ExperienceRecord<A> newER = new ExperienceRecord<A>(a, (List<GeneticVariable>) agentDecider.getVariables(), 
+			ExperienceRecord<A> newER = new ExperienceRecord<A>(a, (List<GeneticVariable<A>>) agentDecider.getVariables(), 
 					agentDecider.getCurrentState(a, a, action), action, chooseableOptions);
 			return processNewER(newER, a);
 		}

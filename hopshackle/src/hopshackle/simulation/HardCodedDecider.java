@@ -20,6 +20,10 @@ public class HardCodedDecider extends BaseDecider {
 	public double valueOption(ActionEnum option, Agent decidingAgent, Agent contextAgent) {
 		return 0;
 	}
+
+	@Override
+	public void learnFrom(ExperienceRecord exp, double maxResult) {
+	}
 }
 
 

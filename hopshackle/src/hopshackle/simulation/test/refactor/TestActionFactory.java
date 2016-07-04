@@ -71,15 +71,15 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 	}
 }
 
-enum TestGenVar implements GeneticVariable {
+enum TestGenVar implements GeneticVariable<TestAgent> {
 	TEST;
 
 	@Override
-	public double getValue(Agent a1, Agent a2) {return 1.0;}
+	public double getValue(TestAgent a1, Agent a2) {return 1.0;}
 	@Override
-	public double getValue(Agent a1, Artefact a2) {return 1.0;}	
+	public double getValue(TestAgent a1, Artefact a2) {return 1.0;}	
 	@Override
-	public double getValue(Agent a1, Action a2) {return 1.0;}
+	public double getValue(TestAgent a1, Action<TestAgent> a2) {return 1.0;}
 	@Override
 	public String getDescriptor() {
 		return "TEST_GV";
@@ -87,6 +87,10 @@ enum TestGenVar implements GeneticVariable {
 
 	@Override
 	public boolean unitaryRange() {return true;}
+	@Override
+	public double getValue(LookaheadState<TestAgent> forwardState) {
+		return 0;
+	}
 	
 }
 
@@ -114,7 +118,7 @@ class TestDecider extends BaseDecider<TestAgent> {
 	public int learningEpisodes = 0;
 	
 	public static List<ActionEnum<TestAgent>> actionList = new ArrayList<ActionEnum<TestAgent>>();
-	public static List<GeneticVariable> gvList = new ArrayList<GeneticVariable>();
+	public static List<GeneticVariable<TestAgent>> gvList = new ArrayList<GeneticVariable<TestAgent>>();
 	static {
 		actionList.add(TestActionEnum.TEST);
 		gvList.add(TestGenVar.TEST);

@@ -36,4 +36,8 @@ public class EvolutionDecider extends VDecider {
 		throw new AssertionError("Not currently implemented");
 	}
 
+	@Override
+	public void learnFrom(ExperienceRecord exp, double maxResult) {	
+	}
+
 }

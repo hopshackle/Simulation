@@ -7,7 +7,7 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 	private int gvLength;
 	private int quadraticVariableLength;
 
-	public GeneralQuadraticQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables) {
+	public GeneralQuadraticQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A>> variables) {
 		super(actions, variables);
 		// Note that we then override everything that the super constructor does
 		actionLength = actions.size();
@@ -36,13 +36,13 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 		return stateDescriptor;
 	}
 
-	public void updateWeight(GeneticVariable var1, GeneticVariable var2, ActionEnum<A> option, double delta) {
+	public void updateWeight(GeneticVariable<A> var1, GeneticVariable<A> var2, ActionEnum<A> option, double delta) {
 		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(var1) * gvLength + variableSet.indexOf(var2);
 		weights[optionIndex][varIndex] += delta - weights[optionIndex][varIndex] * lambda;
 	}
 
-	public double getWeightOf(GeneticVariable input1, GeneticVariable input2, ActionEnum<A> option) {
+	public double getWeightOf(GeneticVariable<A> input1, GeneticVariable<A> input2, ActionEnum<A> option) {
 		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(input1) * gvLength + variableSet.indexOf(input2);
 		return weights[optionIndex][varIndex];
@@ -83,8 +83,8 @@ public class GeneralQuadraticQDecider<A extends Agent> extends GeneralLinearQDec
 			if (value == 0.0) continue;
 			int firstVarComponent = i / gvLength;
 			int secondVarComponent = i % gvLength;
-			GeneticVariable var1 = variableSet.get(firstVarComponent);
-			GeneticVariable var2 = variableSet.get(secondVarComponent);
+			GeneticVariable<A> var1 = variableSet.get(firstVarComponent);
+			GeneticVariable<A> var2 = variableSet.get(secondVarComponent);
 			String variableName = variableSet.get(firstVarComponent).toString() + ":" + variableSet.get(secondVarComponent);
 			if (firstVarComponent == secondVarComponent)
 				variableName = variableSet.get(firstVarComponent).toString();

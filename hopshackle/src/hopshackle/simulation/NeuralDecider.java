@@ -22,7 +22,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	protected double baseMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum", "0.0");
 	private double overrideLearningCoefficient, overrideMomentum; 
 
-	public NeuralDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables){
+	public NeuralDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A>> variables){
 		super(actions, variables);
 		maxNoise = SimProperties.getPropertyAsDouble("NeuralNoise", "0.20");
 		// Each NeuralDecider will have a brain consisting of:
@@ -44,7 +44,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			maxNoise = newMaxNoise;
 	}
 
-	public void setVariables(List<GeneticVariable> genVar) {
+	public void setVariables(List<GeneticVariable<A>> genVar) {
 		super.setVariables(genVar);
 		brain = initialiseFullBrain(actionSet, variableSet);
 	}
@@ -53,7 +53,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		brain = initialiseFullBrain(actionSet, variableSet);
 	}
 
-	protected static <A extends Agent> Hashtable<String, BasicNetwork> initialiseFullBrain(List<ActionEnum<A>> actionSet, List<GeneticVariable> varSet) {
+	protected static <A extends Agent> Hashtable<String, BasicNetwork> initialiseFullBrain(List<ActionEnum<A>> actionSet, List<GeneticVariable<A>> varSet) {
 		Hashtable<String, BasicNetwork> retValue = new Hashtable<String, BasicNetwork>();
 		if (actionSet == null || varSet == null) return retValue;
 		for (ActionEnum<A> ae : actionSet) {
@@ -62,7 +62,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		return retValue;
 	}
 
-	public static BasicNetwork initialiseBrain(List<GeneticVariable> varSet) {
+	protected static <A extends Agent> BasicNetwork initialiseBrain(List<GeneticVariable<A>> varSet) {
 		int neuronLayers = Integer.valueOf(SimProperties.getProperty("NeuralDeciderHiddenLayers", "1"));
 		int[] layers = new int[neuronLayers+2];
 		if (varSet != null) {

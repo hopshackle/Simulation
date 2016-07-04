@@ -8,7 +8,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	protected List<ActionEnum<A>> actionSet = new ArrayList<ActionEnum<A>>();
-	protected List<GeneticVariable> variableSet = new ArrayList<GeneticVariable>();
+	protected List<GeneticVariable<A>> variableSet = new ArrayList<GeneticVariable<A>>();
 	protected String name = "DEFAULT";
 	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMinChance", "0.0");
@@ -20,7 +20,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	private static AtomicInteger idFountain = new AtomicInteger(0);
 	private int id;
 
-	public BaseDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable> variables) {
+	public BaseDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A>> variables) {
 		if (actions != null) {
 			for (ActionEnum<A> ae : actions)
 				actionSet.add(ae);
@@ -31,29 +31,23 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	@Override
 	public abstract double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent);
-
+	
 	@Override
-	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
-		// no default implementation - requires override
-	}
+	public abstract void learnFrom(ExperienceRecord<A> exp, double maxResult);
 
 	@Override
 	public void learnFromBatch(ExperienceRecord<A>[] exp, double maxResult) {
-		// no default implementation - requires override
+		// A default method. Override this for efficiency with batch data.
+		for (ExperienceRecord<A> er : exp) {
+			learnFrom(er, maxResult);
+		}
 	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void learnFromBatch(List<ExperienceRecord<A>> exp, double maxResult) {
 		learnFromBatch((ExperienceRecord<A>[]) exp.toArray(), maxResult);
 	}
-
-	/*
-	 *  getExperienceRecord() is called immediately after a decision is made, and returns
-	 *  a record of initial set of conditions that will be required when the final result is known
-	 *  and this can be applied to the relevant learning algorithm used by the Decider (if any)
-	 *  
-	 *  Once the result is known, the Teacher will call the 'learn' method on the Decider, providing it with the updated ExperienceRecord
-	 */
 
 	@Override
 	public Action<A> decide(A decidingAgent) {
@@ -234,10 +228,10 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		return baseValuesPerOption;
 	}
 	
-	public static double[] getState(Agent decidingAgent, Agent contextAgent, Action<?> action, List<GeneticVariable> variableSet) {
+	public static <A extends Agent> double[] getState(A decidingAgent, Agent contextAgent, Action<A> action, List<GeneticVariable<A>> variableSet) {
 		double[] inputs = new double[variableSet.size()];
 		for (int i = 0; i < variableSet.size(); i ++) {
-			GeneticVariable gv = variableSet.get(i);
+			GeneticVariable<A> gv = variableSet.get(i);
 			inputs[i] = gv.getValue(decidingAgent, action);
 		}
 		return inputs;
@@ -245,7 +239,12 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	@Override
 	public double[] getCurrentState(A decidingAgent, Agent contextAgent, Action<A> action) {
-		return getState(decidingAgent, contextAgent, action, variableSet);
+		double[] inputs = new double[variableSet.size()];
+		for (int i = 0; i < variableSet.size(); i ++) {
+			GeneticVariable<A> gv = variableSet.get(i);
+			inputs[i] = gv.getValue(decidingAgent, action);
+		}
+		return inputs;
 	}
 
 	@Override
@@ -264,12 +263,12 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		}
 	}
 	@Override
-	public List<GeneticVariable> getVariables() {
+	public List<GeneticVariable<A>> getVariables() {
 		return HopshackleUtilities.cloneList(variableSet);
 	}
-	public void setVariables(List<GeneticVariable> variableList) {
-		variableSet = new ArrayList<GeneticVariable>();
-		for (GeneticVariable gv : variableList) {
+	public void setVariables(List<GeneticVariable<A>> variableList) {
+		variableSet = new ArrayList<GeneticVariable<A>>();
+		for (GeneticVariable<A> gv : variableList) {
 			variableSet.add(gv);
 		}
 	}

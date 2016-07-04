@@ -13,9 +13,9 @@ public class GeneralQDeciderTest {
 	private TestLinearQDecider decider;
 	private Agent testAgent;
 	private List<ActionEnum<Agent>> actions;
-	private List<GeneticVariable> variables;
+	private List<GeneticVariable<Agent>> variables;
 
-	public static GeneticVariable gold = new GeneticVariable() {
+	public static GeneticVariable<Agent> gold = new GeneticVariable<Agent>() {
 		@Override
 		public double getValue(Agent a1, Agent a2) {
 			Agent agent = (Agent) a1;
@@ -26,8 +26,12 @@ public class GeneralQDeciderTest {
 			return getValue(a1, a1);
 		}
 		@Override 
-		public double getValue(Agent a1, Action a2) {
+		public double getValue(Agent a1, Action<Agent> a2) {
 			return getValue(a1, a1);
+		}
+		@Override
+		public double getValue(LookaheadState<Agent> forwardState) {
+			throw new AssertionError("Lookahead State not supported.");
 		}
 		@Override
 		public String getDescriptor() {return null;}
@@ -35,7 +39,7 @@ public class GeneralQDeciderTest {
 		public boolean unitaryRange() {return false;}
 	};
 
-	public static GeneticVariable constantTerm = new GeneticVariable() {
+	public static GeneticVariable<Agent> constantTerm = new GeneticVariable<Agent>() {
 		@Override
 		public double getValue(Agent a1, Agent a2) {return 1.0;}
 		@Override 
@@ -43,8 +47,12 @@ public class GeneralQDeciderTest {
 			return getValue(a1, a1);
 		}
 		@Override 
-		public double getValue(Agent a1, Action a2) {
+		public double getValue(Agent a1, Action<Agent> a2) {
 			return getValue(a1, a1);
+		}
+		@Override
+		public double getValue(LookaheadState<Agent> forwardState) {
+			throw new AssertionError("Lookahead State not supported.");
 		}
 		@Override
 		public String getDescriptor() {return null;}
@@ -63,7 +71,7 @@ public class GeneralQDeciderTest {
 		actions.add(RightLeft.RIGHT);
 		actions.add(RightLeft.LEFT);
 
-		variables = new ArrayList<GeneticVariable>();
+		variables = new ArrayList<GeneticVariable<Agent>>();
 		variables.add(constantTerm);
 		variables.add(gold);
 
@@ -171,7 +179,7 @@ public class GeneralQDeciderTest {
 
 class TestLinearQDecider extends GeneralLinearQDecider<Agent> {
 
-	public TestLinearQDecider(List<? extends ActionEnum<Agent>> actions, List<GeneticVariable> variables) {
+	public TestLinearQDecider(List<? extends ActionEnum<Agent>> actions, List<GeneticVariable<Agent>> variables) {
 		super(actions, variables);
 	}
 	

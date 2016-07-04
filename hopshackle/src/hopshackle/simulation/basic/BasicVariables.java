@@ -4,7 +4,7 @@ import hopshackle.simulation.*;
 
 import java.util.List;
 
-public enum BasicVariables implements GeneticVariable {
+public enum BasicVariables implements GeneticVariable<BasicAgent> {
 
 	CONSTANT,
 	HEALTH,
@@ -140,16 +140,16 @@ public enum BasicVariables implements GeneticVariable {
 	}
 
 	@Override
-	public double getValue(Agent a1, Agent a2) {
+	public double getValue(BasicAgent a1, Agent a2) {
 		return getValue(a1);
 	}
 	@Override
-	public double getValue(Agent a1, Artefact a2) {
+	public double getValue(BasicAgent a1, Artefact a2) {
 		return getValue(a1);
 	}
 
 	@Override
-	public double getValue(Agent a1, Action a2) {
+	public double getValue(BasicAgent a1, Action<BasicAgent> a2) {
 		return getValue(a1);
 	}
 
@@ -157,5 +157,10 @@ public enum BasicVariables implements GeneticVariable {
 	@Override
 	public boolean unitaryRange() {
 		return true;
+	}
+
+	@Override
+	public double getValue(LookaheadState<BasicAgent> forwardState) {
+		throw new AssertionError("Lookahead State not supported for BasicAgents");
 	}
 }

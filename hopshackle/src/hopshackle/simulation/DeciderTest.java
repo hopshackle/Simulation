@@ -135,4 +135,8 @@ class TestDecider extends QDecider {
 		}
 		return 0.0;
 	}
+
+	@Override
+	public void learnFrom(ExperienceRecord exp, double maxResult) {
+	}
 }

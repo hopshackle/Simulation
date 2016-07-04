@@ -17,7 +17,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	protected Action<A> actionTaken;
 	protected List<ActionEnum<A>> possibleActionsFromEndState, possibleActionsFromStartState;
 	protected double startScore, endScore, reward;
-	protected List<GeneticVariable> variables;
+	protected List<GeneticVariable<A>> variables;
 	protected boolean isFinalState;
 	protected State ERState = State.UNSEEN;
 	private Agent agent;
@@ -28,7 +28,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		traceCap = SimProperties.getPropertyAsDouble("QTraceMaximum", "10.0");
 	}
 
-	public ExperienceRecord(Agent a, List<GeneticVariable> var, double[] state, Action<A> action, 
+	public ExperienceRecord(Agent a, List<GeneticVariable<A>> var, double[] state, Action<A> action, 
 			List<ActionEnum<A>> possibleActions) {
 		actionTaken = action;
 		startState = state;
@@ -76,10 +76,10 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		setState(State.NEXT_ACTION_TAKEN);
 	}
 	
-	public double[][] getValues(List<GeneticVariable> gvList) {
+	public double[][] getValues(List<GeneticVariable<A>> gvList) {
 		double[][] retValue = new double[2][gvList.size()];		// start Values, then end values
 		int count = 0;
-		for (GeneticVariable gv : gvList) {
+		for (GeneticVariable<A> gv : gvList) {
 			int index = variables.indexOf(gv);
 			if (index > -1) {
 				retValue[0][count] = startState[index];
@@ -129,7 +129,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		return endScore;
 	}
 
-	public List<GeneticVariable> getVariables() {
+	public List<GeneticVariable<A>> getVariables() {
 		return variables;
 	}
 	
