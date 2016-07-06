@@ -44,7 +44,8 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			maxNoise = newMaxNoise;
 	}
 
-	public void setVariables(List<GeneticVariable<A>> genVar) {
+	@Override
+	public <V extends GeneticVariable<A>> void setVariables(List<V> genVar) {
 		super.setVariables(genVar);
 		brain = initialiseFullBrain(actionSet, variableSet);
 	}
@@ -62,7 +63,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		return retValue;
 	}
 
-	protected static <A extends Agent> BasicNetwork initialiseBrain(List<GeneticVariable<A>> varSet) {
+	public static <A extends Agent> BasicNetwork initialiseBrain(List<GeneticVariable<A>> varSet) {
 		int neuronLayers = Integer.valueOf(SimProperties.getProperty("NeuralDeciderHiddenLayers", "1"));
 		int[] layers = new int[neuronLayers+2];
 		if (varSet != null) {

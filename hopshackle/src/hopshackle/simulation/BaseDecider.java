@@ -266,7 +266,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	public List<GeneticVariable<A>> getVariables() {
 		return HopshackleUtilities.cloneList(variableSet);
 	}
-	public void setVariables(List<GeneticVariable<A>> variableList) {
+	public <V extends GeneticVariable<A>> void setVariables(List<V> variableList) {
 		variableSet = new ArrayList<GeneticVariable<A>>();
 		for (GeneticVariable<A> gv : variableList) {
 			variableSet.add(gv);

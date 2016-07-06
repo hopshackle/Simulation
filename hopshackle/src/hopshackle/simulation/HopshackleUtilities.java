@@ -145,4 +145,13 @@ public class HopshackleUtilities {
 		}
 		return retValue.toString();
 	}
+	
+	@SuppressWarnings("unchecked")
+	public static <A, B> List<B> convertList(List<A> input) {
+		List<B> retValue = new ArrayList<B>();
+		for (A item : input) {
+			retValue.add((B) item);
+		}
+		return retValue;
+	}
 }
