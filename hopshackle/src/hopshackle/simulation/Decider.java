@@ -24,11 +24,13 @@ public interface Decider<A extends Agent> {
 	
 	public void setName(String name);
 
-	public List<? extends GeneticVariable> getVariables();
+	public <V extends GeneticVariable<A>> List<V> getVariables();
 
-	public List<? extends ActionEnum<A>> getActions();
+	public <V extends ActionEnum<A>> List<V> getActions();
 
 	public ActionEnum<A> decideWithoutLearning(A decidingAgent, Agent contextAgent);
 
 	public ActionEnum<A> getOptimalDecision(A decidingAgent, Agent contextAgent);
+
+	public ActionEnum<A> makeDecision(A decidingAgent, Agent contextAgent);
 }

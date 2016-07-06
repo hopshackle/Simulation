@@ -12,7 +12,7 @@ public class HardCodedDecider extends BaseDecider {
 	}
 	
 	@Override 
-	protected ActionEnum makeDecision(Agent decidingAgent, Agent contextAgent) {
+	public ActionEnum makeDecision(Agent decidingAgent, Agent contextAgent) {
 		return hardCode;
 	}
 
