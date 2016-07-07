@@ -73,7 +73,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	
 	public void setIsFinal() {
 		isFinalState = true;
-		endScore = 0.0;
+		endScore = agent.getScore();
 		setState(State.NEXT_ACTION_TAKEN);
 	}
 	
