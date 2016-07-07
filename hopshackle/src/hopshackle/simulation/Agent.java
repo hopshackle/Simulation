@@ -100,7 +100,7 @@ public abstract class Agent extends Observable {
 		this.decider = decider;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "unchecked" })
 	public void decide() {
 		if (getDecider() == null)
 			errorLogger.severe("No decider in Agent.decide() for " + this.toString());

@@ -13,6 +13,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMinChance", "0.0");
 	protected boolean localDebug = true;
+	protected boolean generateLearningEvents = true;
 	protected double gamma = SimProperties.getPropertyAsDouble("Gamma", "0.95");
 	protected double alpha = SimProperties.getPropertyAsDouble("Alpha", "0.05");
 	protected double lambda = SimProperties.getPropertyAsDouble("Lambda", "0.001");
@@ -43,10 +44,13 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public void learnFromBatch(List<ExperienceRecord<A>> exp, double maxResult) {
-		learnFromBatch((ExperienceRecord<A>[]) exp.toArray(), maxResult);
+		@SuppressWarnings("unchecked")
+		ExperienceRecord<A>[] asArray = new ExperienceRecord[exp.size()];
+		for (int i = 0; i < exp.size(); i++)
+			asArray[i] = exp.get(i);
+		learnFromBatch(asArray, maxResult);
 	}
 
 	@Override
@@ -69,8 +73,10 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			if (chosenDuration > availableTime) {
 				action = null;
 			} else {
-				AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, this);
-				decidingAgent.eventDispatch(learningEvent);
+				if (generateLearningEvents) {
+					AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, this);
+					decidingAgent.eventDispatch(learningEvent);
+				}
 				decidingAgent.actionPlan.addActionToAllPlans(action);
 			}
 		}

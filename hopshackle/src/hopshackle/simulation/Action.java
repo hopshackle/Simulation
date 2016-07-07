@@ -113,12 +113,17 @@ public abstract class Action<A extends Agent> implements Delayed {
 		case PLANNED:
 			updateAgreement(a, true);
 			AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_AGREED, this);
-			a.eventDispatch(learningEvent);
+			eventDispatch(learningEvent);
 			break;
 		default:
 			a.log("Attempts to agree to Action: " + a + " irrelevant from " + currentState);
 			logger.warning("Attempts to agree to Action: " + a + " irrelevant from " + currentState);
 		}
+	}
+
+	protected void eventDispatch(AgentEvent learningEvent) {
+		Agent a = learningEvent.getAgent();
+		a.eventDispatch(learningEvent);
 	}
 
 	public void reject(A a) {
@@ -138,7 +143,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		case PLANNED:
 			updateAgreement(a, false);
 			AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_REJECTED, this);
-			a.eventDispatch(learningEvent);
+			eventDispatch(learningEvent);
 			a.actionPlan.actionQueue.remove(this);
 			break;
 		default:
@@ -221,7 +226,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		for (A a : mandatoryActors) {
 			if (getState() == State.CANCELLED) {
 				AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_CANCELLED, this);
-				a.eventDispatch(learningEvent);
+				eventDispatch(learningEvent);
 			}
 			a.actionPlan.actionCompleted(this);
 			a.maintenance();
@@ -230,7 +235,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 			if (agentAgreement.getOrDefault(a, false)) {
 				if (getState() == State.CANCELLED) {
 					AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_CANCELLED, this);
-					a.eventDispatch(learningEvent);
+					eventDispatch(learningEvent);
 				}
 				a.actionPlan.actionCompleted(this);
 				a.maintenance();
@@ -243,7 +248,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		allActors.addAll(optionalActors);
 		for (A actor : allActors) {		
 			AgentEvent learningEvent = new AgentEvent(actor, AgentEvent.Type.DECISION_STEP_COMPLETE, this);
-			actor.eventDispatch(learningEvent);		
+			eventDispatch(learningEvent);		
 		}
 		for (A actor : allActors) {
 			doNextDecision(actor);

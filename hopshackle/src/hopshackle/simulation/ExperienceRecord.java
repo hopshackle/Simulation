@@ -62,10 +62,11 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		if (nextER != null) {
 			nextER.constructFeatureTrace(this);
 			possibleActionsFromEndState = nextER.getPossibleActionsFromStartState();
+			endState = nextER.getStartState();
 			endScore = nextER.getStartScore();
 		} else {
 			possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
-			endScore = 0.0;
+			endScore = agent.getScore();
 		}
 		setState(State.NEXT_ACTION_TAKEN);
 	}
