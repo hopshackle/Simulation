@@ -17,7 +17,6 @@ public class ActionLearningTests {
 	TestERCollector erc = new TestERCollector();
 	TestTeacher teacher = new TestTeacher();
 	
-	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() {
 		w = new World();
@@ -29,7 +28,7 @@ public class ActionLearningTests {
 	//	decider.setTeacher(teacher);
 		erc.registerAgent(testAgent);
 		teacher.registerToERStream(erc);
-		decider = (Decider<TestAgent>) testAgent.getDecider();
+		decider = testAgent.getDecider();
 	}
 	
 	@Test
@@ -315,7 +314,7 @@ public class ActionLearningTests {
 		assertTrue(erc.agentKnown(child));
 	}
 
-	private void dispatchLearningEvent(TestAgent agent, Action actionToUse) {
+	private void dispatchLearningEvent(TestAgent agent, Action<TestAgent> actionToUse) {
 		AgentEvent learningEvent = new AgentEvent(agent, AgentEvent.Type.DECISION_STEP_COMPLETE, actionToUse);
 		agent.eventDispatch(learningEvent);
 	}

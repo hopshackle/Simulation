@@ -231,7 +231,7 @@ public class World extends Location {
 				maintenance();
 			}
 		};
-		if (this.calendar != null)
+		if (this.calendar != null && maintenancePeriod > 0)
 			calendar.setScheduledTask(worldMaintenanceTask, maintenancePeriod, maintenancePeriod);
 	}
 

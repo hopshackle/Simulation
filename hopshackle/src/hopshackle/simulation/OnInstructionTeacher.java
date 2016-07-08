@@ -12,7 +12,6 @@ public class OnInstructionTeacher<A extends Agent> extends Teacher<A> {
 
 	public void teach() {
 		List<ExperienceRecord<A>> newER = experienceRecordCollector.getAllExperienceRecords();
-//		System.out.println("Teaching after game with " + newER.size() + " records, and " + decidersToTeach.size() + " deciders");
 		Agent a = newER.get(0).getAgent();
 		for (Decider<A> d : decidersToTeach) {
 			d.learnFromBatch(newER, a.getMaxScore());

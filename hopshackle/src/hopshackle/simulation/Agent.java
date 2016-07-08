@@ -92,7 +92,8 @@ public abstract class Agent extends Observable {
 		genome = g;
 	}
 
-	public Decider<?> getDecider() {
+	@SuppressWarnings("unchecked")
+	public <V extends Agent> Decider<V> getDecider() {
 		return decider;
 	}
 

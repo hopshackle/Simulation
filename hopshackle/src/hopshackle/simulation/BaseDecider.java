@@ -12,7 +12,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected String name = "DEFAULT";
 	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMinChance", "0.0");
-	protected boolean localDebug = true;
+	protected boolean localDebug = false;
 	protected boolean generateLearningEvents = true;
 	protected double gamma = SimProperties.getPropertyAsDouble("Gamma", "0.95");
 	protected double alpha = SimProperties.getPropertyAsDouble("Alpha", "0.05");
