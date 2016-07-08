@@ -139,7 +139,6 @@ public abstract class Agent extends Observable {
 		inventory.clear();
 		clearMapKnowledge();
 
-		log("Closing log file.");
 		if (logger != null)
 			logger.close();
 	}
@@ -183,12 +182,13 @@ public abstract class Agent extends Observable {
 		knowledgeOfLocations.addLocation(newLocation);
 	}
 	public void log(String s) {
-		if(!debug && !debug_this) return;
+		if(!getDebugLocal()) return;
 		if (logger == null) {
 			logger = new EntityLog(toString(), world);
 			logger.setEntityBirth(birth);
 		}
 		logger.log(s);
+		if (isDead()) logger.close();
 	}
 
 	public int getGeneration() {
