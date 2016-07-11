@@ -3,26 +3,18 @@ package hopshackle.simulation.metric;
 import hopshackle.simulation.ConnectionFactory;
 
 import java.sql.*;
-import java.util.HashMap;
 import java.util.logging.Logger;
 
 public class MySQLDataSet implements DataSet {
 
-	private String databaseName;
-	private static HashMap<String, Connection> dbConnectionMap = new HashMap<String, Connection>();
 	private String tableName;
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
-	private Connection connection;
+	private static Connection connection;
 
-	public MySQLDataSet(String db, String table, String user, String password, String hostname) {
-		databaseName = db;
+	public MySQLDataSet(String table) {
 		tableName = table;
-		if (dbConnectionMap.containsKey(databaseName)) {
-			connection = dbConnectionMap.get(databaseName);
-		} else {
-			connection = ConnectionFactory.getConnection(databaseName, user, password, hostname, true);
-			dbConnectionMap.put(databaseName, connection);
-		}
+		if (connection == null)
+			connection = ConnectionFactory.getConnection();
 	}
 
 	public ResultSet getResultSet(String sqlQuery) {

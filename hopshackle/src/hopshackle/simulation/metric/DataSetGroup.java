@@ -1,5 +1,7 @@
 package hopshackle.simulation.metric;
 
+import hopshackle.simulation.SimProperties;
+
 import java.io.*;
 import java.util.ArrayList;
 
@@ -47,7 +49,7 @@ public class DataSetGroup {
 					dsName = br.readLine();
 
 					if (dsName != null) 
-						temp.add(new MySQLDataSet("NSP", dsName, "root", "Metternich", ""));
+						temp.add(new MySQLDataSet(dsName));
 				} while (dsName != null);
 
 				br.close();

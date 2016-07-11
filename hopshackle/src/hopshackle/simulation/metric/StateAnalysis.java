@@ -73,7 +73,7 @@ public class StateAnalysis {
 		for (DataSetGroup dsg : dsgArray) {
 			for (DataSet ds : dsg.getArrayList()) {
 				String tableName = "states_" + ds.toString();
-				MySQLDataSet dataset = new MySQLDataSet("NSP", tableName, "root", "Metternich", "");
+				MySQLDataSet dataset = new MySQLDataSet(tableName);
 				ResultSet rs = dataset.getResultSet("SELECT * FROM &Table where visited > " + MIN_VISITED + ";");
 
 				for (String stateText : CLASS) {

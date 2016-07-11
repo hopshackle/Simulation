@@ -1,6 +1,6 @@
 package hopshackle.simulation.test;
 import static org.junit.Assert.*;
-import hopshackle.simulation.ConnectionFactory;
+import hopshackle.simulation.*;
 import hopshackle.simulation.metric.*;
 
 import java.sql.*;
@@ -13,6 +13,9 @@ public class MySQLMetricTest {
 
 	@Before
 	public void setUp() throws Exception {
+		SimProperties.setProperty("DatabaseSchema", "junit");
+		SimProperties.setProperty("DatabasePassword", "Metternich");
+		SimProperties.setProperty("DatabaseUser", "root");
 		con = ConnectionFactory.getConnection("junit", "root", "Metternich", "", true);
 		try {
 			Statement st = con.createStatement();
@@ -40,7 +43,7 @@ public class MySQLMetricTest {
 		String sqlQuery = "SELECT MAX(testInt) FROM &Table";
 		MySQLMetric testMetric = new MySQLMetric("TestMetric", sqlQuery);
 		
-		MySQLDataSet testDataSet = new MySQLDataSet("junit", "MySQLMetricTest", "root", "Metternich", "");
+		MySQLDataSet testDataSet = new MySQLDataSet("MySQLMetricTest");
 		
 		assertTrue(testMetric.toString().equals("TestMetric"));
 		assertEquals(testMetric.getResult(testDataSet), 5.0, 0.0001);
@@ -51,7 +54,7 @@ public class MySQLMetricTest {
 		String sqlQuery = "SELECT TestStr FROM MySQLMetricTest";
 		MySQLMetric testMetric = new MySQLMetric("TestMetric", sqlQuery);
 		
-		MySQLDataSet testDataSet = new MySQLDataSet("junit", "MySQLMetricTest", "root", "Metternich", "");
+		MySQLDataSet testDataSet = new MySQLDataSet("MySQLMetricTest");
 		
 		assertTrue(testMetric.toString().equals("TestMetric"));
 		assertEquals(testMetric.getResult(testDataSet), 0.0, 0.0001);
