@@ -4,17 +4,14 @@ import java.util.*;
 
 public class OnInstructionTeacher<A extends Agent> extends Teacher<A> {
 	
-	private List<List<ExperienceRecord<A>>> pastData = new ArrayList<List<ExperienceRecord<A>>>();
-	private int pastDataLimit;
+	protected List<List<ExperienceRecord<A>>> pastData = new ArrayList<List<ExperienceRecord<A>>>();
+	protected int pastDataLimit;
 	
 	public OnInstructionTeacher() {
 		this(0);
 	}
 	public OnInstructionTeacher(int pastDataToKeep) {
 		pastDataLimit = pastDataToKeep;
-		for (int i = 0; i <=pastDataLimit; i++) {
-			pastData.add(null);
-		}
 	}
 	
 	@Override
@@ -23,23 +20,26 @@ public class OnInstructionTeacher<A extends Agent> extends Teacher<A> {
 		// we wait for explicit instructions
 	}
 
-	public void teach() {
+	protected void updateData() {
 		List<ExperienceRecord<A>> newER = experienceRecordCollector.getAllExperienceRecords();
-			pastData.add(newER);
-			if (pastData.size() > pastDataLimit+1) {
-				pastData.remove(0);
-			}
-		List<ExperienceRecord<A>> allDataForTraining = getLastNDataSets();
-		Agent a = newER.get(0).getAgent();
-		for (Decider<A> d : decidersToTeach) {
-			d.learnFromBatch(allDataForTraining, a.getMaxScore());
+		pastData.add(newER);
+		if (pastData.size() > pastDataLimit+1) {
+			pastData.remove(0);
 		}
 		experienceRecordCollector.clearAllExperienceRecord();
 	}
-	private List<ExperienceRecord<A>> getLastNDataSets() {
+
+	public void teach() {
+		updateData();
+		List<ExperienceRecord<A>> allDataForTraining = getLastNDataSets();
+		Agent a = allDataForTraining.get(0).getAgent();
+		for (Decider<A> d : decidersToTeach) {
+			d.learnFromBatch(allDataForTraining, a.getMaxScore());
+		}
+	}
+	protected List<ExperienceRecord<A>> getLastNDataSets() {
 		List<ExperienceRecord<A>> retValue = pastData.get(0);
-		for (int i = 1; i <= pastDataLimit; i++) {
-			if (pastData.get(i) == null) break;
+		for (int i = 1; i <= pastDataLimit && i < pastData.size(); i++) {
 			retValue.addAll(pastData.get(i));
 		}
 		return retValue;
