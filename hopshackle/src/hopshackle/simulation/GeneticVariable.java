@@ -11,7 +11,7 @@ public interface GeneticVariable<A extends Agent> {
 	public double getValue(A a1, Artefact a2);
 	// If it it the context of this Agent a1 with another agent a2
 		
-	public double getValue(LookaheadState<A> forwardState);
+	public double getValue(State<A> forwardState);
 	
 	public String getDescriptor();
 	

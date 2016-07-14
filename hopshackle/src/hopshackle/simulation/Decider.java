@@ -2,25 +2,25 @@ package hopshackle.simulation;
 
 import java.util.List;
 
-public interface Decider<A extends Agent> {
+public interface Decider<A extends Agent, S extends State<A>> {
 
 	public double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent);
 
-	public void learnFrom(ExperienceRecord<A> exp, double maxResult);
+	public void learnFrom(ExperienceRecord<A, S> exp, double maxResult);
 
-	public void learnFromBatch(List<ExperienceRecord<A>> exp, double maxResult);
+	public void learnFromBatch(List<ExperienceRecord<A, S>> exp, double maxResult);
 	
-	public void learnFromBatch(ExperienceRecord<A>[] exp, double maxResult);
+	public void learnFromBatch(ExperienceRecord<A, S>[] exp, double maxResult);
 
 	public Action<A> decide(A decidingAgent);
 
 	public Action<A> decide(A decidingAgent, Agent contextAgent);
 
-	public double[] getCurrentState(A decidingAgent, Agent contextAgent, Action<A> action);
+	public S getCurrentState(A decidingAgent, Agent contextAgent, Action<A> action);
 
 	public List<ActionEnum<A>> getChooseableOptions(A a, Agent a2);
 
-	public Decider<A> crossWith(Decider<A> decider);
+	public Decider<A, S> crossWith(Decider<A, S> decider);
 	
 	public void setName(String name);
 

@@ -1,11 +1,9 @@
 package hopshackle.simulation;
 
-import java.util.*;
+import java.util.List;
 
-public interface State {
+public interface State<A extends Agent> {
 	
-	public List<? extends StateAction> getValidActions();
-	
-	public State applyAction(StateAction action);
+	public double[] asArray(List<GeneticVariable<A>> variables);
 
 }

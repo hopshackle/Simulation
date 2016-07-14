@@ -54,26 +54,4 @@ public class ExperienceRecordTest {
 		assertEquals(er.getPossibleActionsFromStartState().size(), 2);
 	}
 
-	@Test
-	public void experienceRecordGetValuesReturnsJustThoseGenVarValuesRequired() {
-		experienceRecordInitialisation();
-		List<GeneticVariable<BasicAgent>> reducedList = new ArrayList<GeneticVariable<BasicAgent>>();
-		reducedList.add(BasicVariables.FOOD_LEVEL);
-		reducedList.add(BasicVariables.FOREST);
-		reducedList.add(BasicVariables.AGE);
-
-		double[][] values = er.getValues(reducedList);
-		int foodIndex = varList.indexOf(BasicVariables.FOOD_LEVEL);
-		int forestIndex = varList.indexOf(BasicVariables.FOREST);
-		int ageIndex = varList.indexOf(BasicVariables.AGE);
-		assertEquals(values.length, 2);
-		assertEquals(values[0].length, 3);
-		assertEquals(values[0][0], foodIndex, 0.01);
-		assertEquals(values[0][1], forestIndex, 0.01);
-		assertEquals(values[0][2], ageIndex, 0.01);
-		assertEquals(values[1][0], Math.sqrt(foodIndex), 0.01);
-		assertEquals(values[1][1], Math.sqrt(forestIndex), 0.01);
-		assertEquals(values[1][2], Math.sqrt(ageIndex), 0.01);
-	}
-
 }

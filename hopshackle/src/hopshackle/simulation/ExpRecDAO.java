@@ -1,6 +1,6 @@
 package hopshackle.simulation;
 
-public class ExpRecDAO implements DAO<ExperienceRecord<?>> {
+public class ExpRecDAO implements DAO<ExperienceRecord<?, ?>> {
 
 	@Override
 	public String getTableCreationSQL(String tableSuffix) {
@@ -29,7 +29,7 @@ public class ExpRecDAO implements DAO<ExperienceRecord<?>> {
 	}
 
 	@Override
-	public String getValues(ExperienceRecord<?> er) {
+	public String getValues(ExperienceRecord<?, ?> er) {
 		
 		return String.format(" (%d, %.5f, %.5f, %.5f, '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
 				er.getAgent().getUniqueID(),

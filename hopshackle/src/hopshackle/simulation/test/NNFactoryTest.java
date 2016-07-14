@@ -1,7 +1,7 @@
 package hopshackle.simulation.test;
 
 import static org.junit.Assert.*;
-import hopshackle.simulation.NeuralDecider;
+import hopshackle.simulation.NeuralDeciderSS;
 
 import org.encog.ml.data.basic.BasicMLData;
 import org.encog.neural.NeuralNetworkError;
@@ -19,7 +19,7 @@ public class NNFactoryTest {
 	@Test
 	public void threeLayer() {
 		int[] layers = {3, 2, 1};
-		BasicNetwork n = NeuralDecider.newFFNetwork(layers);
+		BasicNetwork n = NeuralDeciderSS.newFFNetwork(layers);
 		
 		assertTrue (n instanceof BasicNetwork);
 		assertEquals(n.getLayerCount(), 3, 0);

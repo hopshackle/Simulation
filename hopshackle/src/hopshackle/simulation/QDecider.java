@@ -2,22 +2,22 @@ package hopshackle.simulation;
 
 import java.util.List;
 
-public abstract class QDecider<A extends Agent> extends BaseDecider<A> {
+public abstract class QDecider<A extends Agent, S extends State<A>> extends BaseDecider<A, S> {
 
 	public QDecider(List<? extends ActionEnum<A>> actions,	List<GeneticVariable<A>> variables) {
 		super(actions, variables);
 	}
 
-	public abstract double valueOption(ActionEnum<A> option, double[] state);
+	public abstract double valueOption(ActionEnum<A> option, S state);
 	
-	protected double valueOfBestAction(ExperienceRecord<A> exp) {
+	protected double valueOfBestAction(ExperienceRecord<A, S> exp) {
 		if (exp.isInFinalState()) 
 			return 0.0;
 		ActionEnum<A> bestAction = getBestActionFrom(exp.getPossibleActionsFromEndState(), exp.getEndState());
 		return valueOption(bestAction, exp.getEndState());
 	}
 		
-	protected ActionEnum<A> getBestActionFrom(List<ActionEnum<A>> possActions, double[] state) {
+	protected ActionEnum<A> getBestActionFrom(List<ActionEnum<A>> possActions, S state) {
 		double bestValue = -Double.MAX_VALUE;
 		ActionEnum<A> bestAction = null;
 		for (ActionEnum<A> option : possActions) {

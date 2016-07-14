@@ -104,6 +104,7 @@ public final class AStarPathFinder {
 	}
 
 	private static double calculateLocationHeuristic(Location locationToCost, Location parentLocation, GoalMatcher matcher) {
+		// TODO: Need to implement before A* actually does what it says on the tin.
 		return 0.0;
 	}
 

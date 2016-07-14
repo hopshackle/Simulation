@@ -8,7 +8,7 @@ import org.encog.neural.data.basic.*;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
-public class NeuralDecider<A extends Agent> extends QDecider<A> {
+public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>> {
 
 	protected Hashtable<String, BasicNetwork> brain;
 	protected static double temperature;
@@ -22,7 +22,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	protected double baseMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum", "0.0");
 	private double overrideLearningCoefficient, overrideMomentum; 
 
-	public NeuralDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A>> variables){
+	public NeuralDeciderSS(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A>> variables){
 		super(actions, variables);
 		maxNoise = SimProperties.getPropertyAsDouble("NeuralNoise", "0.20");
 		// Each NeuralDecider will have a brain consisting of:
@@ -80,7 +80,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent) {
-		double[] state = getCurrentState(decidingAgent, contextAgent, null);
+		SimpleState<A> state = getCurrentState(decidingAgent, contextAgent, null);
 		double retValue = valueOption(option, state);
 		if (nd_debug)
 			decidingAgent.log("Option " + option.toString() + " has base Value of " + retValue);
@@ -88,13 +88,13 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	}
 	
 	@Override
-	public double valueOption(ActionEnum<A> option, double[] state) {
+	public double valueOption(ActionEnum<A> option, SimpleState<A> state) {
 		BasicNetwork brainSection = brain.get(option.toString());
 		if (brainSection == null) {
 			logger.severe("Action reference for " + option.toString() + " not found in Brain");
 			return -1.0;
 		}
-		BasicNeuralData inputData = new BasicNeuralData(state);
+		BasicNeuralData inputData = new BasicNeuralData(state.asArray(variableSet));
 		double retValue = brainSection.compute(inputData).getData()[0];
 		temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		return retValue += (1.0 + (Math.random()-0.5)*temperature*maxNoise);
@@ -142,14 +142,14 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	}
 
 
-	public static <A extends Agent> NeuralDecider<A> createNeuralDecider(File saveFile) {
-		NeuralDecider<A> retValue = null;
+	public static <A extends Agent> NeuralDeciderSS<A> createNeuralDecider(File saveFile) {
+		NeuralDeciderSS<A> retValue = null;
 		try {
 			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(saveFile));
 
 			ArrayList actionSet = (ArrayList) ois.readObject();
 			ArrayList variableSet = (ArrayList) ois.readObject();
-			retValue = new NeuralDecider<A>(actionSet, variableSet);
+			retValue = new NeuralDeciderSS<A>(actionSet, variableSet);
 
 			BasicNetwork[] actionNN = new BasicNetwork[actionSet.size()];
 			for (int n=0; n<actionSet.size(); n++)
@@ -200,7 +200,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		} 
 	}
 
-	protected void updateBrain(NeuralDecider<A> parent) {
+	protected void updateBrain(NeuralDeciderSS<A> parent) {
 		this.brain = parent.brain;
 		setName(parent.toString());
 	}
@@ -235,8 +235,8 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	 *  as long as the action and variable Sets are identical
 	 *  (or at least have the same number of items across the two Deciders)
 	 */
-	public Decider<A> crossWith(Decider<A> otherDecider) {
-		if (!(otherDecider instanceof NeuralDecider))
+	public Decider<A, SimpleState<A>> crossWith(Decider<A, SimpleState<A>> otherDecider) {
+		if (!(otherDecider instanceof NeuralDeciderSS))
 			return super.crossWith(otherDecider);
 		if (this.variableSet.size() != otherDecider.getVariables().size())
 			return super.crossWith(otherDecider);
@@ -244,14 +244,14 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			return super.crossWith(otherDecider);
 		if (this == otherDecider) return this;
 
-		NeuralDecider<A> retValue = new NeuralDecider<A>(actionSet, variableSet);
+		NeuralDeciderSS<A> retValue = new NeuralDeciderSS<A>(actionSet, variableSet);
 		BasicNetwork[] newBrain = new BasicNetwork[actionSet.size()];
 		for (int n = 0; n < actionSet.size(); n++) {
 			// 50:50 chance for each action which Network we take
 			if (Math.random() < 0.5) {
 				newBrain[n] = this.brain.get(actionSet.get(n).toString());
 			} else {
-				newBrain[n] = ((NeuralDecider<A>)otherDecider).brain.get(actionSet.get(n).toString());
+				newBrain[n] = ((NeuralDeciderSS<A>)otherDecider).brain.get(actionSet.get(n).toString());
 			}
 		}
 
@@ -296,7 +296,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	}
 	
 	@Override
-	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A, SimpleState<A>> exp, double maxResult) {
 		BasicNetwork brainToTrain = brain.get(exp.getActionTaken().toString());
 		if (exp.getVariables().size() != brainToTrain.getInputCount()) {
 			logger.severe("Input data in ExperienceRecord not the same as input neurons " 
@@ -313,7 +313,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		if (output > 1.0) output = 1.0;
 		if (output < -1.0) output = -1.0;
 		outputValues[0][0] = output;
-		double[] subLoop = exp.getStartState();
+		double[] subLoop = exp.getStartState().asArray(variableSet);
 		for (int n=0; n<subLoop.length; n++) {
 			inputValues[0][n] = subLoop[n];
 		}
@@ -323,5 +323,10 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		BasicNeuralDataSet trainingData = new BasicNeuralDataSet(inputValues, outputValues);
 		Backpropagation trainer = new Backpropagation(brainToTrain, trainingData, modifiedLearningCoefficient, baseMomentum);
 		trainer.iteration();
+	}
+
+	@Override
+	public SimpleState<A> getCurrentState(A decidingAgent, Agent contextAgent, Action<A> action) {
+		return new SimpleState<A>(decidingAgent, variableSet);
 	}
 }

@@ -22,7 +22,7 @@ public abstract class LookaheadDecider<A extends Agent, B extends LookaheadState
 	
 	public double[] getState(LookaheadState<A> ps, List<GeneticVariable<A>> variableSet) {
 		double[] inputs = new double[variableSet.size()];
-		for (int i = 0; i < variableSet.size(); i ++) {
+		for (int i = 0; i < variableSet.size(); i++) {
 			GeneticVariable<A> gv = variableSet.get(i);
 			inputs[i] = gv.getValue(ps);
 		}

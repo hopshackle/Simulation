@@ -2,7 +2,7 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
+public class GeneralLinearQDecider<A extends Agent, S extends State<A>> extends QDecider<A, S> {
 
 	protected double[][] weights;
 	private int variableLength;
@@ -40,7 +40,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 	}
 
 	@Override
-	public double valueOption(ActionEnum<A> option, double[] state) {
+	public double valueOption(ActionEnum<A> option, S state) {
 		int optionIndex = actionSet.indexOf(option);
 		if (optionIndex == -1) logger.severe(option + " not found in actionSet in GLQDecider.valueOption");
 		double retValue = 0.0;

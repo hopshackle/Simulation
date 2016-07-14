@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-public abstract class BaseDecider<A extends Agent> implements Decider<A> {
+public abstract class BaseDecider<A extends Agent, S extends State<A>> implements Decider<A, S> {
 
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	protected List<ActionEnum<A>> actionSet = new ArrayList<ActionEnum<A>>();
@@ -31,23 +31,17 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 
 	@Override
-	public abstract double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent);
-	
-	@Override
-	public abstract void learnFrom(ExperienceRecord<A> exp, double maxResult);
-
-	@Override
-	public void learnFromBatch(ExperienceRecord<A>[] exp, double maxResult) {
+	public void learnFromBatch(ExperienceRecord<A, S>[] exp, double maxResult) {
 		// A default method. Override this for efficiency with batch data.
-		for (ExperienceRecord<A> er : exp) {
+		for (ExperienceRecord<A, S> er : exp) {
 			learnFrom(er, maxResult);
 		}
 	}
 	
 	@Override
-	public void learnFromBatch(List<ExperienceRecord<A>> exp, double maxResult) {
+	public void learnFromBatch(List<ExperienceRecord<A, S>> exp, double maxResult) {
 		@SuppressWarnings("unchecked")
-		ExperienceRecord<A>[] asArray = new ExperienceRecord[exp.size()];
+		ExperienceRecord<A, S>[] asArray = new ExperienceRecord[exp.size()];
 		for (int i = 0; i < exp.size(); i++)
 			asArray[i] = exp.get(i);
 		learnFromBatch(asArray, maxResult);
@@ -245,16 +239,6 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 
 	@Override
-	public double[] getCurrentState(A decidingAgent, Agent contextAgent, Action<A> action) {
-		double[] inputs = new double[variableSet.size()];
-		for (int i = 0; i < variableSet.size(); i ++) {
-			GeneticVariable<A> gv = variableSet.get(i);
-			inputs[i] = gv.getValue(decidingAgent, action);
-		}
-		return inputs;
-	}
-
-	@Override
 	public ActionEnum<A> decideWithoutLearning(A decidingAgent, Agent contextAgent) {
 		return makeDecision(decidingAgent, contextAgent);
 	}
@@ -285,7 +269,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	 *  Default behaviour is to return the Decider on which the call is made
 	 */
 	@Override
-	public Decider<A> crossWith(Decider<A> careerDecider) {
+	public Decider<A, S> crossWith(Decider<A, S> otherDecider) {
 		return this;
 	}
 

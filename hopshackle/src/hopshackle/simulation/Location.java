@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
-public class Location implements Persistent, State {
+public class Location implements Persistent {
 
 	private static AtomicLong idFountain = new AtomicLong(1);
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
@@ -71,14 +71,6 @@ public class Location implements Persistent, State {
 
 	public List<Location> getAccessibleLocations() {
 		return HopshackleUtilities.cloneList(accessibleLocations);
-	}
-	@Override
-	public List<StateAction> getValidActions() {
-		return new ArrayList<StateAction>();
-	}
-	@Override
-	public Location applyAction(StateAction action) {
-		return this;
 	}
 
 	public boolean isChild(Location l) {

@@ -2,17 +2,21 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class ExperienceRecord<A extends Agent> implements Persistent {
+/* S indicates the State representation to use for start and end states
+ * 
+ */
+public class ExperienceRecord<A extends Agent, S extends State<A>> implements Persistent {
 	
 	public enum State {
 		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
 	}
 
 	private static boolean dbStorage = SimProperties.getProperty("ExperienceRecordDBStorage", "false").equals("true");
-	private static DatabaseWriter<ExperienceRecord<?>> writer = new DatabaseWriter<ExperienceRecord<?>>(new ExpRecDAO());
+	private static DatabaseWriter<ExperienceRecord<?, ?>> writer = new DatabaseWriter<ExperienceRecord<?, ?>>(new ExpRecDAO());
 	private static double lambda, gamma, traceCap;
 	static {refreshProperties();}
-	protected double[] startState, endState;
+	protected S startState, endState;
+	protected double[] startStateAsArray;
 	protected double[] featureTrace;
 	protected Action<A> actionTaken;
 	protected List<ActionEnum<A>> possibleActionsFromEndState, possibleActionsFromStartState;
@@ -28,37 +32,48 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		traceCap = SimProperties.getPropertyAsDouble("QTraceMaximum", "10.0");
 	}
 
-	public ExperienceRecord(Agent a, List<GeneticVariable<A>> var, double[] state, Action<A> action, 
+	public ExperienceRecord(Agent a, List<GeneticVariable<A>> var, S state, Action<A> action, 
 			List<ActionEnum<A>> possibleActions) {
+		variables = HopshackleUtilities.cloneList(var);
 		actionTaken = action;
 		startState = state;
-		featureTrace = state;
-		variables = HopshackleUtilities.cloneList(var);
+		startStateAsArray = extractFeaturesFromState(state);
+		featureTrace = startStateAsArray;
 		possibleActionsFromStartState = HopshackleUtilities.cloneList(possibleActions);
 		setState(State.DECISION_TAKEN);
 		startScore = a.getScore();
 		agent = a;
 	}
 
-	private void constructFeatureTrace(ExperienceRecord<A> previousER) {
-		if (previousER.featureTrace.length != startState.length) {
-			featureTrace = startState;
+	private double[] extractFeaturesFromState(S state) {
+		double[] retValue = new double[variables.size()];		// start Values, then end values
+		int count = 0;
+		for (GeneticVariable<A> gv : variables) {
+				retValue[count] = gv.getValue(state);
+			count++;
+		}
+		return retValue;
+	}
+
+	private void constructFeatureTrace(ExperienceRecord<A, S> previousER) {
+		if (previousER.featureTrace.length != startStateAsArray.length) {
+			featureTrace = startStateAsArray;
 		} else {
-			featureTrace = new double[startState.length];
-			for (int i = 0; i < startState.length; i++) {
-				featureTrace[i] = gamma * lambda * previousER.featureTrace[i] + startState[i];
+			featureTrace = new double[startStateAsArray.length];
+			for (int i = 0; i < startStateAsArray.length; i++) {
+				featureTrace[i] = gamma * lambda * previousER.featureTrace[i] + startStateAsArray[i];
 				if (featureTrace[i] > traceCap)	featureTrace[i] = traceCap;
 			}
 		}
 	}
 	
-	public void updateWithResults(double reward, double[] newState) {
+	public void updateWithResults(double reward, S newState) {
 		endState = newState;
 		this.reward = reward;
 		setState(State.ACTION_COMPLETED);
 	}
 	
-	public void updateNextActions(ExperienceRecord<A> nextER) {
+	public void updateNextActions(ExperienceRecord<A, S> nextER) {
 		if (nextER != null) {
 			nextER.constructFeatureTrace(this);
 			possibleActionsFromEndState = nextER.getPossibleActionsFromStartState();
@@ -76,29 +91,12 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		endScore = agent.getScore();
 		setState(State.NEXT_ACTION_TAKEN);
 	}
-	
-	public double[][] getValues(List<GeneticVariable<A>> gvList) {
-		double[][] retValue = new double[2][gvList.size()];		// start Values, then end values
-		int count = 0;
-		for (GeneticVariable<A> gv : gvList) {
-			int index = variables.indexOf(gv);
-			if (index > -1) {
-				retValue[0][count] = startState[index];
-				retValue[1][count] = endState[index];
-			} else {
-				retValue[0][count] = 0.0;
-				retValue[1][count] = 0.0;
-			}
-			count++;
-		}
-		return retValue;
-	}
 
-	public double[] getStartState() {
+	public S getStartState() {
 		return startState;
 	}
 
-	public double[] getEndState() {
+	public S getEndState() {
 		return endState;
 	}
 	

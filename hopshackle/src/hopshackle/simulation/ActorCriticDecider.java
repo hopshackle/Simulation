@@ -7,7 +7,7 @@ import org.encog.neural.data.basic.*;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
 
-public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
+public class ActorCriticDecider<A extends Agent, S extends State<A>> extends NeuralDeciderSS<A, S> {
 
 	protected BasicNetwork stateEvaluationBrain;
 	private static double gamma = SimProperties.getPropertyAsDouble("Gamma", "0.99");
@@ -23,7 +23,7 @@ public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
 	 *  as long as the action and variable Sets are identical
 	 *  (or at least have the same number of items across the two Deciders)
 	 */
-	public Decider<A> crossWith(Decider<A> otherDecider) {
+	public Decider<A, S> crossWith(Decider<A, S> otherDecider) {
 		if (!(otherDecider instanceof ActorCriticDecider))
 			return super.crossWith(otherDecider);
 		if (this.variableSet.size() != otherDecider.getVariables().size())
@@ -32,7 +32,7 @@ public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
 			return super.crossWith(otherDecider);
 		if (this == otherDecider) return this;
 
-		ActorCriticDecider<A> retValue = new ActorCriticDecider<A>(actionSet, variableSet);
+		ActorCriticDecider<A, S> retValue = new ActorCriticDecider<A, S>(actionSet, variableSet);
 		BasicNetwork[] newBrain = new BasicNetwork[actionSet.size()];
 		BasicNetwork newStateBrain = null;
 		for (int n = 0; n < actionSet.size(); n++) {
@@ -40,13 +40,13 @@ public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
 			if (Math.random() < 0.5) {
 				newBrain[n] = (BasicNetwork) this.brain.get(actionSet.get(n).toString()).clone();
 			} else {
-				newBrain[n] = (BasicNetwork) ((NeuralDecider<A>)otherDecider).brain.get(actionSet.get(n).toString()).clone();
+				newBrain[n] = (BasicNetwork) ((NeuralDeciderSS<A, S>)otherDecider).brain.get(actionSet.get(n).toString()).clone();
 			}
 
 			if (Math.random() < 0.5) {
 				newStateBrain = (BasicNetwork) this.stateEvaluationBrain.clone();
 			} else {
-				newStateBrain = (BasicNetwork) ((ActorCriticDecider<A>)otherDecider).stateEvaluationBrain.clone();
+				newStateBrain = (BasicNetwork) ((ActorCriticDecider<A, S>)otherDecider).stateEvaluationBrain.clone();
 			}
 		}
 
@@ -97,7 +97,7 @@ public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
 	}
 	
 	@Override
-	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A, S> exp, double maxResult) {
 		BasicNetwork brainToTrain = brain.get(exp.getActionTaken().toString());
 		if (exp.getVariables().size() != brainToTrain.getInputCount()) {
 			logger.severe("Input data in ExperienceRecord not the same as input neurons " 
@@ -110,7 +110,7 @@ public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
 		double output = exp.getReward()/maxResult;
 		double modifiedLearningCoefficient = baseLearningCoefficient / (double)brain.size() / getPercentageOfOption(exp.getActionTaken().getType());
 
-		BasicNeuralData endState = new BasicNeuralData(exp.getEndState());
+		BasicNeuralData endState = new BasicNeuralData(exp.getEndState().asArray(variableSet));
 		double currentValue = (stateEvaluationBrain.compute(endState)).getData()[0];
 		if (exp.isInFinalState()) currentValue = 0.0;
 		double updatedStartValue = output + gamma * currentValue;
@@ -122,7 +122,7 @@ public class ActorCriticDecider<A extends Agent> extends NeuralDecider<A> {
 		double[][] inputValuesForStateBrain = new double[1][stateEvaluationBrain.getInputCount()];
 
 		outputValues[0][0] = updatedStartValue;
-		double[] subLoop = exp.getStartState();
+		double[] subLoop = exp.getStartState().asArray(variableSet);
 		for (int n=0; n<subLoop.length; n++) {
 			inputValues[0][n] = subLoop[n];
 			inputValuesForStateBrain[0][n] = subLoop[n];
