@@ -243,9 +243,9 @@ public class BasicMarriageTest {
 		femaleAgent2.setDecider(baseDecider);
 		femaleAgent2.decide();	
 		ExperienceRecord<BasicAgent> initialFemaleER = teacher.getExperienceRecords(femaleAgent2).get(0);
-		assertTrue(initialFemaleER.getState() == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(initialFemaleER.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
 		maleAgent1.setDecider(baseDecider);
-		assertTrue(initialFemaleER.getState() == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(initialFemaleER.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
 		BasicAction lookForPartner = new LookForPartner(maleAgent1);
 		world.setCurrentTime(600l); // otherwise we have time to REST again
 		run(lookForPartner);
@@ -260,8 +260,8 @@ public class BasicMarriageTest {
 		// moves the earlier ER to NEXT_ACTION_TAKEN
 		// The same thing happens with the Marry action: Marry.run() should move to ACTION_COMPLETED
 		// Then agreement to the next male action takes us to NEXT_ACTION_TAKEN
-		assertTrue(initialFemaleER.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
-		assertTrue(femaleMarryER.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
+		assertTrue(initialFemaleER.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
+		assertTrue(femaleMarryER.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
 		BasicAction sa = (BasicAction) maleAgent1.getActionPlan().getNextAction();
 		assertEquals(sa.getAllConfirmedParticipants().size(), 2);
 		assertEquals(teacher.getExperienceRecords(femaleAgent2).size(), 3); 
@@ -270,19 +270,19 @@ public class BasicMarriageTest {
 		ExperienceRecord<BasicAgent> femaleRestER = teacher.getExperienceRecords(femaleAgent2).get(2);
 		assertTrue(maleER.getActionTaken() == sa);
 		assertTrue(femaleRestER.getActionTaken() == sa);
-		assertTrue(maleER.getState() == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(maleER.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
 		assertEquals(maleER.getPossibleActionsFromStartState().size(), 2);
-		assertTrue(maleER.getState() == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(maleER.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
 		assertEquals(femaleMarryER.getPossibleActionsFromStartState().size(), 1);
-		assertTrue(femaleRestER.getState() == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(femaleRestER.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
 		maleAgent1.addHealth(-2.0);
 		femaleAgent2.addHealth(-4.0);
 		run(sa);
 		assertEquals(teacher.getExperienceRecords(femaleAgent2).size(), 4); // Rest 
 		ExperienceRecord<BasicAgent> femaleNewRestER = teacher.getExperienceRecords(femaleAgent2).get(3);
-		assertTrue(maleER.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
-		assertTrue(femaleRestER.getState() == ExperienceRecord.State.NEXT_ACTION_TAKEN);
-		assertTrue(femaleNewRestER.getState() == ExperienceRecord.State.DECISION_TAKEN);
+		assertTrue(maleER.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
+		assertTrue(femaleRestER.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
+		assertTrue(femaleNewRestER.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
 		assertEquals(maleER.getReward(), -2.0, 0.01);
 		assertEquals(femaleRestER.getReward(), -4.0, 0.01);	
 		assertTrue(maleER.getStartState() != femaleRestER.getStartState());

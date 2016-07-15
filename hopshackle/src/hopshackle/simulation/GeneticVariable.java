@@ -1,17 +1,9 @@
 package hopshackle.simulation;
 
-public interface GeneticVariable<A extends Agent> {
+public interface GeneticVariable<A extends Agent, S extends State<A>> {
 
-	public double getValue(A a1, Agent a2);
-	// If it it the context of this Agent a1 with another agent a2
-		
-	public double getValue(A a1, Action<A> a2);
-	// If it it the context of this Agent a1 with another agent a2
-		
-	public double getValue(A a1, Artefact a2);
-	// If it it the context of this Agent a1 with another agent a2
-		
-	public double getValue(State<A> forwardState);
+	public double getValue(A agent);
+	public double getValue(State<A> state);
 	
 	public String getDescriptor();
 	

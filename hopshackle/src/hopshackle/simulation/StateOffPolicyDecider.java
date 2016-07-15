@@ -2,13 +2,13 @@ package hopshackle.simulation;
 
 import java.util.ArrayList;
 
-public class StateOffPolicyDecider extends StateDecider {
+public abstract class StateOffPolicyDecider<A extends Agent, S extends State<A>> extends StateDecider<A, S> {
 
-	private StateGreedyDecider GreedyDecider;
+	private StateGreedyDecider<A, S> GreedyDecider;
 
-	public StateOffPolicyDecider(ArrayList<ActionEnum> actions,	ArrayList<GeneticVariable> variables) {
+	public StateOffPolicyDecider(ArrayList<ActionEnum<A>> actions,	ArrayList<GeneticVariable<A, S>> variables) {
 		super(actions, variables);
-		GreedyDecider = new StateGreedyDecider(actions, variables);
+		GreedyDecider = new StateGreedyDecider<A, S>(actions, variables);
 	}
 
 	@Override
@@ -38,8 +38,8 @@ public class StateOffPolicyDecider extends StateDecider {
 		if (bestAction.equals(exp.getActionTaken())) {
 			super.learnFrom(exp, maxResult);
 		} else {
-			HopshackleState startState = getState(exp.getStartState());
-			HopshackleState endState = getState(exp.getEndState());
+			HopshackleState startState = getStateAsArray(exp.getStartState());
+			HopshackleState endState = getStateAsArray(exp.getEndState());
 			startState.addExperience(exp.getActionTaken().actionType, endState, exp.getReward());
 			// but we omit the updateStateValue section
 		}

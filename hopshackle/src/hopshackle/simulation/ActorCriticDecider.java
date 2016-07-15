@@ -7,59 +7,16 @@ import org.encog.neural.data.basic.*;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
 
-public class ActorCriticDecider<A extends Agent, S extends State<A>> extends NeuralDeciderSS<A, S> {
+public abstract class ActorCriticDecider<A extends Agent, S extends State<A>> extends NeuralDecider<A, S> {
 
 	protected BasicNetwork stateEvaluationBrain;
 	private static double gamma = SimProperties.getPropertyAsDouble("Gamma", "0.99");
 
-	public ActorCriticDecider(List<ActionEnum<A>> actions, List<GeneticVariable<A>> variables) {
+	public ActorCriticDecider(List<ActionEnum<A>> actions, List<GeneticVariable<A, S>> variables) {
 		super(actions, variables);
 		stateEvaluationBrain = initialiseBrain(variables);
 	}
-	
-	@Override
-	/* 
-	 * 	For Neural Deciders, we can cross them with another
-	 *  as long as the action and variable Sets are identical
-	 *  (or at least have the same number of items across the two Deciders)
-	 */
-	public Decider<A, S> crossWith(Decider<A, S> otherDecider) {
-		if (!(otherDecider instanceof ActorCriticDecider))
-			return super.crossWith(otherDecider);
-		if (this.variableSet.size() != otherDecider.getVariables().size())
-			return super.crossWith(otherDecider);
-		if (this.actionSet.size() != otherDecider.getActions().size())
-			return super.crossWith(otherDecider);
-		if (this == otherDecider) return this;
 
-		ActorCriticDecider<A, S> retValue = new ActorCriticDecider<A, S>(actionSet, variableSet);
-		BasicNetwork[] newBrain = new BasicNetwork[actionSet.size()];
-		BasicNetwork newStateBrain = null;
-		for (int n = 0; n < actionSet.size(); n++) {
-			// 50:50 chance for each action which Network we take
-			if (Math.random() < 0.5) {
-				newBrain[n] = (BasicNetwork) this.brain.get(actionSet.get(n).toString()).clone();
-			} else {
-				newBrain[n] = (BasicNetwork) ((NeuralDeciderSS<A, S>)otherDecider).brain.get(actionSet.get(n).toString()).clone();
-			}
-
-			if (Math.random() < 0.5) {
-				newStateBrain = (BasicNetwork) this.stateEvaluationBrain.clone();
-			} else {
-				newStateBrain = (BasicNetwork) ((ActorCriticDecider<A, S>)otherDecider).stateEvaluationBrain.clone();
-			}
-		}
-
-		retValue.setBrain(newBrain);
-		retValue.setName(toString());
-		retValue.setStateBrain(newStateBrain);
-		return retValue;
-	}
-
-	private void setStateBrain(BasicNetwork newStateBrain) {
-		stateEvaluationBrain = newStateBrain;
-	}
-	
 	public void saveBrain(String descriptor) {
 		String directory = SimProperties.getProperty("BaseDirectory", "C:");
 		directory = directory + "\\ActorCriticBrains";
@@ -89,7 +46,7 @@ public class ActorCriticDecider<A extends Agent, S extends State<A>> extends Neu
 	}
 
 	public double valueState(A agent) {
-		BasicNeuralData inputData = new BasicNeuralData(getCurrentState(agent, agent, null));
+		BasicNeuralData inputData = new BasicNeuralData(HopshackleUtilities.stateToArray(getCurrentState(agent), variableSet));
 		double retValue = stateEvaluationBrain.compute(inputData).getData()[0];
 
 		temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
@@ -110,7 +67,7 @@ public class ActorCriticDecider<A extends Agent, S extends State<A>> extends Neu
 		double output = exp.getReward()/maxResult;
 		double modifiedLearningCoefficient = baseLearningCoefficient / (double)brain.size() / getPercentageOfOption(exp.getActionTaken().getType());
 
-		BasicNeuralData endState = new BasicNeuralData(exp.getEndState().asArray(variableSet));
+		BasicNeuralData endState = new BasicNeuralData(HopshackleUtilities.stateToArray(exp.getEndState(), variableSet));
 		double currentValue = (stateEvaluationBrain.compute(endState)).getData()[0];
 		if (exp.isInFinalState()) currentValue = 0.0;
 		double updatedStartValue = output + gamma * currentValue;
@@ -122,7 +79,7 @@ public class ActorCriticDecider<A extends Agent, S extends State<A>> extends Neu
 		double[][] inputValuesForStateBrain = new double[1][stateEvaluationBrain.getInputCount()];
 
 		outputValues[0][0] = updatedStartValue;
-		double[] subLoop = exp.getStartState().asArray(variableSet);
+		double[] subLoop = HopshackleUtilities.stateToArray(exp.getStartState(), variableSet);
 		for (int n=0; n<subLoop.length; n++) {
 			inputValues[0][n] = subLoop[n];
 			inputValuesForStateBrain[0][n] = subLoop[n];

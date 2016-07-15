@@ -7,7 +7,7 @@ import java.util.*;
  */
 public class ExperienceRecord<A extends Agent, S extends State<A>> implements Persistent {
 	
-	public enum State {
+	public enum ERState {
 		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
 	}
 
@@ -16,14 +16,14 @@ public class ExperienceRecord<A extends Agent, S extends State<A>> implements Pe
 	private static double lambda, gamma, traceCap;
 	static {refreshProperties();}
 	protected S startState, endState;
-	protected double[] startStateAsArray;
+	protected double[] startStateAsArray, endStateAsArray;
 	protected double[] featureTrace;
 	protected Action<A> actionTaken;
 	protected List<ActionEnum<A>> possibleActionsFromEndState, possibleActionsFromStartState;
 	protected double startScore, endScore, reward;
-	protected List<GeneticVariable<A>> variables;
+	protected List<GeneticVariable<A, S>> variables;
 	protected boolean isFinalState;
-	protected State ERState = State.UNSEEN;
+	protected ERState expRecState = ERState.UNSEEN;
 	private Agent agent;
 
 	public static void refreshProperties() {
@@ -32,7 +32,7 @@ public class ExperienceRecord<A extends Agent, S extends State<A>> implements Pe
 		traceCap = SimProperties.getPropertyAsDouble("QTraceMaximum", "10.0");
 	}
 
-	public ExperienceRecord(Agent a, List<GeneticVariable<A>> var, S state, Action<A> action, 
+	public ExperienceRecord(Agent a, List<GeneticVariable<A, S>> var, S state, Action<A> action, 
 			List<ActionEnum<A>> possibleActions) {
 		variables = HopshackleUtilities.cloneList(var);
 		actionTaken = action;
@@ -40,7 +40,7 @@ public class ExperienceRecord<A extends Agent, S extends State<A>> implements Pe
 		startStateAsArray = extractFeaturesFromState(state);
 		featureTrace = startStateAsArray;
 		possibleActionsFromStartState = HopshackleUtilities.cloneList(possibleActions);
-		setState(State.DECISION_TAKEN);
+		setState(ERState.DECISION_TAKEN);
 		startScore = a.getScore();
 		agent = a;
 	}
@@ -48,7 +48,7 @@ public class ExperienceRecord<A extends Agent, S extends State<A>> implements Pe
 	private double[] extractFeaturesFromState(S state) {
 		double[] retValue = new double[variables.size()];		// start Values, then end values
 		int count = 0;
-		for (GeneticVariable<A> gv : variables) {
+		for (GeneticVariable<A, S> gv : variables) {
 				retValue[count] = gv.getValue(state);
 			count++;
 		}
@@ -69,8 +69,9 @@ public class ExperienceRecord<A extends Agent, S extends State<A>> implements Pe
 	
 	public void updateWithResults(double reward, S newState) {
 		endState = newState;
+		endStateAsArray = extractFeaturesFromState(endState);
 		this.reward = reward;
-		setState(State.ACTION_COMPLETED);
+		setState(ERState.ACTION_COMPLETED);
 	}
 	
 	public void updateNextActions(ExperienceRecord<A, S> nextER) {
@@ -78,26 +79,33 @@ public class ExperienceRecord<A extends Agent, S extends State<A>> implements Pe
 			nextER.constructFeatureTrace(this);
 			possibleActionsFromEndState = nextER.getPossibleActionsFromStartState();
 			endState = nextER.getStartState();
+			endStateAsArray = extractFeaturesFromState(endState);
 			endScore = nextER.getStartScore();
 		} else {
 			possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
 			endScore = agent.getScore();
 		}
-		setState(State.NEXT_ACTION_TAKEN);
+		setState(ERState.NEXT_ACTION_TAKEN);
 	}
 	
 	public void setIsFinal() {
 		isFinalState = true;
 		endScore = agent.getScore();
-		setState(State.NEXT_ACTION_TAKEN);
+		setState(ERState.NEXT_ACTION_TAKEN);
 	}
 
 	public S getStartState() {
 		return startState;
 	}
+	public double[] getStartStateAsArray() {
+		return startStateAsArray;
+	}
 
 	public S getEndState() {
 		return endState;
+	}
+	public double[] getEndStateAsArray() {
+		return endStateAsArray;
 	}
 	
 	public double[] getFeatureTrace() {
@@ -117,7 +125,7 @@ public class ExperienceRecord<A extends Agent, S extends State<A>> implements Pe
 	}
 
 	public double getReward() {
-		if (getState() == State.NEXT_ACTION_TAKEN) 
+		if (getState() == ERState.NEXT_ACTION_TAKEN) 
 			return (reward + endScore - startScore);
 		return reward;
 	}
@@ -128,7 +136,7 @@ public class ExperienceRecord<A extends Agent, S extends State<A>> implements Pe
 		return endScore;
 	}
 
-	public List<GeneticVariable<A>> getVariables() {
+	public List<GeneticVariable<A, S>> getVariables() {
 		return variables;
 	}
 	
@@ -136,8 +144,8 @@ public class ExperienceRecord<A extends Agent, S extends State<A>> implements Pe
 		return isFinalState;
 	}
 	
-	public State getState() {
-		return ERState;
+	public ERState getState() {
+		return expRecState;
 	}
 	public Agent getAgent() {
 		return agent;
@@ -145,10 +153,10 @@ public class ExperienceRecord<A extends Agent, S extends State<A>> implements Pe
 	public World getWorld() {
 		return agent.getWorld();
 	}
-	private void setState(ExperienceRecord.State newState) {
-		if (dbStorage && newState == State.NEXT_ACTION_TAKEN && getState() != State.NEXT_ACTION_TAKEN) {
+	private void setState(ExperienceRecord.ERState newState) {
+		if (dbStorage && newState == ERState.NEXT_ACTION_TAKEN && getState() != ERState.NEXT_ACTION_TAKEN) {
 			writer.write(this, getWorld().toString());
 		}
-		ERState = newState;
+		expRecState = newState;
 	}
 }

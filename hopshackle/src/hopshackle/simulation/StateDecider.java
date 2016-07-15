@@ -2,14 +2,14 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class StateDecider extends QDecider {
+public abstract class StateDecider<A extends Agent, S extends State<A>> extends QDecider<A, S> {
 
 	private String stateType;
 	private int pigeonHoles;
 	private double baseValue;
 	private double maxNoise, minNoise;
 
-	public StateDecider(ArrayList<ActionEnum> actions, ArrayList<GeneticVariable> variables){
+	public StateDecider(ArrayList<ActionEnum<A>> actions, ArrayList<GeneticVariable<A, S>> variables){
 		super(actions, variables);
 		setStateType("DEFAULT");
 		pigeonHoles = 4;
@@ -19,21 +19,22 @@ public class StateDecider extends QDecider {
 	}
 
 	@Override
-	public double valueOption(ActionEnum option, Agent decidingAgent, Agent contextAgent) {
+	public double valueOption(ActionEnum<A> option, A decidingAgent) {
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
-		HopshackleState agentState = getState(decidingAgent, contextAgent);
+		HopshackleState agentState = getState(getCurrentState(decidingAgent));
 		return agentState.valueOption(option, temperature * (maxNoise - minNoise) + minNoise );
 	}
 	
 	@Override
-	public double valueOption(ActionEnum option, double[] state) {
+	public double valueOption(ActionEnum<A> option, S state) {
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		HopshackleState agentState = getState(state);
 		return agentState.valueOption(option, temperature * (maxNoise - minNoise) + minNoise );
 	}
 
-	protected HopshackleState getState(double[] stateDesc) {
+	protected HopshackleState getState(S state) {
 		StringBuffer retStr = new StringBuffer( stateType );
+		double[] stateDesc = HopshackleUtilities.stateToArray(state, variableSet);
 
 		for (int i = 0; i < stateDesc.length; i++)
 			retStr.append(":" + pigeonHole(stateDesc[i]));
@@ -46,10 +47,9 @@ public class StateDecider extends QDecider {
 		return retValue;
 	}
 	
-	public HopshackleState getState(Agent decidingAgent, Agent contextAgent) {
+	public HopshackleState getState(A decidingAgent) {
 		if (decidingAgent.isDead()) return HopshackleState.getState(stateType + ":DEAD");
-		double[] stateDesc = getCurrentState(decidingAgent, contextAgent, null);
-		return getState(stateDesc);
+		return getState(getCurrentState(decidingAgent));
 	}
 
 	/*
@@ -96,8 +96,8 @@ public class StateDecider extends QDecider {
 	}
 
 	@Override
-	public void learnFrom(ExperienceRecord exp, double maxResult) {
-		ActionEnum actionTaken = exp.getActionTaken().actionType;
+	public void learnFrom(ExperienceRecord<A, S> exp, double maxResult) {
+		ActionEnum<A> actionTaken = exp.getActionTaken().actionType;
 		double observedResult = exp.getReward();
 		HopshackleState startState = getState(exp.getStartState());
 		HopshackleState endState = getState(exp.getEndState());

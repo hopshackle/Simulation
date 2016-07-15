@@ -2,27 +2,27 @@ package hopshackle.simulation;
 
 import java.util.ArrayList;
 
-public class HardCodedDecider extends BaseDecider {
+public class HardCodedDecider<A extends Agent> extends SimpleStateBaseDecider<A> {
 
-	private ActionEnum hardCode;
+	private ActionEnum<A> hardCode;
 
-	public HardCodedDecider(ActionEnum decision) {
-		super(new ArrayList<ActionEnum>(), new ArrayList<GeneticVariable>());
+	public HardCodedDecider(ActionEnum<A> decision) {
+		super(new ArrayList<ActionEnum<A>>(), new ArrayList<GeneticVariable<A, SimpleState<A>>>());
 		hardCode = decision;
 	}
 	
 	@Override 
-	public ActionEnum makeDecision(Agent decidingAgent, Agent contextAgent) {
+	public ActionEnum<A> makeDecision(A decidingAgent) {
 		return hardCode;
 	}
 
 	@Override
-	public double valueOption(ActionEnum option, Agent decidingAgent, Agent contextAgent) {
+	public double valueOption(ActionEnum<A> option, A decidingAgent) {
 		return 0;
 	}
 
 	@Override
-	public void learnFrom(ExperienceRecord exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A, SimpleState<A>> exp, double maxResult) {
 	}
 }
 

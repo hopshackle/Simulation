@@ -4,7 +4,7 @@ import hopshackle.simulation.AgentEvent.Type;
 
 import java.util.List;
 
-public class EpisodeTeacher<A extends Agent> extends Teacher<A> {
+public class EpisodeTeacher<A extends Agent, S extends State<A>> extends Teacher<A, S> {
 
 	@Override
 	public void processEvent(AgentEvent event) {
@@ -12,8 +12,8 @@ public class EpisodeTeacher<A extends Agent> extends Teacher<A> {
 		// in a completed ER. So for RealTime learning we do not need to differentiate between the event types
 		A a = (A) event.getAgent();
 		if (event.getEvent() == Type.DEATH) {
-			List<ExperienceRecord<A>> newER = experienceRecordCollector.getCompleteExperienceRecords(a);
-			for (Decider<A> d : decidersToTeach) {
+			List<ExperienceRecord<A, S>> newER = experienceRecordCollector.getCompleteExperienceRecords(a);
+			for (Decider<A, S> d : decidersToTeach) {
 				d.learnFromBatch(newER, a.getMaxScore());
 			}
 			experienceRecordCollector.removeAgent(a);

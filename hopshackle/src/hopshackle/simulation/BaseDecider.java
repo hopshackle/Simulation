@@ -8,7 +8,7 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	protected List<ActionEnum<A>> actionSet = new ArrayList<ActionEnum<A>>();
-	protected List<GeneticVariable<A>> variableSet = new ArrayList<GeneticVariable<A>>();
+	protected List<GeneticVariable<A, S>> variableSet = new ArrayList<GeneticVariable<A, S>>();
 	protected String name = "DEFAULT";
 	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMinChance", "0.0");
@@ -21,7 +21,7 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 	private static AtomicInteger idFountain = new AtomicInteger(0);
 	private int id;
 
-	public BaseDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A>> variables) {
+	public BaseDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A, S>> variables) {
 		if (actions != null) {
 			for (ActionEnum<A> ae : actions)
 				actionSet.add(ae);
@@ -49,13 +49,7 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 
 	@Override
 	public Action<A> decide(A decidingAgent) {
-		Action<A> retValue = decide(decidingAgent, null);
-		return retValue;
-	}
-
-	@Override
-	public Action<A> decide(A decidingAgent, Agent contextAgent) {
-		ActionEnum<A> decisionMade = makeDecision(decidingAgent, contextAgent);
+		ActionEnum<A> decisionMade = makeDecision(decidingAgent);
 		Action<A> action = null;
 		long chosenDuration = 0;
 		long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
@@ -78,35 +72,36 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 	}
 
 	@Override
-	public ActionEnum<A> makeDecision(A decidingAgent, Agent contextAgent) {
+	public ActionEnum<A> makeDecision(A decidingAgent) {
 		double temp = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		double explorationChance = (maxChanceOfRandomChoice - minChanceOfRandomChoice) * temp + minChanceOfRandomChoice;
-		return makeDecision(decidingAgent, contextAgent, explorationChance);
+		return makeDecision(decidingAgent, explorationChance);
 	}
 
 	@Override
-	public ActionEnum<A> getOptimalDecision(A decidingAgent, Agent contextAgent) {
-		return makeDecision(decidingAgent, contextAgent, 0.0);
+	public ActionEnum<A> getOptimalDecision(A decidingAgent) {
+		return makeDecision(decidingAgent, 0.0);
 	}
 
-	protected ActionEnum<A> makeDecision(A decidingAgent, Agent contextAgent, double explorationChance) {
+	protected ActionEnum<A> makeDecision(A decidingAgent, double explorationChance) {
 		if (decidingAgent.isDead()) return null;
 
 		ActionEnum <A>winningChoice = null;
-		List<ActionEnum<A>> chooseableOptions = getChooseableOptions(decidingAgent, contextAgent);
+		List<ActionEnum<A>> chooseableOptions = getChooseableOptions(decidingAgent);
 		if (chooseableOptions.size() == 0) return null;
 
 		double chance = Math.random();
 		if (chance < explorationChance) {
-			winningChoice = selectOptionUsingBoltzmann(chooseableOptions, decidingAgent, contextAgent);
+			winningChoice = selectOptionUsingBoltzmann(chooseableOptions, decidingAgent);
 		} else {
-			winningChoice = selectOption(chooseableOptions, decidingAgent, contextAgent);
+			winningChoice = selectOption(chooseableOptions, decidingAgent);
 		}
 
 		return winningChoice;
 	}
 
-	public List<ActionEnum<A>> getChooseableOptions(A decidingAgent, Agent contextAgent) {
+	@Override
+	public List<ActionEnum<A>> getChooseableOptions(A decidingAgent) {
 		List<ActionEnum<A>> retValue = new ArrayList<ActionEnum<A>>();
 		for (ActionEnum<A> option : actionSet) {
 			if (option.isChooseable(decidingAgent)) {
@@ -116,10 +111,10 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 		return retValue;
 	}
 
-	protected ActionEnum<A> selectOption(List<ActionEnum<A>> optionList, A decidingAgent, Agent contextAgent) {
+	protected ActionEnum<A> selectOption(List<ActionEnum<A>> optionList, A decidingAgent) {
 		ActionEnum<A> winningChoice = null;
 
-		List<Double> optionValues = getValuesPerOption(optionList, decidingAgent, contextAgent);
+		List<Double> optionValues = getValuesPerOption(optionList, decidingAgent);
 		double highestScore = Double.NEGATIVE_INFINITY;
 		for (int i = 0; i<optionList.size(); i++) {
 			if (localDebug) {
@@ -149,9 +144,9 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 		return winningChoice;
 	}
 
-	protected ActionEnum<A> selectOptionUsingBoltzmann(List<ActionEnum<A>> optionList, A decidingAgent, Agent contextAgent) {
+	protected ActionEnum<A> selectOptionUsingBoltzmann(List<ActionEnum<A>> optionList, A decidingAgent) {
 		ActionEnum<A> winningChoice = null;
-		List<Double> optionWeightings = getNormalisedBoltzmannValuesPerOption(optionList, decidingAgent, contextAgent);
+		List<Double> optionWeightings = getNormalisedBoltzmannValuesPerOption(optionList, decidingAgent);
 		double randomNumber = Math.random();
 		double runningSum = 0.0;
 		for (int loop = 0; loop < optionList.size(); loop++) {
@@ -178,17 +173,17 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 		return winningChoice;
 	}
 
-	protected List<Double> getValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent, Agent contextAgent){
+	protected List<Double> getValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent){
 		List<Double> retValue = new ArrayList<Double>();
 		for (int i = 0; i < optionList.size(); i++) {
-			double optionValue = this.valueOption(optionList.get(i), decidingAgent, contextAgent);
+			double optionValue = this.valueOption(optionList.get(i), decidingAgent);
 			retValue.add(optionValue);
 		}
 		return retValue;
 	}
 
-	protected List<Double> getNormalisedBoltzmannValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent, Agent contextAgent){
-		List<Double> baseValuesPerOption = getValuesPerOption(optionList, decidingAgent, contextAgent);
+	protected List<Double> getNormalisedBoltzmannValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent){
+		List<Double> baseValuesPerOption = getValuesPerOption(optionList, decidingAgent);
 		for (int i = 0; i < baseValuesPerOption.size(); i++)
 			if (baseValuesPerOption.get(i) == Double.NaN)
 				baseValuesPerOption.set(i, 0.0);
@@ -229,18 +224,9 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 		return baseValuesPerOption;
 	}
 	
-	public static <A extends Agent> double[] getState(A decidingAgent, Agent contextAgent, Action<A> action, List<GeneticVariable<A>> variableSet) {
-		double[] inputs = new double[variableSet.size()];
-		for (int i = 0; i < variableSet.size(); i ++) {
-			GeneticVariable<A> gv = variableSet.get(i);
-			inputs[i] = gv.getValue(decidingAgent, action);
-		}
-		return inputs;
-	}
-
 	@Override
-	public ActionEnum<A> decideWithoutLearning(A decidingAgent, Agent contextAgent) {
-		return makeDecision(decidingAgent, contextAgent);
+	public ActionEnum<A> decideWithoutLearning(A decidingAgent) {
+		return makeDecision(decidingAgent);
 	}
 
 	@Override
@@ -254,12 +240,12 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 		}
 	}
 	@Override
-	public List<GeneticVariable<A>> getVariables() {
+	public List<GeneticVariable<A, S>> getVariables() {
 		return HopshackleUtilities.cloneList(variableSet);
 	}
-	public <V extends GeneticVariable<A>> void setVariables(List<V> variableList) {
-		variableSet = new ArrayList<GeneticVariable<A>>();
-		for (GeneticVariable<A> gv : variableList) {
+	public <V extends GeneticVariable<A, S>> void setVariables(List<V> variableList) {
+		variableSet = new ArrayList<GeneticVariable<A, S>>();
+		for (GeneticVariable<A, S> gv : variableList) {
 			variableSet.add(gv);
 		}
 	}

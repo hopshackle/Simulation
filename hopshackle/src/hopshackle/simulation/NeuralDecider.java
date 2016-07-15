@@ -8,7 +8,7 @@ import org.encog.neural.data.basic.*;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
-public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>> {
+public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends QDecider<A, S> {
 
 	protected Hashtable<String, BasicNetwork> brain;
 	protected static double temperature;
@@ -22,7 +22,7 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 	protected double baseMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum", "0.0");
 	private double overrideLearningCoefficient, overrideMomentum; 
 
-	public NeuralDeciderSS(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A>> variables){
+	public NeuralDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A, S>> variables){
 		super(actions, variables);
 		maxNoise = SimProperties.getPropertyAsDouble("NeuralNoise", "0.20");
 		// Each NeuralDecider will have a brain consisting of:
@@ -45,7 +45,7 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 	}
 
 	@Override
-	public <V extends GeneticVariable<A>> void setVariables(List<V> genVar) {
+	public <V extends GeneticVariable<A, S>> void setVariables(List<V> genVar) {
 		super.setVariables(genVar);
 		brain = initialiseFullBrain(actionSet, variableSet);
 	}
@@ -54,7 +54,7 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 		brain = initialiseFullBrain(actionSet, variableSet);
 	}
 
-	protected static <A extends Agent> Hashtable<String, BasicNetwork> initialiseFullBrain(List<ActionEnum<A>> actionSet, List<GeneticVariable<A>> varSet) {
+	protected static <A extends Agent, S extends State<A>> Hashtable<String, BasicNetwork> initialiseFullBrain(List<ActionEnum<A>> actionSet, List<GeneticVariable<A, S>> varSet) {
 		Hashtable<String, BasicNetwork> retValue = new Hashtable<String, BasicNetwork>();
 		if (actionSet == null || varSet == null) return retValue;
 		for (ActionEnum<A> ae : actionSet) {
@@ -63,7 +63,7 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 		return retValue;
 	}
 
-	public static <A extends Agent> BasicNetwork initialiseBrain(List<GeneticVariable<A>> varSet) {
+	public static <A extends Agent, S extends State<A>> BasicNetwork initialiseBrain(List<GeneticVariable<A, S>> varSet) {
 		int neuronLayers = Integer.valueOf(SimProperties.getProperty("NeuralDeciderHiddenLayers", "1"));
 		int[] layers = new int[neuronLayers+2];
 		if (varSet != null) {
@@ -79,8 +79,8 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 	}
 
 	@Override
-	public double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent) {
-		SimpleState<A> state = getCurrentState(decidingAgent, contextAgent, null);
+	public double valueOption(ActionEnum<A> option, A decidingAgent) {
+		S state = getCurrentState(decidingAgent);
 		double retValue = valueOption(option, state);
 		if (nd_debug)
 			decidingAgent.log("Option " + option.toString() + " has base Value of " + retValue);
@@ -88,13 +88,13 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 	}
 	
 	@Override
-	public double valueOption(ActionEnum<A> option, SimpleState<A> state) {
+	public double valueOption(ActionEnum<A> option, S state) {
 		BasicNetwork brainSection = brain.get(option.toString());
 		if (brainSection == null) {
 			logger.severe("Action reference for " + option.toString() + " not found in Brain");
 			return -1.0;
 		}
-		BasicNeuralData inputData = new BasicNeuralData(state.asArray(variableSet));
+		BasicNeuralData inputData = new BasicNeuralData(HopshackleUtilities.stateToArray(state, variableSet));
 		double retValue = brainSection.compute(inputData).getData()[0];
 		temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		return retValue += (1.0 + (Math.random()-0.5)*temperature*maxNoise);
@@ -141,37 +141,6 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 		trainer.iteration();
 	}
 
-
-	public static <A extends Agent> NeuralDeciderSS<A> createNeuralDecider(File saveFile) {
-		NeuralDeciderSS<A> retValue = null;
-		try {
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(saveFile));
-
-			ArrayList actionSet = (ArrayList) ois.readObject();
-			ArrayList variableSet = (ArrayList) ois.readObject();
-			retValue = new NeuralDeciderSS<A>(actionSet, variableSet);
-
-			BasicNetwork[] actionNN = new BasicNetwork[actionSet.size()];
-			for (int n=0; n<actionSet.size(); n++)
-				actionNN[n] = (BasicNetwork) ois.readObject();
-
-			ois.close();
-			retValue.setBrain(actionNN);
-			String name = saveFile.getName();
-			String end = ".brain";
-			name = name.substring(0, name.indexOf(end));
-			retValue.setName(name);
-
-		} catch (Exception e) {
-			logger.severe("Error reading combat brain: " + e.toString());
-			for ( StackTraceElement s : e.getStackTrace()) {
-				logger.info(s.toString());
-			}
-		}
-
-		return retValue;
-	}
-
 	public void saveBrain(String name) {
 		String directory = SimProperties.getProperty("BaseDirectory", "C:");
 		directory = directory + "\\NeuralBrains";
@@ -200,7 +169,7 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 		} 
 	}
 
-	protected void updateBrain(NeuralDeciderSS<A> parent) {
+	protected void updateBrain(NeuralDecider<A, S> parent) {
 		this.brain = parent.brain;
 		setName(parent.toString());
 	}
@@ -227,37 +196,6 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 			}
 		}
 		return true;
-	}
-
-	@Override
-	/* 
-	 * 	For Neural Deciders, we can cross them with another
-	 *  as long as the action and variable Sets are identical
-	 *  (or at least have the same number of items across the two Deciders)
-	 */
-	public Decider<A, SimpleState<A>> crossWith(Decider<A, SimpleState<A>> otherDecider) {
-		if (!(otherDecider instanceof NeuralDeciderSS))
-			return super.crossWith(otherDecider);
-		if (this.variableSet.size() != otherDecider.getVariables().size())
-			return super.crossWith(otherDecider);
-		if (this.actionSet.size() != otherDecider.getActions().size())
-			return super.crossWith(otherDecider);
-		if (this == otherDecider) return this;
-
-		NeuralDeciderSS<A> retValue = new NeuralDeciderSS<A>(actionSet, variableSet);
-		BasicNetwork[] newBrain = new BasicNetwork[actionSet.size()];
-		for (int n = 0; n < actionSet.size(); n++) {
-			// 50:50 chance for each action which Network we take
-			if (Math.random() < 0.5) {
-				newBrain[n] = this.brain.get(actionSet.get(n).toString());
-			} else {
-				newBrain[n] = ((NeuralDeciderSS<A>)otherDecider).brain.get(actionSet.get(n).toString());
-			}
-		}
-
-		retValue.setBrain(newBrain);
-		retValue.setName(toString());
-		return retValue;
 	}
 
 	public double getNoise() {
@@ -296,7 +234,7 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 	}
 	
 	@Override
-	public void learnFrom(ExperienceRecord<A, SimpleState<A>> exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A, S> exp, double maxResult) {
 		BasicNetwork brainToTrain = brain.get(exp.getActionTaken().toString());
 		if (exp.getVariables().size() != brainToTrain.getInputCount()) {
 			logger.severe("Input data in ExperienceRecord not the same as input neurons " 
@@ -313,7 +251,7 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 		if (output > 1.0) output = 1.0;
 		if (output < -1.0) output = -1.0;
 		outputValues[0][0] = output;
-		double[] subLoop = exp.getStartState().asArray(variableSet);
+		double[] subLoop = HopshackleUtilities.stateToArray(exp.getStartState(), variableSet);
 		for (int n=0; n<subLoop.length; n++) {
 			inputValues[0][n] = subLoop[n];
 		}
@@ -323,10 +261,5 @@ public class NeuralDeciderSS<A extends Agent> extends QDecider<A, SimpleState<A>
 		BasicNeuralDataSet trainingData = new BasicNeuralDataSet(inputValues, outputValues);
 		Backpropagation trainer = new Backpropagation(brainToTrain, trainingData, modifiedLearningCoefficient, baseMomentum);
 		trainer.iteration();
-	}
-
-	@Override
-	public SimpleState<A> getCurrentState(A decidingAgent, Agent contextAgent, Action<A> action) {
-		return new SimpleState<A>(decidingAgent, variableSet);
 	}
 }

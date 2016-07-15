@@ -2,14 +2,14 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class GeneralLinearQDecider<A extends Agent, S extends State<A>> extends QDecider<A, S> {
+public abstract class GeneralLinearQDecider<A extends Agent, S extends State<A>> extends QDecider<A, S> {
 
 	protected double[][] weights;
-	private int variableLength;
+	protected int variableLength;
 	protected int actionLength;
 	public static String newline = System.getProperty("line.separator");
 
-	public GeneralLinearQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A>> variables) {
+	public GeneralLinearQDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A, S>> variables) {
 		super(actions, variables);
 		actionLength = actionSet.size();
 		variableLength = variableSet.size();
@@ -25,18 +25,17 @@ public class GeneralLinearQDecider<A extends Agent, S extends State<A>> extends 
 		}
 	}
 	
-	protected double[] getState(A decidingAgent, Agent contextAgent) {
+	protected double[] getStateAsArray(S state) {
 		double[] stateDescriptor = new double[variableLength];
 		for (int i = 0; i < variableLength; i++) {
-			stateDescriptor[i] = variableSet.get(i).getValue(decidingAgent, contextAgent);
+			stateDescriptor[i] = variableSet.get(i).getValue(state);
 		}
 		return stateDescriptor;
 	}
 
 	@Override
-	public double valueOption(ActionEnum<A> option, A decidingAgent, Agent contextAgent) {
-		double[] stateDescriptor = getState(decidingAgent, contextAgent);
-		return valueOption(option, stateDescriptor);
+	public double valueOption(ActionEnum<A> option, A decidingAgent) {
+		return valueOption(option, getCurrentState(decidingAgent));
 	}
 
 	@Override
@@ -45,13 +44,14 @@ public class GeneralLinearQDecider<A extends Agent, S extends State<A>> extends 
 		if (optionIndex == -1) logger.severe(option + " not found in actionSet in GLQDecider.valueOption");
 		double retValue = 0.0;
 
+		double[] stateArray = getStateAsArray(state);
 		for (int i = 0; i < variableLength; i++) {
-			retValue += weights[optionIndex][i] * state[i];
+			retValue += weights[optionIndex][i] * stateArray[i];
 		}
 		return retValue;
 	}
 
-	public void updateWeight(GeneticVariable<A> input, ActionEnum<A> option, double delta) {
+	public void updateWeight(GeneticVariable<A, S> input, ActionEnum<A> option, double delta) {
 		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(input);
 		weights[optionIndex][varIndex] += delta - weights[optionIndex][varIndex] * lambda;
@@ -62,7 +62,7 @@ public class GeneralLinearQDecider<A extends Agent, S extends State<A>> extends 
 		weights = newWeights;
 	}
 
-	public double getWeightOf(GeneticVariable<A> input, ActionEnum<A> option) {
+	public double getWeightOf(GeneticVariable<A, S> input, ActionEnum<A> option) {
 		int optionIndex = actionSet.indexOf(option);
 		int varIndex = variableSet.indexOf(input);
 		return weights[optionIndex][varIndex];
@@ -80,13 +80,13 @@ public class GeneralLinearQDecider<A extends Agent, S extends State<A>> extends 
 	}
 
 	@Override
-	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A, S> exp, double maxResult) {
 		double bestNextAction = valueOfBestAction(exp);
 		ActionEnum<A> nextAction = getBestActionFrom(exp.getPossibleActionsFromEndState(), exp.getEndState());
-		double[] startState = exp.getStartState();
-		double[] endState = exp.getEndState();
+		double[] startState = getStateAsArray(exp.getStartState());
+		double[] endState = getStateAsArray(exp.getEndState());
 		double[] featureTrace = exp.getFeatureTrace();
-		double predictedValue = valueOption(exp.getActionTaken().actionType, startState);
+		double predictedValue = valueOption(exp.getActionTaken().actionType, exp.getStartState());
 		double delta = exp.getReward() + gamma * bestNextAction - predictedValue;
 		if (localDebug) {
 			String message = String.format("Learning:\t%-15sReward: %.2f, NextValue: %.2f, Predicted: %.2f, Delta: %.4f, NextAction: %s", 
@@ -105,7 +105,7 @@ public class GeneralLinearQDecider<A extends Agent, S extends State<A>> extends 
 		for (int i = 0; i < variableLength; i++) {
 			double value = featureTrace[i];
 			if (value == 0.0) continue;
-			GeneticVariable<A> input = variableSet.get(i);
+			GeneticVariable<A, S> input = variableSet.get(i);
 			double weightChange = value * delta * alpha;
 			if (localDebug) {
 				String message = String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f", input.toString(), value, weightChange, 

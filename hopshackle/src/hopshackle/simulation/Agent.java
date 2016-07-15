@@ -26,7 +26,6 @@ public abstract class Agent extends Observable {
 	protected World world;
 	protected Decider decider, doNothingDecider;
 	protected ActionPlan actionPlan;
-	protected Genome genome;
 	protected int generation;
 	protected boolean culled = false;
 	protected Location birthLocation, deathLocation;
@@ -75,7 +74,6 @@ public abstract class Agent extends Observable {
 	private void generalAgentInitialisation(World world) {
 		this.world = world;
 		if (world != null) setBirth(world.getCurrentTime());
-		genome = new Genome();
 		inventory = new ArrayList<Artefact>();
 		gold =0;
 		actionPlan = new ActionPlan(this);
@@ -83,13 +81,6 @@ public abstract class Agent extends Observable {
 		children = new ArrayList<Long>();
 		listeners = new ArrayList<AgentListener>();
 		knowledgeOfLocations = new MapKnowledge(this);
-	}
-
-	public Genome getGenome() {
-		return genome;
-	}
-	public void setGenome(Genome g) {
-		genome = g;
 	}
 
 	@SuppressWarnings("unchecked")

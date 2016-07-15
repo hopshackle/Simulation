@@ -1,7 +1,7 @@
 package hopshackle.simulation.test.refactor;
 
 import hopshackle.simulation.*;
-import hopshackle.simulation.ExperienceRecord.State;
+import hopshackle.simulation.ExperienceRecord.ERState;
 
 import java.util.*;
 
@@ -179,14 +179,14 @@ class TestERCollector extends ExperienceRecordCollector<TestAgent> {
 		return agentAlreadySeen(testAgent);
 	}
 
-	public State agentActionState(TestAgent testAgent, Action<TestAgent> actionTaken) {
+	public ERState agentActionState(TestAgent testAgent, Action<TestAgent> actionTaken) {
 		List<ExperienceRecord<TestAgent>> allER = getExperienceRecords(testAgent);
 		for (ExperienceRecord<TestAgent> er : allER) {
 			if (er.getActionTaken().equals(actionTaken)) {
 				return er.getState();
 			}
 		}
-		return State.UNSEEN;
+		return ERState.UNSEEN;
 	}
 }
 

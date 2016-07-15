@@ -2,16 +2,16 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public abstract class Teacher<A extends Agent> implements AgentListener {
+public abstract class Teacher<A extends Agent, S extends State<A>> implements AgentListener {
 	
-	protected List<Decider<A>> decidersToTeach = new ArrayList<Decider<A>>();
-	protected ExperienceRecordCollector<A> experienceRecordCollector;
+	protected List<Decider<A, S>> decidersToTeach = new ArrayList<Decider<A, S>>();
+	protected ExperienceRecordCollector<A, S> experienceRecordCollector;
 
-	public void registerToERStream(ExperienceRecordCollector<A> erc) {
+	public void registerToERStream(ExperienceRecordCollector<A, S> erc) {
 		experienceRecordCollector = erc;
 		experienceRecordCollector.addListener(this);
 	}
-	public void registerDecider(Decider<A> decider) {
+	public void registerDecider(Decider<A, S> decider) {
 		if (!decidersToTeach.contains(decider))
 			decidersToTeach.add(decider);
 	}
