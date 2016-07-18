@@ -4,11 +4,11 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-public abstract class BaseDecider<A extends Agent, S extends State<A>> implements Decider<A, S> {
+public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	protected List<ActionEnum<A>> actionSet = new ArrayList<ActionEnum<A>>();
-	protected List<GeneticVariable<A, S>> variableSet = new ArrayList<GeneticVariable<A, S>>();
+	protected List<GeneticVariable<A>> variableSet = new ArrayList<GeneticVariable<A>>();
 	protected String name = "DEFAULT";
 	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMinChance", "0.0");
@@ -21,7 +21,7 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 	private static AtomicInteger idFountain = new AtomicInteger(0);
 	private int id;
 
-	public BaseDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A, S>> variables) {
+	public BaseDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A>> variables) {
 		if (actions != null) {
 			for (ActionEnum<A> ae : actions)
 				actionSet.add(ae);
@@ -31,7 +31,7 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 	}
 
 	@Override
-	public void learnFromBatch(ExperienceRecord<A, S>[] exp, double maxResult) {
+	public <S extends State<A>> void learnFromBatch(ExperienceRecord<A, S>[] exp, double maxResult) {
 		// A default method. Override this for efficiency with batch data.
 		for (ExperienceRecord<A, S> er : exp) {
 			learnFrom(er, maxResult);
@@ -39,7 +39,7 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 	}
 	
 	@Override
-	public void learnFromBatch(List<ExperienceRecord<A, S>> exp, double maxResult) {
+	public <S extends State<A>>  void learnFromBatch(List<ExperienceRecord<A, S>> exp, double maxResult) {
 		@SuppressWarnings("unchecked")
 		ExperienceRecord<A, S>[] asArray = new ExperienceRecord[exp.size()];
 		for (int i = 0; i < exp.size(); i++)
@@ -240,12 +240,12 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 		}
 	}
 	@Override
-	public List<GeneticVariable<A, S>> getVariables() {
+	public List<GeneticVariable<A>> getVariables() {
 		return HopshackleUtilities.cloneList(variableSet);
 	}
-	public <V extends GeneticVariable<A, S>> void setVariables(List<V> variableList) {
-		variableSet = new ArrayList<GeneticVariable<A, S>>();
-		for (GeneticVariable<A, S> gv : variableList) {
+	public <V extends GeneticVariable<A>> void setVariables(List<V> variableList) {
+		variableSet = new ArrayList<GeneticVariable<A>>();
+		for (GeneticVariable<A> gv : variableList) {
 			variableSet.add(gv);
 		}
 	}
@@ -255,7 +255,7 @@ public abstract class BaseDecider<A extends Agent, S extends State<A>> implement
 	 *  Default behaviour is to return the Decider on which the call is made
 	 */
 	@Override
-	public Decider<A, S> crossWith(Decider<A, S> otherDecider) {
+	public Decider<A> crossWith(Decider<A> otherDecider) {
 		return this;
 	}
 

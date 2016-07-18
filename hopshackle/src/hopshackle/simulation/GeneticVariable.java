@@ -1,9 +1,8 @@
 package hopshackle.simulation;
 
-public interface GeneticVariable<A extends Agent, S extends State<A>> {
+public interface GeneticVariable<A extends Agent> {
 
 	public double getValue(A agent);
-	public double getValue(State<A> state);
 	
 	public String getDescriptor();
 	

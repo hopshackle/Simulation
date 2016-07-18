@@ -57,7 +57,7 @@ public abstract class Agent extends Observable {
 		cacheOfTheLiving.put(uniqueID, this);
 	}
 
-	public Agent (Location l, Decider<?, ?> d, World world) {
+	public Agent (Location l, Decider<?> d, World world) {
 		this(world);
 		setLocation(l);
 		setDecider(d);
@@ -84,11 +84,11 @@ public abstract class Agent extends Observable {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <V extends Agent, S extends State<V>> Decider<V, S> getDecider() {
+	public <V extends Agent> Decider<V> getDecider() {
 		return decider;
 	}
 
-	public void setDecider(Decider<?, ?> decider) {
+	public void setDecider(Decider<?> decider) {
 		this.decider = decider;
 	}
 
