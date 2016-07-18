@@ -7,7 +7,7 @@ package hopshackle.simulation;
  * @author James
  *
  */
-public interface GoalMatcher<T extends State> {
+public interface GoalMatcher<T extends Location> {
 	
 	public boolean matches(T state);
 	
