@@ -4,7 +4,7 @@ import hopshackle.simulation.AgentEvent.Type;
 
 import java.util.*;
 
-public class RealTimeTeacher<A extends Agent, S extends State<A>> extends Teacher<A, S> implements AgentListener {
+public class RealTimeTeacher<A extends Agent> extends Teacher<A> implements AgentListener {
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -12,9 +12,9 @@ public class RealTimeTeacher<A extends Agent, S extends State<A>> extends Teache
 		// The only events that get passed through from ExperienceRecordCollector are the ones that result
 		// in a completed ER. So for RealTime learning we do not need to differentiate between the event types
 		A a = (A) event.getAgent();
-		List<ExperienceRecord<A, S>> newER = experienceRecordCollector.getCompleteExperienceRecords(a);
-		for (ExperienceRecord<A, S> er : newER) {
-			for (Decider<A, S> d : decidersToTeach) {
+		List<ExperienceRecord<A>> newER = experienceRecordCollector.getCompleteExperienceRecords(a);
+		for (ExperienceRecord<A> er : newER) {
+			for (Decider<A> d : decidersToTeach) {
 				d.learnFrom(er, a.getMaxScore());
 			}
 			experienceRecordCollector.removeER(a, er);

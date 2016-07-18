@@ -25,7 +25,6 @@ public class BasicAgentDAO implements DAO<BasicAgent> {
 		" TotalMovement	INT			NOT NULL,"		+
 		" Children	INT			NOT NULL,"		+
 		" ChildrenIds VARCHAR(200) NOT NULL,"	+
-		" ParentGenome	VARCHAR(50)	NOT NULL,"	+
 		" Food		INT			NOT NULL,"	+
 		" Wood		INT			NOT NULL,"	+
 		" Huts		INT			NOT NULL"	+
@@ -40,7 +39,7 @@ public class BasicAgentDAO implements DAO<BasicAgent> {
 	@Override
 	public String getTableUpdateSQL(String lastSuffix) {
 		return "INSERT INTO AllAgents_" + lastSuffix + 
-				" (id,  name, surname, age, birth, Generation, Gender, Father, Mother, Children, ChildrenIds, ParentGenome, Food, Wood, Huts, " +
+				" (id,  name, surname, age, birth, Generation, Gender, Father, Mother, Children, ChildrenIds, Food, Wood, Huts, " +
 				"BirthLocation, DeathLocation, NetMovement, TotalMovement) VALUES";
 	}
 
@@ -71,7 +70,7 @@ public class BasicAgentDAO implements DAO<BasicAgent> {
 			netMovement = lifeRoute.size();
 		}
 
-		return String.format(" (%d, '%s', '%s', %d, %d, %d, '%s', %d, %d, %d, '%s', '%s', %d, %d, %d, '%s', '%s', %d, %d)",
+		return String.format(" (%d, '%s', '%s', %d, %d, %d, '%s', %d, %d, %d, '%s', %d, %d, %d, '%s', '%s', %d, %d)",
 				agent.getUniqueID(),
 				agent.toString(),
 				agent.getSurname(),
@@ -83,7 +82,6 @@ public class BasicAgentDAO implements DAO<BasicAgent> {
 				mother,
 				children.size(),
 				childrenIds.toString(),
-				agent.getGenome().getName(),
 				amountOfFood,
 				amountOfWood,
 				numberOfHuts,

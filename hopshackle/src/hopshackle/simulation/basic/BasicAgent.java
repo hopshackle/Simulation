@@ -74,8 +74,6 @@ public class BasicAgent extends Agent implements Persistent {
 		}
 		setLocation(parent1.getLocation());
 		setDecider(parent1.getDecider());
-		setGenome(parent1.getGenome().crossWith(parent2.getGenome()));
-		genome.mutate();
 		knowledgeOfLocations.addMapKnowledge(parent1.getMapKnowledge());
 		knowledgeOfLocations.addMapKnowledge(parent2.getMapKnowledge());
 	}

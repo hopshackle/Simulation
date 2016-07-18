@@ -9,7 +9,7 @@ import java.util.*;
  * It is currently inefficient in that it separates out the full set of experience records each time
  * rather than just the most recently collected batch.
  */
-public class OnInstructionTeacherSelfOnly<A extends Agent, S extends State<A>> extends OnInstructionTeacher<A, S> {
+public class OnInstructionTeacherSelfOnly<A extends Agent> extends OnInstructionTeacher<A> {
 	
 	public OnInstructionTeacherSelfOnly(int pastGamesToIncludeInTraining) {
 		super(pastGamesToIncludeInTraining);
@@ -17,21 +17,21 @@ public class OnInstructionTeacherSelfOnly<A extends Agent, S extends State<A>> e
 
 	public void teach() {
 		updateData();
-		List<ExperienceRecord<A, S>> allER = getLastNDataSets();;
-		Map<Decider<A, S>, List<ExperienceRecord<A, S>>> splitData = splitByDecider(allER);
+		List<ExperienceRecord<A>> allER = getLastNDataSets();;
+		Map<Decider<A>, List<ExperienceRecord<A>>> splitData = splitByDecider(allER);
 
-		for (Decider<A, S> decider : splitData.keySet()) {
-			List<ExperienceRecord<A, S>> newER = splitData.get(decider);
+		for (Decider<A> decider : splitData.keySet()) {
+			List<ExperienceRecord<A>> newER = splitData.get(decider);
 			decider.learnFromBatch(newER, newER.get(0).getAgent().getMaxScore());
 		}
 	}
 
-	private Map<Decider<A, S>, List<ExperienceRecord<A, S>>> splitByDecider(List<ExperienceRecord<A, S>> allER) {
-		Map<Decider<A, S>, List<ExperienceRecord<A, S>>> retValue = new HashMap<Decider<A, S>, List<ExperienceRecord<A, S>>>();
-		for (ExperienceRecord<A, S> er : allER) {
-			Decider<A, S> d = er.getAgent().getDecider();
+	private Map<Decider<A>, List<ExperienceRecord<A>>> splitByDecider(List<ExperienceRecord<A>> allER) {
+		Map<Decider<A>, List<ExperienceRecord<A>>> retValue = new HashMap<Decider<A>, List<ExperienceRecord<A>>>();
+		for (ExperienceRecord<A> er : allER) {
+			Decider<A> d = er.getAgent().getDecider();
 			if (!retValue.containsKey(d)) {
-				retValue.put(d, new ArrayList<ExperienceRecord<A, S>>());
+				retValue.put(d, new ArrayList<ExperienceRecord<A>>());
 			}
 			retValue.get(d).add(er);
 		}

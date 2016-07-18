@@ -2,12 +2,12 @@ package hopshackle.simulation;
 
 import java.util.ArrayList;
 
-public class HardCodedDecider<A extends Agent> extends SimpleStateBaseDecider<A> {
+public class HardCodedDecider<A extends Agent> extends BaseDecider<A> {
 
 	private ActionEnum<A> hardCode;
 
 	public HardCodedDecider(ActionEnum<A> decision) {
-		super(new ArrayList<ActionEnum<A>>(), new ArrayList<GeneticVariable<A, SimpleState<A>>>());
+		super(null, new ArrayList<ActionEnum<A>>());
 		hardCode = decision;
 	}
 	
@@ -22,7 +22,17 @@ public class HardCodedDecider<A extends Agent> extends SimpleStateBaseDecider<A>
 	}
 
 	@Override
-	public void learnFrom(ExperienceRecord<A, SimpleState<A>> exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {}
+	
+	@Override
+	public State<A> getCurrentState(A agent) {
+		return new State<A>() {
+
+			@Override
+			public double[] getAsArray() {
+				return new double[0];
+			}
+		};
 	}
 }
 

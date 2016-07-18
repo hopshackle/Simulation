@@ -27,9 +27,7 @@ public enum BasicVariables implements GeneticVariable<BasicAgent> {
 
 	public String getDescriptor() {return descriptor;}
 
-	public double getValue(Agent o) {
-		if (!(o instanceof BasicAgent)) return 0.00;
-		BasicAgent agent = (BasicAgent)o;
+	public double getValue(BasicAgent agent) {
 		BasicHex agentLocation = (BasicHex)agent.getLocation();
 		List<BuildingType> inventory = null;
 		switch (this) {
@@ -118,7 +116,7 @@ public enum BasicVariables implements GeneticVariable<BasicAgent> {
 	}
 
 	private JourneyPlan addJourneyTracker(Agent agent) {
-		GoalMatcher locMatcher = null;
+		GoalMatcher<?> locMatcher = null;
 		switch (this) {
 		case WATER:
 			locMatcher = new TerrainMatcher(TerrainType.OCEAN);
@@ -140,27 +138,8 @@ public enum BasicVariables implements GeneticVariable<BasicAgent> {
 	}
 
 	@Override
-	public double getValue(BasicAgent a1, Agent a2) {
-		return getValue(a1);
-	}
-	@Override
-	public double getValue(BasicAgent a1, Artefact a2) {
-		return getValue(a1);
-	}
-
-	@Override
-	public double getValue(BasicAgent a1, Action<BasicAgent> a2) {
-		return getValue(a1);
-	}
-
-
-	@Override
 	public boolean unitaryRange() {
 		return true;
 	}
 
-	@Override
-	public double getValue(LookaheadState<BasicAgent> forwardState) {
-		throw new AssertionError("Lookahead State not supported for BasicAgents");
-	}
 }

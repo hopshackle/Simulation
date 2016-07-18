@@ -83,12 +83,6 @@ public class BasicPopulationSpawner implements Runnable{
 						BasicAgent newC = new BasicAgent(world);
 						newC.setLocation(defaultStartLocation);
 						parent.ercPolicy.apply(newC);
-
-						Genome newGenome = newC.getGenome();
-
-						newGenome.mutate();
-						newC.setGenome(newGenome);
-
 						newC.setGeneration(0);
 
 						Action<BasicAgent> firstAction = BasicActions.REST.getAction(newC);

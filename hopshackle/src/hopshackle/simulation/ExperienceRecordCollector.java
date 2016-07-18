@@ -4,13 +4,13 @@ import hopshackle.simulation.ExperienceRecord.ERState;
 
 import java.util.*;
 
-public class ExperienceRecordCollector<A extends Agent, S extends State<A>> implements AgentListener {
+public class ExperienceRecordCollector<A extends Agent> implements AgentListener {
 	
 	public interface ERCAllocationPolicy<A> {
 		public void apply(A agent);
 	}
 
-	private HashMap<A, List<ExperienceRecord<A, S>>> erListMap = new HashMap<A, List<ExperienceRecord<A, S>>>();
+	private HashMap<A, List<ExperienceRecord<A>>> erListMap = new HashMap<A, List<ExperienceRecord<A>>>();
 	private List<AgentListener> listeners = new ArrayList<AgentListener>();
 	private ERCAllocationPolicy<A> birthPolicy;
 
@@ -21,33 +21,33 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 		}
 	}
 	
-	public List<ExperienceRecord<A, S>> getExperienceRecords(A a) {
+	public List<ExperienceRecord<A>> getExperienceRecords(A a) {
 		if (agentAlreadySeen(a)) {
-			List<ExperienceRecord<A, S>> tdArray = erListMap.get(a);
+			List<ExperienceRecord<A>> tdArray = erListMap.get(a);
 			return HopshackleUtilities.cloneList(tdArray);
 		}
-		return new ArrayList<ExperienceRecord<A, S>>();
+		return new ArrayList<ExperienceRecord<A>>();
 	}
-	public List<ExperienceRecord<A, S>> getCompleteExperienceRecords(A a) {
+	public List<ExperienceRecord<A>> getCompleteExperienceRecords(A a) {
 		if (agentAlreadySeen(a)) {
-			List<ExperienceRecord<A, S>> retValue = new ArrayList<ExperienceRecord<A, S>>();
-			List<ExperienceRecord<A, S>> tdArray = erListMap.get(a);
-			for (ExperienceRecord<A, S> er : tdArray) {
+			List<ExperienceRecord<A>> retValue = new ArrayList<ExperienceRecord<A>>();
+			List<ExperienceRecord<A>> tdArray = erListMap.get(a);
+			for (ExperienceRecord<A> er : tdArray) {
 				if (er.getState() == ERState.NEXT_ACTION_TAKEN)
 					retValue.add(er);
 			}
 			return retValue;
 		}
-		return new ArrayList<ExperienceRecord<A, S>>();
+		return new ArrayList<ExperienceRecord<A>>();
 	}
 	
 	public List<A> getAllAgentsWithER() {
 		return HopshackleUtilities.cloneList(erListMap.keySet());
 	}
 	
-	public List<ExperienceRecord<A, S>> getAllExperienceRecords() {
-		List<ExperienceRecord<A, S>> retList = new ArrayList<ExperienceRecord<A, S>>();
-		for (List<ExperienceRecord<A, S>> l : erListMap.values())
+	public List<ExperienceRecord<A>> getAllExperienceRecords() {
+		List<ExperienceRecord<A>> retList = new ArrayList<ExperienceRecord<A>>();
+		for (List<ExperienceRecord<A>> l : erListMap.values())
 			retList.addAll(l);
 		return retList;
 	}
@@ -56,7 +56,7 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 		erListMap.clear();
 	}
 	
-	public void removeER(A agent, ExperienceRecord<A, S> er) {
+	public void removeER(A agent, ExperienceRecord<A> er) {
 		if (agentAlreadySeen(agent)) {
 			erListMap.get(agent).remove(er);
 		}
@@ -73,14 +73,14 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 	}
 	
 	private void addAgentToList(A a) {
-		List<ExperienceRecord<A, S>> tdList = new ArrayList<ExperienceRecord<A, S>>();
+		List<ExperienceRecord<A>> tdList = new ArrayList<ExperienceRecord<A>>();
 		erListMap.put(a, tdList);
 	}
 	
-	private boolean processNewER(ExperienceRecord<A, S> newlyRegisteredER, A agent) {
+	private boolean processNewER(ExperienceRecord<A> newlyRegisteredER, A agent) {
 		boolean passOnEvent = false;
-		List<ExperienceRecord<A, S>> tdListForAgent = erListMap.getOrDefault(agent, new ArrayList<ExperienceRecord<A, S>>());
-		for (ExperienceRecord<A, S> existingER : tdListForAgent) {
+		List<ExperienceRecord<A>> tdListForAgent = erListMap.getOrDefault(agent, new ArrayList<ExperienceRecord<A>>());
+		for (ExperienceRecord<A> existingER : tdListForAgent) {
 //			System.out.println("\tProcessing: " + existingER.getActionTaken().actionType + "(" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
 			if (existingER.getState() == ERState.ACTION_COMPLETED && 
 					!newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken())) {
@@ -101,8 +101,8 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 	public synchronized void processEvent(AgentEvent event) {
 		A a = (A) event.getAgent();
 		Action<A> action = (Action<A>)event.getAction();
-		Decider<A, S> agentDecider = (Decider<A, S>) event.getDecider();
-		ExperienceRecord<A, S> newER = null;
+		Decider<A> agentDecider = (Decider<A>) event.getDecider();
+		ExperienceRecord<A> newER = null;
 		boolean passOnEvent = false;
 //		if (!a.isDead()) System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
 		switch (event.getEvent()) {
@@ -116,8 +116,7 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 			passOnEvent = true;
 			break;
 		case DECISION_TAKEN:
-			newER = new ExperienceRecord<A, S>(a, (List<GeneticVariable<A, S>>) agentDecider.getVariables(), 
-					agentDecider.getCurrentState(a), action, agentDecider.getChooseableOptions(a));
+			newER = new ExperienceRecord<A>(a, agentDecider.getCurrentState(a), action, agentDecider.getChooseableOptions(a));
 			passOnEvent = processNewER(newER, a);
 			break;
 		case ACTION_AGREED:
@@ -140,8 +139,8 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 	
 	private boolean actionPreviouslySeen(A agent, Action<A> action) {
 		if (agentAlreadySeen(agent)) {
-			List<ExperienceRecord<A, S>> tdArray = erListMap.get(agent);
-			for (ExperienceRecord<A, S> er : tdArray) {
+			List<ExperienceRecord<A>> tdArray = erListMap.get(agent);
+			for (ExperienceRecord<A> er : tdArray) {
 				Action<A> act = er.getActionTaken();
 				if (act.equals(action))
 					return true;
@@ -150,13 +149,12 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 		return false;
 	}
 	
-	private boolean createAndProcessNewERIfNeeded(A a, Action<A> action, Decider<A, S> agentDecider) {
+	private boolean createAndProcessNewERIfNeeded(A a, Action<A> action, Decider<A> agentDecider) {
 		if (action!= null && !actionPreviouslySeen(a, action) && agentDecider != null) {
 			// we need to create a new ER first
 			List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 			chooseableOptions.add(action.getType());
-			ExperienceRecord<A, S> newER = new ExperienceRecord<A, S>(a, (List<GeneticVariable<A, S>>) agentDecider.getVariables(), 
-					agentDecider.getCurrentState(a), action, chooseableOptions);
+			ExperienceRecord<A> newER = new ExperienceRecord<A>(a, agentDecider.getCurrentState(a), action, chooseableOptions);
 			return processNewER(newER, a);
 		}
 		return false;
@@ -164,9 +162,9 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 	
 	protected boolean processDecisionForAgent(A agent, Action<A> action) {
 		boolean passOnEvent = false;
-		List<ExperienceRecord<A, S>> tdArray = erListMap.get(agent);
-		ExperienceRecord<A, S> ERForActionReceived = null;
-		for (ExperienceRecord<A, S> td : tdArray) {
+		List<ExperienceRecord<A>> tdArray = erListMap.get(agent);
+		ExperienceRecord<A> ERForActionReceived = null;
+		for (ExperienceRecord<A> td : tdArray) {
 			if (td.getActionTaken().equals(action)) {
 				ERForActionReceived = td;
 				switch (td.getState()) {
@@ -174,8 +172,8 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 					assert false : "Should not be reachable";
 				break;
 				case DECISION_TAKEN:
-					Decider<A, S> d = agent.getDecider();
-					S newState = d.getCurrentState(agent);
+					Decider<A> d = agent.getDecider();
+					State<A> newState = d.getCurrentState(agent);
 					td.updateWithResults(0.0, newState);
 				case ACTION_COMPLETED:
 				case NEXT_ACTION_TAKEN:
@@ -185,7 +183,7 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 		}
 		// We run through all ER again once we have updated the ER specific to the action received
 		// This then updates any in an ACTION_COMPLETE state
-		for (ExperienceRecord<A, S> td : tdArray) {
+		for (ExperienceRecord<A> td : tdArray) {
 			if (!td.getActionTaken().equals(action)) {
 				switch (td.getState()) {
 				case ACTION_COMPLETED:
@@ -202,12 +200,12 @@ public class ExperienceRecordCollector<A extends Agent, S extends State<A>> impl
 	}
 
 	private void processDeathOfAgent(A agent) {
-		List<ExperienceRecord<A, S>> tdArray = erListMap.get(agent);
-		for (ExperienceRecord<A, S> td : tdArray) {
+		List<ExperienceRecord<A>> tdArray = erListMap.get(agent);
+		for (ExperienceRecord<A> td : tdArray) {
 			switch (td.getState()) {
 			case DECISION_TAKEN:
-				Decider<A, S> d = agent.getDecider();
-				S newState = d.getCurrentState(agent);
+				Decider<A> d = agent.getDecider();
+				State<A> newState = d.getCurrentState(agent);
 				td.updateWithResults(0.0, newState);
 			case ACTION_COMPLETED:
 				td.updateNextActions(null);

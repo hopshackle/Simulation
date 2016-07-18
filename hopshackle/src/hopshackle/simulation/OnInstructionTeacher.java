@@ -2,9 +2,9 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class OnInstructionTeacher<A extends Agent, S extends State<A>> extends Teacher<A, S> {
+public class OnInstructionTeacher<A extends Agent> extends Teacher<A> {
 	
-	protected List<List<ExperienceRecord<A, S>>> pastData = new ArrayList<List<ExperienceRecord<A, S>>>();
+	protected List<List<ExperienceRecord<A>>> pastData = new ArrayList<List<ExperienceRecord<A>>>();
 	protected int pastDataLimit;
 	
 	public OnInstructionTeacher() {
@@ -21,7 +21,7 @@ public class OnInstructionTeacher<A extends Agent, S extends State<A>> extends T
 	}
 
 	protected void updateData() {
-		List<ExperienceRecord<A, S>> newER = experienceRecordCollector.getAllExperienceRecords();
+		List<ExperienceRecord<A>> newER = experienceRecordCollector.getAllExperienceRecords();
 		pastData.add(newER);
 		if (pastData.size() > pastDataLimit+1) {
 			pastData.remove(0);
@@ -31,14 +31,14 @@ public class OnInstructionTeacher<A extends Agent, S extends State<A>> extends T
 
 	public void teach() {
 		updateData();
-		List<ExperienceRecord<A, S>> allDataForTraining = getLastNDataSets();
+		List<ExperienceRecord<A>> allDataForTraining = getLastNDataSets();
 		Agent a = allDataForTraining.get(0).getAgent();
-		for (Decider<A, S> d : decidersToTeach) {
+		for (Decider<A> d : decidersToTeach) {
 			d.learnFromBatch(allDataForTraining, a.getMaxScore());
 		}
 	}
-	protected List<ExperienceRecord<A, S>> getLastNDataSets() {
-		List<ExperienceRecord<A, S>> retValue = pastData.get(0);
+	protected List<ExperienceRecord<A>> getLastNDataSets() {
+		List<ExperienceRecord<A>> retValue = pastData.get(0);
 		for (int i = 1; i <= pastDataLimit && i < pastData.size(); i++) {
 			retValue.addAll(pastData.get(i));
 		}

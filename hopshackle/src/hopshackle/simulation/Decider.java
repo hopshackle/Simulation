@@ -6,13 +6,13 @@ public interface Decider<A extends Agent> {
 
 	public double valueOption(ActionEnum<A> option, A decidingAgent);
 	
-	public void setStateFactory(StateFactory<A> stateFactory);
+	public void learnFrom(ExperienceRecord<A> exp, double maxResult);
 
-	public <S extends State<A>> void learnFrom(ExperienceRecord<A, S> exp, double maxResult);
-
-	public <S extends State<A>> void learnFromBatch(List<ExperienceRecord<A, S>> exp, double maxResult);
+	public void learnFromBatch(List<ExperienceRecord<A>> exp, double maxResult);
 	
-	public <S extends State<A>> void learnFromBatch(ExperienceRecord<A, S>[] exp, double maxResult);
+	public void learnFromBatch(ExperienceRecord<A>[] exp, double maxResult);
+	
+	public State<A> getCurrentState(A agent);
 
 	public Action<A> decide(A decidingAgent);
 

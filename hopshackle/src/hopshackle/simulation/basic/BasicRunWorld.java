@@ -192,8 +192,9 @@ public class BasicRunWorld {
 		ArrayList<ActionEnum<BasicAgent>> actionsToUse = new ArrayList<ActionEnum<BasicAgent>>(EnumSet.allOf(BasicActions.class));
 		actionsToUse.remove(BasicActions.FIND_WATER);
 
-		maleBasicDecider = new GeneralLinearQDecider<BasicAgent>(actionsToUse, variablesToUse);
-		femaleBasicDecider = new GeneralLinearQDecider<BasicAgent>(actionsToUse, variablesToUse);
+		StateFactory<BasicAgent> stateFactory = new LinearStateFactory<BasicAgent>(variablesToUse);
+		maleBasicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory, actionsToUse);
+		femaleBasicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory, actionsToUse);
 		
 		femaleTeacher.registerDecider(femaleBasicDecider);
 		maleTeacher.registerDecider(maleBasicDecider);

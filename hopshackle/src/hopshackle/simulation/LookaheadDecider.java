@@ -2,31 +2,22 @@ package hopshackle.simulation;
 
 import java.util.List;
 
-public abstract class LookaheadDecider<A extends Agent, B extends LookaheadState<A>> extends BaseDecider<A, B> {
+public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 	
-	private LookaheadFunction<A, B> lookahead;
+	private LookaheadFunction<A> lookahead;
 
-	public LookaheadDecider(LookaheadFunction<A, B> lookahead, List<ActionEnum<A>> actions, List<GeneticVariable<A, B>> variables) {
-		super(actions, variables);
+	public LookaheadDecider(StateFactory<A> stateFactory, LookaheadFunction<A> lookahead, List<ActionEnum<A>> actions) {
+		super(stateFactory, actions);
 		this.lookahead = lookahead;
 	}
 
 	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent) {
-		B currentState = lookahead.getCurrentState(decidingAgent);
-		B futureState = lookahead.apply(currentState, option);
+		LookaheadState<A> currentState = lookahead.getCurrentState(decidingAgent);
+		LookaheadState<A> futureState = lookahead.apply(currentState, option);
 		return value(futureState);
 	}
 	
-	public abstract double value(B state);
+	public abstract double value(LookaheadState<A> state);
 	
-	public double[] getState(LookaheadState<A> ps, List<GeneticVariable<A, B>> variableSet) {
-		double[] inputs = new double[variableSet.size()];
-		for (int i = 0; i < variableSet.size(); i++) {
-			GeneticVariable<A, B> gv = variableSet.get(i);
-			inputs[i] = gv.getValue(ps);
-		}
-
-		return inputs;
-	}
 }

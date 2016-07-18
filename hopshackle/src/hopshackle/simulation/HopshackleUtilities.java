@@ -155,13 +155,4 @@ public class HopshackleUtilities {
 		}
 		return retValue;
 	}
-
-	public static <A extends Agent, S extends State<A>> double[] stateToArray(S state, List<GeneticVariable<A, S>> variableSet) {
-		double[] inputs = new double[variableSet.size()];
-		for (int i = 0; i < variableSet.size(); i ++) {
-			GeneticVariable<A, S> gv = variableSet.get(i);
-			inputs[i] = gv.getValue(state);
-		}
-		return inputs;
-	}
 }

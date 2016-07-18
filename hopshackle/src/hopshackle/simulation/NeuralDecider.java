@@ -8,7 +8,7 @@ import org.encog.neural.data.basic.*;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
-public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends QDecider<A, S> {
+public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	protected Hashtable<String, BasicNetwork> brain;
 	protected static double temperature;
@@ -22,13 +22,17 @@ public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends
 	protected double baseMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum", "0.0");
 	private double overrideLearningCoefficient, overrideMomentum; 
 
-	public NeuralDecider(List<? extends ActionEnum<A>> actions, List<GeneticVariable<A, S>> variables){
-		super(actions, variables);
+	public NeuralDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions){
+		super(stateFactory, actions);
 		maxNoise = SimProperties.getPropertyAsDouble("NeuralNoise", "0.20");
 		// Each NeuralDecider will have a brain consisting of:
 		//	A Neural Network for each Option, containing 1 output Neuron,
 		//  and a number of input Neurons equal to the Variables
-		brain = initialiseFullBrain(actionSet, variableSet);
+		// TODO: Really I'd like to tie all the neuron weights together (except at the output layer), so that they 
+		// learn a consistent set of features (and hence share knowledge).
+		// I think the encog library will support multiple output neurons...so if we know in advance the list of
+		// all possible actions, then this can be implemented with a single brain. This is bestest at the moment.
+		brain = initialiseFullBrain(actionSet, stateFactory.getVariables().size());
 		last100Choices = new HashMap<ActionEnum<A>, Integer>();
 		previous100Choices = new HashMap<ActionEnum<A>, Integer>();
 		overrideLearningCoefficient = SimProperties.getPropertyAsDouble("NeuralLearningCoefficient." + toString(), "-99.0");
@@ -44,43 +48,30 @@ public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends
 			maxNoise = newMaxNoise;
 	}
 
-	@Override
-	public <V extends GeneticVariable<A, S>> void setVariables(List<V> genVar) {
-		super.setVariables(genVar);
-		brain = initialiseFullBrain(actionSet, variableSet);
-	}
-	public void setActions(List<? extends ActionEnum<A>> actions) {
-		super.setActions(actions);
-		brain = initialiseFullBrain(actionSet, variableSet);
-	}
-
-	protected static <A extends Agent, S extends State<A>> Hashtable<String, BasicNetwork> initialiseFullBrain(List<ActionEnum<A>> actionSet, List<GeneticVariable<A, S>> varSet) {
+	protected static <A extends Agent> Hashtable<String, BasicNetwork> initialiseFullBrain(List<ActionEnum<A>> actionSet, int inputNeurons) {
 		Hashtable<String, BasicNetwork> retValue = new Hashtable<String, BasicNetwork>();
-		if (actionSet == null || varSet == null) return retValue;
+		if (actionSet == null) return retValue;
 		for (ActionEnum<A> ae : actionSet) {
-			retValue.put(ae.toString(), initialiseBrain(varSet));
+			retValue.put(ae.toString(), initialiseBrain(inputNeurons));
 		}
 		return retValue;
 	}
 
-	public static <A extends Agent, S extends State<A>> BasicNetwork initialiseBrain(List<GeneticVariable<A, S>> varSet) {
+	public static <A extends Agent> BasicNetwork initialiseBrain(int inputNeurons) {
 		int neuronLayers = Integer.valueOf(SimProperties.getProperty("NeuralDeciderHiddenLayers", "1"));
 		int[] layers = new int[neuronLayers+2];
-		if (varSet != null) {
-			int inputNeurons = varSet.size();
-			layers[0] = inputNeurons;
-			for (int hiddenLayer = 1; hiddenLayer <= neuronLayers; hiddenLayer++) {
-				layers[hiddenLayer] = inputNeurons / 2 + 1;	 // all hidden layers have same number of neurons
-			}
-			layers[neuronLayers+1] = 1;	// output neuron
-			return newFFNetwork(layers);
+
+		layers[0] = inputNeurons;
+		for (int hiddenLayer = 1; hiddenLayer <= neuronLayers; hiddenLayer++) {
+			layers[hiddenLayer] = inputNeurons / 2 + 1;	 // all hidden layers have same number of neurons
 		}
-		return null;
+		layers[neuronLayers+1] = 1;	// output neuron
+		return newFFNetwork(layers);
 	}
 
 	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent) {
-		S state = getCurrentState(decidingAgent);
+		State<A> state = getCurrentState(decidingAgent);
 		double retValue = valueOption(option, state);
 		if (nd_debug)
 			decidingAgent.log("Option " + option.toString() + " has base Value of " + retValue);
@@ -88,13 +79,13 @@ public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends
 	}
 	
 	@Override
-	public double valueOption(ActionEnum<A> option, S state) {
+	public double valueOption(ActionEnum<A> option, State<A> state) {
 		BasicNetwork brainSection = brain.get(option.toString());
 		if (brainSection == null) {
 			logger.severe("Action reference for " + option.toString() + " not found in Brain");
 			return -1.0;
 		}
-		BasicNeuralData inputData = new BasicNeuralData(HopshackleUtilities.stateToArray(state, variableSet));
+		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());
 		double retValue = brainSection.compute(inputData).getData()[0];
 		temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		return retValue += (1.0 + (Math.random()-0.5)*temperature*maxNoise);
@@ -149,13 +140,13 @@ public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends
 
 	public void saveBrain(String name, String directory) {
 		File saveFile = new File(directory + "\\" + name + "_" + 
-				actionSet.get(0).getChromosomeDesc() + "_" + variableSet.get(0).getDescriptor() + ".brain");
+				actionSet.get(0).getChromosomeDesc() + "_" + stateFactory.getVariables().get(0).getDescriptor() + ".brain");
 
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(saveFile));
 
 			oos.writeObject(actionSet);
-			oos.writeObject(variableSet);
+			oos.writeObject(stateFactory.getVariables());
 			for (ActionEnum<A> ae : actionSet)
 				oos.writeObject(brain.get(ae.toString()));
 
@@ -169,7 +160,7 @@ public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends
 		} 
 	}
 
-	protected void updateBrain(NeuralDecider<A, S> parent) {
+	protected void updateBrain(NeuralDecider<A> parent) {
 		this.brain = parent.brain;
 		setName(parent.toString());
 	}
@@ -187,11 +178,11 @@ public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends
 					actionSet.size() + "expected, " + network.length + " received.");
 			return false;
 		}
-		for (int n=0; n<network.length; n++){
-			if (network[n].getInputCount() != variableSet.size()) {
+		for (int n=0; n<network.length; n++) {
+			if (network[n].getInputCount() != stateFactory.getVariables().size()) {
 				logger.info("Brain supplied wrong size for NeuralDecider " + toString() +
 						". Action " + n + " has " + network[n].getInputCount() + 
-						" neuron inputs instead of " + variableSet.size());
+						" neuron inputs instead of " + stateFactory.getVariables().size());
 				return false;
 			}
 		}
@@ -234,11 +225,11 @@ public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends
 	}
 	
 	@Override
-	public void learnFrom(ExperienceRecord<A, S> exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		BasicNetwork brainToTrain = brain.get(exp.getActionTaken().toString());
-		if (exp.getVariables().size() != brainToTrain.getInputCount()) {
+		if (exp.getStartStateAsArray().length != brainToTrain.getInputCount()) {
 			logger.severe("Input data in ExperienceRecord not the same as input neurons " 
-					+ exp.getVariables().size() + " : " + brainToTrain.getInputCount());
+					+ exp.getStartStateAsArray().length + " : " + brainToTrain.getInputCount());
 		}
 
 		if (baseLearningCoefficient < 0.000001)
@@ -251,7 +242,7 @@ public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends
 		if (output > 1.0) output = 1.0;
 		if (output < -1.0) output = -1.0;
 		outputValues[0][0] = output;
-		double[] subLoop = HopshackleUtilities.stateToArray(exp.getStartState(), variableSet);
+		double[] subLoop = exp.getStartStateAsArray();
 		for (int n=0; n<subLoop.length; n++) {
 			inputValues[0][n] = subLoop[n];
 		}
@@ -261,5 +252,68 @@ public abstract class NeuralDecider<A extends Agent, S extends State<A>> extends
 		BasicNeuralDataSet trainingData = new BasicNeuralDataSet(inputValues, outputValues);
 		Backpropagation trainer = new Backpropagation(brainToTrain, trainingData, modifiedLearningCoefficient, baseMomentum);
 		trainer.iteration();
+	}
+	
+
+	@SuppressWarnings("unchecked")
+	public static <A extends Agent> NeuralDecider<A> createNeuralDecider(StateFactory<A> stateFactory, File saveFile) {
+		NeuralDecider<A> retValue = null;
+		try {
+			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(saveFile));
+
+			ArrayList<ActionEnum<A>> actionSet = (ArrayList<ActionEnum<A>>) ois.readObject();
+			ArrayList<GeneticVariable<A>> variableSet = (ArrayList<GeneticVariable<A>>) ois.readObject();
+			retValue = new NeuralDecider<A>(stateFactory, actionSet);
+
+			BasicNetwork[] actionNN = new BasicNetwork[actionSet.size()];
+			for (int n=0; n<actionSet.size(); n++)
+				actionNN[n] = (BasicNetwork) ois.readObject();
+
+			ois.close();
+			retValue.setBrain(actionNN);
+			String name = saveFile.getName();
+			String end = ".brain";
+			name = name.substring(0, name.indexOf(end));
+			retValue.setName(name);
+
+		} catch (Exception e) {
+			logger.severe("Error reading combat brain: " + e.toString());
+			for ( StackTraceElement s : e.getStackTrace()) {
+				logger.info(s.toString());
+			}
+		}
+
+		return retValue;
+	}
+
+	@Override
+	/* 
+	 * 	For Neural Deciders, we can cross them with another
+	 *  as long as the action and variable Sets are identical
+	 *  (or at least have the same number of items across the two Deciders)
+	 */
+	public Decider<A> crossWith(Decider<A> otherDecider) {
+		if (!(otherDecider instanceof NeuralDecider))
+			return super.crossWith(otherDecider);
+		if (this.getVariables().size() != otherDecider.getVariables().size())
+			return super.crossWith(otherDecider);
+		if (this.actionSet.size() != otherDecider.getActions().size())
+			return super.crossWith(otherDecider);
+		if (this == otherDecider) return this;
+
+		NeuralDecider<A> retValue = new NeuralDecider<A>(stateFactory, actionSet);
+		BasicNetwork[] newBrain = new BasicNetwork[actionSet.size()];
+		for (int n = 0; n < actionSet.size(); n++) {
+			// 50:50 chance for each action which Network we take
+			if (Math.random() < 0.5) {
+				newBrain[n] = this.brain.get(actionSet.get(n).toString());
+			} else {
+				newBrain[n] = ((NeuralDecider<A>)otherDecider).brain.get(actionSet.get(n).toString());
+			}
+		}
+
+		retValue.setBrain(newBrain);
+		retValue.setName(toString());
+		return retValue;
 	}
 }

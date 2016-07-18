@@ -2,15 +2,15 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public abstract class StateDecider<A extends Agent, S extends State<A>> extends QDecider<A, S> {
+public abstract class StateDecider<A extends Agent> extends QDecider<A> {
 
 	private String stateType;
 	private int pigeonHoles;
 	private double baseValue;
 	private double maxNoise, minNoise;
 
-	public StateDecider(ArrayList<ActionEnum<A>> actions, ArrayList<GeneticVariable<A, S>> variables){
-		super(actions, variables);
+	public StateDecider(StateFactory<A> stateFactory, ArrayList<ActionEnum<A>> actions){
+		super(stateFactory, actions);
 		setStateType("DEFAULT");
 		pigeonHoles = 4;
 		baseValue = SimProperties.getPropertyAsDouble("StateBaseValue", "10000");
@@ -26,15 +26,15 @@ public abstract class StateDecider<A extends Agent, S extends State<A>> extends 
 	}
 	
 	@Override
-	public double valueOption(ActionEnum<A> option, S state) {
+	public double valueOption(ActionEnum<A> option, State<A> state) {
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		HopshackleState agentState = getState(state);
 		return agentState.valueOption(option, temperature * (maxNoise - minNoise) + minNoise );
 	}
 
-	protected HopshackleState getState(S state) {
+	protected HopshackleState getState(State<A> state) {
 		StringBuffer retStr = new StringBuffer( stateType );
-		double[] stateDesc = HopshackleUtilities.stateToArray(state, variableSet);
+		double[] stateDesc = state.getAsArray();
 
 		for (int i = 0; i < stateDesc.length; i++)
 			retStr.append(":" + pigeonHole(stateDesc[i]));
@@ -96,7 +96,7 @@ public abstract class StateDecider<A extends Agent, S extends State<A>> extends 
 	}
 
 	@Override
-	public void learnFrom(ExperienceRecord<A, S> exp, double maxResult) {
+	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		ActionEnum<A> actionTaken = exp.getActionTaken().actionType;
 		double observedResult = exp.getReward();
 		HopshackleState startState = getState(exp.getStartState());
