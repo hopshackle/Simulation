@@ -75,22 +75,13 @@ enum TestGenVar implements GeneticVariable<TestAgent> {
 	TEST;
 
 	@Override
-	public double getValue(TestAgent a1, Agent a2) {return 1.0;}
-	@Override
-	public double getValue(TestAgent a1, Artefact a2) {return 1.0;}	
-	@Override
-	public double getValue(TestAgent a1, Action<TestAgent> a2) {return 1.0;}
+	public double getValue(TestAgent a1) {return 1.0;}
 	@Override
 	public String getDescriptor() {
 		return "TEST_GV";
 	}
-
 	@Override
 	public boolean unitaryRange() {return true;}
-	@Override
-	public double getValue(LookaheadState<TestAgent> forwardState) {
-		return 0;
-	}
 	
 }
 
@@ -125,11 +116,11 @@ class TestDecider extends BaseDecider<TestAgent> {
 	}
 
 	public TestDecider() {
-		super(actionList, gvList);
+		super(new LinearStateFactory<TestAgent>(gvList), actionList);
 	}
 
 	@Override
-	public double valueOption(ActionEnum<TestAgent> option, TestAgent decidingAgent, Agent contextAgent) {
+	public double valueOption(ActionEnum<TestAgent> option, TestAgent decidingAgent) {
 		return 0;
 	}
 	@Override

@@ -19,7 +19,7 @@ public class BasicMarriageTest {
 	private List<ActionEnum<BasicAgent>> actions;
 	private List<GeneticVariable<BasicAgent>> variables = new ArrayList<GeneticVariable<BasicAgent>>(EnumSet.allOf(BasicVariables.class));
 	private Decider<BasicAgent> baseDecider;
-	private Decider<BasicAgent> restDecider = new HardCodedDecider(BasicActions.REST);
+	private Decider<BasicAgent> restDecider = new HardCodedDecider<BasicAgent>(BasicActions.REST);
 
 	@Before
 	public void setUp() {
@@ -28,7 +28,8 @@ public class BasicMarriageTest {
 		actions.add(BasicActions.FORAGE);
 		actions.add(BasicActions.MARRY);
 		actions.add(BasicActions.LOOK_FOR_PARTNER);
-		baseDecider = new GeneralLinearQDecider<BasicAgent>(actions, variables);
+		StateFactory<BasicAgent> sf = new LinearStateFactory<BasicAgent>(variables);
+		baseDecider = new GeneralLinearQDecider<BasicAgent>(sf, actions);
 		ap = new TestActionProcessor();
 		world = ap.w;
 		homeHex = new BasicHex(0, 0);
@@ -294,14 +295,14 @@ public class BasicMarriageTest {
 	@Test
 	public void onDissolutionSpouseTakesActionsAgain() {
 		new Hut(maleAgent1);
-		maleAgent1.setDecider(new HardCodedDecider(BasicActions.LOOK_FOR_PARTNER));
+		maleAgent1.setDecider(new HardCodedDecider<BasicAgent>(BasicActions.LOOK_FOR_PARTNER));
 		femaleAgent2.decide();
 		maleAgent1.decide();
-		maleAgent1.setDecider(new HardCodedDecider(BasicActions.REST));
+		maleAgent1.setDecider(new HardCodedDecider<BasicAgent>(BasicActions.REST));
 		ap.processActionsInQueue(6);	// REST, LOOK_FOR_PARTNER, then MARRY
 		assertTrue(maleAgent1.isMarried());
 		assertTrue(femaleAgent2.isMarried());
-		Action nextMaleAction = maleAgent1.getNextAction();
+		Action<BasicAgent> nextMaleAction = (Action<BasicAgent>) maleAgent1.getNextAction();
 		assertTrue(nextMaleAction instanceof Rest);
 		assertEquals(nextMaleAction.getAllConfirmedParticipants().size(), 2);
 		assertEquals(maleAgent1.getActionPlan().sizeOfQueue(), 1);
@@ -313,10 +314,10 @@ public class BasicMarriageTest {
 	@Test
 	public void checkStateVariableDistinguishesBetweenMarriedStates() {
 		new Marriage(maleAgent1, femaleAgent2);
-		assertEquals(BasicVariables.MARRIED_STATUS.getValue(maleAgent1, maleAgent1), 1.0, 0.001);
-		assertEquals(BasicVariables.MARRIED_STATUS.getValue(femaleAgent2, femaleAgent2), 1.0, 0.001);
-		assertEquals(BasicVariables.MARRIED_STATUS.getValue(maleAgent3, maleAgent3), 0.0, 0.001);
-		assertEquals(BasicVariables.MARRIED_STATUS.getValue(femaleAgent3, femaleAgent3), 0.0, 0.001);
+		assertEquals(BasicVariables.MARRIED_STATUS.getValue(maleAgent1), 1.0, 0.001);
+		assertEquals(BasicVariables.MARRIED_STATUS.getValue(femaleAgent2), 1.0, 0.001);
+		assertEquals(BasicVariables.MARRIED_STATUS.getValue(maleAgent3), 0.0, 0.001);
+		assertEquals(BasicVariables.MARRIED_STATUS.getValue(femaleAgent3), 0.0, 0.001);
 	}
 	
 	@Test

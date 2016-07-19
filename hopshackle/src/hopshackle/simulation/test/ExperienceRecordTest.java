@@ -28,11 +28,8 @@ public class ExperienceRecordTest {
 		List<ActionEnum<BasicAgent>> possibleActions = new ArrayList<ActionEnum<BasicAgent>>();
 		possibleActions.add(BasicActions.FARM);
 		possibleActions.add(BasicActions.FIND_UNKNOWN);
-		double[] startState = new double[varList.size()];
-		for (int i = 0; i < startState.length; i++)
-			startState[i] = i;
 
-		er = new ExperienceRecord<BasicAgent>(agent, varList, startState, BasicActions.FARM.getAction(agent), possibleActions);
+		er = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions);
 
 		assertFalse(er.isInFinalState());
 		assertTrue(er.getEndState() == null);
@@ -41,11 +38,8 @@ public class ExperienceRecordTest {
 		assertTrue(er.getPossibleActionsFromEndState() == null);
 		assertEquals(er.getPossibleActionsFromStartState().size(), 2);
 
-		double[] endState = new double[varList.size()];
-		for (int i = 0; i < endState.length; i++)
-			endState[i] = Math.sqrt(i);
 		possibleActions.add(BasicActions.BREED);
-		er.updateWithResults(30.0, endState);
+		er.updateWithResults(30.0, new LinearState<BasicAgent>(agent, varList));
 		er.setIsFinal();
 		assertTrue(er.isInFinalState());
 		assertFalse(er.getEndState() == null);

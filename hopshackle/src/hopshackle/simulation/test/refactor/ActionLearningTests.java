@@ -156,7 +156,7 @@ public class ActionLearningTests {
 		assertEquals(teacher.eventsReceived.size(), 1); // DECISION_STEP_COMPLETE
 		assertTrue(er1.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
 		assertTrue(erc.agentActionState(testAgent, forwardAction) == ExperienceRecord.ERState.DECISION_TAKEN);
-		assertTrue(er1.getEndState().length > 0);
+		assertTrue(er1.getEndState().getAsArray().length > 0);
 		assertTrue(er2.getEndState() == null);
 	}	
 	
