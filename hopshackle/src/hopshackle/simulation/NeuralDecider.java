@@ -17,7 +17,7 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 
 	public NeuralDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions){
 		super(stateFactory, actions);
-		brain = BrainFactory.initialiseBrain(actionSet.size(), stateFactory.getVariables().size());
+		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), actionSet.size());
 		overrideLearningCoefficient = SimProperties.getPropertyAsDouble("NeuralLearningCoefficient." + toString(), "-99.0");
 		overrideMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");
 		if (overrideLearningCoefficient > -98) baseLearningCoefficient = overrideLearningCoefficient;
