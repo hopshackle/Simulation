@@ -173,8 +173,10 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 				break;
 				case DECISION_TAKEN:
 					Decider<A> d = agent.getDecider();
-					State<A> newState = d.getCurrentState(agent);
-					td.updateWithResults(0.0, newState);
+					if (d != null) {
+						State<A> newState = d.getCurrentState(agent);
+						td.updateWithResults(0.0, newState);
+					}
 				case ACTION_COMPLETED:
 				case NEXT_ACTION_TAKEN:
 					// Do nothing

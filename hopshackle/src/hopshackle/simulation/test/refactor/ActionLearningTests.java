@@ -170,7 +170,7 @@ public class ActionLearningTests {
 		assertTrue(er2.getActionTaken().equals(forwardAction));
 		er1.getActionTaken().start();
 		assertEquals(teacher.eventsReceived.size(), 0);
-		testAgent.setDecider(null);
+		((TestAction)er1.getActionTaken()).makeNextDecision = false;
 		er1.getActionTaken().run();
 		assertEquals(teacher.eventsReceived.size(), 0);
 		assertTrue(erc.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.ERState.ACTION_COMPLETED);
@@ -193,7 +193,7 @@ public class ActionLearningTests {
 		TestAction actionTaken = (TestAction) testAgent.getActionPlan().getNextAction();
 		ExperienceRecord<TestAgent> er1 = erc.getExperienceRecords(testAgent).get(0);
 		actionTaken.start();
-		testAgent.setDecider(null);
+		actionTaken.makeNextDecision = false;
 		assertEquals(teacher.eventsReceived.size(), 0);
 		actionTaken.run();
 		assertEquals(teacher.eventsReceived.size(), 0);
@@ -213,7 +213,7 @@ public class ActionLearningTests {
 		TestAction actionTaken = (TestAction) testAgent.getActionPlan().getNextAction();
 		ExperienceRecord<TestAgent> er1 = erc.getExperienceRecords(testAgent).get(0);
 		actionTaken.start();
-		testAgent.setDecider(null); // otherwise we move on to next decision
+		actionTaken.makeNextDecision = false;
 		actionTaken.run();
 		assertEquals(teacher.eventsReceived.size(), 0);
 		assertTrue(er1.getState() == ExperienceRecord.ERState.ACTION_COMPLETED);
@@ -234,9 +234,10 @@ public class ActionLearningTests {
 		ExperienceRecord<TestAgent> er1 = erc.getExperienceRecords(testAgent).get(0);
 		assertTrue(erc.agentActionState(allAgents.get(1), twoParticipants) == ExperienceRecord.ERState.DECISION_TAKEN);
 		twoParticipants.start();
-		allAgents.get(1).setDecider(null);
+		twoParticipants.makeNextDecision = false;
 		assertEquals(teacher.eventsReceived.size(), 0);
 		twoParticipants.run();
+		testAgent.decide();
 		assertTrue(erc.agentActionState(testAgent, twoParticipants) == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
 		assertTrue(er1.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
 		assertTrue(erc.agentActionState(allAgents.get(1), twoParticipants) == ExperienceRecord.ERState.ACTION_COMPLETED);

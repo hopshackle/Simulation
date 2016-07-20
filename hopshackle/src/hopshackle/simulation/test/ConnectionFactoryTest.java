@@ -8,6 +8,8 @@ import java.sql.*;
 import org.junit.*;
 
 public class ConnectionFactoryTest {
+	
+	Connection c;
 
 	@Before
 	public void setUp() throws Exception {
@@ -15,20 +17,19 @@ public class ConnectionFactoryTest {
 
 	@Test
 	public void testVanilla() {
-		Connection c = ConnectionFactory.getConnection();	
+		c = ConnectionFactory.getConnection();	
 		assertTrue (c != null);
 	}
 
 	@Test
 	public void testFailure() {
-		Connection c = ConnectionFactory.getConnection("dummy", "who", "noidea", "", true);
+		c = ConnectionFactory.getConnection("dummy", "who", "noidea", "", true);
 		assertTrue (c == null);
 	}
 
 	@Test
 	public void testVariants() {
-
-		Connection c = ConnectionFactory.getConnection("junit", "root", "Metternich", "", false);
+		c = ConnectionFactory.getConnection("junit", "root", "Metternich", "", false);
 		assertTrue (c != null);
 		try {
 			c.close();
@@ -56,5 +57,16 @@ public class ConnectionFactoryTest {
 			}
 		} catch (SQLException e) {
 		}
+	}
+	
+	@After
+	public void tearDown() throws Exception {
+		try {
+			if (c != null && !c.isClosed())
+				c.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
 	}
 }

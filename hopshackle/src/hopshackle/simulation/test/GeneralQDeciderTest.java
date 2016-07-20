@@ -40,6 +40,7 @@ public class GeneralQDeciderTest {
 	public void setup() {
 		SimProperties.setProperty("Gamma", "0.90");
 		SimProperties.setProperty("Alpha", "0.20");
+		SimProperties.setProperty("Lambda", "0.00");
 		SimProperties.setProperty("QTraceLambda", "0.00");
 		SimProperties.setProperty("QTraceMaximum", "2.0");
 		ExperienceRecord.refreshProperties();

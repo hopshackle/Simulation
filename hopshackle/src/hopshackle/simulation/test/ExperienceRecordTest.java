@@ -1,9 +1,9 @@
 package hopshackle.simulation.test;
 
 import static org.junit.Assert.*;
-
 import hopshackle.simulation.*;
 import hopshackle.simulation.basic.*;
+
 import java.util.*;
 
 import org.junit.*;
@@ -21,6 +21,9 @@ public class ExperienceRecordTest {
 			varList.add(gv);
 		w = new World();
 		agent = new BasicAgent(w);
+		BasicHex loc = new BasicHex(0, 0);
+		loc.setParentLocation(w);
+		agent.setLocation(loc);
 	}
 
 	@Test
@@ -40,11 +43,13 @@ public class ExperienceRecordTest {
 
 		possibleActions.add(BasicActions.BREED);
 		er.updateWithResults(30.0, new LinearState<BasicAgent>(agent, varList));
+		agent.addHealth(-15.0);
+		assertEquals(er.getReward(), 30.0, 0.01);
 		er.setIsFinal();
 		assertTrue(er.isInFinalState());
 		assertFalse(er.getEndState() == null);
 		assertTrue(er.getActionTaken().getType() == BasicActions.FARM);
-		assertEquals(er.getReward(), 10.0, 0.01);	// -20 in change of score from full health to dead, plus 30 reward
+		assertEquals(er.getReward(), 15.0, 0.01);	// -15 in change of score from full health, plus 30 reward
 		assertEquals(er.getPossibleActionsFromStartState().size(), 2);
 	}
 

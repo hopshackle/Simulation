@@ -6,7 +6,10 @@ import hopshackle.simulation.ExperienceRecord.ERState;
 import java.util.*;
 
 class TestAction extends Action<TestAgent> {
+	
 	boolean dieInMiddle = false;
+	boolean makeNextDecision = true;
+	
 	public TestAction(List<TestAgent> mandatory, List<TestAgent> optional, long startOffset, long duration, boolean recordAction) {
 		super(TestActionEnum.TEST, mandatory, optional, startOffset, duration, recordAction);
 	}
@@ -22,6 +25,14 @@ class TestAction extends Action<TestAgent> {
 			for (Agent a : getAllConfirmedParticipants()) {
 				a.die("Oops");
 			}
+		}
+	}
+	@Override
+	protected void doNextDecision(TestAgent a) {
+		if (makeNextDecision) {
+			super.doNextDecision(a);
+		} else {
+			// Do Nothing
 		}
 	}
 	private void waitABit() {

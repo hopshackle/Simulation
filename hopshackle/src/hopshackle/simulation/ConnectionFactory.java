@@ -6,13 +6,13 @@ import java.util.logging.Logger;
 
 public class ConnectionFactory {
 
-	protected static String password = SimProperties.getProperty("DatabasePassword", "");
-	protected static String user = SimProperties.getProperty("DatabaseUser", "");
-	protected static String schema = SimProperties.getProperty("DatabaseSchema", "");
-	protected static String hostname = SimProperties.getProperty("DatabaseHost", "");
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 
 	public static synchronized Connection getConnection() {
+		String password = SimProperties.getProperty("DatabasePassword", "");
+		String user = SimProperties.getProperty("DatabaseUser", "");
+		String schema = SimProperties.getProperty("DatabaseSchema", "");
+		String hostname = SimProperties.getProperty("DatabaseHost", "");
 		return getConnection(schema, user, password, hostname, false);
 	}
 
