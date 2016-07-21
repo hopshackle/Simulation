@@ -1,7 +1,5 @@
 package hopshackle.simulation;
 
-import java.io.*;
-
 import org.encog.engine.network.activation.ActivationSigmoid;
 import org.encog.neural.data.basic.BasicNeuralDataSet;
 import org.encog.neural.networks.BasicNetwork;

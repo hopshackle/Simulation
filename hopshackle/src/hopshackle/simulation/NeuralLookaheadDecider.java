@@ -1,31 +1,30 @@
 package hopshackle.simulation;
 
-import java.util.List;
+import java.util.*;
 
-import org.encog.neural.networks.BasicNetwork;
+import org.encog.neural.data.basic.BasicNeuralData;
 
 public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A> {
 
-	private BasicNetwork brain;
-	protected double maxNoise = SimProperties.getPropertyAsDouble("NeuralNoise", "0.20");
-	protected double baseLearningCoefficient = SimProperties.getPropertyAsDouble("NeuralLearningCoefficient", "0.02");
-	protected double baseMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum", "0.0");
-	
+	private NeuralDecider<A> brain;
+
 	public NeuralLookaheadDecider(StateFactory<A> stateFactory,	LookaheadFunction<A> lookahead, List<ActionEnum<A>> actions) {
 		super(stateFactory, lookahead, actions);
-		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), 1);
+		brain = new NeuralDecider<A>(stateFactory, dummyActionSet);
 	}
 
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
-		// TODO Auto-generated method stub
-		
+		ExperienceRecord<A> expRecAfterLookahead = preProcessExperienceRecord(exp);
+		brain.learnFrom(expRecAfterLookahead, maxResult);
 	}
 
 	@Override
 	public double value(LookaheadState<A> state) {
-		// TODO Auto-generated method stub
-		return 0;
+		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());
+		return brain.brain.compute(inputData).getData(0);
 	}
-
 }
+
+
+

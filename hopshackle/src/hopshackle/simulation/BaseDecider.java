@@ -41,8 +41,12 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 
 	@Override
+	/*
+	 * (non-Javadoc)
+	 * @see hopshackle.simulation.Decider#learnFromBatch(hopshackle.simulation.ExperienceRecord[], double)
+	 * A default method. Override this for efficiency with batch data.
+	 */
 	public void learnFromBatch(ExperienceRecord<A>[] exp, double maxResult) {
-		// A default method. Override this for efficiency with batch data.
 		for (ExperienceRecord<A> er : exp) {
 			learnFrom(er, maxResult);
 		}

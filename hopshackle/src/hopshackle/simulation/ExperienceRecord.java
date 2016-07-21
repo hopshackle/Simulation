@@ -23,7 +23,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	protected double startScore, endScore, reward;
 	protected boolean isFinalState;
 	protected ERState expRecState = ERState.UNSEEN;
-	private Agent agent;
+	private A agent;
 
 	public static void refreshProperties() {
 		lambda = SimProperties.getPropertyAsDouble("QTraceLambda", "0.0");
@@ -31,7 +31,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		traceCap = SimProperties.getPropertyAsDouble("QTraceMaximum", "10.0");
 	}
 
-	public ExperienceRecord(Agent a, State<A> state, Action<A> action, List<ActionEnum<A>> possibleActions) {
+	public ExperienceRecord(A a, State<A> state, Action<A> action, List<ActionEnum<A>> possibleActions) {
 		actionTaken = action;
 		startState = state;
 		startStateAsArray = state.getAsArray();
@@ -130,13 +130,13 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	public ERState getState() {
 		return expRecState;
 	}
-	public Agent getAgent() {
+	public A getAgent() {
 		return agent;
 	}
 	public World getWorld() {
 		return agent.getWorld();
 	}
-	private void setState(ExperienceRecord.ERState newState) {
+	protected void setState(ExperienceRecord.ERState newState) {
 		if (dbStorage && newState == ERState.NEXT_ACTION_TAKEN && getState() != ERState.NEXT_ACTION_TAKEN) {
 			writer.write(this, getWorld().toString());
 		}
