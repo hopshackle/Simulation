@@ -48,6 +48,11 @@ public class QuadraticStateFactory<A extends Agent> implements StateFactory<A> {
 		}
 		return stateDescriptor;
 	}
+
+	@Override
+	public StateFactory<A> cloneWithNewVariables(List<GeneticVariable<A>> newVar) {
+		return new QuadraticStateFactory<A>(newVar);
+	}
 }
 
 class QuadraticVariable<A extends Agent> implements GeneticVariable<A> {
