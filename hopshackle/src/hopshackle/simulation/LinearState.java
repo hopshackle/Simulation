@@ -16,14 +16,6 @@ public class LinearState<A extends Agent> implements State<A> {
 		}
 	}
 
-	public double getValue(GeneticVariable<A> gv) {
-		if (variables.contains(gv)) {
-			return values[variables.indexOf(gv)];
-		} else {
-			return 0.0;
-		}
-	}
-
 	@Override
 	public double[] getAsArray() {
 		return values;

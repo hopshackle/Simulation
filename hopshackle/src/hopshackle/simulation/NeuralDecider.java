@@ -5,6 +5,7 @@ import java.util.*;
 
 import org.encog.neural.data.basic.*;
 import org.encog.neural.networks.BasicNetwork;
+import org.encog.neural.networks.structure.NeuralStructure;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
 public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 
@@ -22,6 +23,35 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 		overrideMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");
 		if (overrideLearningCoefficient > -98) baseLearningCoefficient = overrideLearningCoefficient;
 		if (overrideMomentum > -98) baseMomentum = overrideMomentum;
+	}
+
+	/*
+	 * allVar is a list of all possible genetic variables that could be used
+	 * We then remove a variable from the current set, or add one in that is not currently used
+	 * Repeating for the number of required mutations
+	 */
+	public NeuralDecider<A> mutate(int mutations, List<GeneticVariable<A>> allVar) {
+		List<GeneticVariable<A>> variableSet = HopshackleUtilities.cloneList(stateFactory.getVariables());
+		for (int i = 0; i < mutations; i++) {
+			int numberOfInputs = variableSet.size();
+			if (Math.random() > (numberOfInputs - 5) * 0.1) {
+				// then add a new one
+				boolean variableFound = false;
+				do {
+					int roll = Dice.roll(1, allVar.size()) -1;
+					GeneticVariable<A> choice = allVar.get(roll);
+					if (!variableSet.contains(choice)) {
+						variableFound = true;
+						variableSet.add(choice);
+					}
+				} while (!variableFound);
+			} else {
+				int roll = Dice.roll(1, numberOfInputs) -1;
+				variableSet.remove(roll);
+			}
+		}
+		StateFactory<A> newFactory = stateFactory.cloneWithNewVariables(variableSet);
+		return new NeuralDecider<A>(newFactory, actionSet);
 	}
 
 	public void setName(String newName) {
@@ -156,4 +186,78 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 	
 		return retValue;
 	}
+	
+	@Override
+	public Decider<A> crossWith(Decider<A> otherDecider) {
+		if (otherDecider == null) {
+			NeuralDecider<A> retValue = new NeuralDecider<A>(stateFactory, actionSet);
+			retValue.brain = (BasicNetwork) brain.clone();
+			// i.e. descendant retains weights from learning so far
+			return retValue;
+		}
+		if (!(otherDecider instanceof NeuralDecider))
+			return super.crossWith(otherDecider);
+		if (this.actionSet.size() != otherDecider.getActions().size())
+			return super.crossWith(otherDecider);
+
+		List<GeneticVariable<A>> newInputs = combineAndReduceInputs(otherDecider.getVariables(), 4);
+		NeuralDecider<A> retValue = new NeuralDecider<A>(stateFactory.cloneWithNewVariables(newInputs), HopshackleUtilities.convertList(actionSet));
+		retValue.setName(this.toString());
+		return retValue;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <V extends GeneticVariable<A>> List<V> combineAndReduceInputs(List<V> list, int mutations) {
+		Set<V> retValue1 = new HashSet<V>();
+		for (GeneticVariable<A> gv : stateFactory.getVariables()) {
+			if (Math.random() > 0.50)
+				retValue1.add((V) gv);
+		}
+		for (GeneticVariable<A> gv : list) {
+			if (Math.random() > 0.50)
+				retValue1.add((V) gv);
+		}
+		List<V> retValue = new ArrayList<V>();
+		for (GeneticVariable<A> gv : retValue1) 
+			retValue.add((V) gv);
+		for (int i = 0; i < mutations; i++) {
+			int numberOfInputs = retValue.size();
+			if (Math.random() > (numberOfInputs - 5) * 0.1) {
+				// then add a new one
+				//but we can't
+			} else {
+				int roll = Dice.roll(1, numberOfInputs) -1;
+				retValue.remove(roll);
+			}
+		}
+		return retValue;
+	}
+
+	public void mutateWeights(int mutations) {
+		NeuralStructure structure = brain.getStructure();
+		if (brain.getLayerCount() != 3) 
+			throw new AssertionError("Hard-coded assumption that NN has just one hidden layer.");
+		int totalWeights = structure.calculateSize();
+		int inputNeurons = brain.getLayerNeuronCount(1);
+		int hiddenNeurons = brain.getLayerTotalNeuronCount(2);
+		int outputNeurons = brain.getLayerTotalNeuronCount(3);
+		totalWeights = inputNeurons * (hiddenNeurons - 1) + hiddenNeurons * outputNeurons;
+		// -1 in the above is for the bias neuron in the hidden layer, which has no connections from input layer
+
+		for (int i = 0; i < mutations; i++) {
+			int weightToChange = Dice.roll(1, totalWeights);
+			int fromLayer = 1;
+			int toNeuronCount = hiddenNeurons - 1;
+			if (weightToChange > inputNeurons * (hiddenNeurons - 1)) {
+				fromLayer = 2;
+				weightToChange -= inputNeurons * (hiddenNeurons - 1);
+				toNeuronCount = outputNeurons;
+			}
+			int fromNeuron = weightToChange / toNeuronCount + 1;
+			int toNeuron = weightToChange % toNeuronCount + 1;
+
+			brain.addWeight(fromLayer, fromNeuron, toNeuron, Math.random() / 10.0);
+		}
+	}
+
 }

@@ -22,4 +22,9 @@ public class LinearStateFactory<A extends Agent> implements StateFactory<A> {
 		return (List<V>) variables;
 	}
 
+	@Override
+	public StateFactory<A> cloneWithNewVariables(List<GeneticVariable<A>> newVar) {
+		return new LinearStateFactory<A>(newVar);
+	}
+
 }
