@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
+	public static String newline = System.getProperty("line.separator");
 	protected List<ActionEnum<A>> actionSet = new ArrayList<ActionEnum<A>>();
 	protected String name = "DEFAULT";
 	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");

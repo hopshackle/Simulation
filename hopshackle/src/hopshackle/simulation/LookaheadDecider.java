@@ -64,6 +64,8 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 	 *  iii) Optionally, we also lookahead from the endState using each of the possibleActionsFromEndState. 
 	 *  We then take the best scoring of these options as defining the actual endState we reach.
 	 *  iv) We set possibleActionsFromEndState to be the dummyAction only. 
+	 *  v) Note that this means featureTrace will not work for TD(lambda), as that would require the 
+	 *  subsequent ExpRec also in pre-processed form.
 	 */
 	protected ExperienceRecord<A> preProcessExperienceRecord(ExperienceRecord<A> baseER) {
 		ExperienceRecord<A> retValue = new ExperienceRecord<A>(
@@ -91,6 +93,27 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 		retValue.possibleActionsFromEndState = dummyActionSet;
 		retValue.endScore = baseER.endScore;
 		retValue.setState(baseER.getState());
+		// TODO: Move this to ExpRec creation, so that we can correctly set up the featureTrace needed for
+		// TD(lambda) to work. 
+		if (localDebug) {
+			double maxResult = baseER.getAgent().getMaxScore();
+			double endValue = value((LookaheadState<A>) retValue.getEndState()) * maxResult; // projection
+			String message = String.format("Learning:\t%-20sEndScore: %.2f, End State Valuation: %.2f, Inferred Start Value: %.2f, EndGame: %s", 
+					retValue.getActionTaken(), retValue.getEndScore(), endValue, retValue.endScore, retValue.isInFinalState());
+			log(message);
+			retValue.getAgent().log(message);
+			double[] startArray = retValue.getStartStateAsArray();
+			double[] endArray = retValue.getEndStateAsArray();
+			double[] featureTrace = retValue.getFeatureTrace();
+			StringBuffer logMessage = new StringBuffer("StartState -> EndState (FeatureTrace) :" + newline);
+			for (int i = 0; i < startArray.length; i++) {
+				if (startArray[i] != 0.0 || endArray[i] != 0.0 || Math.abs(featureTrace[i]) >= 0.01)
+					logMessage.append(String.format("\t%.2f -> %.2f (%.2f) %s %s", startArray[i], endArray[i], featureTrace[i], stateFactory.getVariables().get(i).toString(), newline));
+			}
+			message = logMessage.toString();
+			log(message);
+			retValue.getAgent().log(message);
+		}
 		
 		return retValue;
 	}

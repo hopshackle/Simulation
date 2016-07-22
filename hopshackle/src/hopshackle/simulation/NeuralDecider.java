@@ -6,14 +6,23 @@ import java.util.*;
 import org.encog.neural.data.basic.*;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.structure.NeuralStructure;
+import org.encog.neural.networks.training.propagation.Propagation;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
+import org.encog.neural.networks.training.propagation.quick.QuickPropagation;
+import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
 public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 
 	protected BasicNetwork brain;
 	protected static double temperature;
 	protected double maxNoise = SimProperties.getPropertyAsDouble("NeuralNoise", "0.20");
-	protected double baseLearningCoefficient = SimProperties.getPropertyAsDouble("NeuralLearningCoefficient", "0.02");
 	protected double baseMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum", "0.0");
+	protected String propagationType = SimProperties.getProperty("NeuralPropagationType", "back");
+	protected boolean applyTemperatureToLearning = SimProperties.getProperty("NeuralAnnealLearning", "false").equals("true");
+	protected int learningIterations = Integer.valueOf(SimProperties.getProperty("NeuralLearningIterations", "1"));
+	private static boolean learnWithValidation = SimProperties.getProperty("NeuralLearnUntilValidationError", "false").equals("true");
+	private static boolean logTrainingErrors = SimProperties.getProperty("NeuralLogTrainingErrors", "false").equals("true");
+
+	
 	private double overrideLearningCoefficient, overrideMomentum; 
 
 	public NeuralDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions){
@@ -21,7 +30,7 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), actionSet.size());
 		overrideLearningCoefficient = SimProperties.getPropertyAsDouble("NeuralLearningCoefficient." + toString(), "-99.0");
 		overrideMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");
-		if (overrideLearningCoefficient > -98) baseLearningCoefficient = overrideLearningCoefficient;
+		if (overrideLearningCoefficient > -98) alpha = overrideLearningCoefficient;
 		if (overrideMomentum > -98) baseMomentum = overrideMomentum;
 	}
 
@@ -129,7 +138,7 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 					+ exp.getStartStateAsArray().length + " : " + brain.getInputCount());
 		}
 
-		if (baseLearningCoefficient < 0.000001)
+		if (alpha < 0.000001)
 			return;	// no learning to take place
 
 		double[][] outputValues = new double[1][brain.getOutputCount()];
@@ -153,9 +162,144 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 		// So only the action chosen has an updated target value - the others assume the prediction was correct.
 
 		BasicNeuralDataSet trainingData = new BasicNeuralDataSet(inputValues, outputValues);
-		Backpropagation trainer = new Backpropagation(brain, trainingData, baseLearningCoefficient, baseMomentum);
-		trainer.iteration();
+		teach(trainingData);
 	}
+	
+
+	protected double teach(BasicNeuralDataSet trainingData) {
+		double trainingError = 0.0;
+		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
+		double updatedLearningCoefficient = alpha;
+		if (applyTemperatureToLearning)
+			updatedLearningCoefficient *= temperature;
+		Propagation trainer = null;
+		switch (propagationType) {
+		case "back":
+			trainer = new Backpropagation(brain, trainingData, updatedLearningCoefficient, baseMomentum);
+			break;
+		case "quick":
+			trainer = new QuickPropagation(brain, trainingData, updatedLearningCoefficient);
+			break;
+		case "resilient":
+			trainer = new ResilientPropagation(brain, trainingData);
+			break;
+		default:
+			throw new AssertionError(propagationType + " is not a known type. Must be back/quick/resilient.");
+		}
+
+		trainer.iteration(learningIterations);
+		trainer.finishTraining();
+		if (lambda > 0.00)
+			applyLambda();
+		return trainingError;
+	}
+	
+	private void applyLambda() {
+		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
+		double updatedLambda = lambda;
+		if (applyTemperatureToLearning)
+			updatedLambda *= temperature;
+		for (int layerNumber = 0; layerNumber < brain.getLayerCount()-1; layerNumber++) {	
+			for (int fromNeuron = 0; fromNeuron < brain.getLayerTotalNeuronCount(layerNumber); fromNeuron++) {
+				for (int toNeuron = 0; toNeuron < brain.getLayerNeuronCount(layerNumber+1); toNeuron++) {
+					// The last Neuron in each layer is a bias neuron, which has no incoming connections
+					if (brain.isConnected(layerNumber, fromNeuron, toNeuron)) {
+						double currentWeight = brain.getWeight(layerNumber, fromNeuron, toNeuron);
+						brain.setWeight(layerNumber, fromNeuron, toNeuron, currentWeight * (1.0 - updatedLambda));
+					} else {
+						System.out.println(String.format("No Connection from layer %d, %d -> %d",layerNumber, fromNeuron, toNeuron));
+					}
+				}
+			}
+		}
+	}
+	
+
+	@Override
+	public void learnFromBatch(ExperienceRecord<A>[] expArray, double maxResult) {
+		if (alpha < 0.000001)
+			return;	// no learning to take place
+		
+		int inputLength = brain.getInputCount();
+		int outputLength = brain.getOutputCount();
+		double[][] batchOutputData = new double[expArray.length][outputLength];
+		double[][] batchInputData = new double[expArray.length][inputLength];
+
+		int count = 0;
+		for (ExperienceRecord<A> exp : expArray) {
+			double[] startState = exp.getStartStateAsArray();
+			for (int n=0; n<startState.length; n++) {
+				batchInputData[count][n] = startState[n];
+			}
+			double output = exp.getReward()/maxResult;
+			if (output > 1.0) output = 1.0;
+			if (output < -1.0) output = -1.0;
+			
+			BasicNeuralData inputData = new BasicNeuralData(startState);
+			double[] prediction = brain.compute(inputData).getData();
+			for (int n=0; n < exp.getEndStateAsArray().length; n++) {
+				batchOutputData[count][n] = prediction[n];
+			}
+			
+			int actionIndex = actionSet.indexOf(exp.actionTaken.getType());
+			batchOutputData[count][actionIndex] = output;
+
+			count++;
+		}
+
+		if (learnWithValidation) {
+			double[][] validationOutputData = new double[expArray.length / 5][1];
+			double[][] validationInputData = new double[expArray.length / 5][inputLength];
+
+			double[][] batchOutputData2 = new double[expArray.length - expArray.length / 5][1];
+			double[][] batchInputData2 = new double[expArray.length - expArray.length / 5][inputLength];
+
+			int valCount = 0;
+			for (int i = 0; i < expArray.length; i++) {
+				if (i % 5 == 4) {
+					validationInputData[valCount] = batchInputData[i];
+					validationOutputData[valCount] = batchOutputData[i];
+					valCount++;
+				} else {
+					batchInputData2[i - valCount] = batchInputData[i];
+					batchOutputData2[i - valCount] = batchOutputData[i];
+				}
+			}
+
+			BasicNeuralDataSet trainingData = new BasicNeuralDataSet(batchInputData2, batchOutputData2);
+			BasicNeuralDataSet validationData = new BasicNeuralDataSet(validationInputData, validationOutputData);
+			BasicNetwork brainCopy = (BasicNetwork) brain.clone();
+			double startingError = brain.calculateError(validationData);
+			double valError = 1.00;
+			int iteration = 1;
+			boolean terminateLearning = false;
+			double lastTrainingError = 0.0;
+			double trainingError = 0.0;
+			do {
+				lastTrainingError = trainingError;
+				trainingError = teach(trainingData);
+				double newValError = brain.calculateError(validationData);
+				//			System.out.println(String.format("Iteration %d on %s has validation error of %.5f and training error of %.5f (starting validation error %.5f)", iteration, this.toString(), newValError, trainingError, startingError));
+				if (newValError >= valError || iteration > learningIterations) {
+					terminateLearning = true;
+					brain = brainCopy;
+					if (logTrainingErrors)
+						System.out.println(String.format("%d iterations on %s has validation error of %.5f and training error of %.5f (starting validation error %.5f)", iteration-1, this.toString(), valError, lastTrainingError, startingError));
+				} else {
+					brainCopy = (BasicNetwork) brain.clone();
+					valError = newValError;
+				}
+				iteration++;
+			} while (!terminateLearning);			
+
+		} else {
+			BasicNeuralDataSet trainingData = new BasicNeuralDataSet(batchInputData, batchOutputData);
+			double error = teach(trainingData);
+			if (logTrainingErrors)
+				System.out.println(String.format("%s has training error of %.4f", this.toString(), error));
+		}
+	}
+
 	
 	@SuppressWarnings("unchecked")
 	public static <A extends Agent> NeuralDecider<A> createNeuralDecider(StateFactory<A> stateFactory, File saveFile) {
@@ -166,7 +310,7 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 			ArrayList<ActionEnum<A>> actionSet = (ArrayList<ActionEnum<A>>) ois.readObject();
 			// Not used...but written away for...so we read it in to make the code comparable
 			ArrayList<GeneticVariable<A>> variableSet = (ArrayList<GeneticVariable<A>>) ois.readObject();
-			retValue = new NeuralDecider<A>(stateFactory, actionSet);
+			retValue = new NeuralDecider<A>(stateFactory.cloneWithNewVariables(variableSet), actionSet);
 	
 			BasicNetwork actionNN = (BasicNetwork) ois.readObject();
 	
