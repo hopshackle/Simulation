@@ -404,4 +404,7 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 		}
 	}
 
+	public BasicNetwork getBrain() {
+		return brain;
+	}
 }

@@ -48,7 +48,7 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 
 	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent) {
-		LookaheadState<A> currentState = lookahead.getCurrentState(decidingAgent);
+		LookaheadState<A> currentState = (LookaheadState<A>) stateFactory.getCurrentState(decidingAgent);
 		LookaheadState<A> futureState = lookahead.apply(currentState, option);
 		return value(futureState);
 	}
