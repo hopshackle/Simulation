@@ -8,15 +8,24 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
 
 	private NeuralDecider<A> internalNeuralDecider;
 
-	public NeuralLookaheadDecider(StateFactory<A> stateFactory,	LookaheadFunction<A> lookahead, List<ActionEnum<A>> actions) {
+	public NeuralLookaheadDecider(StateFactory<A> stateFactory,	LookaheadFunction<A> lookahead, List<ActionEnum<A>> actions, double scaleFactor) {
 		super(stateFactory, lookahead, actions);
-		internalNeuralDecider = new NeuralDecider<A>(stateFactory, dummyActionSet);
+		internalNeuralDecider = new NeuralDecider<A>(stateFactory, dummyActionSet, scaleFactor);
 	}
 	
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		ExperienceRecord<A> expRecAfterLookahead = preProcessExperienceRecord(exp);
 		internalNeuralDecider.learnFrom(expRecAfterLookahead, maxResult);
+	}
+	
+	@Override
+	public void learnFromBatch(List<ExperienceRecord<A>> allExperience, double maxResult) {
+		List<ExperienceRecord<A>> processedER = new ArrayList<ExperienceRecord<A>>();
+		for (ExperienceRecord<A> er : allExperience) {
+			processedER.add(preProcessExperienceRecord(er));
+		}
+		internalNeuralDecider.learnFromBatch(processedER, maxResult);
 	}
 
 	@Override

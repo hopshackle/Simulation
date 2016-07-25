@@ -3,41 +3,7 @@ package hopshackle.simulation;
 import java.util.*;
 
 public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
-	public enum DummyState {
-		DUMMY;
-	}
-	private ActionEnum<A> dummyAction = new ActionEnum<A>(){
 
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public String getChromosomeDesc() {
-			return "DUMMY";
-		}
-
-		@Override
-		public Action<A> getAction(A a) {
-			return new Action<A>(dummyAction, a, false) {
-			};
-		}
-
-		@Override
-		public boolean isChooseable(A a) {
-			return true;
-		}
-
-		@Override
-		public Enum<?> getEnum() {
-			return DummyState.DUMMY;
-		}
-		
-		@Override 
-		public String toString() {
-			return "DUMMY";
-		}
-		
-	};
-	
 	private static boolean lookaheadQLearning = SimProperties.getProperty("LookaheadQLearning", "false").equals("true");
 	private LookaheadFunction<A> lookahead;
 	protected List<ActionEnum<A>> dummyActionSet;
@@ -46,7 +12,7 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 		super(stateFactory, actions);
 		this.lookahead = lookahead;
 		dummyActionSet = new ArrayList<ActionEnum<A>>();
-		dummyActionSet.add(dummyAction);
+		dummyActionSet.add(DummyAction.DUMMY);
 	}
 
 	@Override
@@ -55,7 +21,8 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 		LookaheadState<A> futureState = lookahead.apply(currentState, option);
 		double retValue = value(futureState);
 		if (localDebug) {
-			String message = "Option " + option.toString() + " has base Value of " + retValue;
+			String message = "Option " + option.toString() + " has base Value of " + retValue; //+
+				//	" with state representation of: \n \t" + Arrays.toString(futureState.getAsArray());
 			decidingAgent.log(message);
 			log(message);
 		}
@@ -80,7 +47,7 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 		ExperienceRecord<A> retValue = new ExperienceRecord<A>(
 				baseER.getAgent(), 
 				lookahead.apply((LookaheadState<A>) baseER.getStartState(), baseER.getActionTaken().getType()),
-				dummyAction.getAction(baseER.getAgent()), 
+				(Action<A>) DummyAction.DUMMY.getAction(baseER.getAgent()), 
 				dummyActionSet);
 		LookaheadState<A> endState = (LookaheadState<A>) baseER.getEndState();
 		if (lookaheadQLearning) {
