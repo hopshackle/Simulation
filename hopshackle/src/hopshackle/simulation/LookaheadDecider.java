@@ -8,6 +8,8 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 	}
 	private ActionEnum<A> dummyAction = new ActionEnum<A>(){
 
+		private static final long serialVersionUID = 1L;
+
 		@Override
 		public String getChromosomeDesc() {
 			return "DUMMY";
@@ -15,12 +17,8 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 
 		@Override
 		public Action<A> getAction(A a) {
-			return null;
-		}
-
-		@Override
-		public <B extends Agent> Action<A> getAction(A a1, B a2) {
-			return null;
+			return new Action<A>(dummyAction, a, false) {
+			};
 		}
 
 		@Override
@@ -31,6 +29,11 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 		@Override
 		public Enum<?> getEnum() {
 			return DummyState.DUMMY;
+		}
+		
+		@Override 
+		public String toString() {
+			return "DUMMY";
 		}
 		
 	};
@@ -50,7 +53,13 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 	public double valueOption(ActionEnum<A> option, A decidingAgent) {
 		LookaheadState<A> currentState = (LookaheadState<A>) stateFactory.getCurrentState(decidingAgent);
 		LookaheadState<A> futureState = lookahead.apply(currentState, option);
-		return value(futureState);
+		double retValue = value(futureState);
+		if (localDebug) {
+			String message = "Option " + option.toString() + " has base Value of " + retValue;
+			decidingAgent.log(message);
+			log(message);
+		}
+		return retValue;
 	}
 	
 	public abstract double value(LookaheadState<A> state);
@@ -91,15 +100,18 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 				baseER.reward, 
 				endState);
 		retValue.possibleActionsFromEndState = dummyActionSet;
+		retValue.startScore = baseER.startScore;
 		retValue.endScore = baseER.endScore;
+		retValue.isFinalState = baseER.isFinalState;
 		retValue.setState(baseER.getState());
 		// TODO: Move this to ExpRec creation, so that we can correctly set up the featureTrace needed for
 		// TD(lambda) to work. 
 		if (localDebug) {
 			double maxResult = baseER.getAgent().getMaxScore();
+			double startValue = value((LookaheadState<A>) retValue.getStartState()) * maxResult; // projection
 			double endValue = value((LookaheadState<A>) retValue.getEndState()) * maxResult; // projection
-			String message = String.format("Learning:\t%-20sEndScore: %.2f, End State Valuation: %.2f, Inferred Start Value: %.2f, EndGame: %s", 
-					retValue.getActionTaken(), retValue.getEndScore(), endValue, retValue.endScore, retValue.isInFinalState());
+			String message = String.format("Learning:\t%-20sScore: %.2f -> %.2f, State Valuation: %.2f -> %.2f, EndGame: %s", 
+					retValue.getActionTaken(), retValue.getStartScore(), retValue.getEndScore(), endValue, startValue, retValue.isInFinalState());
 			log(message);
 			retValue.getAgent().log(message);
 			double[] startArray = retValue.getStartStateAsArray();

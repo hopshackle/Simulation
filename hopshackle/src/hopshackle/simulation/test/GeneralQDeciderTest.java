@@ -190,11 +190,6 @@ enum RightLeft implements ActionEnum<Agent> {
 	}
 
 	@Override
-	public <B extends Agent> Action<Agent> getAction(Agent a1, B a2) {
-		return getAction(a1);
-	}
-
-	@Override
 	public boolean isChooseable(Agent a) {
 		return true;
 	}

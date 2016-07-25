@@ -19,12 +19,6 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 	FIND_UNKNOWN,
 	FIND_HUT,
 	FIND_CIVILISATION;
-
-
-	@Override
-	public <B extends Agent> Action<BasicAgent> getAction(BasicAgent a1, B a2) {
-		return getAction(a1);
-	}
 	
 	@Override
 	public BasicAction getAction(BasicAgent a) {

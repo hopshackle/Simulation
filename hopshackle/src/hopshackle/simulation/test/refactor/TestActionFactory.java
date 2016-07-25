@@ -67,11 +67,6 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 	}
 
 	@Override
-	public Action<TestAgent> getAction(TestAgent a1, Agent a2) {
-		return getAction(a1);
-	}
-
-	@Override
 	public boolean isChooseable(TestAgent a) {
 		return true;
 	}

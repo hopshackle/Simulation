@@ -368,4 +368,9 @@ public abstract class Action<A extends Agent> implements Delayed {
 		}
 	}
 	
+	@Override
+	public String toString() {
+		return actionType.toString();
+	}
+	
 }

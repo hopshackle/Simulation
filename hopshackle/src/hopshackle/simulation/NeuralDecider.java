@@ -10,7 +10,7 @@ import org.encog.neural.networks.training.propagation.Propagation;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
 import org.encog.neural.networks.training.propagation.quick.QuickPropagation;
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
-public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
+public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	protected BasicNetwork brain;
 	protected static double temperature;
@@ -21,8 +21,6 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 	protected int learningIterations = Integer.valueOf(SimProperties.getProperty("NeuralLearningIterations", "1"));
 	private static boolean learnWithValidation = SimProperties.getProperty("NeuralLearnUntilValidationError", "false").equals("true");
 	private static boolean logTrainingErrors = SimProperties.getProperty("NeuralLogTrainingErrors", "false").equals("true");
-
-	
 	private double overrideLearningCoefficient, overrideMomentum; 
 
 	public NeuralDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions){
@@ -80,13 +78,18 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent) {
 		State<A> state = getCurrentState(decidingAgent);
-		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());
-		double[] retValue = brain.compute(inputData).getData();
-		temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
-		int index = actionSet.indexOf(option);
+		double retValue =  valueOption(option, state);
 		if (localDebug)
 			decidingAgent.log("Option " + option.toString() + " has base Value of " + retValue);
-		return retValue[index] += (1.0 + (Math.random()-0.5)*temperature*maxNoise);
+		return retValue;
+	}
+	
+	@Override
+	public double valueOption(ActionEnum<A> option, State<A> state) {
+		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());
+		double[] valuation = brain.compute(inputData).getData();
+		int optionIndex = actionSet.indexOf(option);
+		return valuation[optionIndex];
 	}
 	
 	public void saveBrain(String name, String directory) {
@@ -96,6 +99,9 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(saveFile));
 
+			for (ActionEnum<A> a: actionSet) {
+				System.out.println(a.toString() + " : " + a instanceof Serializable);
+			}
 			oos.writeObject(actionSet);
 			oos.writeObject(stateFactory.getVariables());
 			oos.writeObject(brain);
@@ -148,24 +154,34 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 		for (int n=0; n<startState.length; n++) {
 			inputValues[0][n] = startState[n];
 		}
-
-		double output = exp.getReward()/maxResult;
+		// our target is the reward observed, plus gamma times the predicted value of the end state
+		// which in turn is given by the best action value 
+		double bestQValue = valueOfBestAction(exp);
+		double output = exp.getReward() + gamma * bestQValue;
+		
+		int actionIndex = actionSet.indexOf(exp.actionTaken.getType());
 		if (output > 1.0) output = 1.0;
 		if (output < -1.0) output = -1.0;
 		BasicNeuralData inputData = new BasicNeuralData(startState);
 		double[] prediction = brain.compute(inputData).getData();
-		for (int n=0; n < exp.getEndStateAsArray().length; n++) {
+		for (int n=0; n < brain.getOutputCount(); n++) {
 			outputValues[0][n] = prediction[n];
 		}
-		int actionIndex = actionSet.indexOf(exp.actionTaken.getType());
 		outputValues[0][actionIndex] = output;
 		// So only the action chosen has an updated target value - the others assume the prediction was correct.
+		if (localDebug) {
+			for (int i = 0; i < inputValues.length; i++) {
+				log(Arrays.toString(inputValues[i]));
+				log(Arrays.toString(outputValues[i]));
+				exp.getAgent().log(Arrays.toString(inputValues[i]));
+				exp.getAgent().log(Arrays.toString(outputValues[i]));
+			}
+		}
 
 		BasicNeuralDataSet trainingData = new BasicNeuralDataSet(inputValues, outputValues);
 		teach(trainingData);
 	}
 	
-
 	protected double teach(BasicNeuralDataSet trainingData) {
 		double trainingError = 0.0;
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
@@ -237,7 +253,7 @@ public class NeuralDecider<A extends Agent> extends BaseDecider<A> {
 			
 			BasicNeuralData inputData = new BasicNeuralData(startState);
 			double[] prediction = brain.compute(inputData).getData();
-			for (int n=0; n < exp.getEndStateAsArray().length; n++) {
+			for (int n=0; n < outputLength; n++) {
 				batchOutputData[count][n] = prediction[n];
 			}
 			

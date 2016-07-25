@@ -1,12 +1,12 @@
 package hopshackle.simulation;
 
-public interface ActionEnum<A extends Agent> {
+import java.io.Serializable;
+
+public interface ActionEnum<A extends Agent> extends Serializable {
 
 	public String getChromosomeDesc();
 	
 	public Action<A> getAction(A a);
-	
-	public <B extends Agent> Action<A> getAction(A a1, B a2);
 	
 	/* 
 	 * The isChooseable method returns true if the pre-conditions are met
@@ -17,5 +17,5 @@ public interface ActionEnum<A extends Agent> {
 	 */
 	public boolean isChooseable(A a);
 	
-	public Enum getEnum();
+	public Enum<?> getEnum();
 }
