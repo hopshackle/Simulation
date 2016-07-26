@@ -4,7 +4,8 @@ import java.util.*;
 
 public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 
-	private static boolean lookaheadQLearning = SimProperties.getProperty("LookaheadQLearning", "false").equals("true");
+	private static boolean lookaheadQLearningStart = SimProperties.getProperty("LookaheadQLearningStart", "false").equals("true");
+	private static boolean lookaheadQLearningEnd = SimProperties.getProperty("LookaheadQLearningEnd", "false").equals("true");
 	private LookaheadFunction<A> lookahead;
 	protected List<ActionEnum<A>> dummyActionSet;
 
@@ -44,13 +45,25 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 	 *  subsequent ExpRec also in pre-processed form.
 	 */
 	protected ExperienceRecord<A> preProcessExperienceRecord(ExperienceRecord<A> baseER) {
+		// TODO: We should no longer need to apply the lookahead function to the start state, as this will be done 
+		// within the ExperienceRecord. 
+		// Instead we need to copy over ExperienceRecord as is (add a clone method?)
+		// And then just update the actionTaken, nextActionTaken, possibleActions from Start/End States to be DUMMY
+		// Also, we need to use the lookaheadStateArray and FeatureTraces during learning. So copy these over to the standard 
+		// ones.
+		// This is all to enable me to use the same ExperienceRecords for lookahead and non-lookahead deciders. Which I think
+		// for the moment I do want to keep (although the current db persistence is insufficient)
+		LookaheadState<A> startState = (LookaheadState<A>) baseER.getStartState();
+		if (lookaheadQLearningStart) {
+			startState = lookahead.apply(startState, baseER.getActionTaken().getType());
+		}
 		ExperienceRecord<A> retValue = new ExperienceRecord<A>(
 				baseER.getAgent(), 
-				lookahead.apply((LookaheadState<A>) baseER.getStartState(), baseER.getActionTaken().getType()),
+				startState,
 				(Action<A>) DummyAction.DUMMY.getAction(baseER.getAgent()), 
 				dummyActionSet);
 		LookaheadState<A> endState = (LookaheadState<A>) baseER.getEndState();
-		if (lookaheadQLearning) {
+		if (lookaheadQLearningEnd) {
 			double highScore = Double.NEGATIVE_INFINITY;
 			LookaheadState<A> bestForward = endState;
 			for (ActionEnum<A> option : baseER.getPossibleActionsFromEndState()) {

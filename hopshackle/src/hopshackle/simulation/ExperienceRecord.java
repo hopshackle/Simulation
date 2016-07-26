@@ -19,7 +19,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	protected State<A> startState, endState;
 	protected double[] startStateAsArray, endStateAsArray;
 	protected double[] featureTrace;
-	protected Action<A> actionTaken;
+	protected Action<A> actionTaken, nextActionTaken;
 	protected List<ActionEnum<A>> possibleActionsFromEndState, possibleActionsFromStartState;
 	protected double startScore, endScore, reward;
 	protected boolean isFinalState;
@@ -41,6 +41,10 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		setState(ERState.DECISION_TAKEN);
 		startScore = a.getScore();
 		agent = a;
+		// TODO: Add an optional lookahead function as a parameter
+		// If included, then we can calculate startStateAsArray and featureTrace from this.
+		// or better - for now - as two brand new fields of lookaheadArray and lookaheadTrace
+		// TODO: Then also need to update ERCollector to provide the lookahead function. 
 	}
 
 	private void constructFeatureTrace(ExperienceRecord<A> previousER) {
@@ -53,6 +57,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 				if (featureTrace[i] > traceCap)	featureTrace[i] = traceCap;
 			}
 		}
+		// TODO: Repeat this for lookaheadTrace as well
 	}
 	
 	public void updateWithResults(double reward, State<A> newState) {
@@ -66,6 +71,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		if (nextER != null) {
 			nextER.constructFeatureTrace(this);
 			possibleActionsFromEndState = nextER.getPossibleActionsFromStartState();
+			nextActionTaken = nextER.actionTaken;
 			endState = nextER.getStartState();
 			endStateAsArray = endState.getAsArray();
 			endScore = nextER.getStartScore();
