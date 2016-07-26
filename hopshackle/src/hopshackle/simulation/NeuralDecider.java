@@ -14,7 +14,6 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	protected BasicNetwork brain;
 	protected static double temperature;
-	protected double maxNoise = SimProperties.getPropertyAsDouble("NeuralNoise", "0.20");
 	protected double baseMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum", "0.0");
 	protected String propagationType = SimProperties.getProperty("NeuralPropagationType", "back");
 	protected boolean applyTemperatureToLearning = SimProperties.getProperty("NeuralAnnealLearning", "false").equals("true");
@@ -60,13 +59,6 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		}
 		StateFactory<A> newFactory = stateFactory.cloneWithNewVariables(variableSet);
 		return new NeuralDecider<A>(newFactory, actionSet, scaleFactor);
-	}
-
-	public void setName(String newName) {
-		super.setName(newName);
-		double newMaxNoise = SimProperties.getPropertyAsDouble("NeuralNoise." + newName, "-99.00");
-		if (newMaxNoise > -98.00)
-			maxNoise = newMaxNoise;
 	}
 
 	/*
@@ -155,7 +147,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		outputValues[0] = getTarget(exp);
 
 		// So only the action chosen has an updated target value - the others assume the prediction was correct.
-/*		if (localDebug) {
+		if (localDebug) {
 			for (int i = 0; i < inputValues.length; i++) {
 				log(Arrays.toString(inputValues[i]));
 				log(Arrays.toString(outputValues[i]));
@@ -163,7 +155,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 				exp.getAgent().log(Arrays.toString(outputValues[i]));
 			}
 		}
-*/
+
 		BasicNeuralDataSet trainingData = new BasicNeuralDataSet(inputValues, outputValues);
 		teach(trainingData);
 	}
@@ -255,6 +247,12 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 				batchInputData[count][n] = startState[n];
 			}
 			batchOutputData[count] = getTarget(exp);
+			if (localDebug) {
+				log(Arrays.toString(batchInputData[count]));
+				log(Arrays.toString(batchOutputData[count]));
+				exp.getAgent().log(Arrays.toString(batchInputData[count]));
+				exp.getAgent().log(Arrays.toString(batchOutputData[count]));
+			}
 			count++;
 		}
 

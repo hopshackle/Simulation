@@ -51,8 +51,8 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 				dummyActionSet);
 		LookaheadState<A> endState = (LookaheadState<A>) baseER.getEndState();
 		if (lookaheadQLearning) {
-			double highScore = Double.MIN_VALUE;
-			LookaheadState<A> bestForward = null;
+			double highScore = Double.NEGATIVE_INFINITY;
+			LookaheadState<A> bestForward = endState;
 			for (ActionEnum<A> option : baseER.getPossibleActionsFromEndState()) {
 				LookaheadState<A> forwardEndState = lookahead.apply(endState, option);
 				double value = value(forwardEndState);

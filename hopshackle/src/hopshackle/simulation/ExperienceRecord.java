@@ -11,6 +11,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
 	}
 
+	private static boolean incrementalScoreAffectsReward = SimProperties.getProperty("IncrementalScoreReward", "true").equals("true");
 	private static boolean dbStorage = SimProperties.getProperty("ExperienceRecordDBStorage", "false").equals("true");
 	private static DatabaseWriter<ExperienceRecord<?>> writer = new DatabaseWriter<ExperienceRecord<?>>(new ExpRecDAO());
 	private static double lambda, gamma, traceCap;
@@ -112,10 +113,14 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	}
 
 	public double getReward() {
-		if (getState() == ERState.NEXT_ACTION_TAKEN) 
+		if (getState() == ERState.NEXT_ACTION_TAKEN && incrementalScoreAffectsReward) 
 			return (reward + endScore - startScore);
+		if (isInFinalState() && !incrementalScoreAffectsReward) {
+			return reward + endScore;
+		}
 		return reward;
 	}
+	
 	public double getStartScore() {
 		return startScore;
 	}

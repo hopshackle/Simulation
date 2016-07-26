@@ -45,6 +45,12 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
 	public void saveToFile(String descriptor, String directory) {
 		internalNeuralDecider.saveBrain(descriptor, directory);
 	}
+	
+	@Override
+	public void setName(String newName) {
+		super.setName(newName);
+		internalNeuralDecider.setName(newName + "_ND");
+	}
 }
 
 
