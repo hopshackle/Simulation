@@ -147,7 +147,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		outputValues[0] = getTarget(exp);
 
 		// So only the action chosen has an updated target value - the others assume the prediction was correct.
-		if (localDebug) {
+/*		if (localDebug) {
 			for (int i = 0; i < inputValues.length; i++) {
 				log(Arrays.toString(inputValues[i]));
 				log(Arrays.toString(outputValues[i]));
@@ -155,7 +155,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 				exp.getAgent().log(Arrays.toString(outputValues[i]));
 			}
 		}
-
+*/
 		BasicNeuralDataSet trainingData = new BasicNeuralDataSet(inputValues, outputValues);
 		teach(trainingData);
 	}
@@ -247,12 +247,13 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 				batchInputData[count][n] = startState[n];
 			}
 			batchOutputData[count] = getTarget(exp);
-			if (localDebug) {
+/*			if (localDebug) {
 				log(Arrays.toString(batchInputData[count]));
 				log(Arrays.toString(batchOutputData[count]));
 				exp.getAgent().log(Arrays.toString(batchInputData[count]));
 				exp.getAgent().log(Arrays.toString(batchOutputData[count]));
 			}
+			*/
 			count++;
 		}
 
