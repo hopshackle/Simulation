@@ -14,7 +14,9 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	private static boolean incrementalScoreAffectsReward = SimProperties.getProperty("IncrementalScoreReward", "true").equals("true");
 	private static boolean dbStorage = SimProperties.getProperty("ExperienceRecordDBStorage", "false").equals("true");
 	private static DatabaseWriter<ExperienceRecord<?>> writer = new DatabaseWriter<ExperienceRecord<?>>(new ExpRecDAO());
-	private static double lambda, gamma, traceCap;
+	protected static double lambda;
+	protected static double gamma;
+	protected static double traceCap;
 	static {refreshProperties();}
 	protected State<A> startState, endState;
 	protected double[] startStateAsArray, endStateAsArray;
@@ -41,10 +43,6 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		setState(ERState.DECISION_TAKEN);
 		startScore = a.getScore();
 		agent = a;
-		// TODO: Add an optional lookahead function as a parameter
-		// If included, then we can calculate startStateAsArray and featureTrace from this.
-		// or better - for now - as two brand new fields of lookaheadArray and lookaheadTrace
-		// TODO: Then also need to update ERCollector to provide the lookahead function. 
 	}
 
 	private void constructFeatureTrace(ExperienceRecord<A> previousER) {
@@ -57,7 +55,6 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 				if (featureTrace[i] > traceCap)	featureTrace[i] = traceCap;
 			}
 		}
-		// TODO: Repeat this for lookaheadTrace as well
 	}
 	
 	public void updateWithResults(double reward, State<A> newState) {

@@ -15,17 +15,51 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
 	
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
-		ExperienceRecord<A> expRecAfterLookahead = preProcessExperienceRecord(exp);
-		internalNeuralDecider.learnFrom(expRecAfterLookahead, maxResult);
+		if (exp instanceof ExperienceRecordWithLookahead) {
+			exp = ((ExperienceRecordWithLookahead<A>) exp).convertToStandardER(this);
+		} else {
+			throw new AssertionError("Expected ExperienceRecordWithLookahead in NeuralLookaheadDecider");
+		}
+		logResult(exp);
+		internalNeuralDecider.learnFrom(exp, maxResult);
 	}
 	
 	@Override
 	public void learnFromBatch(List<ExperienceRecord<A>> allExperience, double maxResult) {
 		List<ExperienceRecord<A>> processedER = new ArrayList<ExperienceRecord<A>>();
 		for (ExperienceRecord<A> er : allExperience) {
-			processedER.add(preProcessExperienceRecord(er));
+			if (er instanceof ExperienceRecordWithLookahead) {
+				er = ((ExperienceRecordWithLookahead<A>) er).convertToStandardER(this);
+			} else {
+				throw new AssertionError("Expected ExperienceRecordWithLookahead in NeuralLookaheadDecider");
+			}			
+			processedER.add(er);
+			logResult(er);
 		}
 		internalNeuralDecider.learnFromBatch(processedER, maxResult);
+	}
+	
+	private void logResult(ExperienceRecord<A> baseER) {
+		if (localDebug) {
+			double maxResult = baseER.getAgent().getMaxScore();
+			double startValue = value((LookaheadState<A>) baseER.getStartState()) * maxResult; // projection
+			double endValue = value((LookaheadState<A>) baseER.getEndState()) * maxResult; // projection
+			String message = String.format("Learning:\t%-20sScore: %.2f -> %.2f, State Valuation: %.2f -> %.2f, EndGame: %s", 
+					baseER.getActionTaken(), baseER.getStartScore(), baseER.getEndScore(), endValue, startValue, baseER.isInFinalState());
+			log(message);
+			baseER.getAgent().log(message);
+			double[] startArray = baseER.getStartStateAsArray();
+			double[] endArray = baseER.getEndStateAsArray();
+			double[] featureTrace = baseER.getFeatureTrace();
+			StringBuffer logMessage = new StringBuffer("StartState -> EndState (FeatureTrace) :" + newline);
+			for (int i = 0; i < startArray.length; i++) {
+				if (startArray[i] != 0.0 || endArray[i] != 0.0 || Math.abs(featureTrace[i]) >= 0.01)
+					logMessage.append(String.format("\t%.2f -> %.2f (%.2f) %s %s", startArray[i], endArray[i], featureTrace[i], stateFactory.getVariables().get(i).toString(), newline));
+			}
+			message = logMessage.toString();
+			log(message);
+			baseER.getAgent().log(message);
+		}
 	}
 
 	@Override

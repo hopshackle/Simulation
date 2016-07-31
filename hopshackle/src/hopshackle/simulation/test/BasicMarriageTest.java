@@ -15,7 +15,7 @@ public class BasicMarriageTest {
 	private BasicAgent maleAgent1, maleAgent2, maleAgent3;
 	private BasicAgent femaleAgent1, femaleAgent2, femaleAgent3;
 	private TestActionProcessor ap;
-	private ExperienceRecordCollector<BasicAgent> teacher = new ExperienceRecordCollector<BasicAgent>();
+	private ExperienceRecordCollector<BasicAgent> teacher = new ExperienceRecordCollector<BasicAgent>(new StandardERFactory<BasicAgent>());
 	private List<ActionEnum<BasicAgent>> actions;
 	private List<GeneticVariable<BasicAgent>> variables = new ArrayList<GeneticVariable<BasicAgent>>(EnumSet.allOf(BasicVariables.class));
 	private Decider<BasicAgent> baseDecider;
@@ -23,6 +23,7 @@ public class BasicMarriageTest {
 
 	@Before
 	public void setUp() {
+		SimProperties.setProperty("IncrementalScoreReward", "true");
 		actions = new ArrayList<ActionEnum<BasicAgent>>();
 		actions.add(BasicActions.REST);
 		actions.add(BasicActions.FORAGE);

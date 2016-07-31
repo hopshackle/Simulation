@@ -13,6 +13,11 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	private HashMap<A, List<ExperienceRecord<A>>> erListMap = new HashMap<A, List<ExperienceRecord<A>>>();
 	private List<AgentListener> listeners = new ArrayList<AgentListener>();
 	private ERCAllocationPolicy<A> birthPolicy;
+	private ExperienceRecordFactory<A> erFactory;
+	
+	public ExperienceRecordCollector(ExperienceRecordFactory<A> factory) {
+		erFactory = factory;
+	}
 
 	public void registerAgent(A a) {
 		if (!agentAlreadySeen(a)) {
@@ -116,7 +121,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			passOnEvent = true;
 			break;
 		case DECISION_TAKEN:
-			newER = new ExperienceRecord<A>(a, agentDecider.getCurrentState(a), action, agentDecider.getChooseableOptions(a));
+			newER = erFactory.generate(a, agentDecider.getCurrentState(a), action, agentDecider.getChooseableOptions(a));
 			passOnEvent = processNewER(newER, a);
 			break;
 		case ACTION_AGREED:
@@ -154,7 +159,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			// we need to create a new ER first
 			List<ActionEnum<A>> chooseableOptions = new ArrayList<ActionEnum<A>>();
 			chooseableOptions.add(action.getType());
-			ExperienceRecord<A> newER = new ExperienceRecord<A>(a, agentDecider.getCurrentState(a), action, chooseableOptions);
+			ExperienceRecord<A> newER = erFactory.generate(a, agentDecider.getCurrentState(a), action, chooseableOptions);
 			return processNewER(newER, a);
 		}
 		return false;

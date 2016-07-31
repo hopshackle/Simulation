@@ -58,9 +58,8 @@ public class ActionPlan {
 			if (willFitInPlan) {
 				for (Action a : overriddenActions) {
 					a.reject(agent);
-					// currently all agents accept/reject when the action is created
+					// TODO: currently all agents accept/reject when the action is created
 					// this will ultimately need to change for asynchronous decisions
-					// TODO: 
 				}
 				newAction.agree(agent);
 				actionQueue.add(newAction);

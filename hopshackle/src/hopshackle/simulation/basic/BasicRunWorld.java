@@ -16,8 +16,9 @@ public class BasicRunWorld {
 	
 	protected RealTimeTeacher<BasicAgent> femaleTeacher = new RealTimeTeacher<BasicAgent>();
 	protected RealTimeTeacher<BasicAgent> maleTeacher = new RealTimeTeacher<BasicAgent>();
-	protected ExperienceRecordCollector<BasicAgent> femaleERCollector = new ExperienceRecordCollector<BasicAgent>();
-	protected ExperienceRecordCollector<BasicAgent> maleERCollector = new ExperienceRecordCollector<BasicAgent>();
+	protected ExperienceRecordFactory<BasicAgent> erFactory = new StandardERFactory<BasicAgent>();
+	protected ExperienceRecordCollector<BasicAgent> femaleERCollector = new ExperienceRecordCollector<BasicAgent>(erFactory);
+	protected ExperienceRecordCollector<BasicAgent> maleERCollector = new ExperienceRecordCollector<BasicAgent>(erFactory);
 	protected boolean genderSpecificTeacher = SimProperties.getProperty("BasicGenderSpecificTeacher", "true").equals("true");
 	protected Decider<BasicAgent> maleBasicDecider, femaleBasicDecider;
 	protected ExperienceRecordCollector.ERCAllocationPolicy<BasicAgent> ercPolicy = new ExperienceRecordCollector.ERCAllocationPolicy<BasicAgent>() {

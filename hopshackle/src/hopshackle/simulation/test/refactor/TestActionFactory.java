@@ -2,6 +2,7 @@ package hopshackle.simulation.test.refactor;
 
 import hopshackle.simulation.*;
 import hopshackle.simulation.ExperienceRecord.ERState;
+import hopshackle.simulation.basic.BasicAgent;
 
 import java.util.*;
 
@@ -171,6 +172,10 @@ class TestActionPolicy extends Policy<TestAction> {
 }
 
 class TestERCollector extends ExperienceRecordCollector<TestAgent> {
+
+	public TestERCollector() {
+		super(new StandardERFactory<TestAgent>());
+	}
 
 	public boolean agentKnown(TestAgent testAgent) {
 		return agentAlreadySeen(testAgent);
