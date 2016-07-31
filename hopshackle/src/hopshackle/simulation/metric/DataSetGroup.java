@@ -1,9 +1,9 @@
 package hopshackle.simulation.metric;
 
-import hopshackle.simulation.SimProperties;
+import hopshackle.simulation.*;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.*;
 
 public class DataSetGroup {
 
@@ -25,8 +25,47 @@ public class DataSetGroup {
 	}
 	
 	public String toString() {return name;}
+	
+	public static List<DataSetGroup> getDataSets(File dir) {
+		if (dir.isDirectory()) {
+			return getDataSetsFromDSFiles(dir);
+		} else {
+			return getDataSetsFromFile(dir);
+		}
+	}
+	
+	public static List<DataSetGroup> getDataSetsFromFile(File dir) {
+		Map<String, DataSetGroup> dsgArray = new HashMap<String, DataSetGroup>();
+		
+		List<String> fileEntries = HopshackleUtilities.createListFromFile(dir);
+		for (String entry : fileEntries) {
+			String[] params = entry.split(" ");
+			String datasetName = params[0];
+			String dbStem = params[1];
+			int startRef = Integer.valueOf(params[2]);
+			int endRef = Integer.valueOf(params[3]);
+			
+			ArrayList<DataSet> temp = new ArrayList<DataSet>();
+			for (int i = startRef; i <= endRef; i++) {
+				temp.add(new MySQLDataSet(dbStem + i));
+			}
+			
+			if (dsgArray.containsKey(datasetName)) {
+				temp.addAll(dsgArray.get(datasetName).getArrayList());
+				dsgArray.put(datasetName, new DataSetGroup(datasetName, getArrayFromArrayList(temp)));
+			} else {
+				dsgArray.put(datasetName, new DataSetGroup(datasetName, getArrayFromArrayList(temp)));
+			}
+		}
 
-	public static ArrayList<DataSetGroup> getDataSets(File dir) {
+		List<DataSetGroup> retValue = new ArrayList<DataSetGroup>();
+		for (DataSetGroup dsg : dsgArray.values()) {
+			retValue.add(dsg);
+		}
+		return retValue;
+	}
+
+	public static List<DataSetGroup> getDataSetsFromDSFiles(File dir) {
 		ArrayList<File> dsFiles = new ArrayList<File>();
 		ArrayList<DataSetGroup> dsgArray = new ArrayList<DataSetGroup>();
 		

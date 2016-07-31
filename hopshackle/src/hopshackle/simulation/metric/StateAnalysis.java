@@ -23,7 +23,7 @@ public class StateAnalysis {
 
 	public StateAnalysis(String[] args) {
 		excludedList = new ArrayList<Integer>();
-		ArrayList<DataSetGroup> dsgArray = DataSetGroup.getDataSets(new File(baseDir + "\\Metrics"));
+		List<DataSetGroup> dsgArray = DataSetGroup.getDataSets(new File(baseDir + "\\Metrics"));
 
 		if (args.length > 0 && args[0] != null) {
 			CLASS = new String[1];

@@ -4,13 +4,13 @@ import hopshackle.simulation.SimProperties;
 
 import java.io.*;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.*;
 
 public class RunMetrics {
 
 	private File dir;
-	private ArrayList<DataSetGroup> dsgArray;
-	private ArrayList<Metric> metricArray;
+	private List<DataSetGroup> dsgArray;
+	private List<Metric> metricArray;
 
 	/**
 	 * The first argument may optionally be a directory location to provide input.
@@ -37,20 +37,23 @@ public class RunMetrics {
 	}
 
 	public RunMetrics(String[] args) {
-
+		
 		String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
 		File defaultDir = new File(baseDir + "\\Metrics");
 		if (args.length > 0 && args[0] != null) {
 			dir = new File(args[0]);
 		}
 
-		if (dir == null || !dir.isDirectory()) 
-			dir = defaultDir;
+		if (dir == null) dir = defaultDir;
 
 		ArrayList<File> sqlFiles = new ArrayList<File>();
 
 		dsgArray = DataSetGroup.getDataSets(dir);
 		metricArray = new ArrayList<Metric>();
+		
+		if (!dir.isDirectory()) {
+			dir = defaultDir;
+		}
 
 		File[] allFiles = dir.listFiles();
 		for (int n=0; n<allFiles.length; n++) 
@@ -96,7 +99,7 @@ public class RunMetrics {
 
 		for (int loop = 0; loop<nDataSetGroup; loop++) {
 			DataSetGroup currentDSG = dsgArray.get(loop);
-			DataSet[] dsArray = getArrayFromArrayListDS(currentDSG.getArrayList());
+			DataSet[] dsArray = getArrayFromListDS(currentDSG.getArrayList());
 			int nDataSet = dsArray.length;
 
 			String[] dsName = new String[nDataSet];
@@ -119,9 +122,9 @@ public class RunMetrics {
 		 *  We pass on to a Persistence object to write them away
 		 */
 		try {
-			new MySQLResultSet(null, getArrayFromArrayListDSG(dsgArray), 
-					getArrayFromArrayListString(dsNames), metricName, 
-					getArrayFromArrayListDouble(dsValues));
+			new MySQLResultSet(null, getArrayFromListDSG(dsgArray), 
+					getArrayFromListString(dsNames), metricName, 
+					getArrayFromListDouble(dsValues));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -130,28 +133,28 @@ public class RunMetrics {
 
 	}
 
-	private DataSet[] getArrayFromArrayListDS(ArrayList<DataSet> al) {
+	private DataSet[] getArrayFromListDS(ArrayList<DataSet> al) {
 		DataSet[] retValue = new DataSet[al.size()];
 		for (int n=0; n<retValue.length; n++) 
 			retValue[n]=al.get(n);
 
 		return retValue;
 	}
-	private String[] getArrayFromArrayListDSG(ArrayList<DataSetGroup> al) {
+	private String[] getArrayFromListDSG(List<DataSetGroup> al) {
 		String[] retValue = new String[al.size()];
 		for (int n=0; n<retValue.length; n++) 
 			retValue[n]=al.get(n).toString();
 
 		return retValue;
 	}
-	private double[][][] getArrayFromArrayListDouble(ArrayList<double[][]> al) {
+	private double[][][] getArrayFromListDouble(List<double[][]> al) {
 		double[][][] retValue = new double[al.size()][][];
 		for (int n=0; n<retValue.length; n++) 
 			retValue[n]=al.get(n);
 
 		return retValue;
 	}
-	private String[][] getArrayFromArrayListString(ArrayList<String[]> al) {
+	private String[][] getArrayFromListString(List<String[]> al) {
 		String[][] retValue = new String[al.size()][];
 		for (int n=0; n<retValue.length; n++) 
 			retValue[n]=al.get(n);
