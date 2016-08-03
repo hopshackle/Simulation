@@ -27,7 +27,7 @@ public class ExperienceRecordWithLookahead<A extends Agent> extends ExperienceRe
 		} else {
 			lookaheadFeatureTrace = new double[lookaheadStartArray.length];
 			for (int i = 0; i < lookaheadStartArray.length; i++) {
-				featureTrace[i] = gamma * lambda * previousER.lookaheadFeatureTrace[i] + lookaheadStartArray[i];
+				lookaheadFeatureTrace[i] = (gamma * lambda * previousER.lookaheadFeatureTrace[i]) + lookaheadStartArray[i];
 				if (lookaheadFeatureTrace[i] > traceCap) 
 					lookaheadFeatureTrace[i] = traceCap;
 			}

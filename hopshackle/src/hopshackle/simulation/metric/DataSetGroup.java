@@ -41,6 +41,7 @@ public class DataSetGroup {
 		for (String entry : fileEntries) {
 			String[] params = entry.split(" ");
 			String datasetName = params[0];
+			if (datasetName.startsWith("#")) continue;
 			String dbStem = params[1];
 			int startRef = Integer.valueOf(params[2]);
 			int endRef = Integer.valueOf(params[3]);

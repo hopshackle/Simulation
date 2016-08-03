@@ -21,6 +21,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	private static boolean learnWithValidation = SimProperties.getProperty("NeuralLearnUntilValidationError", "false").equals("true");
 	private static boolean logTrainingErrors = SimProperties.getProperty("NeuralLogTrainingErrors", "false").equals("true");
 	private double overrideLearningCoefficient, overrideMomentum, scaleFactor; 
+	private static boolean extraDebug = true;
 
 	public NeuralDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions, double scaleFactor){
 		super(stateFactory, actions);
@@ -247,13 +248,14 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 				batchInputData[count][n] = startState[n];
 			}
 			batchOutputData[count] = getTarget(exp);
-/*			if (localDebug) {
-				log(Arrays.toString(batchInputData[count]));
-				log(Arrays.toString(batchOutputData[count]));
-				exp.getAgent().log(Arrays.toString(batchInputData[count]));
-				exp.getAgent().log(Arrays.toString(batchOutputData[count]));
+			if (localDebug && extraDebug) {
+				String message = HopshackleUtilities.formatArray(batchInputData[count], " ", "%+.3f");
+				log(message);
+				exp.getAgent().log(message);
+				message = HopshackleUtilities.formatArray(batchOutputData[count], " ", "%+.3f");
+				log(message);
+				exp.getAgent().log(message);
 			}
-			*/
 			count++;
 		}
 
@@ -289,7 +291,9 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 				lastTrainingError = trainingError;
 				trainingError = teach(trainingData);
 				double newValError = brain.calculateError(validationData);
-				//			System.out.println(String.format("Iteration %d on %s has validation error of %.5f and training error of %.5f (starting validation error %.5f)", iteration, this.toString(), newValError, trainingError, startingError));
+				if (localDebug) {
+					log(String.format("Iteration %d on %s has validation error of %.5f and training error of %.5f (starting validation error %.5f)", iteration, this.toString(), newValError, trainingError, startingError));
+				}
 				if (newValError >= valError || iteration > learningIterations) {
 					terminateLearning = true;
 					brain = brainCopy;

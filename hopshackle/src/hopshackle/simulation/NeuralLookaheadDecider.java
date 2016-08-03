@@ -45,7 +45,7 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
 			double startValue = value((LookaheadState<A>) baseER.getStartState()) * maxResult; // projection
 			double endValue = value((LookaheadState<A>) baseER.getEndState()) * maxResult; // projection
 			String message = String.format("Learning:\t%-20sScore: %.2f -> %.2f, State Valuation: %.2f -> %.2f, EndGame: %s", 
-					baseER.getActionTaken(), baseER.getStartScore(), baseER.getEndScore(), endValue, startValue, baseER.isInFinalState());
+					baseER.getActionTaken(), baseER.getStartScore(), baseER.getEndScore(), startValue, endValue, baseER.isInFinalState());
 			log(message);
 			baseER.getAgent().log(message);
 			double[] startArray = baseER.getStartStateAsArray();
