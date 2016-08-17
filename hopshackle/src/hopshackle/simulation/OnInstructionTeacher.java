@@ -34,12 +34,13 @@ public class OnInstructionTeacher<A extends Agent> extends Teacher<A> {
 		List<ExperienceRecord<A>> allDataForTraining = getLastNDataSets();
 		Agent a = allDataForTraining.get(0).getAgent();
 		for (Decider<A> d : decidersToTeach) {
+	//		System.out.println(this.toString() + " teaching " + d.toString() + " with " + allDataForTraining.size() + " records.");
 			d.learnFromBatch(allDataForTraining, a.getMaxScore());
 		}
 	}
 	protected List<ExperienceRecord<A>> getLastNDataSets() {
-		List<ExperienceRecord<A>> retValue = pastData.get(0);
-		for (int i = 1; i <= pastDataLimit && i < pastData.size(); i++) {
+		List<ExperienceRecord<A>> retValue = new ArrayList<ExperienceRecord<A>>();
+		for (int i = 0; i <= pastDataLimit && i < pastData.size(); i++) {
 			retValue.addAll(pastData.get(i));
 		}
 		return retValue;

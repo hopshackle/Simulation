@@ -183,7 +183,6 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	}
 	
 	protected double teach(BasicNeuralDataSet trainingData) {
-		double trainingError = 0.0;
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		double updatedLearningCoefficient = alpha;
 		if (applyTemperatureToLearning)
@@ -207,7 +206,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		trainer.finishTraining();
 		if (lambda > 0.00)
 			applyLambda();
-		return trainingError;
+		return trainer.getError();
 	}
 	
 	private void applyLambda() {
