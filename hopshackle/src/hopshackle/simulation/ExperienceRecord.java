@@ -11,12 +11,9 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
 	}
 
-	private static boolean incrementalScoreAffectsReward = SimProperties.getProperty("IncrementalScoreReward", "true").equals("true");
-	private static boolean dbStorage = SimProperties.getProperty("ExperienceRecordDBStorage", "false").equals("true");
+	private static boolean incrementalScoreAffectsReward, dbStorage;
 	private static DatabaseWriter<ExperienceRecord<?>> writer = new DatabaseWriter<ExperienceRecord<?>>(new ExpRecDAO());
-	protected static double lambda;
-	protected static double gamma;
-	protected static double traceCap;
+	protected static double lambda, gamma, traceCap;
 	static {refreshProperties();}
 	protected State<A> startState, endState;
 	protected double[] startStateAsArray, endStateAsArray;
@@ -32,6 +29,8 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		lambda = SimProperties.getPropertyAsDouble("QTraceLambda", "0.0");
 		gamma = SimProperties.getPropertyAsDouble("Gamma", "1.0");
 		traceCap = SimProperties.getPropertyAsDouble("QTraceMaximum", "10.0");
+		incrementalScoreAffectsReward = SimProperties.getProperty("IncrementalScoreReward", "true").equals("true");
+		dbStorage = SimProperties.getProperty("ExperienceRecordDBStorage", "false").equals("true");
 	}
 
 	public ExperienceRecord(A a, State<A> state, Action<A> action, List<ActionEnum<A>> possibleActions) {

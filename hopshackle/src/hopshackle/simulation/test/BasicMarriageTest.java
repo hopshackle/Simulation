@@ -24,6 +24,7 @@ public class BasicMarriageTest {
 	@Before
 	public void setUp() {
 		SimProperties.setProperty("IncrementalScoreReward", "true");
+		ExperienceRecord.refreshProperties();
 		actions = new ArrayList<ActionEnum<BasicAgent>>();
 		actions.add(BasicActions.REST);
 		actions.add(BasicActions.FORAGE);

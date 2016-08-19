@@ -1,2 +1,7 @@
 /bin/
-/commons-math-2.0-javadoc.jar
+*.jar
+.project
+.classpath
+/.metadata/
+/.settings/
+/.idea/
