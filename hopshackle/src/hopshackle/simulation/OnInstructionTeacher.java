@@ -20,22 +20,25 @@ public class OnInstructionTeacher<A extends Agent> extends Teacher<A> {
 		// we wait for explicit instructions
 	}
 
-	protected void updateData() {
+	private boolean updateData() {
 		List<ExperienceRecord<A>> newER = experienceRecordCollector.getAllExperienceRecords();
+		if (newER.isEmpty()) return false;
 		pastData.add(newER);
 		if (pastData.size() > pastDataLimit+1) {
 			pastData.remove(0);
 		}
 		experienceRecordCollector.clearAllExperienceRecord();
+		return true;
 	}
 
 	public void teach() {
-		updateData();
-		List<ExperienceRecord<A>> allDataForTraining = getLastNDataSets();
-		Agent a = allDataForTraining.get(0).getAgent();
-		for (Decider<A> d : decidersToTeach) {
-	//		System.out.println(this.toString() + " teaching " + d.toString() + " with " + allDataForTraining.size() + " records.");
-			d.learnFromBatch(allDataForTraining, a.getMaxScore());
+		if (updateData()) {
+			List<ExperienceRecord<A>> allDataForTraining = getLastNDataSets();
+			Agent a = allDataForTraining.get(0).getAgent();
+			for (Decider<A> d : decidersToTeach) {
+				//		System.out.println(this.toString() + " teaching " + d.toString() + " with " + allDataForTraining.size() + " records.");
+				d.learnFromBatch(allDataForTraining, a.getMaxScore());
+			}
 		}
 	}
 	protected List<ExperienceRecord<A>> getLastNDataSets() {
