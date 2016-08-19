@@ -5,3 +5,5 @@
 /.metadata/
 /.settings/
 /.idea/
+../.classpath
+../.project
