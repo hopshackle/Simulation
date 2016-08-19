@@ -5,7 +5,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="commons-math-2.0-javadoc.jar"/>
 	<classpathentry kind="lib" path="commons-math-2.0-sources.jar"/>
-	<classpathentry kind="lib" path="mysql-connector-java-5.1.10/mysql-connector-java-5.1.10/mysql-connector-java-5.1.10-bin.jar"/>
 	<classpathentry kind="lib" path="commons-math-2.0.jar"/>
 	<classpathentry kind="lib" path="encog-core-3.2.0.jar">
 		<attributes>
@@ -13,5 +12,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="lib" path="C:/Program Files (x86)/MySQL/Connector J 5.1.26/mysql-connector-java-5.1.26-bin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
