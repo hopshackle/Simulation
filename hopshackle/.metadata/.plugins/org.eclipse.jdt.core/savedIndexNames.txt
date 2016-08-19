@@ -1,1 +1,0 @@
-INDEX VERSION 1.126+C:\Users\James\Google Drive\Eclipse\hopshackle\.metadata\.plugins\org.eclipse.jdt.core
