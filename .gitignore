@@ -1,5 +1,6 @@
 /bin/
 *.jar
+*.iml
 .project
 .classpath
 /.metadata/
