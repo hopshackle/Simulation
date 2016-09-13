@@ -13,7 +13,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 
 	private static boolean incrementalScoreAffectsReward, dbStorage, monteCarlo;
 	private static DatabaseWriter<ExperienceRecord<?>> writer = new DatabaseWriter<ExperienceRecord<?>>(new ExpRecDAO());
-	protected static double lambda, gamma, traceCap;
+	protected static double lambda, gamma, traceCap, timePeriod;
 	static {refreshProperties();}
 	protected State<A> startState, endState;
 	protected double[] startStateAsArray, endStateAsArray;
@@ -25,6 +25,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	protected ERState expRecState = ERState.UNSEEN;
 	private A agent;
 	private ExperienceRecord<A> previousRecord;
+	protected long timeOfDecision, timeOfResolution;
 
 	public static void refreshProperties() {
 		lambda = SimProperties.getPropertyAsDouble("QTraceLambda", "0.0");
@@ -33,6 +34,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		incrementalScoreAffectsReward = SimProperties.getProperty("IncrementalScoreReward", "true").equals("true");
 		dbStorage = SimProperties.getProperty("ExperienceRecordDBStorage", "false").equals("true");
 		monteCarlo = SimProperties.getProperty("MonteCarloReward", "false").equals("true");
+		timePeriod = SimProperties.getPropertyAsDouble("TimePeriodforGamma", "1000");
 	}
 
 	public ExperienceRecord(A a, State<A> state, Action<A> action, List<ActionEnum<A>> possibleActions) {
@@ -44,6 +46,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		setState(ERState.DECISION_TAKEN);
 		startScore = a.getScore();
 		agent = a;
+		timeOfDecision = a.getWorld().getCurrentTime();
 	}
 
 	private void constructFeatureTrace(ExperienceRecord<A> previousER) {
@@ -62,6 +65,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		endState = newState;
 		endStateAsArray = endState.getAsArray();
 		this.reward = reward;
+		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		setState(ERState.ACTION_COMPLETED);
 	}
 	
@@ -78,12 +82,14 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 			possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
 			endScore = agent.getScore();
 		}
+		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		setState(ERState.NEXT_ACTION_TAKEN);
 	}
 	
 	public void setIsFinal() {
 		isFinalState = true;
 		endScore = agent.getScore();
+		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		setState(ERState.NEXT_ACTION_TAKEN);
 		if (monteCarlo) {
 			updatePreviousRecord(getReward());
@@ -166,5 +172,8 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 			writer.write(this, getWorld().toString());
 		}
 		expRecState = newState;
+	}
+	public double getDiscountPeriod() {
+		return (timeOfResolution - timeOfDecision) / timePeriod;
 	}
 }

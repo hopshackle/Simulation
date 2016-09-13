@@ -55,6 +55,7 @@ public class ExperienceRecordWithLookahead<A extends Agent> extends ExperienceRe
 				newStartState,
 				(Action<A>) DummyAction.DUMMY.getAction(this.getAgent()), 
 				decider.dummyActionSet);
+		retValue.timeOfDecision = this.timeOfDecision;
 		LookaheadState<A> newEndState = (LookaheadState<A>) this.getEndState();
 		if (lookaheadQLearningEnd) {
 			double highScore = Double.NEGATIVE_INFINITY;
@@ -77,8 +78,8 @@ public class ExperienceRecordWithLookahead<A extends Agent> extends ExperienceRe
 		retValue.endScore = this.endScore;
 		retValue.isFinalState = this.isFinalState;
 		retValue.featureTrace = newFeatureTrace;
+		retValue.timeOfResolution = this.timeOfResolution;
 		retValue.setState(this.getState());
-
 		return retValue;
 	}
 }

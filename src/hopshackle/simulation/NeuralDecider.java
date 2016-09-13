@@ -166,7 +166,8 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		// which in turn is given by the best action value 
 		double[] retValue = new double[brain.getOutputCount()];
 		double bestQValue = valueOfBestAction(exp) / scaleFactor; 
-		double output = exp.getReward()/scaleFactor + gamma * bestQValue;
+		double discountPeriod = exp.getDiscountPeriod();
+		double output = exp.getReward()/scaleFactor + Math.pow(gamma, discountPeriod) * bestQValue;
 
 		int actionIndex = actionSet.indexOf(exp.actionTaken.getType());
 		if (output > 1.0) {
