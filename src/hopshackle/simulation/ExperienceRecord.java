@@ -34,7 +34,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		incrementalScoreAffectsReward = SimProperties.getProperty("IncrementalScoreReward", "true").equals("true");
 		dbStorage = SimProperties.getProperty("ExperienceRecordDBStorage", "false").equals("true");
 		monteCarlo = SimProperties.getProperty("MonteCarloReward", "false").equals("true");
-		timePeriod = SimProperties.getPropertyAsDouble("TimePeriodforGamma", "1000");
+		timePeriod = SimProperties.getPropertyAsDouble("TimePeriodForGamma", "1000");
 	}
 
 	public ExperienceRecord(A a, State<A> state, Action<A> action, List<ActionEnum<A>> possibleActions) {
@@ -47,6 +47,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		startScore = a.getScore();
 		agent = a;
 		timeOfDecision = a.getWorld().getCurrentTime();
+		timeOfResolution = -1;
 	}
 
 	private void constructFeatureTrace(ExperienceRecord<A> previousER) {
@@ -174,6 +175,9 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		expRecState = newState;
 	}
 	public double getDiscountPeriod() {
-		return (timeOfResolution - timeOfDecision) / timePeriod;
+		if (timeOfResolution > -1)
+			return (timeOfResolution - timeOfDecision) / timePeriod;
+		else
+			return 0.0;
 	}
 }
