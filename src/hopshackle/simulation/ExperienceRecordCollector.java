@@ -14,9 +14,19 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	private List<AgentListener> listeners = new ArrayList<AgentListener>();
 	private ERCAllocationPolicy<A> birthPolicy;
 	private ExperienceRecordFactory<A> erFactory;
+	protected EventFilter filter;
 	
 	public ExperienceRecordCollector(ExperienceRecordFactory<A> factory) {
+		this(factory, new EventFilter() {
+			@Override
+			public boolean ignore(AgentEvent event) {
+				return false;
+			}
+		});
+	}
+	public ExperienceRecordCollector(ExperienceRecordFactory<A> factory, EventFilter filter) {
 		erFactory = factory;
+		this.filter = filter;
 	}
 
 	public void registerAgent(A a) {
@@ -104,6 +114,8 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	@SuppressWarnings("unchecked")
 	@Override
 	public synchronized void processEvent(AgentEvent event) {
+		if (filter.ignore(event)) 
+			return;
 		A a = (A) event.getAgent();
 		Action<A> action = (Action<A>)event.getAction();
 		Decider<A> agentDecider = (Decider<A>) event.getDecider();

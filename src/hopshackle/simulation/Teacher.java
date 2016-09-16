@@ -18,7 +18,7 @@ public abstract class Teacher<A extends Agent> implements AgentListener {
 	public void clearDeciders() {
 		decidersToTeach.clear();
 	}
-	
+
 	@Override
 	public abstract void processEvent(AgentEvent event);
 
