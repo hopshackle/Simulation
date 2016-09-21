@@ -68,6 +68,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		endStateAsArray = endState.getAsArray();
 		this.reward = reward;
 		timeOfResolution = getAgent().getWorld().getCurrentTime();
+//		getAgent().log("ACTION_COMPLETED for " + this.actionTaken);
 		setState(ERState.ACTION_COMPLETED);
 	}
 	
@@ -81,6 +82,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 			endState = nextER.getStartState();
 			endStateAsArray = endState.getAsArray();
 			endScore = nextER.getStartScore();
+//			getAgent().log("Updated ER for Action " + actionTaken + " after new action " + nextER.getActionTaken());
 		} else {
 			possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
 			endScore = agent.getScore();

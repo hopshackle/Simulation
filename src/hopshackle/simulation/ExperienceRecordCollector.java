@@ -96,10 +96,11 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		boolean passOnEvent = false;
 		List<ExperienceRecord<A>> tdListForAgent = erListMap.getOrDefault(agent, new ArrayList<ExperienceRecord<A>>());
 		for (ExperienceRecord<A> existingER : tdListForAgent) {
-//			System.out.println("\tProcessing: " + existingER.getActionTaken().actionType + "(" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
+	//		System.out.println("\tProcessing: " + existingER.getActionTaken() + " (" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
 			if (existingER.getState() == ERState.ACTION_COMPLETED && 
 					!newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken())) {
 				existingER.updateNextActions(newlyRegisteredER);
+	//			System.out.println("Linking " + newlyRegisteredER.getActionTaken() + " to " + existingER.getActionTaken());
 				passOnEvent = true;
 			}
 		}
@@ -116,9 +117,10 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	public synchronized void processEvent(AgentEvent event) {
 		if (filter.ignore(event)) 
 			return;
+//		System.out.println("Through Filter: " + event.getAction() + " ; " + event.getEvent());
 		A a = (A) event.getAgent();
 		Action<A> action = (Action<A>)event.getAction();
-		Decider<A> agentDecider = (Decider<A>) event.getDecider();
+		Decider<A> eventDecider = (Decider<A>) event.getDecider();
 		ExperienceRecord<A> newER = null;
 		boolean passOnEvent = false;
 //		if (!a.isDead()) System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
@@ -133,16 +135,16 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			passOnEvent = true;
 			break;
 		case DECISION_TAKEN:
-			newER = erFactory.generate(a, agentDecider.getCurrentState(a), action, agentDecider.getChooseableOptions(a));
+			newER = erFactory.generate(a, eventDecider.getCurrentState(a), action, eventDecider.getChooseableOptions(a));
 			passOnEvent = processNewER(newER, a);
 			break;
 		case ACTION_AGREED:
-			passOnEvent = createAndProcessNewERIfNeeded(a, action, agentDecider);
+			passOnEvent = createAndProcessNewERIfNeeded(a, action, eventDecider);
 			break;
 		case ACTION_REJECTED:
 		case ACTION_CANCELLED:
 		case DECISION_STEP_COMPLETE:
-			boolean passOn1 = createAndProcessNewERIfNeeded(a, action, agentDecider);
+			boolean passOn1 = createAndProcessNewERIfNeeded(a, action, eventDecider);
 			passOnEvent = processDecisionForAgent(a, action);
 			passOnEvent = passOnEvent || passOn1;
 			break;
@@ -179,6 +181,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	
 	protected boolean processDecisionForAgent(A agent, Action<A> action) {
 		boolean passOnEvent = false;
+//		agent.log("Processing Decision " + action);
 		List<ExperienceRecord<A>> tdArray = erListMap.get(agent);
 		ExperienceRecord<A> ERForActionReceived = null;
 		for (ExperienceRecord<A> td : tdArray) {

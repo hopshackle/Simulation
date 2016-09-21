@@ -36,7 +36,7 @@ public class OnInstructionTeacher<A extends Agent> extends Teacher<A> {
 			List<ExperienceRecord<A>> allDataForTraining = getLastNDataSets();
 			Agent a = allDataForTraining.get(0).getAgent();
 			for (Decider<A> d : decidersToTeach) {
-				//		System.out.println(this.toString() + " teaching " + d.toString() + " with " + allDataForTraining.size() + " records.");
+		//				System.out.println(this.toString() + " teaching " + d.toString() + " with " + allDataForTraining.size() + " records.");
 				d.learnFromBatch(allDataForTraining, a.getMaxScore());
 			}
 		}
