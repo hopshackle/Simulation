@@ -56,7 +56,8 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		} else {
 			featureTrace = new double[startStateAsArray.length];
 			for (int i = 0; i < startStateAsArray.length; i++) {
-				featureTrace[i] = gamma * lambda * previousER.featureTrace[i] + startStateAsArray[i];
+				// We discount feature trace over time that has passed
+				featureTrace[i] = Math.pow(gamma * lambda, previousER.getDiscountPeriod()) * previousER.featureTrace[i] + startStateAsArray[i];
 				if (featureTrace[i] > traceCap)	featureTrace[i] = traceCap;
 			}
 		}
@@ -71,6 +72,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	}
 	
 	public void updateNextActions(ExperienceRecord<A> nextER) {
+		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		if (nextER != null) {
 			nextER.previousRecord = this;
 			nextER.constructFeatureTrace(this);
@@ -83,7 +85,6 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 			possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
 			endScore = agent.getScore();
 		}
-		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		setState(ERState.NEXT_ACTION_TAKEN);
 	}
 	
