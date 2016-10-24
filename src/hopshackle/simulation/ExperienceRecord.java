@@ -11,7 +11,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
 	}
 
-	private static boolean incrementalScoreAffectsReward, dbStorage;
+	private static boolean incrementalScoreAffectsReward, dbStorage, monteCarlo;
 	private static DatabaseWriter<ExperienceRecord<?>> writer = new DatabaseWriter<ExperienceRecord<?>>(new ExpRecDAO());
 	protected static double lambda, gamma, traceCap;
 	static {refreshProperties();}
@@ -24,6 +24,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	protected boolean isFinalState;
 	protected ERState expRecState = ERState.UNSEEN;
 	private A agent;
+	private ExperienceRecord<A> previousRecord;
 
 	public static void refreshProperties() {
 		lambda = SimProperties.getPropertyAsDouble("QTraceLambda", "0.0");
@@ -31,6 +32,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		traceCap = SimProperties.getPropertyAsDouble("QTraceMaximum", "10.0");
 		incrementalScoreAffectsReward = SimProperties.getProperty("IncrementalScoreReward", "true").equals("true");
 		dbStorage = SimProperties.getProperty("ExperienceRecordDBStorage", "false").equals("true");
+		monteCarlo = SimProperties.getProperty("MonteCarloReward", "false").equals("true");
 	}
 
 	public ExperienceRecord(A a, State<A> state, Action<A> action, List<ActionEnum<A>> possibleActions) {
@@ -65,6 +67,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	
 	public void updateNextActions(ExperienceRecord<A> nextER) {
 		if (nextER != null) {
+			nextER.previousRecord = this;
 			nextER.constructFeatureTrace(this);
 			possibleActionsFromEndState = nextER.getPossibleActionsFromStartState();
 			nextActionTaken = nextER.actionTaken;
@@ -82,6 +85,21 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		isFinalState = true;
 		endScore = agent.getScore();
 		setState(ERState.NEXT_ACTION_TAKEN);
+		if (monteCarlo) {
+			updatePreviousRecord(getReward());
+		}
+	}
+	
+	private void updatePreviousRecord(double score) {
+		if (previousRecord != null) {
+			double newScore = score * gamma + previousRecord.getReward();
+			previousRecord.reward = newScore;
+			previousRecord.endScore = 0.0;
+			previousRecord.startScore = 0.0;
+			previousRecord.updatePreviousRecord(newScore);
+		} else {
+			// end of the chain
+		}
 	}
 
 	public State<A> getStartState() {

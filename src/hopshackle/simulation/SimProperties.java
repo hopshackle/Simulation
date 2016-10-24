@@ -21,7 +21,7 @@ public class SimProperties {
 	}
 	
 	private static void initialiseProperties() {
-		if (initialised == false) {
+		if (!initialised) {
 			geneticProperties = new Properties();
 			File f = new File(fileLocation);
 			try {
@@ -63,8 +63,8 @@ public class SimProperties {
 
 	public static String getProperty(String propertyName, String defaultValue) {
 		if (!initialised) initialiseProperties();
-		if (!geneticProperties.containsKey(propertyName)) { 
-			logger.warning(propertyName + " not found in Properties. Using default.");
+		if (!geneticProperties.containsKey(propertyName)) {
+			logger.warning(propertyName + " not found in Properties. Using default " + defaultValue +".");
 			setProperty(propertyName, defaultValue);
 		}
 		return geneticProperties.getProperty(propertyName, defaultValue);
@@ -73,18 +73,17 @@ public class SimProperties {
 	public static double getPropertyAsDouble(String name, String defaultValue) {
 		if (!initialised) initialiseProperties();
 		if (!geneticProperties.containsKey(name)) { 
-			logger.warning(name + " not found in Properties. Using default.");
+			logger.warning(name + " not found in Properties. Using default " + defaultValue +".");
 			setProperty(name, defaultValue);
 		}
 		String temp = getProperty(name, defaultValue);
-		double retValue = Double.valueOf(temp);
-		return retValue;
+		return Double.valueOf(temp);
 	}
 
 	public static int getPropertyAsInteger(String name, String defaultValue) {
 		if (!initialised) initialiseProperties();
 		if (!geneticProperties.containsKey(name)) { 
-			logger.warning(name + " not found in Properties. Using default.");
+			logger.warning(name + " not found in Properties. Using default " + defaultValue +".");
 			setProperty(name, defaultValue);
 		}
 		String temp = getProperty(name, defaultValue);
