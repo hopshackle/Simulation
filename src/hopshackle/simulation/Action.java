@@ -248,7 +248,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		allActors.addAll(optionalActors);
 		for (A actor : allActors) {		
 			AgentEvent learningEvent = new AgentEvent(actor, AgentEvent.Type.DECISION_STEP_COMPLETE, this);
-			eventDispatch(learningEvent);		
+			eventDispatch(learningEvent);
 		}
 		for (A actor : allActors) {
 			doNextDecision(actor);

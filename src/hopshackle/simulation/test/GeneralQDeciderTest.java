@@ -14,6 +14,7 @@ public class GeneralQDeciderTest {
 	private Agent testAgent;
 	private List<ActionEnum<Agent>> actions;
 	private List<GeneticVariable<Agent>> variables;
+	private World w;
 
 	public static GeneticVariable<Agent> gold = new GeneticVariable<Agent>() {
 		@Override
@@ -43,6 +44,7 @@ public class GeneralQDeciderTest {
 		SimProperties.setProperty("Lambda", "0.00");
 		SimProperties.setProperty("QTraceLambda", "0.00");
 		SimProperties.setProperty("QTraceMaximum", "2.0");
+		SimProperties.setProperty("TimePeriodForGamma", "1000");
 		ExperienceRecord.refreshProperties();
 		actions = new ArrayList<ActionEnum<Agent>>();
 		actions.add(RightLeft.RIGHT);
@@ -56,7 +58,8 @@ public class GeneralQDeciderTest {
 		decider.setWeights(new double[3][2]);
 		// so we have two actions, right and left
 		// and two inputs, one is just equal to the Agents Gold, and the other is equal to a constant
-		World w = new World();
+		w = new World();
+		w.setCalendar(new FastCalendar(0l));
 		testAgent = new BasicAgent(w);
 	}
 
@@ -94,6 +97,7 @@ public class GeneralQDeciderTest {
 		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
 				decider.getChooseableOptions(testAgent));
 		exp.updateWithResults(2.0, decider.getCurrentState(testAgent));
+		w.setCurrentTime(1000l); // move forward before taking next action, so that discounting works
 		ExperienceRecord<Agent> exp2 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.LEFT.getAction(testAgent), 
 				decider.getChooseableOptions(testAgent));
 		exp.updateNextActions(exp2);
@@ -110,6 +114,7 @@ public class GeneralQDeciderTest {
 		exp2.updateWithResults(-2.0, decider.getCurrentState(testAgent));
 		ExperienceRecord<Agent> exp3 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
 				decider.getChooseableOptions(testAgent));
+		w.setCurrentTime(2000l); // move forward before taking next action, so that discounting works
 		exp2.updateNextActions(exp3);
 		decider.learnFrom(exp2, 10.0);
 		// prediction would be 0.0 from starting State
