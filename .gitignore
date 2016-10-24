@@ -1,8 +1,5 @@
-/bin/
-<<<<<<< HEAD
 .classpath
 .project
-=======
 *.jar
 *.iml
 .project
@@ -10,8 +7,4 @@
 /.metadata/
 /.settings/
 /.idea/
-<<<<<<< HEAD
->>>>>>> branch 'master' of https://github.com/hopshackle/Simulation.git
-=======
->>>>>>> refs/remotes/origin/LearnCardPlay
 /hopshackle/
