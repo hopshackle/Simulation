@@ -2,7 +2,6 @@ package hopshackle.simulation.test.refactor;
 
 import hopshackle.simulation.*;
 import hopshackle.simulation.ExperienceRecord.ERState;
-import hopshackle.simulation.basic.BasicAgent;
 
 import java.util.*;
 
@@ -51,7 +50,9 @@ class TestAction extends Action<TestAgent> {
 
 enum TestActionEnum implements ActionEnum<TestAgent> {
 
-	TEST;
+	TEST,
+	LEFT,
+	RIGHT;
 	
 	public static boolean dummyMode = false;
 	
@@ -79,10 +80,21 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 }
 
 enum TestGenVar implements GeneticVariable<TestAgent> {
-	TEST;
+	CONSTANT,
+	GOLD,
+	AGE;
 
 	@Override
-	public double getValue(TestAgent a1) {return 1.0;}
+	public double getValue(TestAgent a1) {
+		switch(this) {
+		case CONSTANT:
+			return 1.0;
+		case GOLD:
+			return a1.getGold();
+		case AGE:
+			return a1.getAge();
+		}
+		return 1.0;}
 	@Override
 	public String getDescriptor() {
 		return "TEST_GV";
@@ -119,7 +131,7 @@ class TestDecider extends BaseDecider<TestAgent> {
 	public static List<GeneticVariable<TestAgent>> gvList = new ArrayList<GeneticVariable<TestAgent>>();
 	static {
 		actionList.add(TestActionEnum.TEST);
-		gvList.add(TestGenVar.TEST);
+		gvList.add(TestGenVar.CONSTANT);
 	}
 
 	public TestDecider() {
