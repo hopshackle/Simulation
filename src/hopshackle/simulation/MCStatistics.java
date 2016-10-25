@@ -2,7 +2,7 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class MCStatistics<A extends ActionEnum<?>> {
+public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 	
 	private List<A> allActions;
 	private int totalVisits = 0;

@@ -32,6 +32,11 @@ public class HardCodedDecider<A extends Agent> extends BaseDecider<A> {
 			public double[] getAsArray() {
 				return new double[0];
 			}
+
+			@Override
+			public String getAsString() {
+				return "0.00";
+			}
 		};
 	}
 }

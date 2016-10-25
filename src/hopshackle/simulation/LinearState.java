@@ -21,4 +21,13 @@ public class LinearState<A extends Agent> implements State<A> {
 		return values;
 	}
 
+	@Override
+	public String getAsString() {
+		StringBuffer retValue = new StringBuffer();
+		for (double d : values) {
+			retValue.append(String.format(".2f|", d));
+		}
+		return retValue.toString();
+	}
+
 }

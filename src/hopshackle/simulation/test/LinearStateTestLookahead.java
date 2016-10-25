@@ -20,7 +20,11 @@ public class LinearStateTestLookahead implements LookaheadState<BasicAgent> {
 	public double[] getAsArray() {
 		return wrappedState.getAsArray();
 	}
-
+	@Override
+	public String getAsString() {
+		return wrappedState.getAsString();
+	}
+	
 	@Override
 	public LookaheadState<BasicAgent> apply(ActionEnum<BasicAgent> proposedAction) {
 		return this;
@@ -30,7 +34,6 @@ public class LinearStateTestLookahead implements LookaheadState<BasicAgent> {
 	public LookaheadState<BasicAgent> clone() {
 		return this;
 	}
-
 }
 
 class LookaheadTestFunction<A extends Agent> implements LookaheadFunction<A> {

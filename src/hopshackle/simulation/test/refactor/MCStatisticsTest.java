@@ -9,7 +9,7 @@ public class MCStatisticsTest {
 
 	List<TestActionEnum> allActions = new ArrayList<TestActionEnum>(EnumSet.allOf(TestActionEnum.class));
 	List<TestActionEnum> leftRightOnly = new ArrayList<TestActionEnum>(EnumSet.allOf(TestActionEnum.class));
-	MCStatistics<TestActionEnum> stats;
+	MCStatistics<TestAgent, TestActionEnum> stats;
 
 	@Before 
 	public void setup() {
@@ -19,7 +19,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void createEmpty() {
-		stats = new MCStatistics<TestActionEnum>(leftRightOnly);
+		stats = new MCStatistics<TestAgent, TestActionEnum>(leftRightOnly);
 		assertEquals(stats.getVisits(TestActionEnum.LEFT), 0);
 		assertEquals(stats.getVisits(TestActionEnum.RIGHT), 0);
 		assertEquals(stats.getVisits(TestActionEnum.TEST), 0);
@@ -30,7 +30,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void updateWithNewVisit() {
-		stats = new MCStatistics<TestActionEnum>(leftRightOnly);
+		stats = new MCStatistics<TestAgent, TestActionEnum>(leftRightOnly);
 		stats.update(TestActionEnum.LEFT, 2.0);
 		stats.update(TestActionEnum.LEFT, 5.0);
 		stats.update(TestActionEnum.LEFT, -1.0);
@@ -46,7 +46,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void cycleThroughActionsIfNotAllTried() {
-		stats = new MCStatistics<TestActionEnum>(leftRightOnly);
+		stats = new MCStatistics<TestAgent, TestActionEnum>(leftRightOnly);
 		assertTrue(stats.hasUntriedAction());
 		TestActionEnum newAction = stats.getRandomUntriedAction();
 		stats.update(newAction, 1.0);
@@ -59,7 +59,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void uctActionReturnsBestBound() {
-		stats = new MCStatistics<TestActionEnum>(leftRightOnly);
+		stats = new MCStatistics<TestAgent, TestActionEnum>(leftRightOnly);
 		stats.update(TestActionEnum.LEFT, 2.0);
 		stats.update(TestActionEnum.RIGHT, 1.0);
 		assertFalse(stats.hasUntriedAction());
