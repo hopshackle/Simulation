@@ -8,10 +8,6 @@ public interface Game<P extends Agent, A extends ActionEnum<P>> {
 	
 	public double[] playGame();
 	
-	public void apply(A action);
-
-	public void forwardToNextMoveForPlayer(int playerNumber);
-	
 	public P getCurrentPlayer();
 
 	public int getCurrentPlayerNumber();
@@ -19,5 +15,7 @@ public interface Game<P extends Agent, A extends ActionEnum<P>> {
 	public List<P> getAllPlayers();
 	
 	public int getPlayerNumber(P player);
+	
+	public P getPlayer(int n);
 
 }
