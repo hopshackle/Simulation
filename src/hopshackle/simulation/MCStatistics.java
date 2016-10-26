@@ -98,6 +98,21 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 		}
 		return retValue.toString();
 	}
+
+	public A getBestAction() {
+		A retValue = null;
+		double score = Double.MIN_VALUE;
+		for (A action : allActions) {
+			String key = action.toString();
+			if (map.containsKey(key)) {
+				if (map.get(key).mean > score) {
+					score = map.get(key).mean;
+					retValue = action;
+				}
+			}
+		}
+		return retValue;
+	}
 }
 
 class MCData {

@@ -518,4 +518,7 @@ public abstract class Agent extends Observable {
 		}
 	}
 	
+	public <B extends Agent> Game<B, ActionEnum<B>> getGame() {
+		return null;
+	}
 }

@@ -82,6 +82,7 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 enum TestGenVar implements GeneticVariable<TestAgent> {
 	CONSTANT,
 	GOLD,
+	POSITION,
 	AGE;
 
 	@Override
@@ -91,6 +92,8 @@ enum TestGenVar implements GeneticVariable<TestAgent> {
 			return 1.0;
 		case GOLD:
 			return a1.getGold();
+		case POSITION:
+			return a1.position;
 		case AGE:
 			return a1.getAge();
 		}
@@ -107,6 +110,7 @@ enum TestGenVar implements GeneticVariable<TestAgent> {
 class TestAgent extends Agent {
 	
 	int decisionsTaken = 0;
+	int position = 0;
 	
 	public TestAgent(World world) {
 		super(world);

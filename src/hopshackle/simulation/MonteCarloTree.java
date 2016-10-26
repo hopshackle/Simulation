@@ -49,4 +49,10 @@ public class MonteCarloTree<P extends Agent, A extends ActionEnum<P>> {
 			throw new AssertionError(stateAsString + " not found in MonteCarloTree to choose action");
 		}
 	}
+	public MCStatistics<P, A> getStatisticsFor(State<P> state) {
+		return tree.get(state);
+	}
+	public A getBestAction(State<P> state) {
+		return tree.get(state).getBestAction();
+	}
 }

@@ -5,7 +5,7 @@ import java.util.*;
 public class MCTSChildDecider<P extends Agent, A extends ActionEnum<P>> extends BaseDecider<P> {
 
 	private Decider<P> rolloutDecider;
-	private  MonteCarloTree<P, A> tree;
+	private MonteCarloTree<P, A> tree;
 	
 	public MCTSChildDecider(StateFactory<P> stateFactory, List<A> actions, MonteCarloTree<P, A> tree, Decider<P> rolloutDecider) {
 		super(stateFactory, actions);
