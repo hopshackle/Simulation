@@ -38,7 +38,9 @@ public class SimpleMazeGame implements Game<TestAgent, TestActionEnum>{
 	
 	public void oneMove() {
 		Action<Agent> action = player.getDecider().decide(player);
+		action.makeNextDecision = false;
 		action.start();
+		player.getWorld().setCurrentTime(player.getWorld().getCurrentTime() + 1000);
 		action.run();
 		reward[0] = reward[0] - 1.0;
 	}
