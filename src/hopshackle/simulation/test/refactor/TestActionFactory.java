@@ -10,8 +10,8 @@ class TestAction extends Action<TestAgent> {
 	boolean dieInMiddle = false;
 	boolean makeNextDecision = true;
 	
-	public TestAction(List<TestAgent> mandatory, List<TestAgent> optional, long startOffset, long duration, boolean recordAction) {
-		super(TestActionEnum.TEST, mandatory, optional, startOffset, duration, recordAction);
+	public TestAction(TestActionEnum action, List<TestAgent> mandatory, List<TestAgent> optional, long startOffset, long duration, boolean recordAction) {
+		super(action, mandatory, optional, startOffset, duration, recordAction);
 	}
 	
 	@Override
@@ -25,6 +25,14 @@ class TestAction extends Action<TestAgent> {
 			for (Agent a : getAllConfirmedParticipants()) {
 				a.die("Oops");
 			}
+		}
+		switch ((TestActionEnum)actionType) {
+		case LEFT:
+			actor.position++;
+			break;
+		case RIGHT:
+			actor.position--;
+		default:
 		}
 	}
 	@Override
@@ -44,7 +52,7 @@ class TestAction extends Action<TestAgent> {
 	}
 	@Override
 	public String toString() {
-		return "TEST(" + getStartTime() + "-" + getEndTime() + ")";
+		return actionType + " (" + getStartTime() + "-" + getEndTime() + ")";
 	}
 }
 
@@ -65,7 +73,7 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 	public Action<TestAgent> getAction(TestAgent a) {
 		List<TestAgent> thisAgentAsList = new ArrayList<TestAgent>();
 		thisAgentAsList.add(a);
-		return new TestAction(thisAgentAsList, new ArrayList<TestAgent>(), 0, 1000, true);
+		return new TestAction(this, thisAgentAsList, new ArrayList<TestAgent>(), 0, 1000, true);
 	}
 
 	@Override
@@ -168,7 +176,7 @@ class TestActionFactory {
 		for (int i = mandatory; i < mandatory + optional; i++) {
 			optionalAgents.add(allAgents.get(i));
 		}
-		return new TestAction(mandatoryAgents, optionalAgents, offset, duration, true);
+		return new TestAction(TestActionEnum.TEST, mandatoryAgents, optionalAgents, offset, duration, true);
 	}
 }
 

@@ -2,22 +2,27 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class MCTSChildDecider<P extends Agent, A extends ActionEnum<P>> extends BaseDecider<P> {
+public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 
 	private Decider<P> rolloutDecider;
-	private MonteCarloTree<P, A> tree;
+	private MonteCarloTree<P, ActionEnum<P>> tree;
 	
-	public MCTSChildDecider(StateFactory<P> stateFactory, List<A> actions, MonteCarloTree<P, A> tree, Decider<P> rolloutDecider) {
+	public MCTSChildDecider(StateFactory<P> stateFactory, List<ActionEnum<P>> actions, MonteCarloTree<P, ActionEnum<P>> tree, Decider<P> rolloutDecider) {
 		super(stateFactory, actions);
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
+		boolean monteCarlo = SimProperties.getProperty("MonteCarloReward", "false").equals("true");
+		if (!monteCarlo) {
+			throw new AssertionError("MCTS Deciders should only be used with MonteCarlo switched on! Update GeneticProperties.txt");
+		}
 	}
-	
-	public ActionEnum<P> makeDecision(P decidingAgent, Game<P, A> game) {
+
+	@Override
+	public ActionEnum<P> makeDecision(P decidingAgent) {
 		if (decidingAgent.isDead()) return null;
 
 		State<P> state = stateFactory.getCurrentState(decidingAgent);
-	
+
 		if (tree.containsState(state)) {
 			return tree.getNextAction(state);
 		} else {
@@ -33,14 +38,13 @@ public class MCTSChildDecider<P extends Agent, A extends ActionEnum<P>> extends 
 		return 0.0;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void learnFrom(ExperienceRecord<P> exp, double maxResult) {
 		// 'Learning' in this context means updating the MonteCarloTree
 		if (tree.containsState(exp.getStartState())) {
-			tree.updateState(exp.getStartState(), (A) exp.getActionTaken().actionType, exp.getReward());
+			tree.updateState(exp.getStartState(), exp.getActionTaken().actionType, exp.getReward());
 			if (tree.updatesLeft() > 0 && !tree.containsState(exp.getEndState())) {
-				tree.insertState(exp.getEndState(), (List<A>) exp.getPossibleActionsFromEndState());
+				tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
 			}
 		}
 		// This relies on us going forward through the ER (if backwards, then we still insert the additional state, 

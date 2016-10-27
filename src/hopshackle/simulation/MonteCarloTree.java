@@ -55,4 +55,16 @@ public class MonteCarloTree<P extends Agent, A extends ActionEnum<P>> {
 	public A getBestAction(State<P> state) {
 		return tree.get(state).getBestAction();
 	}
+	public int numberOfState() {
+		return tree.size();
+	}
+	@Override
+	public String toString() {
+		StringBuffer retValue = new StringBuffer("Monte Carlo Tree ");
+		retValue.append("with " + tree.size() + " states.\n");
+		for (String s : tree.keySet()) {
+			retValue.append("\t" + s + "\t" + tree.get(s).getVisits() + " visits");
+		}
+		return retValue.toString();
+	}
 }

@@ -38,3 +38,4 @@ public class SimpleMazeDecider extends BaseDecider<TestAgent> {
 	public void learnFrom(ExperienceRecord<TestAgent> exp, double maxResult) {
 	}
 }
+

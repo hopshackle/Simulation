@@ -34,6 +34,7 @@ public abstract class Agent extends Observable {
 	private Lock agentLock = new ReentrantLock();
 	private Map<String, Policy<?>> policies = new HashMap<String, Policy<?>>(); 
 	protected boolean debug_this = false;
+	protected Game game;
 
 	protected long birth = 0;
 	protected long death = -1;
@@ -518,7 +519,10 @@ public abstract class Agent extends Observable {
 		}
 	}
 	
-	public <B extends Agent> Game<B, ActionEnum<B>> getGame() {
-		return null;
+	public Game getGame() {
+		return game;
+	}
+	public void setGame(Game game) {
+		this.game = game;
 	}
 }

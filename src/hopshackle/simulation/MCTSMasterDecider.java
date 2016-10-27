@@ -5,13 +5,15 @@ import java.util.List;
 public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	
 	private MonteCarloTree<A, ActionEnum<A>> tree;
-	private Decider<A> rolloutDecider;
-	private MCTSChildDecider<A, ActionEnum<A>> childDecider;
+	private Decider<A> rolloutDecider, opponentModel;
+	private MCTSChildDecider<A> childDecider;
 	private static int N = SimProperties.getPropertyAsInteger("MonteCarloRolloutCount", "99");
 
-	public MCTSMasterDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions, Decider<A> rolloutDecider) {
+	public MCTSMasterDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions, 
+			Decider<A> rolloutDecider, Decider<A> opponentModel) {
 		super(stateFactory, actions);
 		this.rolloutDecider = rolloutDecider;
+		this.opponentModel = opponentModel;
 	}
 	
 	@Override
@@ -28,25 +30,29 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		// This is not using any Lookahead; just the record of state to state transitions
 		tree = new MonteCarloTree<A, ActionEnum<A>>();
 		OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
-		childDecider = new MCTSChildDecider<A, ActionEnum<A>>(stateFactory, actionSet, tree, rolloutDecider);
-		// TODO: Need to think here. This only works if all the other players are using a model decider.
-		// SO I might need a way to inject the assumed opponent model here. If in the master game all the players
-		// are actually using their own MCTS (or other) learning engines.
+		childDecider = new MCTSChildDecider<A>(stateFactory, actionSet, tree, rolloutDecider);
 		teacher.registerDecider(childDecider);
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>());
-		agent.setDecider(childDecider);		// We replace this decider for the agent
 		State<A> currentState = stateFactory.getCurrentState(agent);
 		for (int i = 0; i < N; i++) {
 			tree.setUpdatesLeft(1);
 			Game<A, ActionEnum<A>> clonedGame = game.clone(agent);
 			A clonedAgent = clonedGame.getPlayer(currentPlayer);
+			for (A player : clonedGame.getAllPlayers()) {
+				if (player != clonedAgent) {
+					player.setDecider(opponentModel);
+				} else {
+					player.setDecider(childDecider);
+				}
+				// For each other player in the game, we have to model their behaviour in some way
+				// For this player (from whose perspective the MonteCarloTree is being constructed)
+				// we use MCTSChildDecider
+			}
 			erc.registerAgent(clonedAgent);
 			clonedGame.playGame();
-			// TODO: I need this to be properly MonteCarlo; i.e. just use the final score for all training!
 			teacher.teach();
 		}
-		agent.setDecider(this); // we reset this decider for the agent
-		
+	
 		// Then we look at the statistics in the tree for the current state to make a decision
 		return tree.getBestAction(currentState);
 	}
@@ -58,6 +64,10 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
+	}
+	
+	public MonteCarloTree<A, ActionEnum<A>> getTree() {
+		return tree;
 	}
 
 }
