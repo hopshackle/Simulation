@@ -33,7 +33,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		childDecider = new MCTSChildDecider<A>(stateFactory, actionSet, tree, rolloutDecider);
 		teacher.registerDecider(childDecider);
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>());
+		teacher.registerToERStream(erc);
 		State<A> currentState = stateFactory.getCurrentState(agent);
+		tree.insertState(currentState, getChooseableOptions(agent));
 		for (int i = 0; i < N; i++) {
 			tree.setUpdatesLeft(1);
 			Game<A, ActionEnum<A>> clonedGame = game.clone(agent);

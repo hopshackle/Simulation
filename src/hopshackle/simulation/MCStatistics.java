@@ -6,7 +6,7 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 	
 	private List<A> allActions;
 	private int totalVisits = 0;
-	private static double C = SimProperties.getPropertyAsDouble("MonteCarloUCTC", "0.1");
+	private static double C = SimProperties.getPropertyAsDouble("MonteCarloUCTC", "1.0");
 
 	public MCStatistics(List<A> possibleActions) {
 		allActions = HopshackleUtilities.cloneList(possibleActions);
@@ -25,6 +25,9 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 			map.put(key, new MCData(1, reward));
 		}
 		totalVisits++;
+	}
+	public List<A> getPossibleActions() {
+		return allActions;
 	}
 
 	public int getVisits() {
@@ -70,7 +73,7 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 	public A getUCTAction() {
 		if (hasUntriedAction()) 
 			throw new AssertionError("Should not be looking for UCT action while there are still untried actions");
-		double best = Double.MIN_VALUE;
+		double best = Double.NEGATIVE_INFINITY;
 		A retValue = null;
 		for (A action : allActions) {
 			String key = action.toString();
@@ -86,14 +89,14 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 	
 	@Override
 	public String toString() {
-		StringBuffer retValue = new StringBuffer("MC Statistics: \n\tTotal Visits\t" + totalVisits + "\n");
+		StringBuffer retValue = new StringBuffer("MC Statistics\tTotal Visits\t" + totalVisits + "\n");
 		for (A action : allActions) {
 			String key = action.toString();
-			retValue.append(key);
+			retValue.append("\t"+key);
 			if (map.containsKey(key)) {
-				retValue.append("/t" + map.get(key).toString());
+				retValue.append("\t" + map.get(key).toString());
 			} else {
-				retValue.append("\t No Data");
+				retValue.append("\t No Data\n");
 			}
 		}
 		return retValue.toString();
@@ -101,7 +104,7 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 
 	public A getBestAction() {
 		A retValue = null;
-		double score = Double.MIN_VALUE;
+		double score = Double.NEGATIVE_INFINITY;
 		for (A action : allActions) {
 			String key = action.toString();
 			if (map.containsKey(key)) {
@@ -131,6 +134,6 @@ class MCData {
 	
 	@Override
 	public String toString() {
-		return String.format("Visits:%d \tScore:%.2f", visits, mean);
+		return String.format("Visits:%d \tScore:%.2f\n", visits, mean);
 	}
 }

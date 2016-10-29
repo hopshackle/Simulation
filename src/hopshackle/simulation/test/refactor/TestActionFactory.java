@@ -9,9 +9,12 @@ class TestAction extends Action<TestAgent> {
 	
 	boolean dieInMiddle = false;
 	boolean makeNextDecision = true;
+	int waitTime;
 	
-	public TestAction(TestActionEnum action, List<TestAgent> mandatory, List<TestAgent> optional, long startOffset, long duration, boolean recordAction) {
+	public TestAction(TestActionEnum action, List<TestAgent> mandatory, List<TestAgent> optional, long startOffset, long duration, boolean recordAction, boolean makeNext, int wait) {
 		super(action, mandatory, optional, startOffset, duration, recordAction);
+		makeNextDecision = makeNext;
+		waitTime = wait;
 	}
 	
 	@Override
@@ -44,10 +47,12 @@ class TestAction extends Action<TestAgent> {
 		}
 	}
 	private void waitABit() {
-		try {
-			Thread.sleep(200);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		if (waitTime > 0) {
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	@Override
@@ -63,6 +68,8 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 	RIGHT;
 	
 	public static boolean dummyMode = false;
+	public static boolean defaultMakeNextDecision = true;
+	public static int waitTime = 200;
 	
 	@Override
 	public String getChromosomeDesc() {
@@ -73,7 +80,7 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 	public Action<TestAgent> getAction(TestAgent a) {
 		List<TestAgent> thisAgentAsList = new ArrayList<TestAgent>();
 		thisAgentAsList.add(a);
-		return new TestAction(this, thisAgentAsList, new ArrayList<TestAgent>(), 0, 1000, true);
+		return new TestAction(this, thisAgentAsList, new ArrayList<TestAgent>(), 0, 1000, true, defaultMakeNextDecision, waitTime);
 	}
 
 	@Override
@@ -103,7 +110,7 @@ enum TestGenVar implements GeneticVariable<TestAgent> {
 		case POSITION:
 			return a1.position;
 		case AGE:
-			return a1.getAge();
+			return a1.getAge() / 1000.0;
 		}
 		return 1.0;}
 	@Override
@@ -132,6 +139,13 @@ class TestAgent extends Agent {
 	@Override
 	public void eventDispatch(AgentEvent ae) {
 		super.eventDispatch(ae);
+	}
+	@Override
+	public double getScore() {
+		if (game != null) {
+			return ((SimpleMazeGame) game).reward[0];
+		}
+		return 0.0;
 	}
 }
 
@@ -176,7 +190,7 @@ class TestActionFactory {
 		for (int i = mandatory; i < mandatory + optional; i++) {
 			optionalAgents.add(allAgents.get(i));
 		}
-		return new TestAction(TestActionEnum.TEST, mandatoryAgents, optionalAgents, offset, duration, true);
+		return new TestAction(TestActionEnum.TEST, mandatoryAgents, optionalAgents, offset, duration, true, true, 200);
 	}
 }
 

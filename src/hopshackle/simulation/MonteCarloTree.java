@@ -50,20 +50,29 @@ public class MonteCarloTree<P extends Agent, A extends ActionEnum<P>> {
 		}
 	}
 	public MCStatistics<P, A> getStatisticsFor(State<P> state) {
-		return tree.get(state);
+		return tree.get(state.getAsString());
 	}
 	public A getBestAction(State<P> state) {
-		return tree.get(state).getBestAction();
+		return tree.get(state.getAsString()).getBestAction();
 	}
 	public int numberOfState() {
 		return tree.size();
 	}
 	@Override
 	public String toString() {
+		return toString(false);
+	}
+	public String toString(boolean full) {
 		StringBuffer retValue = new StringBuffer("Monte Carlo Tree ");
 		retValue.append("with " + tree.size() + " states.\n");
 		for (String s : tree.keySet()) {
-			retValue.append("\t" + s + "\t" + tree.get(s).getVisits() + " visits");
+			MCStatistics<P, A> stats = tree.get(s);
+			retValue.append("\t" + s + "\t" + stats.getVisits() + " visits\n");
+			if (full) {
+				retValue.append("------------------\n");
+				retValue.append(stats.toString());
+				retValue.append("------------------\n");
+			}
 		}
 		return retValue.toString();
 	}

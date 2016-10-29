@@ -43,7 +43,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 		// 'Learning' in this context means updating the MonteCarloTree
 		if (tree.containsState(exp.getStartState())) {
 			tree.updateState(exp.getStartState(), exp.getActionTaken().actionType, exp.getReward());
-			if (tree.updatesLeft() > 0 && !tree.containsState(exp.getEndState())) {
+			if (tree.updatesLeft() > 0 && !tree.containsState(exp.getEndState()) && !exp.isFinalState) {
 				tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
 			}
 		}

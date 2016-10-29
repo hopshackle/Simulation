@@ -13,32 +13,41 @@ public class SimpleMazeGame implements Game<TestAgent, TestActionEnum>{
 	public SimpleMazeGame(int target, TestAgent player) {
 		this.target = target;
 		this.player = player;
+		TestActionEnum.defaultMakeNextDecision = false;
+		TestActionEnum.waitTime = 0;
+		player.setGame(this);
 	}
 
 	@Override
 	public Game<TestAgent, TestActionEnum> clone(TestAgent perspectivePlayer) {
-		TestAgent clonedPlayer = new TestAgent(perspectivePlayer.getWorld());
+		World clonedWorld = new World();
+		long currentTime = perspectivePlayer.getWorld().getCurrentTime();
+		clonedWorld.setCalendar(new FastCalendar(currentTime));
+		
+		TestAgent clonedPlayer = new TestAgent(clonedWorld);
+		clonedPlayer.setAge(perspectivePlayer.getAge());
 		clonedPlayer.position = perspectivePlayer.position;
 		
 		SimpleMazeGame retValue = new SimpleMazeGame(target, clonedPlayer);
 		retValue.reward[0] = reward[0];
 		return retValue;
 	}
+	
+	public boolean gameOver() {
+		return player.position >= target;
+	}
 
 	@Override
 	public double[] playGame() {
-		boolean success = false;
 		do {
 			oneMove();
-			if (player.position >= target)
-				success = true;
-		} while (!success && reward[0] > -100);
+		} while (!gameOver() && reward[0] > -100);
+		player.die("Game Over");
 		return reward;
 	}
 	
 	public void oneMove() {
-		Action<Agent> action = player.getDecider().decide(player);
-		action.makeNextDecision = false;
+		Action<?> action = player.getDecider().decide(player);
 		action.start();
 		player.getWorld().setCurrentTime(player.getWorld().getCurrentTime() + 1000);
 		action.run();

@@ -1,17 +1,24 @@
 package hopshackle.simulation;
 
+import java.util.Random;
+
 public final class Dice {
 
 	static int lastRoll;
 	static int nextRoll;
+	private static Random rnd = new Random();
 
+	public static void setSeed(long seed) {
+		rnd = new Random(seed);
+	}
+	
 	public static int roll (int n, int max) {
 		int total = 0;
 		if (nextRoll > 0 && nextRoll < max * n) {
 			total = nextRoll;
 			nextRoll = 0;
 		} else 
-			for (int i=0; i<n; i++) total+=Math.random()*max+1;
+			for (int i=0; i<n; i++) total+=rnd.nextInt(max)+1;
 		lastRoll = total;
 		return total;
 	}

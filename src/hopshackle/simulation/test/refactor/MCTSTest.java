@@ -26,9 +26,11 @@ public class MCTSTest {
 	public void setup()  {
 		world.setCalendar(new FastCalendar(0l));
 		SimProperties.setProperty("MonteCarloReward", "true");
+		SimProperties.setProperty("MonteCarloUCTC", "1.0");
 		agent.setDecider(masterDecider);
 		mazeGame = new SimpleMazeGame(2, agent);
 		agent.setGame(mazeGame);
+		Dice.setSeed(6l);
 	}
 	
 	@Test
@@ -41,11 +43,33 @@ public class MCTSTest {
 		 * 
 		 */
 		
+		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
 		MonteCarloTree<TestAgent, ActionEnum<TestAgent>> tree = masterDecider.getTree();
-		System.out.println(tree);
+
+		assertEquals(tree.numberOfState(), 7);
+		MCStatistics<TestAgent, ActionEnum<TestAgent>> startStats = tree.getStatisticsFor(startState);
+		assertEquals(startStats.getVisits(), 99);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT), -1.96, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST), -5.33, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT), -6.3, 0.01);
+		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
+		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
+		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
 		
-		fail("Not yet implemented");
+		startState = masterDecider.getCurrentState(agent);
+		mazeGame.oneMove();
+		tree = masterDecider.getTree();
+//		System.out.println(tree.toString(true));
+		startStats = tree.getStatisticsFor(startState);
+		assertEquals(tree.numberOfState(), 3);
+		assertEquals(startStats.getVisits(), 99);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT), -2.00, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST), -4.29, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT), -5.88, 0.01);
+		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 97);
+		assertEquals(startStats.getVisits(TestActionEnum.TEST), 1);
+		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
 	}
 
 }
