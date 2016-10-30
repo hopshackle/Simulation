@@ -5,14 +5,13 @@ import java.util.*;
 public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 	
 	private List<A> allActions;
+	private Map<String, MCData> map = new HashMap<String, MCData>();
 	private int totalVisits = 0;
 	private static double C = SimProperties.getPropertyAsDouble("MonteCarloUCTC", "1.0");
 
 	public MCStatistics(List<A> possibleActions) {
 		allActions = HopshackleUtilities.cloneList(possibleActions);
 	}
-
-	Map<String, MCData> map = new HashMap<String, MCData>();
 	
 	public void update(A action, double reward) {
 		if (!allActions.contains(action))
@@ -25,6 +24,10 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 			map.put(key, new MCData(1, reward));
 		}
 		totalVisits++;
+	}
+	private void addAction(A newAction) {
+		if (!allActions.contains(newAction))
+			allActions.add(newAction);
 	}
 	public List<A> getPossibleActions() {
 		return allActions;
@@ -50,19 +53,23 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 		}
 	}
 
-	public boolean hasUntriedAction() {
-		for (A action : allActions) {
-			if (!map.containsKey(action.toString()))
+	public boolean hasUntriedAction(List<A> availableActions) {
+		for (A action : availableActions) {
+			if (!map.containsKey(action.toString())) {
+				addAction(action);
 				return true;
+			}
 		}
 		return false;
 	}
 	
-	public A getRandomUntriedAction() {
+	public A getRandomUntriedAction(List<A> availableActions) {
 		List<A> untried = new ArrayList<A>();
-		for (A action : allActions) {
-			if (!map.containsKey(action.toString()))
+		for (A action : availableActions) {
+			if (!map.containsKey(action.toString())) {
 				untried.add(action);
+				addAction(action);
+			}
 		}
 		if (untried.isEmpty())
 			throw new AssertionError("Cannot call getRandomUntriedAction is there aren't any");
@@ -70,12 +77,12 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 		return untried.get(diceRoll-1);
 	}
 	
-	public A getUCTAction() {
-		if (hasUntriedAction()) 
+	public A getUCTAction(List<A> availableActions) {
+		if (hasUntriedAction(availableActions)) 
 			throw new AssertionError("Should not be looking for UCT action while there are still untried actions");
 		double best = Double.NEGATIVE_INFINITY;
 		A retValue = null;
-		for (A action : allActions) {
+		for (A action : availableActions) {
 			String key = action.toString();
 			MCData data = map.get(key);
 			double score = data.mean + C * Math.sqrt(Math.log(totalVisits) / (double)data.visits);
@@ -102,10 +109,10 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 		return retValue.toString();
 	}
 
-	public A getBestAction() {
+	public A getBestAction(List<A> availableActions) {
 		A retValue = null;
 		double score = Double.NEGATIVE_INFINITY;
-		for (A action : allActions) {
+		for (A action : availableActions) {
 			String key = action.toString();
 			if (map.containsKey(key)) {
 				if (map.get(key).mean > score) {

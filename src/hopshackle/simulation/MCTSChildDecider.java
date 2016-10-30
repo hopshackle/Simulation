@@ -24,7 +24,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 		State<P> state = stateFactory.getCurrentState(decidingAgent);
 
 		if (tree.containsState(state)) {
-			return tree.getNextAction(state);
+			return tree.getNextAction(state, getChooseableOptions(decidingAgent));
 		} else {
 			return rolloutDecider.makeDecision(decidingAgent);
 		}

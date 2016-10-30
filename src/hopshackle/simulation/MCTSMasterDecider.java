@@ -35,7 +35,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>());
 		teacher.registerToERStream(erc);
 		State<A> currentState = stateFactory.getCurrentState(agent);
-		tree.insertState(currentState, getChooseableOptions(agent));
+		List<ActionEnum<A>> chooseableOptions = getChooseableOptions(agent);
+		tree.insertState(currentState, chooseableOptions);
 		for (int i = 0; i < N; i++) {
 			tree.setUpdatesLeft(1);
 			Game<A, ActionEnum<A>> clonedGame = game.clone(agent);
@@ -56,7 +57,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		}
 	
 		// Then we look at the statistics in the tree for the current state to make a decision
-		return tree.getBestAction(currentState);
+		return tree.getBestAction(currentState, chooseableOptions);
 	}
 
 	@Override

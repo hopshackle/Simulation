@@ -27,6 +27,7 @@ public class GeneralQLambdaTest {
 		SimProperties.setProperty("QTraceLambda", "0.50");
 		SimProperties.setProperty("QTraceMaximum", "2.0");
 		SimProperties.setProperty("TimePeriodForGamma", "1000");
+		SimProperties.setProperty("MonteCarloReward", "false");
 		ExperienceRecord.refreshProperties();
 		actions = new ArrayList<ActionEnum<Agent>>();
 		actions.add(RightLeft.RIGHT);

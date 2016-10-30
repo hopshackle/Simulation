@@ -67,7 +67,7 @@ public class MCTreeTest {
 		// the object hierarchy)
 		tree = new MonteCarloTree<TestAgent, TestActionEnum>();
 		tree.insertState(test, leftRightOnly);
-		TestActionEnum next = tree.getNextAction(test);
+		TestActionEnum next = tree.getNextAction(test, leftRightOnly);
 		boolean firstLeft = false;
 		if (next == TestActionEnum.LEFT) 
 			firstLeft = true;
@@ -75,7 +75,7 @@ public class MCTreeTest {
 			tree.updateState(test, TestActionEnum.LEFT, 2.0);
 		else
 			tree.updateState(test, TestActionEnum.RIGHT, 1.0);
-		next = tree.getNextAction(test);
+		next = tree.getNextAction(test, leftRightOnly);
 		if (firstLeft) {
 			assertTrue(next == TestActionEnum.RIGHT);
 			tree.updateState(test, TestActionEnum.RIGHT, 1.0);
@@ -84,21 +84,88 @@ public class MCTreeTest {
 			tree.updateState(test, TestActionEnum.LEFT, 2.0);
 		}
 		
-		next = tree.getNextAction(test);
+		next = tree.getNextAction(test, leftRightOnly);
 		assertTrue(next == TestActionEnum.LEFT);
 		tree.updateState(test, TestActionEnum.LEFT, 2.0);
-		next = tree.getNextAction(test);
+		next = tree.getNextAction(test, leftRightOnly);
 		assertTrue(next == TestActionEnum.LEFT);
 		tree.updateState(test, TestActionEnum.LEFT, 0.5);
-		next = tree.getNextAction(test);
+		next = tree.getNextAction(test, leftRightOnly);
 		assertTrue(next == TestActionEnum.LEFT);
 		tree.updateState(test, TestActionEnum.LEFT, 1.5);
-		next = tree.getNextAction(test);
+		next = tree.getNextAction(test, leftRightOnly);
 		assertTrue(next == TestActionEnum.RIGHT);
 		tree.updateState(test, TestActionEnum.RIGHT, 1.0);
-		next = tree.getNextAction(test);
+		next = tree.getNextAction(test, leftRightOnly);
 		assertTrue(next == TestActionEnum.LEFT);
 		
+	}
+	
+	@Test
+	public void getNextActionWithAPreviouslyUnseenActionShouldReturnIt() {
+		tree = new MonteCarloTree<TestAgent, TestActionEnum>();
+		tree.insertState(test, leftRightOnly);
+		tree.updateState(test, TestActionEnum.LEFT, 2.0);
+		tree.updateState(test, TestActionEnum.RIGHT, 2.0);
+		tree.updateState(test, TestActionEnum.LEFT, 1.0);
+		TestActionEnum leftRight = tree.getNextAction(test, leftRightOnly);
+		TestActionEnum allA = tree.getNextAction(test, allActions);
+		assertTrue(leftRight == TestActionEnum.RIGHT);
+		assertTrue(allA == TestActionEnum.TEST);
+	}
+	
+	@Test
+	public void getNextActionWithRestrictedListShouldObeyRestrictions() {
+		tree = new MonteCarloTree<TestAgent, TestActionEnum>();
+		tree.insertState(test, allActions);
+		tree.updateState(test, TestActionEnum.LEFT, 2.0);
+		tree.updateState(test, TestActionEnum.RIGHT, 2.0);
+		tree.updateState(test, TestActionEnum.LEFT, 1.0);
+		TestActionEnum leftRight = tree.getNextAction(test, leftRightOnly);
+		TestActionEnum allA = tree.getNextAction(test, allActions);
+		assertTrue(leftRight == TestActionEnum.RIGHT);
+		assertTrue(allA == TestActionEnum.TEST);
+	}
+	
+	
+	@Test
+	public void getBestActionWithAPreviouslyUnseenActionShouldNotReturnIt() {
+		tree = new MonteCarloTree<TestAgent, TestActionEnum>();
+		tree.insertState(test, leftRightOnly);
+		tree.updateState(test, TestActionEnum.LEFT, 2.0);
+		tree.updateState(test, TestActionEnum.RIGHT, 2.0);
+		tree.updateState(test, TestActionEnum.LEFT, 1.0);
+		TestActionEnum leftRight = tree.getBestAction(test, leftRightOnly);
+		TestActionEnum allA = tree.getBestAction(test, allActions);
+		assertTrue(leftRight == TestActionEnum.RIGHT);
+		assertTrue(allA == TestActionEnum.RIGHT);
+	}
+	
+	@Test
+	public void getBestActionWithRestrictedListShouldObeyRestrictions() {
+		tree = new MonteCarloTree<TestAgent, TestActionEnum>();
+		tree.insertState(test, allActions);
+		tree.updateState(test, TestActionEnum.LEFT, 2.0);
+		tree.updateState(test, TestActionEnum.RIGHT, 2.0);
+		tree.updateState(test, TestActionEnum.TEST, 5.0);
+		tree.updateState(test, TestActionEnum.LEFT, 1.0);
+		TestActionEnum leftRight = tree.getBestAction(test, leftRightOnly);
+		TestActionEnum allA = tree.getBestAction(test, allActions);
+		assertTrue(leftRight == TestActionEnum.RIGHT);
+		assertTrue(allA == TestActionEnum.TEST);
+	}
+	
+
+	@Test
+	public void updateStateWithAPreviouslyUnseenActionShouldError() {
+		tree = new MonteCarloTree<TestAgent, TestActionEnum>();
+		tree.insertState(test, leftRightOnly);
+		try {
+			tree.updateState(test, TestActionEnum.TEST, 1.0);
+			fail("TEST action is unknown - this should throw error");
+		} catch (AssertionError e) {
+			// as expected
+		}
 	}
 	
 }

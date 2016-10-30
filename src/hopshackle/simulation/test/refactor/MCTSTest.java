@@ -27,6 +27,9 @@ public class MCTSTest {
 		world.setCalendar(new FastCalendar(0l));
 		SimProperties.setProperty("MonteCarloReward", "true");
 		SimProperties.setProperty("MonteCarloUCTC", "1.0");
+		SimProperties.setProperty("Gamma", "0.95");
+		SimProperties.setProperty("IncrementalScoreReward", "false");
+		ExperienceRecord.refreshProperties();
 		agent.setDecider(masterDecider);
 		mazeGame = new SimpleMazeGame(2, agent);
 		agent.setGame(mazeGame);
@@ -46,8 +49,8 @@ public class MCTSTest {
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
 		MonteCarloTree<TestAgent, ActionEnum<TestAgent>> tree = masterDecider.getTree();
-
-		assertEquals(tree.numberOfState(), 7);
+		System.out.println(tree.toString(true));
+		assertEquals(tree.numberOfStates(), 7);
 		MCStatistics<TestAgent, ActionEnum<TestAgent>> startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
 		assertEquals(startStats.getMean(TestActionEnum.LEFT), -1.96, 0.01);
@@ -62,7 +65,7 @@ public class MCTSTest {
 		tree = masterDecider.getTree();
 //		System.out.println(tree.toString(true));
 		startStats = tree.getStatisticsFor(startState);
-		assertEquals(tree.numberOfState(), 3);
+		assertEquals(tree.numberOfStates(), 3);
 		assertEquals(startStats.getVisits(), 99);
 		assertEquals(startStats.getMean(TestActionEnum.LEFT), -2.00, 0.01);
 		assertEquals(startStats.getMean(TestActionEnum.TEST), -4.29, 0.01);
