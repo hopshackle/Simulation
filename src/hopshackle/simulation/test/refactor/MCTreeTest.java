@@ -27,6 +27,8 @@ public class MCTreeTest {
 			public String getAsString() {
 				return "0.00|0.10|0.20";
 			}
+			@Override public State<TestAgent> clone() { return this;}
+			@Override public State<TestAgent> apply(ActionEnum<TestAgent> action) { return this;}
 		};
 		other = new State<TestAgent>() {
 			@Override
@@ -38,6 +40,8 @@ public class MCTreeTest {
 			public String getAsString() {
 				return "1.00|0.10|0.20|";
 			}
+			@Override public State<TestAgent> clone() { return this;}
+			@Override public State<TestAgent> apply(ActionEnum<TestAgent> action) { return this;}
 		};
 		SimProperties.setProperty("MonteCarloUCTC", "1");
 	}

@@ -8,18 +8,13 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
 
 	private NeuralDecider<A> internalNeuralDecider;
 
-	public NeuralLookaheadDecider(StateFactory<A> stateFactory,	LookaheadFunction<A> lookahead, List<ActionEnum<A>> actions, double scaleFactor) {
-		super(stateFactory, lookahead, actions);
+	public NeuralLookaheadDecider(StateFactory<A> stateFactory, List<ActionEnum<A>> actions, double scaleFactor) {
+		super(stateFactory, actions);
 		internalNeuralDecider = new NeuralDecider<A>(stateFactory, dummyActionSet, scaleFactor);
 	}
 	
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
-		if (exp instanceof ExperienceRecordWithLookahead) {
-			exp = ((ExperienceRecordWithLookahead<A>) exp).convertToStandardER(this);
-		} else {
-			throw new AssertionError("Expected ExperienceRecordWithLookahead in NeuralLookaheadDecider");
-		}
 		logResult(exp);
 		internalNeuralDecider.learnFrom(exp, maxResult);
 	}
@@ -27,12 +22,7 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
 	@Override
 	public void learnFromBatch(List<ExperienceRecord<A>> allExperience, double maxResult) {
 		List<ExperienceRecord<A>> processedER = new ArrayList<ExperienceRecord<A>>();
-		for (ExperienceRecord<A> er : allExperience) {
-			if (er instanceof ExperienceRecordWithLookahead) {
-				er = ((ExperienceRecordWithLookahead<A>) er).convertToStandardER(this);
-			} else {
-				throw new AssertionError("Expected ExperienceRecordWithLookahead in NeuralLookaheadDecider");
-			}			
+		for (ExperienceRecord<A> er : allExperience) {			
 			processedER.add(er);
 			logResult(er);
 		}
@@ -42,8 +32,8 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
 	private void logResult(ExperienceRecord<A> baseER) {
 		if (localDebug) {
 			double maxResult = baseER.getAgent().getMaxScore();
-			double startValue = value((LookaheadState<A>) baseER.getStartState()) * maxResult; // projection
-			double endValue = value((LookaheadState<A>) baseER.getEndState()) * maxResult; // projection
+			double startValue = value(baseER.getStartState()) * maxResult; // projection
+			double endValue = value(baseER.getEndState()) * maxResult; // projection
 			String message = String.format("Learning:\t%-20sScore: %.2f -> %.2f, State Valuation: %.2f -> %.2f, EndGame: %s", 
 					baseER.getActionTaken(), baseER.getStartScore(), baseER.getEndScore(), startValue, endValue, baseER.isInFinalState());
 			log(message);
@@ -63,7 +53,7 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
 	}
 
 	@Override
-	public double value(LookaheadState<A> state) {
+	public double value(State<A> state) {
 		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());
 		return internalNeuralDecider.brain.compute(inputData).getData(0);
 	}

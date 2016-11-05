@@ -37,6 +37,15 @@ public class HardCodedDecider<A extends Agent> extends BaseDecider<A> {
 			public String getAsString() {
 				return "0.00";
 			}
+			
+			@Override
+			public State<A> clone() {
+				return this;
+			}
+			@Override
+			public State<A> apply(ActionEnum<A> action) {
+				return this;
+			}
 		};
 	}
 }

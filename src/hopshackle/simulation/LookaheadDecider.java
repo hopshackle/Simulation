@@ -4,20 +4,19 @@ import java.util.*;
 
 public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 
-	private LookaheadFunction<A> lookahead;
 	protected List<ActionEnum<A>> dummyActionSet;
 
-	public LookaheadDecider(StateFactory<A> stateFactory, LookaheadFunction<A> lookahead, List<ActionEnum<A>> actions) {
+	@SuppressWarnings("unchecked")
+	public LookaheadDecider(StateFactory<A> stateFactory, List<ActionEnum<A>> actions) {
 		super(stateFactory, actions);
-		this.lookahead = lookahead;
 		dummyActionSet = new ArrayList<ActionEnum<A>>();
 		dummyActionSet.add(DummyAction.DUMMY);
 	}
 
 	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent) {
-		LookaheadState<A> currentState = (LookaheadState<A>) stateFactory.getCurrentState(decidingAgent);
-		LookaheadState<A> futureState = lookahead.apply(currentState, option);
+		State<A> currentState = stateFactory.getCurrentState(decidingAgent);
+		State<A> futureState = currentState.apply(option);
 		double retValue = value(futureState);
 		if (localDebug) {
 			String message = "Option " + option.toString() + " has base Value of " + retValue; //+
@@ -28,7 +27,6 @@ public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 		return retValue;
 	}
 	
-	public abstract double value(LookaheadState<A> state);
+	public abstract double value(State<A> state);
 	
-
 }

@@ -231,7 +231,6 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 				td.updateWithResults(0.0, newState);
 			case ACTION_COMPLETED:
 				td.updateNextActions(null);
-				td.setIsFinal();
 			case NEXT_ACTION_TAKEN:
 			case UNSEEN:
 				// Do nothing

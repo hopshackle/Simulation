@@ -130,29 +130,26 @@ public class ExperienceRecordTest {
 		SimProperties.setProperty("TimePeriodForGamma", "800");
 		ExperienceRecord.refreshProperties();
 		// First set World time
-		LookaheadFunction<BasicAgent> lookahead = new LookaheadTestFunction<BasicAgent>();
 		w.setCurrentTime(500l);
 		LinearStateTestLookahead lookaheadState = new LinearStateTestLookahead(new LinearState<BasicAgent>(agent, varList));
-		ExperienceRecordWithLookahead<BasicAgent> er = new ExperienceRecordWithLookahead<BasicAgent>(agent, lookaheadState, 
-				BasicActions.FARM.getAction(agent), possibleActions, lookahead);
+		ExperienceRecord<BasicAgent> er = new ExperienceRecord<BasicAgent>(agent, lookaheadState, 
+				BasicActions.FARM.getAction(agent), possibleActions);
 		assertEquals(er.getDiscountPeriod(), 0.0, 0.001);
 		w.setCurrentTime(700l);
 		er.updateWithResults(3.0, new LinearStateTestLookahead(new LinearState<BasicAgent>(agent, varList)));
 		assertEquals(er.getDiscountPeriod(), 200.0 / 800.0, 0.001);
 		w.setCurrentTime(1200l);
-		ExperienceRecordWithLookahead<BasicAgent> nextER = new ExperienceRecordWithLookahead<BasicAgent>(agent, 
+		ExperienceRecord<BasicAgent> nextER = new ExperienceRecord<BasicAgent>(agent, 
 				new LinearStateTestLookahead(new LinearState<BasicAgent>(agent, varList)), 
 				BasicActions.FARM.getAction(agent), 
-				possibleActions, lookahead);
+				possibleActions);
 		er.updateNextActions(nextER);
 		
 		assertEquals(er.getDiscountPeriod(), 700.0 / 800.0, 0.001);
 		
 		w.setCurrentTime(3000l);
-		LookaheadTestDecider decider = new LookaheadTestDecider(stateFactory, lookahead, possibleActions);
-		ExperienceRecord<BasicAgent> extractedER = er.convertToStandardER(decider);
-		
-		assertEquals(extractedER.getDiscountPeriod(), 700.0 / 800.0, 0.001);
+
+		assertEquals(er.getDiscountPeriod(), 700.0 / 800.0, 0.001);
 	}
 	
 }

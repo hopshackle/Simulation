@@ -11,6 +11,8 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
 	}
 
+	private static boolean lookaheadQLearning = SimProperties.getProperty("LookaheadQLearning", "false").equals("true");
+
 	private static boolean incrementalScoreAffectsReward, dbStorage, monteCarlo;
 	private static DatabaseWriter<ExperienceRecord<?>> writer = new DatabaseWriter<ExperienceRecord<?>>(new ExpRecDAO());
 	protected static double lambda, gamma, traceCap, timePeriod;
@@ -39,7 +41,11 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 
 	public ExperienceRecord(A a, State<A> state, Action<A> action, List<ActionEnum<A>> possibleActions) {
 		actionTaken = action;
-		startState = state;
+		if (lookaheadQLearning) {
+			startState = state.apply(action.getType());	
+		} else {
+			startState = state;
+		}
 		startStateAsArray = state.getAsArray();
 		featureTrace = startStateAsArray;
 		possibleActionsFromStartState = HopshackleUtilities.cloneList(possibleActions);
@@ -86,6 +92,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		} else {
 			possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
 			endScore = agent.getScore();
+			setIsFinal();
 		}
 		setState(ERState.NEXT_ACTION_TAKEN);
 	}

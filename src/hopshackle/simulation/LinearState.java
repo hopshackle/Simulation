@@ -29,5 +29,16 @@ public class LinearState<A extends Agent> implements State<A> {
 		}
 		return retValue.toString();
 	}
+	
+	@Override
+	public LinearState<A> clone() {
+		return this;
+	}
+	
+	@Override
+	public LinearState<A> apply(ActionEnum<A> action) {
+		return this;
+	}
+
 
 }

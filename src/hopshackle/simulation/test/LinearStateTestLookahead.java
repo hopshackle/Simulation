@@ -8,7 +8,7 @@ import hopshackle.simulation.basic.*;
 /*
  * A test LookaheadState that simply wraps an internal LinearState and does not actually do any lookahead
  */
-public class LinearStateTestLookahead implements LookaheadState<BasicAgent> {
+public class LinearStateTestLookahead implements State<BasicAgent> {
 	
 	private LinearState<BasicAgent> wrappedState;
 	
@@ -26,36 +26,21 @@ public class LinearStateTestLookahead implements LookaheadState<BasicAgent> {
 	}
 	
 	@Override
-	public LookaheadState<BasicAgent> apply(ActionEnum<BasicAgent> proposedAction) {
+	public State<BasicAgent> apply(ActionEnum<BasicAgent> proposedAction) {
 		return this;
 	}
 
 	@Override
-	public LookaheadState<BasicAgent> clone() {
+	public State<BasicAgent> clone() {
 		return this;
-	}
-}
-
-class LookaheadTestFunction<A extends Agent> implements LookaheadFunction<A> {
-
-	@Override
-	public LookaheadState<A> apply(LookaheadState<A> currentState, ActionEnum<A> option) {
-		return currentState;
-	}
-
-	@Override
-	public LookaheadState<A> getCurrentState(A agent) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }
 
 class LookaheadTestDecider extends LookaheadDecider<BasicAgent> {
 
 	public LookaheadTestDecider(StateFactory<BasicAgent> stateFactory,
-			LookaheadFunction<BasicAgent> lookahead,
 			List<ActionEnum<BasicAgent>> actions) {
-		super(stateFactory, lookahead, actions);
+		super(stateFactory, actions);
 	}
 
 	@Override
@@ -63,7 +48,7 @@ class LookaheadTestDecider extends LookaheadDecider<BasicAgent> {
 	}
 
 	@Override
-	public double value(LookaheadState<BasicAgent> state) {
+	public double value(State<BasicAgent> state) {
 		return 0;
 	}
 	
