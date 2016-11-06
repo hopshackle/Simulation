@@ -18,7 +18,6 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMinChance", "0.0");
 	protected boolean localDebug = false;
-	protected boolean generateLearningEvents = true;
 	protected double gamma = SimProperties.getPropertyAsDouble("Gamma", "0.95");
 	protected double alpha = SimProperties.getPropertyAsDouble("Alpha", "0.05");
 	protected double lambda = SimProperties.getPropertyAsDouble("Lambda", "0.001");
@@ -76,10 +75,8 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			if (chosenDuration > availableTime) {
 				action = null;
 			} else {
-				if (generateLearningEvents) {
-					AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, this);
-					decidingAgent.eventDispatch(learningEvent);
-				}
+				AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, this);
+				action.eventDispatch(learningEvent);
 				decidingAgent.actionPlan.addActionToAllPlans(action);
 			}
 		}

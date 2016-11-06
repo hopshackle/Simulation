@@ -2,18 +2,18 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
+public class MCStatistics<P extends Agent> {
 	
-	private List<A> allActions;
+	private List<ActionEnum<P>> allActions;
 	private Map<String, MCData> map = new HashMap<String, MCData>();
 	private int totalVisits = 0;
 	private static double C = SimProperties.getPropertyAsDouble("MonteCarloUCTC", "1.0");
 
-	public MCStatistics(List<A> possibleActions) {
+	public MCStatistics(List<ActionEnum<P>> possibleActions) {
 		allActions = HopshackleUtilities.cloneList(possibleActions);
 	}
 	
-	public void update(A action, double reward) {
+	public void update(ActionEnum<P> action, double reward) {
 		if (!allActions.contains(action))
 			throw new AssertionError("Unexpected Action " + action);
 		String key = action.toString();
@@ -25,18 +25,18 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 		}
 		totalVisits++;
 	}
-	private void addAction(A newAction) {
+	private void addAction(ActionEnum<P> newAction) {
 		if (!allActions.contains(newAction))
 			allActions.add(newAction);
 	}
-	public List<A> getPossibleActions() {
+	public List<ActionEnum<P>> getPossibleActions() {
 		return allActions;
 	}
 
 	public int getVisits() {
 		return totalVisits;
 	}
-	public int getVisits(A action) {
+	public int getVisits(ActionEnum<P> action) {
 		String key = action.toString();
 		if (map.containsKey(key)) {
 			return map.get(key).visits;
@@ -44,7 +44,7 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 			return 0;
 		}
 	}
-	public double getMean(A action) {
+	public double getMean(ActionEnum<P> action) {
 		String key = action.toString();
 		if (map.containsKey(key)) {
 			return map.get(key).mean;
@@ -53,8 +53,8 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 		}
 	}
 
-	public boolean hasUntriedAction(List<A> availableActions) {
-		for (A action : availableActions) {
+	public boolean hasUntriedAction(List<ActionEnum<P>> availableActions) {
+		for (ActionEnum<P> action : availableActions) {
 			if (!map.containsKey(action.toString())) {
 				addAction(action);
 				return true;
@@ -63,9 +63,9 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 		return false;
 	}
 	
-	public A getRandomUntriedAction(List<A> availableActions) {
-		List<A> untried = new ArrayList<A>();
-		for (A action : availableActions) {
+	public ActionEnum<P> getRandomUntriedAction(List<ActionEnum<P>> availableActions) {
+		List<ActionEnum<P>> untried = new ArrayList<ActionEnum<P>>();
+		for (ActionEnum<P> action : availableActions) {
 			if (!map.containsKey(action.toString())) {
 				untried.add(action);
 				addAction(action);
@@ -77,12 +77,12 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 		return untried.get(diceRoll-1);
 	}
 	
-	public A getUCTAction(List<A> availableActions) {
+	public ActionEnum<P> getUCTAction(List<ActionEnum<P>> availableActions) {
 		if (hasUntriedAction(availableActions)) 
 			throw new AssertionError("Should not be looking for UCT action while there are still untried actions");
 		double best = Double.NEGATIVE_INFINITY;
-		A retValue = null;
-		for (A action : availableActions) {
+		ActionEnum<P> retValue = null;
+		for (ActionEnum<P> action : availableActions) {
 			String key = action.toString();
 			MCData data = map.get(key);
 			double score = data.mean + C * Math.sqrt(Math.log(totalVisits) / (double)data.visits);
@@ -97,7 +97,7 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 	@Override
 	public String toString() {
 		StringBuffer retValue = new StringBuffer("MC Statistics\tTotal Visits\t" + totalVisits + "\n");
-		for (A action : allActions) {
+		for (ActionEnum<P> action : allActions) {
 			String key = action.toString();
 			retValue.append("\t"+key);
 			if (map.containsKey(key)) {
@@ -108,11 +108,23 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 		}
 		return retValue.toString();
 	}
-
-	public A getBestAction(List<A> availableActions) {
-		A retValue = null;
+	/*
+	private List<String> keysInVisitOrder() {
+		List<String> retValue = new ArrayList<String>();
+		List<MCData> sortedByVisit = new ArrayList<MCData>();
+		sortedByVisit.addAll(map.values());
+		Collections.sort(sortedByVisit);
+		List<String> allKeys = new ArrayList<String>();
+		allKeys.addAll(map.keySet());
+		for (MCData mcd : sortedByVisit) {
+			
+		}
+	}
+*/
+	public ActionEnum<P> getBestAction(List<ActionEnum<P>> availableActions) {
+		ActionEnum<P> retValue = null;
 		double score = Double.NEGATIVE_INFINITY;
-		for (A action : availableActions) {
+		for (ActionEnum<P> action : availableActions) {
 			String key = action.toString();
 			if (map.containsKey(key)) {
 				if (map.get(key).mean > score) {
@@ -125,7 +137,7 @@ public class MCStatistics<P extends Agent, A extends ActionEnum<P>> {
 	}
 }
 
-class MCData {
+class MCData implements Comparable<MCData> {
 	double mean;
 	int visits;
 	
@@ -142,5 +154,10 @@ class MCData {
 	@Override
 	public String toString() {
 		return String.format("Visits:%d \tScore:%.2f\n", visits, mean);
+	}
+
+	@Override
+	public int compareTo(MCData other) {
+		return (this.visits - other.visits);
 	}
 }

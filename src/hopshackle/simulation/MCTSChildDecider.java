@@ -5,9 +5,9 @@ import java.util.*;
 public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 
 	private Decider<P> rolloutDecider;
-	private MonteCarloTree<P, ActionEnum<P>> tree;
+	private MonteCarloTree<P> tree;
 	
-	public MCTSChildDecider(StateFactory<P> stateFactory, List<ActionEnum<P>> actions, MonteCarloTree<P, ActionEnum<P>> tree, Decider<P> rolloutDecider) {
+	public MCTSChildDecider(StateFactory<P> stateFactory, List<ActionEnum<P>> actions, MonteCarloTree<P> tree, Decider<P> rolloutDecider) {
 		super(stateFactory, actions);
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
@@ -43,12 +43,22 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 		// 'Learning' in this context means updating the MonteCarloTree
 		if (tree.containsState(exp.getStartState())) {
 			tree.updateState(exp.getStartState(), exp.getActionTaken().actionType, exp.getReward());
-			if (tree.updatesLeft() > 0 && !tree.containsState(exp.getEndState()) && !exp.isFinalState) {
-				tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
+			if (tree.updatesLeft() > 0) {
+				if (!tree.containsState(exp.getEndState())) {
+					if (!exp.isFinalState) {
+						tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
+					}
+				} 
 			}
+		} else if (tree.updatesLeft() > 0){
+			throw new AssertionError("Tree should contain previous state");
 		}
 		// This relies on us going forward through the ER (if backwards, then we still insert the additional state, 
 		// but do not update its statistics
+	}
+
+	public Decider<P> getRolloutDecider() {
+		return rolloutDecider;
 	}
 
 }

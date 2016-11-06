@@ -4,8 +4,9 @@ import java.util.List;
 
 public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	
-	private MonteCarloTree<A, ActionEnum<A>> tree;
-	private Decider<A> rolloutDecider, opponentModel;
+	protected MonteCarloTree<A> tree;
+	protected Decider<A> rolloutDecider;
+	private Decider<A> opponentModel;
 	private MCTSChildDecider<A> childDecider;
 	private static int N = SimProperties.getPropertyAsInteger("MonteCarloRolloutCount", "99");
 
@@ -14,6 +15,10 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		super(stateFactory, actions);
 		this.rolloutDecider = rolloutDecider;
 		this.opponentModel = opponentModel;
+	}
+	
+	protected MCTSChildDecider<A> createChildDecider() {
+		return new MCTSChildDecider<A>(stateFactory, actionSet, tree, rolloutDecider);
 	}
 	
 	@Override
@@ -28,9 +33,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		// once the game is finished, we use this to update the MonteCarloTree
 		// using an OnInstructionTeacher.
 		// This is not using any Lookahead; just the record of state to state transitions
-		tree = new MonteCarloTree<A, ActionEnum<A>>();
+		tree = new MonteCarloTree<A>();
 		OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
-		childDecider = new MCTSChildDecider<A>(stateFactory, actionSet, tree, rolloutDecider);
+		childDecider = createChildDecider();
 		teacher.registerDecider(childDecider);
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>());
 		teacher.registerToERStream(erc);
@@ -57,7 +62,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		}
 	
 		// Then we look at the statistics in the tree for the current state to make a decision
-		return tree.getBestAction(currentState, chooseableOptions);
+		agent.log(tree.getStatisticsFor(currentState).toString());
+		ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions);
+		return best;
 	}
 
 	@Override
@@ -69,8 +76,12 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 	}
 	
-	public MonteCarloTree<A, ActionEnum<A>> getTree() {
+	public MonteCarloTree<A> getTree() {
 		return tree;
+	}
+
+	public Decider<A> getRolloutDecider() {
+		return rolloutDecider;
 	}
 
 }

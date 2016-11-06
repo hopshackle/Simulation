@@ -7,9 +7,9 @@ import org.junit.*;
 
 public class MCStatisticsTest {
 
-	List<TestActionEnum> allActions = new ArrayList<TestActionEnum>(EnumSet.allOf(TestActionEnum.class));
-	List<TestActionEnum> leftRightOnly = new ArrayList<TestActionEnum>(EnumSet.allOf(TestActionEnum.class));
-	MCStatistics<TestAgent, TestActionEnum> stats;
+	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
+	List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
+	MCStatistics<TestAgent> stats;
 
 	@Before 
 	public void setup() {
@@ -19,7 +19,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void createEmpty() {
-		stats = new MCStatistics<TestAgent, TestActionEnum>(leftRightOnly);
+		stats = new MCStatistics<TestAgent>(leftRightOnly);
 		assertEquals(stats.getVisits(TestActionEnum.LEFT), 0);
 		assertEquals(stats.getVisits(TestActionEnum.RIGHT), 0);
 		assertEquals(stats.getVisits(TestActionEnum.TEST), 0);
@@ -30,7 +30,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void updateWithNewVisit() {
-		stats = new MCStatistics<TestAgent, TestActionEnum>(leftRightOnly);
+		stats = new MCStatistics<TestAgent>(leftRightOnly);
 		stats.update(TestActionEnum.LEFT, 2.0);
 		stats.update(TestActionEnum.LEFT, 5.0);
 		stats.update(TestActionEnum.LEFT, -1.0);
@@ -46,12 +46,12 @@ public class MCStatisticsTest {
 
 	@Test
 	public void cycleThroughActionsIfNotAllTried() {
-		stats = new MCStatistics<TestAgent, TestActionEnum>(leftRightOnly);
+		stats = new MCStatistics<TestAgent>(leftRightOnly);
 		assertTrue(stats.hasUntriedAction(leftRightOnly));
-		TestActionEnum newAction = stats.getRandomUntriedAction(leftRightOnly);
+		TestActionEnum newAction = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly);
 		stats.update(newAction, 1.0);
 		assertTrue(stats.hasUntriedAction(leftRightOnly));
-		TestActionEnum newAction2 = stats.getRandomUntriedAction(leftRightOnly);
+		TestActionEnum newAction2 = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly);
 		assertTrue(newAction != newAction2);
 		stats.update(newAction2, 1.0);
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
@@ -59,23 +59,23 @@ public class MCStatisticsTest {
 
 	@Test
 	public void uctActionReturnsBestBound() {
-		stats = new MCStatistics<TestAgent, TestActionEnum>(leftRightOnly);
+		stats = new MCStatistics<TestAgent>(leftRightOnly);
 		stats.update(TestActionEnum.LEFT, 2.0);
 		stats.update(TestActionEnum.RIGHT, 1.0);
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
-		TestActionEnum nextPick = stats.getUCTAction(leftRightOnly);
+		TestActionEnum nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.LEFT);
 		stats.update(nextPick, 2.0);
-		nextPick = stats.getUCTAction(leftRightOnly);
+		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.LEFT);
 		stats.update(nextPick, 0.5);
-		nextPick = stats.getUCTAction(leftRightOnly);
+		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.LEFT);
 		stats.update(nextPick, 1.5);
-		nextPick = stats.getUCTAction(leftRightOnly);
+		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.RIGHT);
 		stats.update(nextPick, 1.0);
-		nextPick = stats.getUCTAction(leftRightOnly);
+		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.LEFT);
 		/* Expected results for C, N (total), 
 		 * n (for this action) and Q
@@ -111,7 +111,7 @@ public class MCStatisticsTest {
 	
 	@Test
 	public void updateWithPreviouslyUnknownActionShouldError() {
-		stats = new MCStatistics<TestAgent, TestActionEnum>(leftRightOnly);
+		stats = new MCStatistics<TestAgent>(leftRightOnly);
 		try {
 			stats.update(TestActionEnum.LEFT, 5.0);
 			fail("Error should be thrown if unseen action used.");

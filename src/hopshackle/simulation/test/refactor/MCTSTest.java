@@ -13,7 +13,7 @@ public class MCTSTest {
 	List<GeneticVariable<TestAgent>> genVar = new ArrayList<GeneticVariable<TestAgent>>(EnumSet.allOf(TestGenVar.class));
 	StateFactory<TestAgent> factory = new LinearStateFactory<TestAgent>(genVar);
 	Decider<TestAgent> rolloutDecider = new SimpleMazeDecider();
-	MonteCarloTree<TestAgent, ActionEnum<TestAgent>> tree = new MonteCarloTree<TestAgent, ActionEnum<TestAgent>>();
+	MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>();
 	// This is a single agent test, so no opponent model is needed, and the last parameter is safely null
 	MCTSMasterDecider<TestAgent> masterDecider = new MCTSMasterDecider<TestAgent>(factory, actionList, rolloutDecider, null);
 	
@@ -48,10 +48,10 @@ public class MCTSTest {
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
-		MonteCarloTree<TestAgent, ActionEnum<TestAgent>> tree = masterDecider.getTree();
+		MonteCarloTree<TestAgent> tree = masterDecider.getTree();
 		System.out.println(tree.toString(true));
 		assertEquals(tree.numberOfStates(), 7);
-		MCStatistics<TestAgent, ActionEnum<TestAgent>> startStats = tree.getStatisticsFor(startState);
+		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
 		assertEquals(startStats.getMean(TestActionEnum.LEFT), -1.96, 0.01);
 		assertEquals(startStats.getMean(TestActionEnum.TEST), -5.33, 0.01);
