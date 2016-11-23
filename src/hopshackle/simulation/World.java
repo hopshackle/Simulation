@@ -43,12 +43,14 @@ public class World extends Location {
 		super();
 		MAX_POPULATION = Integer.valueOf(SimProperties.getProperty("MaxAgentPopulation", "10000"));
 		suffix = "dummy";
+		this.setName(suffix);
 		listeners = new ArrayList<ActionListener>();
 		initialiseTemperature(new Temperature(0, 0));
 	}
 
 	public World(ActionProcessor ap, String suffix, long end) {
 		this();
+		this.setName(suffix);
 		actionProcessor = ap;
 		if (ap != null)
 			ap.setWorld(this);
@@ -125,9 +127,11 @@ public class World extends Location {
 
 	@Override
 	public void setName(String name) {
+		super.setName(name);
 		suffix = name;
 	}
 
+	@SuppressWarnings("rawtypes")
 	public boolean addAction(Action a) {
 		if (actionProcessor !=null && a !=null) {
 			actionProcessor.add(a);

@@ -9,6 +9,7 @@ public class DatabaseAccessUtility implements Runnable{
 	private Connection mainConnection;
 	private BlockingQueue<String> queue;
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
+	private long timeout = (long) SimProperties.getPropertyAsDouble("DatabaseUtilityTimeout", "10");
 	private volatile boolean done = false;
 	private long startTime = System.currentTimeMillis();
 
@@ -41,7 +42,7 @@ public class DatabaseAccessUtility implements Runnable{
 		String nextUpdate = null;
 		try {
 			do { 
-				nextUpdate = queue.poll(10, TimeUnit.MINUTES);
+				nextUpdate = queue.poll(timeout, TimeUnit.MINUTES);
 				if (nextUpdate == null || nextUpdate.equals("EXIT")) {
 					done = true;
 					System.out.println("DBU exiting at " + (System.currentTimeMillis()-startTime));
