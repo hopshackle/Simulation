@@ -257,7 +257,7 @@ public class World extends Location {
 
 	public String getCurrentDate() {
 		if (calendar == null) 
-			return "Uknown";
+			return "Unknown";
 		return calendar.getDate();
 	}
 
