@@ -41,6 +41,12 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		teacher.registerToERStream(erc);
 		State<A> currentState = stateFactory.getCurrentState(agent);
 		List<ActionEnum<A>> chooseableOptions = getChooseableOptions(agent);
+		if (chooseableOptions.size() == 1) {
+			agent.log("Only one action possible...skipping MCTS");
+			return chooseableOptions.get(0);
+			// TODO: If we have a time budget, then in the future it may make sense to 
+			// construct a Tree anyway, as parts may be of relevance in later turns
+		}
 		tree.insertState(currentState, chooseableOptions);
 		for (int i = 0; i < N; i++) {
 			tree.setUpdatesLeft(1);

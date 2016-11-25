@@ -14,8 +14,10 @@ public class MCStatistics<P extends Agent> {
 	}
 	
 	public void update(ActionEnum<P> action, double reward) {
-		if (!allActions.contains(action))
-			throw new AssertionError("Unexpected Action " + action);
+		if (!allActions.contains(action)) {
+		//	System.out.println("Unexpected Action " + action);
+			addAction(action);
+		}
 		String key = action.toString();
 		if (map.containsKey(key)) {
 			MCData old = map.get(key);
