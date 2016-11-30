@@ -25,6 +25,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	private static AtomicInteger idFountain = new AtomicInteger(0);
 	protected StateFactory<A> stateFactory;
 	private int id;
+	protected List<ActionEnum<A>> optionsOverride;
 
 	public BaseDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions) {
 		if (actions != null) {
@@ -34,7 +35,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		this.stateFactory = stateFactory;
 		id = idFountain.incrementAndGet();
 	}
-	
+
 	@Override
 	public State<A> getCurrentState(A agent) {
 		return stateFactory.getCurrentState(agent);
@@ -51,7 +52,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			learnFrom(er, maxResult);
 		}
 	}
-	
+
 	@Override
 	public void learnFromBatch(List<ExperienceRecord<A>> exp, double maxResult) {
 		@SuppressWarnings("unchecked")
@@ -62,25 +63,40 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 
 	@Override
+	public Action<A> decide(A decidingAgent, List<ActionEnum<A>> possibleActions) {
+		decidingAgent.log("Setting override options " + possibleActions.size() + " in " + this);
+		optionsOverride = possibleActions;
+		Action<A> retValue = decide(decidingAgent);
+		optionsOverride = null;
+		return retValue;
+	}
+
+	@Override
 	public Action<A> decide(A decidingAgent) {
 		ActionEnum<A> decisionMade = makeDecision(decidingAgent);
 		Action<A> action = null;
 		long chosenDuration = 0;
 		long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
-		if (availableTime > 0) {
-			if (decisionMade != null)
-				action = decisionMade.getAction(decidingAgent);
-			if (action != null) 
-				chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
-			if (chosenDuration > availableTime) {
-				action = null;
-			} else {
-				AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, this);
-				action.eventDispatch(learningEvent);
-				decidingAgent.actionPlan.addActionToAllPlans(action);
-			}
+		if (decisionMade != null)
+			action = decisionMade.getAction(decidingAgent);
+		if (action != null) 
+			chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
+		if (chosenDuration > availableTime) {
+			action = null;
+		} else {
+			AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, this);
+			action.eventDispatch(learningEvent);
+			decidingAgent.actionPlan.addActionToAllPlans(action);
 		}
 		return action;
+	}
+
+	@Override
+	public ActionEnum<A> makeDecision(A decidingAgent, List<ActionEnum<A>> options) {
+		optionsOverride = options;
+		ActionEnum<A> retValue = makeDecision(decidingAgent);
+		optionsOverride = null;
+		return retValue;
 	}
 
 	@Override
@@ -98,9 +114,20 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected ActionEnum<A> makeDecision(A decidingAgent, double explorationChance) {
 		if (decidingAgent.isDead()) return null;
 
-		ActionEnum <A>winningChoice = null;
-		List<ActionEnum<A>> chooseableOptions = getChooseableOptions(decidingAgent);
-		if (chooseableOptions.size() == 0) return null;
+		ActionEnum<A> winningChoice = null;
+		/*
+		 * TODO: At some point I suspect I will move the selection of possible actions completely out of the Decider
+		 * As that should really be delegated elsewhere. At that point I can remove this hack with a temporary variable being set
+		 * to contain the list of actions if the override is being used
+		 */
+		List<ActionEnum<A>> chooseableOptions = optionsOverride;
+		if (chooseableOptions == null || chooseableOptions.isEmpty()) {
+			chooseableOptions = getChooseableOptions(decidingAgent);
+	//		decidingAgent.log("Using local list " + this);
+		} else {
+	//		decidingAgent.log("Using override option list");
+		}
+		if (chooseableOptions.isEmpty()) return null;
 
 		double chance = Math.random();
 		if (chance < explorationChance) {
@@ -235,7 +262,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		}
 		return baseValuesPerOption;
 	}
-	
+
 	@Override
 	public ActionEnum<A> decideWithoutLearning(A decidingAgent) {
 		return makeDecision(decidingAgent);

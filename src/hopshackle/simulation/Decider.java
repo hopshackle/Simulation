@@ -15,6 +15,8 @@ public interface Decider<A extends Agent> {
 	public State<A> getCurrentState(A agent);
 
 	public Action<A> decide(A decidingAgent);
+	
+	public Action<A> decide(A decidingAgent, List<ActionEnum<A>> possibleActions);
 
 	public List<ActionEnum<A>> getChooseableOptions(A a);
 
@@ -31,4 +33,6 @@ public interface Decider<A extends Agent> {
 	public ActionEnum<A> getOptimalDecision(A decidingAgent);
 
 	public ActionEnum<A> makeDecision(A decidingAgent);
+	
+	public ActionEnum<A> makeDecision(A decidingAgent, List<ActionEnum<A>> possibleActions);
 }

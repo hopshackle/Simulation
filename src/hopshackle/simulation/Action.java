@@ -100,8 +100,6 @@ public abstract class Action<A extends Agent> implements Delayed {
 		} else {
 			world = optional.get(0).getWorld();
 		}
-		// startTime used to be endTime??
-		// startTime = (long)((duration*throttle))+world.getCurrentTime() + startOffset;
 		plannedStartTime = world.getCurrentTime() + startOffset;
 		plannedEndTime = plannedStartTime + duration ;
 		if (recordAction) world.recordAction(this);

@@ -3,7 +3,7 @@ package hopshackle.simulation;
 import java.util.List;
 
 public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
-	
+
 	protected MonteCarloTree<A> tree;
 	protected Decider<A> rolloutDecider;
 	private Decider<A> opponentModel;
@@ -16,11 +16,11 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		this.rolloutDecider = rolloutDecider;
 		this.opponentModel = opponentModel;
 	}
-	
+
 	protected MCTSChildDecider<A> createChildDecider() {
 		return new MCTSChildDecider<A>(stateFactory, actionSet, tree, rolloutDecider);
 	}
-	
+
 	@Override
 	public ActionEnum<A> makeDecision(A agent) {
 		// Hmm. We therefore need a way to get the agent's game context
@@ -40,7 +40,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>());
 		teacher.registerToERStream(erc);
 		State<A> currentState = stateFactory.getCurrentState(agent);
-		List<ActionEnum<A>> chooseableOptions = getChooseableOptions(agent);
+		List<ActionEnum<A>> chooseableOptions = optionsOverride;
+		if (chooseableOptions == null || chooseableOptions.isEmpty())
+			chooseableOptions = getChooseableOptions(agent);
 		if (chooseableOptions.size() == 1) {
 			agent.log("Only one action possible...skipping MCTS");
 			return chooseableOptions.get(0);
@@ -66,7 +68,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			clonedGame.playGame();
 			teacher.teach();
 		}
-	
+
 		// Then we look at the statistics in the tree for the current state to make a decision
 		agent.log(tree.getStatisticsFor(currentState).toString());
 		ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions);
@@ -81,7 +83,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 	}
-	
+
 	public MonteCarloTree<A> getTree() {
 		return tree;
 	}

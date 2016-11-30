@@ -39,8 +39,7 @@ public class ActionProcessor {
 		actionCount = new Hashtable<String, Integer>();
 		lastRecordedTime = 0L;
 		delayCount = 0l;
-		String baseDir = SimProperties.getProperty("BaseDirectory",
-				"C:\\Simulations");
+		String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
 		logFile = baseDir + "\\logs\\ActionProcessorRecord_" + suffix + ".log";
 		actionThread = new ActionThread(this);
 		t = new Thread(actionThread, "Action Thread");
@@ -87,12 +86,12 @@ public class ActionProcessor {
 			do {
 				count++;
 				currentAction = q.poll(wait1, wait2);
+	//			System.out.println("AP processing " + currentAction + " : " + currentAction.getState());
 			} while (!validAction(currentAction) && count < 10);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 		// If we ever have to wait for more than wait period, then exit
-
 		return currentAction;
 	}
 
@@ -161,7 +160,7 @@ public class ActionProcessor {
 					// If we ever have to wait for more than 10 seconds,
 					// then exit
 					if (currentAction != null && !done) {
-
+			//			System.out.println("AP processing " + currentAction + " : " + currentAction.getState());
 						synchronized (ap) {
 							if (debug) logger.info("started action: " + currentAction.toString() + " in state of " + currentAction.getState()
 									+ " at " + world.getCurrentTime() + " with delay of " + currentAction.getDelay(TimeUnit.MILLISECONDS));

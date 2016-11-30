@@ -15,7 +15,7 @@ public class MCTSTest {
 	Decider<TestAgent> rolloutDecider = new SimpleMazeDecider();
 	MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>();
 	// This is a single agent test, so no opponent model is needed, and the last parameter is safely null
-	MCTSMasterDecider<TestAgent> masterDecider = new MCTSMasterDecider<TestAgent>(factory, actionList, rolloutDecider, null);
+	MCTSMasterDecider<TestAgent> masterDecider;
 	
 	World world = new World();
 	TestAgent agent = new TestAgent(world);
@@ -29,7 +29,9 @@ public class MCTSTest {
 		SimProperties.setProperty("MonteCarloUCTC", "1.0");
 		SimProperties.setProperty("Gamma", "0.95");
 		SimProperties.setProperty("IncrementalScoreReward", "false");
+		SimProperties.setProperty("MonteCarloRolloutCount", "99");
 		ExperienceRecord.refreshProperties();
+		masterDecider = new MCTSMasterDecider<TestAgent>(factory, actionList, rolloutDecider, null);
 		agent.setDecider(masterDecider);
 		mazeGame = new SimpleMazeGame(2, agent);
 		agent.setGame(mazeGame);

@@ -126,16 +126,17 @@ public class ActionProcessorTests {
 		synchronized (ap) {
 			a.addToAllPlans();
 			b.addToAllPlans();
-			a.start();
 			w.setCurrentTime(500l);
-			a.run();
-			ap.wait(1000);
+			ap.wait(1000);	// this will a.start();
+			assertTrue(a.getState() == Action.State.EXECUTING);
+			a.run();		// this FINISHES it outside ap framework
 			assertTrue(a.getState() == Action.State.FINISHED);
 			assertTrue(b.getState() == Action.State.PLANNED);
 			assertEquals(w.getCurrentTime().intValue(), 500);
 			assertTrue(one.getNextAction() == b);
 			ap.wait(1000);
 			assertTrue(a.getState() == Action.State.FINISHED);
+			System.out.println(b.getState());
 			assertTrue(b.getState() == Action.State.EXECUTING);
 			assertEquals(w.getCurrentTime().intValue(), 1000);
 			assertTrue(one.getNextAction() == b);
