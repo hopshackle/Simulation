@@ -81,7 +81,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			action = decisionMade.getAction(decidingAgent);
 		if (action != null) 
 			chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
-		if (chosenDuration > availableTime) {
+		if (chosenDuration > availableTime && action != null) {
 			action = null;
 		} else {
 			AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, this);
