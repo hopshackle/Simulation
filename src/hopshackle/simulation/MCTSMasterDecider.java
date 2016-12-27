@@ -41,6 +41,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		teacher.registerToERStream(erc);
 		State<A> currentState = stateFactory.getCurrentState(agent);
 		List<ActionEnum<A>> chooseableOptions = optionsOverride;
+//		if (optionsOverride != null)
+//			System.out.println("MCTSMasterDecider spawning with optionsOverride: " + optionsOverride);
 		if (chooseableOptions == null || chooseableOptions.isEmpty())
 			chooseableOptions = getChooseableOptions(agent);
 		if (chooseableOptions.size() == 1) {

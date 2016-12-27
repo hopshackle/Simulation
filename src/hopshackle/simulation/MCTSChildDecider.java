@@ -6,7 +6,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 
 	private Decider<P> rolloutDecider;
 	private MonteCarloTree<P> tree;
-	
+
 	public MCTSChildDecider(StateFactory<P> stateFactory, List<ActionEnum<P>> actions, MonteCarloTree<P> tree, Decider<P> rolloutDecider) {
 		super(stateFactory, actions);
 		this.rolloutDecider = rolloutDecider;
@@ -23,10 +23,19 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 
 		State<P> state = stateFactory.getCurrentState(decidingAgent);
 
-		if (tree.containsState(state)) {
-			return tree.getNextAction(state, getChooseableOptions(decidingAgent));
+		List<ActionEnum<P>> chooseableOptions = optionsOverride;
+		if (chooseableOptions == null || chooseableOptions.isEmpty()) {
+			chooseableOptions = getChooseableOptions(decidingAgent);
+			//		decidingAgent.log("Using local list " + this);
 		} else {
-			return rolloutDecider.makeDecision(decidingAgent);
+			//		decidingAgent.log("Using override option list");
+		}
+		if (chooseableOptions.isEmpty()) return null;
+		
+		if (tree.containsState(state)) {
+			return tree.getNextAction(state, chooseableOptions);
+		} else {
+			return rolloutDecider.makeDecision(decidingAgent, chooseableOptions);
 		}
 	}
 
