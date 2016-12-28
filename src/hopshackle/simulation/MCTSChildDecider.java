@@ -30,7 +30,9 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 		} else {
 			//		decidingAgent.log("Using override option list");
 		}
-		if (chooseableOptions.isEmpty()) return null;
+		if (chooseableOptions.isEmpty()) {
+			return null;
+		}
 		
 		if (tree.containsState(state)) {
 			return tree.getNextAction(state, chooseableOptions);
