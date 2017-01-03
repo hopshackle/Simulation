@@ -4,7 +4,7 @@ import hopshackle.simulation.*;
 
 import java.util.*;
 
-public class SimpleMazeGame implements Game<TestAgent, TestActionEnum>{
+public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 
 	int target = 0;
 	TestAgent player;
@@ -19,7 +19,7 @@ public class SimpleMazeGame implements Game<TestAgent, TestActionEnum>{
 	}
 
 	@Override
-	public Game<TestAgent, TestActionEnum> clone(TestAgent perspectivePlayer) {
+	public Game<TestAgent, ActionEnum<TestAgent>> clone(TestAgent perspectivePlayer) {
 		World clonedWorld = new World();
 		long currentTime = perspectivePlayer.getWorld().getCurrentTime();
 		clonedWorld.setCalendar(new FastCalendar(currentTime));
@@ -29,29 +29,21 @@ public class SimpleMazeGame implements Game<TestAgent, TestActionEnum>{
 		clonedPlayer.position = perspectivePlayer.position;
 		
 		SimpleMazeGame retValue = new SimpleMazeGame(target, clonedPlayer);
-		retValue.reward[0] = reward[0];
+		retValue.reward[0] = this.reward[0];
 		return retValue;
 	}
 	
 	public boolean gameOver() {
-		return player.position >= target;
-	}
-
-	@Override
-	public double[] playGame() {
-		do {
-			oneMove();
-		} while (!gameOver() && reward[0] > -100);
-		player.die("Game Over");
-		return reward;
+		boolean retValue  = (player.position >= target || reward[0] < -100);
+		if (retValue && !player.isDead())
+			player.die("End of game");
+		return retValue;
 	}
 	
 	public void oneMove() {
 		Action<?> action = player.getDecider().decide(player);
 		action.start();
-		player.getWorld().setCurrentTime(player.getWorld().getCurrentTime() + 1000);
 		action.run();
-		reward[0] = reward[0] - 1.0;
 	}
 
 	@Override
@@ -82,6 +74,19 @@ public class SimpleMazeGame implements Game<TestAgent, TestActionEnum>{
 	public TestAgent getPlayer(int n) {
 		if (n == 1) return player;
 		return null;
+	}
+
+	@Override
+	public List<ActionEnum<TestAgent>> getPossibleCurrentActions() {
+		Decider<TestAgent> decider = player.getDecider();
+		return decider.getChooseableOptions(player);
+	}
+
+	@Override
+	public void updateGameStatus() {
+		if (gameOver()) {
+			player.die("Game Over");
+		}
 	}
 
 }

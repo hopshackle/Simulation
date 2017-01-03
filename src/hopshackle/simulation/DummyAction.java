@@ -12,6 +12,11 @@ public enum DummyAction implements ActionEnum {
 	@Override
 	public Action<?> getAction(Agent a) {
 		return new Action<Agent>(DUMMY, a, false) {
+
+			@Override
+			public Action<Agent> clone(Agent newPlayer) {
+				return null;
+			}
 		};
 	}
 

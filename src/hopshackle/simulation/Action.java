@@ -1,5 +1,4 @@
 package hopshackle.simulation;
-
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
@@ -78,6 +77,8 @@ public abstract class Action<A extends Agent> implements Delayed {
 	protected State currentState = State.PROPOSED;
 	protected ActionEnum<A> actionType;
 	private long uniqueId = idFountain.getAndIncrement();
+	protected Action<A> followUpAction;
+	protected List<ActionEnum<A>> possibleOptions = new ArrayList<ActionEnum<A>>();
 
 	public Action(ActionEnum<A> type, A a, boolean recordAction) {
 		this(type, a, 1000, recordAction);
@@ -274,7 +275,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		return (int) (getDelay(TimeUnit.MILLISECONDS) - d.getDelay(TimeUnit.MILLISECONDS));
 	}
 
-	public Agent getActor() {
+	public A getActor() {
 		return actor;
 	}
 
@@ -369,6 +370,18 @@ public abstract class Action<A extends Agent> implements Delayed {
 	@Override
 	public String toString() {
 		return actionType.toString();
+	}
+
+	public List<ActionEnum<A>> getNextOptions() {
+		return possibleOptions;
+	}
+
+	public Action<A> getFollowOnAction() {
+		return followUpAction;
+	}
+
+	public Action<A> clone(A newPlayer) {
+		return this;
 	}
 	
 }

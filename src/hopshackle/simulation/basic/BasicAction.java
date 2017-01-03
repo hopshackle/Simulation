@@ -30,5 +30,4 @@ public class BasicAction extends Action<BasicAgent> {
 		}
 		return retValue;
 	}
-	
 }

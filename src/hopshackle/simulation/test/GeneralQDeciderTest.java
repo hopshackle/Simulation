@@ -45,6 +45,7 @@ public class GeneralQDeciderTest {
 		SimProperties.setProperty("QTraceLambda", "0.00");
 		SimProperties.setProperty("QTraceMaximum", "2.0");
 		SimProperties.setProperty("TimePeriodForGamma", "1000");
+		SimProperties.setProperty("MonteCarloReward", "false");
 		ExperienceRecord.refreshProperties();
 		actions = new ArrayList<ActionEnum<Agent>>();
 		actions.add(RightLeft.RIGHT);
@@ -120,6 +121,7 @@ public class GeneralQDeciderTest {
 		// prediction would be 0.0 from starting State
 		// reward of -2.0. Value of left is 0.0, and value of right is 0.4. So max is 0.4.
 		// so difference = -2.0 + gamma * 0.40 - 0.00 = -1.64
+		assertEquals(exp2.getReward(), -2.0, 0.001);
 		assertEquals(decider.getWeightOf(1, RightLeft.RIGHT), 0.0, 0.001);
 		assertEquals(decider.getWeightOf(1, RightLeft.LEFT), 0.0, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.RIGHT), 0.4, 0.001);

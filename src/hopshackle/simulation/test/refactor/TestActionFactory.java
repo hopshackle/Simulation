@@ -6,17 +6,17 @@ import hopshackle.simulation.ExperienceRecord.ERState;
 import java.util.*;
 
 class TestAction extends Action<TestAgent> {
-	
+
 	boolean dieInMiddle = false;
 	boolean makeNextDecision = true;
 	int waitTime;
-	
+
 	public TestAction(TestActionEnum action, List<TestAgent> mandatory, List<TestAgent> optional, long startOffset, long duration, boolean recordAction, boolean makeNext, int wait) {
 		super(action, mandatory, optional, startOffset, duration, recordAction);
 		makeNextDecision = makeNext;
 		waitTime = wait;
 	}
-	
+
 	@Override
 	public void initialisation() {
 		waitABit();
@@ -29,12 +29,16 @@ class TestAction extends Action<TestAgent> {
 				a.die("Oops");
 			}
 		}
+		if (actor.game != null)
+			actor.game.reward[0] -= 1.0;
+		actor.getWorld().setCurrentTime(actor.getWorld().getCurrentTime()+1000);
 		switch ((TestActionEnum)actionType) {
 		case LEFT:
 			actor.position++;
 			break;
 		case RIGHT:
 			actor.position--;
+			break;
 		default:
 		}
 	}
@@ -66,11 +70,11 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
 	TEST,
 	LEFT,
 	RIGHT;
-	
+
 	public static boolean dummyMode = false;
 	public static boolean defaultMakeNextDecision = true;
 	public static int waitTime = 200;
-	
+
 	@Override
 	public String getChromosomeDesc() {
 		return "TEST";
@@ -119,14 +123,15 @@ enum TestGenVar implements GeneticVariable<TestAgent> {
 	}
 	@Override
 	public boolean unitaryRange() {return true;}
-	
+
 }
 
 class TestAgent extends Agent {
-	
+
 	int decisionsTaken = 0;
 	int position = 0;
-	
+	SimpleMazeGame game;
+
 	public TestAgent(World world) {
 		super(world);
 		setDecider(new TestDecider());
@@ -147,12 +152,20 @@ class TestAgent extends Agent {
 		}
 		return 0.0;
 	}
+	public void setGame(SimpleMazeGame mazeGame) {
+		game = mazeGame;
+	}
+	@SuppressWarnings("unchecked")
+	@Override
+	public Game<TestAgent, ActionEnum<TestAgent>> getGame() {
+		return game;
+	}
 }
 
 class TestDecider extends BaseDecider<TestAgent> {
-	
+
 	public int learningEpisodes = 0;
-	
+
 	public static List<ActionEnum<TestAgent>> actionList = new ArrayList<ActionEnum<TestAgent>>();
 	public static List<GeneticVariable<TestAgent>> gvList = new ArrayList<GeneticVariable<TestAgent>>();
 	static {
@@ -176,7 +189,7 @@ class TestDecider extends BaseDecider<TestAgent> {
 }
 
 class TestActionFactory {
-	
+
 	List<TestAgent> allAgents;
 	public TestActionFactory(List<TestAgent> allAgents) {
 		this.allAgents = allAgents;
@@ -206,7 +219,7 @@ class TestActionPolicy extends Policy<TestAction> {
 	public void setValue(TestAction a, double value) {
 		actionValues.put(a, value);
 	}
-	
+
 }
 
 class TestERCollector extends ExperienceRecordCollector<TestAgent> {
@@ -231,12 +244,12 @@ class TestERCollector extends ExperienceRecordCollector<TestAgent> {
 }
 
 class TestTeacher extends Teacher<TestAgent> {
-	
+
 	public List<AgentEvent> eventsReceived = new ArrayList<AgentEvent>();
 
 	@Override
 	public void processEvent(AgentEvent event) {
 		eventsReceived.add(event);
 	}
-	
+
 }

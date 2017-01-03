@@ -8,7 +8,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	protected Decider<A> rolloutDecider;
 	private Decider<A> opponentModel;
 	private MCTSChildDecider<A> childDecider;
-	private static int N = SimProperties.getPropertyAsInteger("MonteCarloRolloutCount", "99");
+	private static int maxRollouts = SimProperties.getPropertyAsInteger("MonteCarloRolloutCount", "99");
+	private static int maxRolloutsPerOption = SimProperties.getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
 
 	public MCTSMasterDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions, 
 			Decider<A> rolloutDecider, Decider<A> opponentModel) {
@@ -23,7 +24,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 	@Override
 	public ActionEnum<A> makeDecision(A agent) {
-		// Hmm. We therefore need a way to get the agent's game context
 		Game<A, ActionEnum<A>> game = agent.getGame();
 		int currentPlayer = game.getPlayerNumber(agent);
 		if (currentPlayer != game.getCurrentPlayerNumber()) 
@@ -52,6 +52,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			// construct a Tree anyway, as parts may be of relevance in later turns
 		}
 		tree.insertState(currentState, chooseableOptions);
+		int N = Math.min(maxRollouts, maxRolloutsPerOption * chooseableOptions.size());
 		for (int i = 0; i < N; i++) {
 			tree.setUpdatesLeft(1);
 			Game<A, ActionEnum<A>> clonedGame = game.clone(agent);
