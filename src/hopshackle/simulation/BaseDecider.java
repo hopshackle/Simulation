@@ -64,7 +64,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	@Override
 	public Action<A> decide(A decidingAgent, List<ActionEnum<A>> possibleActions) {
-		decidingAgent.log("Setting override options " + possibleActions.size() + " in " + this);
+//		decidingAgent.log("Setting override options " + possibleActions.size() + " in " + this);
 		optionsOverride = possibleActions;
 		Action<A> retValue = decide(decidingAgent);
 		optionsOverride = null;

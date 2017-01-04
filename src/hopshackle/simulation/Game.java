@@ -21,17 +21,29 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 	public abstract List<ActionEnum<P>> getPossibleCurrentActions();
 
 	public abstract boolean gameOver();
-	
+
 	public abstract void updateGameStatus();
 
 	public final double[] playGame() {
-		
+
+		while (!gameOver()) {
+			oneAction(false);
+		}
+		double[] retValue = new double[getAllPlayers().size()];
+		for (int i = 1; i <= retValue.length; i++) {
+			retValue[i-1] = getPlayer(i).getScore();
+		}
+		return retValue;
+	}
+
+	public final void oneAction(boolean noUpdate) {
 		P currentPlayer = null;
 		List<ActionEnum<P>> options = null;
 		Decider<P> decider = null;
 		Action<P> action = null;
 
-		while (!gameOver()) {
+		do {
+
 			if (action != null) {
 				// this occurs if we popped an action off the stack on the last iteration
 				// so we already have the action we wish to execute
@@ -43,7 +55,6 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 					decider = currentPlayer.getDecider();
 					action = decider.decide(currentPlayer, options);
 				} else {	// otherwise we get a new action
-					updateGameStatus();
 					currentPlayer = getCurrentPlayer();
 					options = getPossibleCurrentActions();
 					decider = currentPlayer.getDecider();
@@ -61,20 +72,20 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 			if (options.isEmpty()) {
 				if (actionStack.isEmpty()) {
 					action = null;
-				} else {
+				} else {				
 					action = actionStack.pop().getFollowOnAction();
 				}
 			} else {
 				actionStack.push(action);
 				action = null;
 			}
-		}
-		
-		double[] retValue = new double[getAllPlayers().size()];
-		for (int i = 1; i <= retValue.length; i++) {
-			retValue[i-1] = getPlayer(i).getScore();
-		}
-		return retValue;
+			
+			if (action == null && actionStack.isEmpty() && !noUpdate)
+				updateGameStatus(); // finished the last cycle, so move game state forward
+									// otherwise, we still have interrupts/consequences to deal with
+
+		} while (action != null || !actionStack.isEmpty());
 	}
 
 }
+
