@@ -68,7 +68,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 	protected List<A> mandatoryActors;
 	protected List<A> optionalActors;
 	protected Map<A, Boolean> agentAgreement = new HashMap<A, Boolean>();
-	protected A actor; // currently left in for backwards compatibility
+	protected A actor, nextActor; // currently left in for backwards compatibility
 	protected World world;
 	protected long startTime = -1;
 	protected long endTime = -1;
@@ -98,6 +98,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		if (!mandatory.isEmpty()) {
 			actor = mandatory.get(0);
 			world = actor.getWorld();
+			nextActor = actor;
 		} else {
 			world = optional.get(0).getWorld();
 		}
@@ -382,6 +383,10 @@ public abstract class Action<A extends Agent> implements Delayed {
 
 	public Action<A> clone(A newPlayer) {
 		return this;
+	}
+
+	public A getNextActor() {
+		return nextActor;
 	}
 	
 }

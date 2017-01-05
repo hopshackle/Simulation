@@ -51,7 +51,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 				// we have completed the last one, so pick a new action
 				if (!actionStack.isEmpty()) { // actionStack first, to complete interrupts and consequences
 					options = actionStack.peek().getNextOptions();
-					currentPlayer = actionStack.peek().getActor();
+					currentPlayer = actionStack.peek().getNextActor();
 					decider = currentPlayer.getDecider();
 					action = decider.decide(currentPlayer, options);
 				} else {	// otherwise we get a new action
@@ -61,11 +61,8 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 					action = decider.decide(currentPlayer, options);
 				}
 			}
-			// this is for compatibility with Action statuses in a real-time simulation
-			List<P> participants = action.getAllInvitedParticipants();
-			for (P player : participants) {
-				player.actionPlan.addAction(action);
-			}
+	
+			action.addToAllPlans(); // this is for compatibility with Action statuses in a real-time simulation
 			action.start();
 			action.run();
 			options = action.getNextOptions();
