@@ -25,7 +25,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	private static AtomicInteger idFountain = new AtomicInteger(0);
 	protected StateFactory<A> stateFactory;
 	private int id;
-	protected List<ActionEnum<A>> optionsOverride;
+	protected List<ActionEnum<A>> chooseableOptions;
 
 	public BaseDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions) {
 		if (actions != null) {
@@ -65,9 +65,9 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	@Override
 	public Action<A> decide(A decidingAgent, List<ActionEnum<A>> possibleActions) {
 //		decidingAgent.log("Setting override options " + possibleActions.size() + " in " + this);
-		optionsOverride = possibleActions;
+		chooseableOptions = possibleActions;
 		Action<A> retValue = decide(decidingAgent);
-		optionsOverride = null;
+		chooseableOptions = null;
 		return retValue;
 	}
 
@@ -84,7 +84,8 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		if (chosenDuration > availableTime && action != null) {
 			action = null;
 		} else {
-			AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, this);
+			AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, 
+					this, HopshackleUtilities.convertList(chooseableOptions));
 			action.eventDispatch(learningEvent);
 			decidingAgent.actionPlan.addActionToAllPlans(action);
 		}
@@ -93,9 +94,9 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	@Override
 	public ActionEnum<A> makeDecision(A decidingAgent, List<ActionEnum<A>> options) {
-		optionsOverride = options;
+		chooseableOptions = options;
 		ActionEnum<A> retValue = makeDecision(decidingAgent);
-		optionsOverride = null;
+		chooseableOptions = null;
 		return retValue;
 	}
 
@@ -120,7 +121,6 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		 * As that should really be delegated elsewhere. At that point I can remove this hack with a temporary variable being set
 		 * to contain the list of actions if the override is being used
 		 */
-		List<ActionEnum<A>> chooseableOptions = optionsOverride;
 		if (chooseableOptions == null || chooseableOptions.isEmpty()) {
 			chooseableOptions = getChooseableOptions(decidingAgent);
 	//		decidingAgent.log("Using local list " + this);

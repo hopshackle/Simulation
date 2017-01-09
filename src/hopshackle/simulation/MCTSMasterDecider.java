@@ -26,8 +26,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	public ActionEnum<A> makeDecision(A agent) {
 		Game<A, ActionEnum<A>> game = agent.getGame();
 		int currentPlayer = game.getPlayerNumber(agent);
-		if (currentPlayer != game.getCurrentPlayerNumber()) 
-			throw new AssertionError("Incorrect current player for Game");
 		// We initialise a new tree, and then rollout N times
 		// We also listen to the ER stream for the cloned agent, and then
 		// once the game is finished, we use this to update the MonteCarloTree
@@ -37,10 +35,15 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
 		childDecider = createChildDecider();
 		teacher.registerDecider(childDecider);
-		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>());
+		class FollowOnEventFilter implements EventFilter {
+			@Override
+			public boolean ignore(AgentEvent event) {
+				return (event.getAction() == null) ? false : event.getAction().isFollowOnAction();
+			}
+		}
+		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(), new FollowOnEventFilter());
 		teacher.registerToERStream(erc);
 		State<A> currentState = stateFactory.getCurrentState(agent);
-		List<ActionEnum<A>> chooseableOptions = optionsOverride;
 //		if (optionsOverride != null)
 //			System.out.println("MCTSMasterDecider spawning with optionsOverride: " + optionsOverride);
 		if (chooseableOptions == null || chooseableOptions.isEmpty())

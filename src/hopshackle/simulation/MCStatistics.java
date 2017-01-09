@@ -23,7 +23,7 @@ public class MCStatistics<P extends Agent> {
 			MCData old = map.get(key);
 			map.put(key, new MCData(old, reward));
 		} else {
-			map.put(key, new MCData(1, reward));
+			map.put(key, new MCData(key, 1, reward));
 		}
 		totalVisits++;
 	}
@@ -99,30 +99,32 @@ public class MCStatistics<P extends Agent> {
 	@Override
 	public String toString() {
 		StringBuffer retValue = new StringBuffer("MC Statistics\tTotal Visits\t" + totalVisits + "\n");
+		for (String k : keysInVisitOrder()) {
+			retValue.append("\t" + k + "\t" + map.get(k).toString());
+		}
 		for (ActionEnum<P> action : allActions) {
 			String key = action.toString();
-			retValue.append("\t"+key);
 			if (map.containsKey(key)) {
-				retValue.append("\t" + map.get(key).toString());
+				// already reported
 			} else {
-				retValue.append("\t No Data\n");
+				retValue.append("\t" + key + "\t No Data\n");
 			}
 		}
 		return retValue.toString();
 	}
-	/*
+
 	private List<String> keysInVisitOrder() {
 		List<String> retValue = new ArrayList<String>();
 		List<MCData> sortedByVisit = new ArrayList<MCData>();
 		sortedByVisit.addAll(map.values());
 		Collections.sort(sortedByVisit);
-		List<String> allKeys = new ArrayList<String>();
-		allKeys.addAll(map.keySet());
+		Collections.reverse(sortedByVisit);
 		for (MCData mcd : sortedByVisit) {
-			
+			retValue.add(mcd.key);
 		}
+		return retValue;
 	}
-*/
+
 	public ActionEnum<P> getBestAction(List<ActionEnum<P>> availableActions) {
 		ActionEnum<P> retValue = null;
 		double score = Double.NEGATIVE_INFINITY;
@@ -142,13 +144,16 @@ public class MCStatistics<P extends Agent> {
 class MCData implements Comparable<MCData> {
 	double mean;
 	int visits;
+	String key;
 	
-	public MCData(int n, double r) {
+	public MCData(String key, int n, double r) {
 		visits = n;
 		mean = r;
+		this.key = key;
 	}
 	
 	public MCData(MCData old, double r) {
+		this.key = old.key;
 		visits = old.visits + 1;
 		mean = old.mean + (r - old.mean) / (double) visits;
 	}

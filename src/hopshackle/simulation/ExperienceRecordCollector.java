@@ -135,7 +135,8 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			passOnEvent = true;
 			break;
 		case DECISION_TAKEN:
-			newER = erFactory.generate(a, eventDecider.getCurrentState(a), action, eventDecider.getChooseableOptions(a));
+			newER = erFactory.generate(a, eventDecider.getCurrentState(a), action, 
+					HopshackleUtilities.convertList(event.getChooseableOptions()));
 			passOnEvent = processNewER(newER, a);
 			break;
 		case ACTION_AGREED:

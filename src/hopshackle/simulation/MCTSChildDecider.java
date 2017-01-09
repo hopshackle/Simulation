@@ -23,7 +23,6 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 
 		State<P> state = stateFactory.getCurrentState(decidingAgent);
 
-		List<ActionEnum<P>> chooseableOptions = optionsOverride;
 		if (chooseableOptions == null || chooseableOptions.isEmpty()) {
 			chooseableOptions = getChooseableOptions(decidingAgent);
 			//		decidingAgent.log("Using local list " + this);
@@ -61,7 +60,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 					}
 				} 
 			}
-		} else if (tree.updatesLeft() > 0){
+		} else if (tree.updatesLeft() > 0) {
 			throw new AssertionError("Tree should contain previous state");
 		}
 		// This relies on us going forward through the ER (if backwards, then we still insert the additional state, 

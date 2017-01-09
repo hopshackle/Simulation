@@ -79,6 +79,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 	private long uniqueId = idFountain.getAndIncrement();
 	protected Action<A> followUpAction;
 	protected List<ActionEnum<A>> possibleOptions = new ArrayList<ActionEnum<A>>();
+	protected boolean hasNoAssociatedDecision;
 
 	public Action(ActionEnum<A> type, A a, boolean recordAction) {
 		this(type, a, 1000, recordAction);
@@ -388,5 +389,10 @@ public abstract class Action<A extends Agent> implements Delayed {
 	public A getNextActor() {
 		return nextActor;
 	}
+	
+	public boolean isFollowOnAction() {
+		return hasNoAssociatedDecision;
+	}
+
 	
 }

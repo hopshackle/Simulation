@@ -27,7 +27,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 	public final double[] playGame() {
 
 		while (!gameOver()) {
-			oneAction(false);
+			oneAction();
 		}
 		double[] retValue = new double[getAllPlayers().size()];
 		for (int i = 1; i <= retValue.length; i++) {
@@ -36,7 +36,11 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 		return retValue;
 	}
 
-	public final void oneAction(boolean noUpdate) {
+	public final void oneAction() {
+		oneAction(false, false);
+	}
+	
+	public final void oneAction(boolean noUpdate, boolean singleAction) {
 		P currentPlayer = null;
 		List<ActionEnum<P>> options = null;
 		Decider<P> decider = null;
@@ -80,6 +84,8 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 			if (action == null && actionStack.isEmpty() && !noUpdate)
 				updateGameStatus(); // finished the last cycle, so move game state forward
 									// otherwise, we still have interrupts/consequences to deal with
+			
+			if (singleAction && action == null) break;
 
 		} while (action != null || !actionStack.isEmpty());
 	}
