@@ -6,9 +6,16 @@ public class MonteCarloTree<P extends Agent> {
 	
 	private Map<String, MCStatistics<P>> tree;
 	private int updatesLeft;
+	private Map<String, MCData> actionValues;
 	
 	public MonteCarloTree() {
 		tree = new HashMap<String, MCStatistics<P>>();
+		actionValues = new HashMap<String, MCData>();
+	}
+	
+	public void reset() {
+		tree.clear();
+		// leave actionValues unchanged
 	}
 
 	public boolean containsState(State<?> state) {
@@ -26,7 +33,7 @@ public class MonteCarloTree<P extends Agent> {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString))
 			throw new AssertionError(stateAsString + " already included in MonteCarloTree");
-		tree.put(stateAsString, new MCStatistics<P>(actions));
+		tree.put(stateAsString, new MCStatistics<P>(actions, this));
 		updatesLeft--;
 	}
 	public void updateState(State<P> state, ActionEnum<P> action, double reward) {
@@ -34,6 +41,12 @@ public class MonteCarloTree<P extends Agent> {
 		if (tree.containsKey(stateAsString)) {
 			MCStatistics<P> stats = tree.get(stateAsString);
 			stats.update(action, reward);
+		}
+		String actionAsString = action.toString();
+		if (actionValues.containsKey(actionAsString)) {
+			actionValues.put(actionAsString, new MCData(actionValues.get(actionAsString), reward));
+		} else {
+			actionValues.put(actionAsString, new MCData(actionAsString, 1, reward));
 		}
 	}
 	public ActionEnum<P> getNextAction(State<P> state, List<ActionEnum<P>> possibleActions) {
@@ -57,6 +70,19 @@ public class MonteCarloTree<P extends Agent> {
 	}
 	public int numberOfStates() {
 		return tree.size();
+	}
+	public double getActionValue(String k) {
+		if (actionValues.containsKey(k)) {
+			return actionValues.get(k).mean;
+		} 
+		return 0.0;
+	}
+
+	public int getActionCount(String k) {
+		if (actionValues.containsKey(k)) {
+			return actionValues.get(k).visits;
+		} 
+		return 0;
 	}
 	@Override
 	public String toString() {

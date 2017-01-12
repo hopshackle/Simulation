@@ -3,19 +3,30 @@ package hopshackle.simulation;
 import java.util.*;
 
 public class MCStatistics<P extends Agent> {
-	
+
 	private List<ActionEnum<P>> allActions;
+	private MonteCarloTree<P> tree;
 	private Map<String, MCData> map = new HashMap<String, MCData>();
 	private int totalVisits = 0;
 	private static double C = SimProperties.getPropertyAsDouble("MonteCarloUCTC", "1.0");
+	private static double priorWeight = SimProperties.getPropertyAsDouble("MonteCarloEffectiveVisitsForPriorActionInformation", "0");
+	private static double actionWeight = SimProperties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
 
-	public MCStatistics(List<ActionEnum<P>> possibleActions) {
-		allActions = HopshackleUtilities.cloneList(possibleActions);
-	}
 	
+	public MCStatistics(List<ActionEnum<P>> possibleActions) {
+		this(possibleActions, new MonteCarloTree<P>());
+	}
+	public MCStatistics(List<ActionEnum<P>> possibleActions, MonteCarloTree<P> tree) {
+		allActions = HopshackleUtilities.cloneList(possibleActions);
+		this.tree = tree;
+	}
+	public static void refresh() {
+		priorWeight = SimProperties.getPropertyAsDouble("MonteCarloEffectiveVisitsForPriorActionInformation", "0");
+		actionWeight = SimProperties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
+	}
 	public void update(ActionEnum<P> action, double reward) {
 		if (!allActions.contains(action)) {
-		//	System.out.println("Unexpected Action " + action);
+			//	System.out.println("Unexpected Action " + action);
 			addAction(action);
 		}
 		String key = action.toString();
@@ -64,7 +75,7 @@ public class MCStatistics<P extends Agent> {
 		}
 		return false;
 	}
-	
+
 	public ActionEnum<P> getRandomUntriedAction(List<ActionEnum<P>> availableActions) {
 		List<ActionEnum<P>> untried = new ArrayList<ActionEnum<P>>();
 		for (ActionEnum<P> action : availableActions) {
@@ -78,7 +89,7 @@ public class MCStatistics<P extends Agent> {
 		int diceRoll = Dice.roll(1, untried.size());
 		return untried.get(diceRoll-1);
 	}
-	
+
 	public ActionEnum<P> getUCTAction(List<ActionEnum<P>> availableActions) {
 		if (hasUntriedAction(availableActions)) 
 			throw new AssertionError("Should not be looking for UCT action while there are still untried actions");
@@ -87,7 +98,8 @@ public class MCStatistics<P extends Agent> {
 		for (ActionEnum<P> action : availableActions) {
 			String key = action.toString();
 			MCData data = map.get(key);
-			double score = data.mean + C * Math.sqrt(Math.log(totalVisits) / (double)data.visits);
+			double effectiveMean = (data.mean * data.visits + tree.getActionValue(key) * priorWeight) / (priorWeight + data.visits);
+			double score = effectiveMean + C * Math.sqrt(Math.log(totalVisits) / (double)data.visits);
 			if (score > best) {
 				best = score;
 				retValue = action;
@@ -95,12 +107,13 @@ public class MCStatistics<P extends Agent> {
 		}
 		return retValue;
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuffer retValue = new StringBuffer("MC Statistics\tTotal Visits\t" + totalVisits + "\n");
 		for (String k : keysInVisitOrder()) {
-			retValue.append("\t" + k + "\t" + map.get(k).toString());
+			String output = String.format("\t%s\t%s\t(AV:%.2f | %d)\n", k, map.get(k).toString(), tree.getActionValue(k), tree.getActionCount(k));
+			retValue.append(output);
 		}
 		for (ActionEnum<P> action : allActions) {
 			String key = action.toString();
@@ -131,8 +144,10 @@ public class MCStatistics<P extends Agent> {
 		for (ActionEnum<P> action : availableActions) {
 			String key = action.toString();
 			if (map.containsKey(key)) {
-				if (map.get(key).mean > score) {
-					score = map.get(key).mean;
+				MCData data = map.get(key);
+				double effectiveMean = (data.mean * data.visits + tree.getActionValue(key) * actionWeight) / (actionWeight + data.visits);
+				if (effectiveMean > score) {
+					score = effectiveMean;
 					retValue = action;
 				}
 			}
@@ -145,22 +160,22 @@ class MCData implements Comparable<MCData> {
 	double mean;
 	int visits;
 	String key;
-	
+
 	public MCData(String key, int n, double r) {
 		visits = n;
 		mean = r;
 		this.key = key;
 	}
-	
+
 	public MCData(MCData old, double r) {
 		this.key = old.key;
 		visits = old.visits + 1;
 		mean = old.mean + (r - old.mean) / (double) visits;
 	}
-	
+
 	@Override
 	public String toString() {
-		return String.format("Visits:%d \tScore:%.2f\n", visits, mean);
+		return String.format("Visits:%d \tScore:%.2f", visits, mean);
 	}
 
 	@Override

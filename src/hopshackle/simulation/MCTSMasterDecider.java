@@ -1,10 +1,10 @@
 package hopshackle.simulation;
 
-import java.util.List;
+import java.util.*;
 
 public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
-	protected MonteCarloTree<A> tree;
+	protected Map<A, MonteCarloTree<A>> treeMap = new HashMap<A, MonteCarloTree<A>>();
 	protected Decider<A> rolloutDecider;
 	private Decider<A> opponentModel;
 	private MCTSChildDecider<A> childDecider;
@@ -18,7 +18,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		this.opponentModel = opponentModel;
 	}
 
-	protected MCTSChildDecider<A> createChildDecider() {
+	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree) {
 		return new MCTSChildDecider<A>(stateFactory, actionSet, tree, rolloutDecider);
 	}
 
@@ -31,9 +31,11 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		// once the game is finished, we use this to update the MonteCarloTree
 		// using an OnInstructionTeacher.
 		// This is not using any Lookahead; just the record of state to state transitions
-		tree = new MonteCarloTree<A>();
+		MonteCarloTree<A> tree = treeMap.getOrDefault(agent, new MonteCarloTree<A>());
+		tree.reset();
+
 		OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
-		childDecider = createChildDecider();
+		childDecider = createChildDecider(tree);
 		teacher.registerDecider(childDecider);
 		class FollowOnEventFilter implements EventFilter {
 			@Override
@@ -44,8 +46,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(), new FollowOnEventFilter());
 		teacher.registerToERStream(erc);
 		State<A> currentState = stateFactory.getCurrentState(agent);
-//		if (optionsOverride != null)
-//			System.out.println("MCTSMasterDecider spawning with optionsOverride: " + optionsOverride);
+		//		if (optionsOverride != null)
+		//			System.out.println("MCTSMasterDecider spawning with optionsOverride: " + optionsOverride);
 		if (chooseableOptions == null || chooseableOptions.isEmpty())
 			chooseableOptions = getChooseableOptions(agent);
 		if (chooseableOptions.size() == 1) {
@@ -78,6 +80,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		// Then we look at the statistics in the tree for the current state to make a decision
 		agent.log(tree.getStatisticsFor(currentState).toString());
 		ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions);
+		treeMap.put(agent, tree);
 		return best;
 	}
 
@@ -90,8 +93,12 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 	}
 
-	public MonteCarloTree<A> getTree() {
-		return tree;
+	public MonteCarloTree<A> getTree(A agent) {
+		if (treeMap.containsKey(agent)) {
+			return treeMap.get(agent);
+		}
+		treeMap.put(agent, new MonteCarloTree<A>());
+		return treeMap.get(agent);
 	}
 
 	public Decider<A> getRolloutDecider() {

@@ -1,8 +1,11 @@
 package hopshackle.simulation.test.refactor;
 
 import static org.junit.Assert.*;
+
 import java.util.*;
+
 import hopshackle.simulation.*;
+
 import org.junit.*;
 
 public class MCStatisticsTest {
@@ -15,6 +18,8 @@ public class MCStatisticsTest {
 	public void setup() {
 		leftRightOnly.remove(TestActionEnum.TEST);
 		SimProperties.setProperty("MonteCarloUCTC", "1");
+		SimProperties.setProperty("MonteCarloEffectiveVisitsForPriorActionInformation", "0");
+		MCStatistics.refresh();
 	}
 
 	@Test
@@ -32,16 +37,19 @@ public class MCStatisticsTest {
 	public void updateWithNewVisit() {
 		stats = new MCStatistics<TestAgent>(leftRightOnly);
 		stats.update(TestActionEnum.LEFT, 2.0);
-		stats.update(TestActionEnum.LEFT, 5.0);
+		stats.update(TestActionEnum.LEFT, 3.5);
 		stats.update(TestActionEnum.LEFT, -1.0);
 		stats.update(TestActionEnum.RIGHT, 1.0);
 
 		assertEquals(stats.getVisits(TestActionEnum.LEFT), 3);
 		assertEquals(stats.getVisits(TestActionEnum.RIGHT), 1);
 		assertEquals(stats.getVisits(TestActionEnum.TEST), 0);
-		assertEquals(stats.getMean(TestActionEnum.LEFT), 2.0, 0.001);
+		assertEquals(stats.getMean(TestActionEnum.LEFT), 1.5, 0.001);
 		assertEquals(stats.getMean(TestActionEnum.RIGHT), 1.0, 0.001);
 		assertEquals(stats.getMean(TestActionEnum.TEST), 0.0, 0.001);
+		
+		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.LEFT);
+		assertTrue(stats.getUCTAction(leftRightOnly) == TestActionEnum.LEFT);
 	}
 
 	@Test

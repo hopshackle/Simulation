@@ -30,6 +30,8 @@ public class MCTSTest {
 		SimProperties.setProperty("Gamma", "0.95");
 		SimProperties.setProperty("IncrementalScoreReward", "false");
 		SimProperties.setProperty("MonteCarloRolloutCount", "99");
+		SimProperties.setProperty("MonteCarloEffectiveVisitsForPriorActionInformation", "0");
+		MCStatistics.refresh();
 		ExperienceRecord.refreshProperties();
 		mazeGame = new SimpleMazeGame(2, agent);
 		masterDecider = new MCTSMasterDecider<TestAgent>(factory, actionList, rolloutDecider, null);
@@ -49,7 +51,7 @@ public class MCTSTest {
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
-		MonteCarloTree<TestAgent> tree = masterDecider.getTree();
+		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		assertEquals(tree.numberOfStates(), 7);
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
@@ -63,7 +65,7 @@ public class MCTSTest {
 		
 		startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
-		tree = masterDecider.getTree();
+		tree = masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		startStats = tree.getStatisticsFor(startState);
 		assertEquals(tree.numberOfStates(), 3);
