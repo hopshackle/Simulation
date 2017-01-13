@@ -159,17 +159,26 @@ public class MCStatistics<P extends Agent> {
 class MCData implements Comparable<MCData> {
 	double mean;
 	int visits;
+	int limit;
 	String key;
 
-	public MCData(String key, int n, double r) {
+	public MCData(String key, int n, double r, int limit) {
 		visits = n;
 		mean = r;
 		this.key = key;
+		this.limit = limit;
+		if (this.limit < 1) 
+			this.limit = Integer.MAX_VALUE;
+	}
+	public MCData(String key, int n, double r) {
+		this(key, n, r, 0);
 	}
 
 	public MCData(MCData old, double r) {
 		this.key = old.key;
+		limit = old.limit;
 		visits = old.visits + 1;
+		if (visits > limit) visits = limit;
 		mean = old.mean + (r - old.mean) / (double) visits;
 	}
 
