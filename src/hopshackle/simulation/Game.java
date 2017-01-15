@@ -39,15 +39,18 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 	public final void oneAction() {
 		oneAction(false, false);
 	}
-	
+
 	public final void oneAction(boolean noUpdate, boolean singleAction) {
 		P currentPlayer = null;
-		List<ActionEnum<P>> options = null;
+		List<ActionEnum<P>> options = null, startOptions = null, startStartOptions = null;
 		Decider<P> decider = null;
-		Action<P> action = null;
+		Action<P> action = null, startAction = null, startStartAction = null;
 
 		do {
-
+			startStartOptions = startOptions;
+			startStartAction = startAction;
+			startOptions = options;
+			startAction = action;
 			if (action != null) {
 				// this occurs if we popped an action off the stack on the last iteration
 				// so we already have the action we wish to execute
@@ -65,7 +68,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 					action = decider.decide(currentPlayer, options);
 				}
 			}
-	
+
 			action.addToAllPlans(); // this is for compatibility with Action statuses in a real-time simulation
 			action.start();
 			action.run();
@@ -73,18 +76,20 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 			if (options.isEmpty()) {
 				if (actionStack.isEmpty()) {
 					action = null;
-				} else {				
-					action = actionStack.pop().getFollowOnAction();
+				} else {
+					do {
+						action = actionStack.pop().getFollowOnAction();
+					} while (action == null && !actionStack.isEmpty());
 				}
 			} else {
 				actionStack.push(action);
 				action = null;
 			}
-			
+
 			if (action == null && actionStack.isEmpty() && !noUpdate)
 				updateGameStatus(); // finished the last cycle, so move game state forward
-									// otherwise, we still have interrupts/consequences to deal with
-			
+			// otherwise, we still have interrupts/consequences to deal with
+
 			if (singleAction && action == null) break;
 
 		} while (action != null || !actionStack.isEmpty());
