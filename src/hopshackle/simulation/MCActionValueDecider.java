@@ -10,6 +10,7 @@ public class MCActionValueDecider<A extends Agent> extends BaseDecider<A> {
 	public MCActionValueDecider(MonteCarloTree<A> tree, StateFactory<A> stateFactory, List<ActionEnum<A>> actions) {
 		super(stateFactory, actions);
 		this.tree = tree;
+		localDebug = false;
 	}
 	
 	@Override

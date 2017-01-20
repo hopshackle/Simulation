@@ -10,6 +10,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	private MCTSChildDecider<A> childDecider;
 	private static int maxRollouts = SimProperties.getPropertyAsInteger("MonteCarloRolloutCount", "99");
 	private static int maxRolloutsPerOption = SimProperties.getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
+	private static boolean useAVDForRollout = SimProperties.getProperty("MonteCarloActionValueRollout", "false").equals("true");
+	private static boolean useAVDForOpponent = SimProperties.getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
 
 	public MCTSMasterDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions, 
 			Decider<A> rolloutDecider, Decider<A> opponentModel) {
@@ -19,7 +21,10 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	}
 
 	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree) {
-		return new MCTSChildDecider<A>(stateFactory, actionSet, tree, rolloutDecider);
+		if (useAVDForRollout)
+			return new MCTSChildDecider<A>(stateFactory, actionSet, tree, new MCActionValueDecider<A>(tree, stateFactory, actionSet));
+		else 
+			return new MCTSChildDecider<A>(stateFactory, actionSet, tree, rolloutDecider);
 	}
 
 	@Override
@@ -64,7 +69,10 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			A clonedAgent = clonedGame.getPlayer(currentPlayer);
 			for (A player : clonedGame.getAllPlayers()) {
 				if (player != clonedAgent) {
-					player.setDecider(opponentModel);
+					if (useAVDForOpponent)
+						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory, this.actionSet));
+					else 
+						player.setDecider(opponentModel);
 				} else {
 					player.setDecider(childDecider);
 				}
