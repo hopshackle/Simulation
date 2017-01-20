@@ -150,6 +150,7 @@ public class HopshackleUtilities {
 	@SuppressWarnings("unchecked")
 	public static <A, B> List<B> convertList(List<A> input) {
 		List<B> retValue = new ArrayList<B>();
+		if (input == null) return retValue;
 		for (A item : input) {
 			retValue.add((B) item);
 		}

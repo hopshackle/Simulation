@@ -220,8 +220,13 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		}
 		return retValue;
 	}
-
+	
 	protected List<Double> getNormalisedBoltzmannValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent){
+		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
+		return getNormalisedBoltzmannValuesPerOption(optionList, decidingAgent, temperature);
+	}
+
+	protected List<Double> getNormalisedBoltzmannValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent, double temperature){
 		List<Double> baseValuesPerOption = getValuesPerOption(optionList, decidingAgent);
 		for (int i = 0; i < baseValuesPerOption.size(); i++)
 			if (baseValuesPerOption.get(i) == Double.NaN)
@@ -231,7 +236,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			baseValue = -Collections.min(baseValuesPerOption);
 		if (baseValue < 0.01)
 			baseValue = 0.01;
-		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
+
 		if (temperature < 0.01) temperature = 0.01;
 		if (localDebug) {
 			String message = "Base Value is " + baseValue;
