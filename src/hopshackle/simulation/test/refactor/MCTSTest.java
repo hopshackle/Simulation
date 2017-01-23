@@ -31,6 +31,10 @@ public class MCTSTest {
 		SimProperties.setProperty("IncrementalScoreReward", "false");
 		SimProperties.setProperty("MonteCarloRolloutCount", "99");
 		SimProperties.setProperty("MonteCarloEffectiveVisitsForPriorActionInformation", "0");
+		SimProperties.setProperty("MonteCarloActionValueRollout", "false");
+		SimProperties.setProperty("MonteCarloActionValueOpponentModel", "false");
+		SimProperties.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
+		SimProperties.setProperty("MonteCarloRetainTreeBetweenActions", "false");
 		MCStatistics.refresh();
 		ExperienceRecord.refreshProperties();
 		mazeGame = new SimpleMazeGame(2, agent);

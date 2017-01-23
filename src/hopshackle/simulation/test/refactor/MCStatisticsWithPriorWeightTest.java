@@ -35,7 +35,7 @@ public class MCStatisticsWithPriorWeightTest {
 		};
 		startingTree = new MonteCarloTree<TestAgent>();
 		startingTree.insertState(dummyState, leftRightOnly);
-		startingTree.updateState(dummyState, TestActionEnum.RIGHT, 2.0);
+		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, 2.0);
 	}
 
 	@Test

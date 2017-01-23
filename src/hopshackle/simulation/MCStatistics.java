@@ -7,7 +7,9 @@ public class MCStatistics<P extends Agent> {
 	private List<ActionEnum<P>> allActions;
 	private MonteCarloTree<P> tree;
 	private Map<String, MCData> map = new HashMap<String, MCData>();
+	private Map<String, Set<String>> successorStatesByAction = new HashMap<String, Set<String>>();
 	private int totalVisits = 0;
+	
 	private static double C = SimProperties.getPropertyAsDouble("MonteCarloUCTC", "1.0");
 	private static double priorWeight = SimProperties.getPropertyAsDouble("MonteCarloEffectiveVisitsForPriorActionInformation", "0");
 	private static double actionWeight = SimProperties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
@@ -25,11 +27,21 @@ public class MCStatistics<P extends Agent> {
 		actionWeight = SimProperties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
 	}
 	public void update(ActionEnum<P> action, double reward) {
+		update(action, "UNKNOWN", reward);
+	}
+	public void update(ActionEnum<P> action, String nextState, double reward) {
 		if (!allActions.contains(action)) {
-			//	System.out.println("Unexpected Action " + action);
 			addAction(action);
 		}
 		String key = action.toString();
+		Set<String> currentStates = successorStatesByAction.get(key);
+		if (currentStates == null) {
+			currentStates = new HashSet<String>();
+			successorStatesByAction.put(key, currentStates);
+		}
+		if (!currentStates.contains(nextState)) {
+			currentStates.add(nextState);
+		}
 		if (map.containsKey(key)) {
 			MCData old = map.get(key);
 			map.put(key, new MCData(old, reward));
@@ -46,6 +58,13 @@ public class MCStatistics<P extends Agent> {
 		return allActions;
 	}
 
+	public Set<String> getSuccessorStates() {
+		Set<String> successors = new HashSet<String>();
+		for (Set<String> states : successorStatesByAction.values()) {
+			successors.addAll(states);
+		}
+		return successors;
+	}
 	public int getVisits() {
 		return totalVisits;
 	}

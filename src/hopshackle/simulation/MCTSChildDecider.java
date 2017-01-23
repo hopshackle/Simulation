@@ -32,7 +32,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 		if (chooseableOptions.isEmpty()) {
 			return null;
 		}
-		
+
 		if (tree.containsState(state)) {
 			return tree.getNextAction(state, chooseableOptions);
 		} else {
@@ -52,13 +52,9 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 	public void learnFrom(ExperienceRecord<P> exp, double maxResult) {
 		// 'Learning' in this context means updating the MonteCarloTree
 		if (tree.containsState(exp.getStartState())) {
-			tree.updateState(exp.getStartState(), exp.getActionTaken().actionType, exp.getReward());
-			if (tree.updatesLeft() > 0) {
-				if (!tree.containsState(exp.getEndState())) {
-					if (!exp.isFinalState) {
-						tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
-					}
-				} 
+			tree.updateState(exp.getStartState(), exp.getActionTaken().actionType, exp.getEndState(), exp.getReward());
+			if (tree.updatesLeft() > 0 && !exp.isFinalState) {
+				tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
 			}
 		} else if (tree.updatesLeft() > 0) {
 			throw new AssertionError("Tree should contain previous state");

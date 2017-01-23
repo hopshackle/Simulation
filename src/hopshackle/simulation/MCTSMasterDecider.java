@@ -1,5 +1,7 @@
 package hopshackle.simulation;
 
+import hopshackle.simulation.AgentEvent.Type;
+
 import java.util.*;
 
 public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
@@ -12,6 +14,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	private static int maxRolloutsPerOption = SimProperties.getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
 	private static boolean useAVDForRollout = SimProperties.getProperty("MonteCarloActionValueRollout", "false").equals("true");
 	private static boolean useAVDForOpponent = SimProperties.getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
+	private static boolean reuseOldTree = SimProperties.getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
+	private static boolean debug = true;
 
 	public MCTSMasterDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions, 
 			Decider<A> rolloutDecider, Decider<A> opponentModel) {
@@ -19,6 +23,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		this.rolloutDecider = rolloutDecider;
 		this.opponentModel = opponentModel;
 	}
+
 
 	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree) {
 		if (useAVDForRollout)
@@ -31,13 +36,35 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	public ActionEnum<A> makeDecision(A agent) {
 		Game<A, ActionEnum<A>> game = agent.getGame();
 		int currentPlayer = game.getPlayerNumber(agent);
+		State<A> currentState = stateFactory.getCurrentState(agent);
 		// We initialise a new tree, and then rollout N times
 		// We also listen to the ER stream for the cloned agent, and then
 		// once the game is finished, we use this to update the MonteCarloTree
 		// using an OnInstructionTeacher.
 		// This is not using any Lookahead; just the record of state to state transitions
+		if (!treeMap.containsKey(agent)) {
+			// we need to listen to the agent, so that on its death we can remove the tree from the map
+			// and avoid nasty memory leaks
+			agent.addListener(new AgentListener() {
+				@Override
+				public void processEvent(AgentEvent event) {
+					if (event.getEvent() == Type.DEATH) {
+						//				agent.log("Removing Tree from MCTS decider");
+						treeMap.remove(agent);
+					}
+				}
+			});
+		}
 		MonteCarloTree<A> tree = treeMap.getOrDefault(agent, new MonteCarloTree<A>());
-		tree.reset();
+		if (reuseOldTree) {
+			int before = tree.numberOfStates();
+			tree.pruneTree(currentState.getAsString());
+			if (debug) {
+				agent.log("Pruning reduces states in tree from " + before + " to " + tree.numberOfStates());
+			}
+		} else {
+			tree.reset();
+		}
 
 		OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
 		childDecider = createChildDecider(tree);
@@ -50,7 +77,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		}
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(), new FollowOnEventFilter());
 		teacher.registerToERStream(erc);
-		State<A> currentState = stateFactory.getCurrentState(agent);
 		//		if (optionsOverride != null)
 		//			System.out.println("MCTSMasterDecider spawning with optionsOverride: " + optionsOverride);
 		if (chooseableOptions == null || chooseableOptions.isEmpty())

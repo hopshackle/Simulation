@@ -9,7 +9,7 @@ import org.junit.*;
 
 public class MCTreeTest {
 
-	State<TestAgent> test, other;
+	State<TestAgent> test, other, yetAnother;
 	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	MonteCarloTree<TestAgent> tree;
@@ -41,6 +41,19 @@ public class MCTreeTest {
 			@Override
 			public String getAsString() {
 				return "1.00|0.10|0.20|";
+			}
+			@Override public State<TestAgent> clone() { return this;}
+			@Override public State<TestAgent> apply(ActionEnum<TestAgent> action) { return this;}
+		};
+		yetAnother = new State<TestAgent>() {
+			@Override
+			public double[] getAsArray() {
+				double[] retValue = {0.0, 0.5, 0.2};
+				return retValue;
+			}
+			@Override
+			public String getAsString() {
+				return "0.00|0.50|0.20|";
 			}
 			@Override public State<TestAgent> clone() { return this;}
 			@Override public State<TestAgent> apply(ActionEnum<TestAgent> action) { return this;}
@@ -80,30 +93,30 @@ public class MCTreeTest {
 		if (next == TestActionEnum.LEFT) 
 			firstLeft = true;
 		if (firstLeft) 
-			tree.updateState(test, TestActionEnum.LEFT, 2.0);
+			tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		else
-			tree.updateState(test, TestActionEnum.RIGHT, 1.0);
+			tree.updateState(test, TestActionEnum.RIGHT, test, 1.0);
 		next = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		if (firstLeft) {
 			assertTrue(next == TestActionEnum.RIGHT);
-			tree.updateState(test, TestActionEnum.RIGHT, 1.0);
+			tree.updateState(test, TestActionEnum.RIGHT, test, 1.0);
 		} else {
 			assertTrue(next == TestActionEnum.LEFT);
-			tree.updateState(test, TestActionEnum.LEFT, 2.0);
+			tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		}
 
 		next = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		assertTrue(next == TestActionEnum.LEFT);
-		tree.updateState(test, TestActionEnum.LEFT, 2.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		next = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		assertTrue(next == TestActionEnum.LEFT);
-		tree.updateState(test, TestActionEnum.LEFT, 0.5);
+		tree.updateState(test, TestActionEnum.LEFT, test, 0.5);
 		next = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		assertTrue(next == TestActionEnum.LEFT);
-		tree.updateState(test, TestActionEnum.LEFT, 1.5);
+		tree.updateState(test, TestActionEnum.LEFT, test, 1.5);
 		next = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		assertTrue(next == TestActionEnum.RIGHT);
-		tree.updateState(test, TestActionEnum.RIGHT, 1.0);
+		tree.updateState(test, TestActionEnum.RIGHT, test, 1.0);
 		next = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		assertTrue(next == TestActionEnum.LEFT);
 
@@ -113,9 +126,9 @@ public class MCTreeTest {
 	public void getNextActionWithAPreviouslyUnseenActionShouldReturnIt() {
 		tree = new MonteCarloTree<TestAgent>();
 		tree.insertState(test, leftRightOnly);
-		tree.updateState(test, TestActionEnum.LEFT, 2.0);
-		tree.updateState(test, TestActionEnum.RIGHT, 2.0);
-		tree.updateState(test, TestActionEnum.LEFT, 1.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
+		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
 		TestActionEnum leftRight = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		TestActionEnum allA = (TestActionEnum) tree.getNextAction(test, allActions);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
@@ -126,9 +139,9 @@ public class MCTreeTest {
 	public void getNextActionWithRestrictedListShouldObeyRestrictions() {
 		tree = new MonteCarloTree<TestAgent>();
 		tree.insertState(test, allActions);
-		tree.updateState(test, TestActionEnum.LEFT, 2.0);
-		tree.updateState(test, TestActionEnum.RIGHT, 2.0);
-		tree.updateState(test, TestActionEnum.LEFT, 1.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
+		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
 		TestActionEnum leftRight = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		TestActionEnum allA = (TestActionEnum) tree.getNextAction(test, allActions);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
@@ -140,9 +153,9 @@ public class MCTreeTest {
 	public void getBestActionWithAPreviouslyUnseenActionShouldNotReturnIt() {
 		tree = new MonteCarloTree<TestAgent>();
 		tree.insertState(test, leftRightOnly);
-		tree.updateState(test, TestActionEnum.LEFT, 2.0);
-		tree.updateState(test, TestActionEnum.RIGHT, 2.0);
-		tree.updateState(test, TestActionEnum.LEFT, 1.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
+		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
 		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly);
 		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
@@ -153,10 +166,10 @@ public class MCTreeTest {
 	public void getBestActionWithRestrictedListShouldObeyRestrictions() {
 		tree = new MonteCarloTree<TestAgent>();
 		tree.insertState(test, allActions);
-		tree.updateState(test, TestActionEnum.LEFT, 2.0);
-		tree.updateState(test, TestActionEnum.RIGHT, 2.0);
-		tree.updateState(test, TestActionEnum.TEST, 5.0);
-		tree.updateState(test, TestActionEnum.LEFT, 1.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
+		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
+		tree.updateState(test, TestActionEnum.TEST, test, 5.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
 		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly);
 		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
@@ -169,7 +182,7 @@ public class MCTreeTest {
 		tree = new MonteCarloTree<TestAgent>();
 		tree.insertState(test, leftRightOnly);
 		try {
-			tree.updateState(test, TestActionEnum.TEST, 1.0);
+			tree.updateState(test, TestActionEnum.TEST, test, 1.0);
 			fail("TEST action is unknown - this should throw error");
 		} catch (AssertionError e) {
 			// as expected
@@ -180,8 +193,8 @@ public class MCTreeTest {
 	public void actionValueDeciderInGreedyMode() {
 		tree = new MonteCarloTree<TestAgent>();
 		SimProperties.setProperty("MonteCarloActionValueDeciderTemperature", "0.00");
-		tree.updateState(test, TestActionEnum.RIGHT, 5.0);
-		tree.updateState(test, TestActionEnum.LEFT, 4.0);
+		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
 		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString()), 5.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.LEFT.toString()), 4.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.TEST.toString()), 0.0, 0.001);
@@ -196,8 +209,8 @@ public class MCTreeTest {
 	public void actionValueDeciderinBoltzmannMode() {
 		tree = new MonteCarloTree<TestAgent>();
 		SimProperties.setProperty("MonteCarloActionValueDeciderTemperature", "0.1");
-		tree.updateState(test, TestActionEnum.RIGHT, 5.0);
-		tree.updateState(test, TestActionEnum.LEFT, 4.0);
+		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
+		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
 		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString()), 5.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.LEFT.toString()), 4.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.TEST.toString()), 0.0, 0.001);
@@ -222,6 +235,35 @@ public class MCTreeTest {
 		assertTrue(rightCount > leftCount);
 		assertTrue(leftCount > testCount);
 		assertTrue(leftCount > 0);
+	}
+	
+	@Test
+	public void successorStatesInTree() {
+		tree = new MonteCarloTree<TestAgent>();
+		tree.insertState(test, allActions);
+		tree.updateState(test, TestActionEnum.LEFT, other, 0.0);
+		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 1);
+		assertEquals(tree.numberOfStates(), 1);
+		tree.updateState(test, TestActionEnum.RIGHT, yetAnother, 0.0);
+		tree.updateState(test, TestActionEnum.RIGHT, other, 0.0);
+		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 2);
+		assertEquals(tree.numberOfStates(), 1);
+		
+		tree.insertState(other, allActions);
+		tree.insertState(yetAnother, allActions);
+		tree.updateState(other, TestActionEnum.RIGHT, yetAnother, 0.0);
+		tree.updateState(yetAnother, TestActionEnum.RIGHT, yetAnother, 0.0);
+		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 2);
+		assertEquals(tree.numberOfStates(), 3);
+		
+		tree.pruneTree(test.getAsString());	// should have no impact
+		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 2);
+		assertEquals(tree.numberOfStates(), 3);
+		
+		tree.pruneTree(other.getAsString());
+		assertTrue(tree.getStatisticsFor(test) == null);
+		assertEquals(tree.getStatisticsFor(other).getSuccessorStates().size(), 1);
+		assertEquals(tree.numberOfStates(), 2);
 	}
 
 }

@@ -1,19 +1,20 @@
 package hopshackle.simulation;
 
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class MonteCarloTree<P extends Agent> {
-	
+
 	private Map<String, MCStatistics<P>> tree;
 	private int updatesLeft;
 	private Map<String, MCData> actionValues;
 	private int visitLimit = SimProperties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
-	
+
 	public MonteCarloTree() {
 		tree = new HashMap<String, MCStatistics<P>>();
 		actionValues = new HashMap<String, MCData>();
 	}
-	
+
 	public void reset() {
 		tree.clear();
 		// leave actionValues unchanged
@@ -33,15 +34,16 @@ public class MonteCarloTree<P extends Agent> {
 	public void insertState(State<P> state, List<ActionEnum<P>> actions) {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString))
-			throw new AssertionError(stateAsString + " already included in MonteCarloTree");
+			return;
 		tree.put(stateAsString, new MCStatistics<P>(actions, this));
 		updatesLeft--;
 	}
-	public void updateState(State<P> state, ActionEnum<P> action, double reward) {
+
+	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double reward) {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString)) {
 			MCStatistics<P> stats = tree.get(stateAsString);
-			stats.update(action, reward);
+			stats.update(action, nextState.getAsString(), reward);
 		}
 		String actionAsString = action.toString();
 		if (actionValues.containsKey(actionAsString)) {
@@ -50,6 +52,7 @@ public class MonteCarloTree<P extends Agent> {
 			actionValues.put(actionAsString, new MCData(actionAsString, 1, reward, visitLimit));
 		}
 	}
+
 	public ActionEnum<P> getNextAction(State<P> state, List<ActionEnum<P>> possibleActions) {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString)) {
@@ -85,6 +88,37 @@ public class MonteCarloTree<P extends Agent> {
 		} 
 		return 0;
 	}
+
+	public void pruneTree(String newRoot) {
+		/*
+		- Create a new, empty tree as in refresh()
+		- statesToCopy = empty Queue
+		- statesToCopy.push(startState)
+		- While statesToCopy not empty
+			Pop state from statesToCopy
+			Add all child states of state to statesToCopy
+			Add state to new Tree
+		 */
+
+		Map<String, MCStatistics<P>> newTree = new HashMap<String, MCStatistics<P>>();
+		Queue<String> q = new LinkedBlockingQueue<String>();
+		Set<String> processed = new HashSet<String>();
+		q.add(newRoot);
+		do {
+			String state = q.poll();
+			processed.add(state);
+			MCStatistics<P> toCopy = tree.get(state);
+			if (toCopy != null) {
+				newTree.put(state, toCopy);
+				for (String successor : toCopy.getSuccessorStates())
+					if (!processed.contains(successor))
+						q.add(successor);
+			}
+		} while (!q.isEmpty());
+
+		tree = newTree;
+	}
+
 	@Override
 	public String toString() {
 		return toString(false);
