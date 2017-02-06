@@ -13,12 +13,17 @@ public class MCStatisticsTest {
 	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	MCStatistics<TestAgent> stats;
+	TestState A, B, C, END;
 
 	@Before 
 	public void setup() {
+		A = new TestState("A");
+		B = new TestState("B");
+		C = new TestState("C");
+		END = new TestState("END");
 		leftRightOnly.remove(TestActionEnum.TEST);
 		SimProperties.setProperty("MonteCarloUCTC", "1");
-		SimProperties.setProperty("MonteCarloEffectiveVisitsForPriorActionInformation", "0");
+		SimProperties.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
 		MCStatistics.refresh();
 	}
 
@@ -126,6 +131,57 @@ public class MCStatisticsTest {
 		} catch (AssertionError e) {
 			// as expected
 		}
+	}
+	
+	@Test
+	public void qAndvUpdated() {
+		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>();
+		tree.insertState(A, leftRightOnly);
+		tree.insertState(B, leftRightOnly);
+		tree.insertState(C, leftRightOnly);
+
+		tree.updateState(A, TestActionEnum.LEFT, C, 10);
+		tree.updateState(C, TestActionEnum.RIGHT, END, 10);
+		
+		assertEquals(tree.getStatisticsFor(A).getV(), 10.0, 0.01);
+		assertEquals(tree.getStatisticsFor(A).getQ(), 10.0, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getV(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getQ(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getV(), 10, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getQ(), 10, 0.01);
+		
+		tree.updateState(A, TestActionEnum.RIGHT, B, 3);
+		tree.updateState(B, TestActionEnum.RIGHT, END, 3);
+		
+		assertEquals(tree.getStatisticsFor(A).getV(), 6.5, 0.01);
+		assertEquals(tree.getStatisticsFor(A).getQ(), 10.0, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getV(), 3.0, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getQ(), 3.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getV(), 10, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getQ(), 10, 0.01);
+		
+		tree.updateState(A, TestActionEnum.LEFT, B, 4);
+		tree.updateState(B, TestActionEnum.LEFT, END, 4);
+			
+		assertEquals(tree.getStatisticsFor(A).getV(), 5.333, 0.01);
+		assertEquals(tree.getStatisticsFor(A).getQ(), 6.5, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getV(), 3.5, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getQ(), 4.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getV(), 10, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getQ(), 10, 0.01);
+		
+		tree.updateState(A, TestActionEnum.LEFT, B, 6);
+		tree.updateState(B, TestActionEnum.LEFT, END, 6);
+		tree.insertState(END, leftRightOnly);
+			
+		assertEquals(tree.getStatisticsFor(A).getV(), 4.875, 0.01);
+		assertEquals(tree.getStatisticsFor(A).getQ(), 5.667, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getV(), 4.333, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getQ(), 5.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getV(), 10, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getQ(), 10, 0.01);
+		assertEquals(tree.getStatisticsFor(END).getV(), 0, 0.01);
+		assertEquals(tree.getStatisticsFor(END).getQ(), 0, 0.01);
 	}
 }
 

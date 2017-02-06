@@ -30,7 +30,7 @@ public class MCTSTest {
 		SimProperties.setProperty("Gamma", "0.95");
 		SimProperties.setProperty("IncrementalScoreReward", "false");
 		SimProperties.setProperty("MonteCarloRolloutCount", "99");
-		SimProperties.setProperty("MonteCarloEffectiveVisitsForPriorActionInformation", "0");
+		SimProperties.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
 		SimProperties.setProperty("MonteCarloActionValueRollout", "false");
 		SimProperties.setProperty("MonteCarloActionValueOpponentModel", "false");
 		SimProperties.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");

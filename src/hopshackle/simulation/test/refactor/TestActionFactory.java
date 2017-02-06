@@ -253,3 +253,33 @@ class TestTeacher extends Teacher<TestAgent> {
 	}
 
 }
+
+class TestState implements State<TestAgent> {
+
+	private String name;
+	
+	public TestState(String name) {
+		this.name = name;
+	}
+	
+	@Override
+	public double[] getAsArray() {
+		return new double[0];
+	}
+
+	@Override
+	public String getAsString() {
+		return name;
+	}
+
+	@Override
+	public State<TestAgent> apply(ActionEnum<TestAgent> proposedAction) {
+		return this;
+	}
+
+	@Override
+	public State<TestAgent> clone() {
+		return this;
+	}
+	
+}

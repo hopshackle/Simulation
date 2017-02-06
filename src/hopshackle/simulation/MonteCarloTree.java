@@ -20,9 +20,12 @@ public class MonteCarloTree<P extends Agent> {
 		// leave actionValues unchanged
 	}
 
+	public boolean containsState(String stateAsString) {
+		return tree.containsKey(stateAsString);
+	}
 	public boolean containsState(State<?> state) {
 		String stateAsString = state.getAsString();
-		return tree.containsKey(stateAsString);
+		return containsState(stateAsString);
 	}
 
 	public void setUpdatesLeft(int n) {
@@ -43,7 +46,7 @@ public class MonteCarloTree<P extends Agent> {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString)) {
 			MCStatistics<P> stats = tree.get(stateAsString);
-			stats.update(action, nextState.getAsString(), reward);
+			stats.update(action, nextState, reward);
 		}
 		String actionAsString = action.toString();
 		if (actionValues.containsKey(actionAsString)) {
