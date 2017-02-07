@@ -195,8 +195,8 @@ public class MCStatistics<P extends Agent> {
 
 	private double score(MCData data, String actionKey) {
 		double baseValue = data.mean;
-		if (UCTType == "Q") baseValue = data.Q;
-		if (UCTType == "V") baseValue = data.V;
+		if (UCTType.equals("Q")) baseValue = data.Q;
+		if (UCTType.equals("V")) baseValue = data.V;
 		if (actionWeight > 0.0)
 			return (baseValue * data.visits + tree.getActionValue(actionKey) * actionWeight) / (actionWeight + data.visits);
 		return baseValue;
