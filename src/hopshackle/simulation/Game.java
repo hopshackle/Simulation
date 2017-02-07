@@ -18,7 +18,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 
 	public abstract int getCurrentPlayerNumber();
 
-	public abstract List<ActionEnum<P>> getPossibleCurrentActions();
+	public abstract List<ActionEnum<P>> getPossibleActions(P player);
 
 	public abstract boolean gameOver();
 
@@ -42,15 +42,11 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 
 	public final void oneAction(boolean noUpdate, boolean singleAction) {
 		P currentPlayer = null;
-		List<ActionEnum<P>> options = null, startOptions = null, startStartOptions = null;
+		List<ActionEnum<P>> options = null;
 		Decider<P> decider = null;
-		Action<P> action = null, startAction = null, startStartAction = null;
+		Action<P> action = null;
 
 		do {
-			startStartOptions = startOptions;
-			startStartAction = startAction;
-			startOptions = options;
-			startAction = action;
 			if (action != null) {
 				// this occurs if we popped an action off the stack on the last iteration
 				// so we already have the action we wish to execute
@@ -63,7 +59,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 					action = decider.decide(currentPlayer, options);
 				} else {	// otherwise we get a new action
 					currentPlayer = getCurrentPlayer();
-					options = getPossibleCurrentActions();
+					options = getPossibleActions(currentPlayer);
 					decider = currentPlayer.getDecider();
 					action = decider.decide(currentPlayer, options);
 				}

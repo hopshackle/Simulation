@@ -79,7 +79,7 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 	}
 
 	@Override
-	public List<ActionEnum<TestAgent>> getPossibleCurrentActions() {
+	public List<ActionEnum<TestAgent>> getPossibleActions(TestAgent a) {
 		return allActions;
 	}
 
