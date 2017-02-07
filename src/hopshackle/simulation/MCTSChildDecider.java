@@ -7,8 +7,8 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 	private Decider<P> rolloutDecider;
 	private MonteCarloTree<P> tree;
 
-	public MCTSChildDecider(StateFactory<P> stateFactory, List<ActionEnum<P>> actions, MonteCarloTree<P> tree, Decider<P> rolloutDecider) {
-		super(stateFactory, actions);
+	public MCTSChildDecider(StateFactory<P> stateFactory, MonteCarloTree<P> tree, Decider<P> rolloutDecider) {
+		super(stateFactory);
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
 		boolean monteCarlo = SimProperties.getProperty("MonteCarloReward", "false").equals("true");
@@ -18,17 +18,10 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 	}
 
 	@Override
-	public ActionEnum<P> makeDecision(P decidingAgent) {
+	public ActionEnum<P> makeDecision(P decidingAgent, List<ActionEnum<P>> chooseableOptions) {
 		if (decidingAgent.isDead()) return null;
 
 		State<P> state = stateFactory.getCurrentState(decidingAgent);
-
-		if (chooseableOptions == null || chooseableOptions.isEmpty()) {
-			chooseableOptions = getChooseableOptions(decidingAgent);
-			//		decidingAgent.log("Using local list " + this);
-		} else {
-			//		decidingAgent.log("Using override option list");
-		}
 		if (chooseableOptions.isEmpty()) {
 			return null;
 		}

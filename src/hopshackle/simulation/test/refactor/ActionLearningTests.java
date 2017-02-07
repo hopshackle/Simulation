@@ -9,6 +9,7 @@ import org.junit.*;
 
 public class ActionLearningTests {
 	
+	static List<ActionEnum<TestAgent>> actionList = new ArrayList<ActionEnum<TestAgent>> (EnumSet.allOf(TestActionEnum.class));
 	World w;
 	List<TestAgent> allAgents = new ArrayList<TestAgent>();
 	TestActionFactory taf;
@@ -19,7 +20,7 @@ public class ActionLearningTests {
 	
 	@Before
 	public void setup() {
-		w = new World();
+		w = new World(new SimpleWorldLogic<TestAgent>(actionList));
 		for (int i = 0; i < 10; i++) {
 			allAgents.add(new TestAgent(w));
 		}

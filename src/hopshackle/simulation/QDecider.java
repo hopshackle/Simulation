@@ -6,8 +6,8 @@ public abstract class QDecider<A extends Agent> extends BaseDecider<A> {
 	
 	private boolean monteCarlo;
 
-	public <S extends State<A>> QDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions) {
-		super(stateFactory, actions);
+	public <S extends State<A>> QDecider(StateFactory<A> stateFactory) {
+		super(stateFactory);
 		monteCarlo = SimProperties.getProperty("MonteCarloReward", "false").equals("true");
 	}
 

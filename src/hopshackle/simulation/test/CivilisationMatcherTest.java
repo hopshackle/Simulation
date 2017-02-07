@@ -1,18 +1,23 @@
 package hopshackle.simulation.test;
 import static org.junit.Assert.*;
+
+import java.util.*;
+
 import hopshackle.simulation.*;
 import hopshackle.simulation.basic.*;
+
 import org.junit.*;
 public class CivilisationMatcherTest {
 	private World w;
 	private Hex[] locations;
 	private Agent testAgent, builder;
 	private ActionProcessor ap;
+	private List<ActionEnum<BasicAgent>> allActions = new ArrayList<ActionEnum<BasicAgent>>(EnumSet.allOf(BasicActions.class));
 	
 	@Before
 	public void setUp() {
 		ap = new ActionProcessor("test", false);
-		w = new World(ap, "test");
+		w = new World(ap, "test", new SimpleWorldLogic<BasicAgent>(allActions));
 		w.setCalendar(new FastCalendar(0l));
 		ap.start();
 		ap.setTestingMode(true);

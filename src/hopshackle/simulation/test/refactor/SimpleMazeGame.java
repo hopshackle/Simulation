@@ -9,6 +9,8 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 	int target = 0;
 	TestAgent player;
 	double[] reward = {0.0};
+	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
+
 
 	public SimpleMazeGame(int target, TestAgent player) {
 		this.target = target;
@@ -41,7 +43,7 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 	}
 	
 	public void oneMove() {
-		Action<?> action = player.getDecider().decide(player);
+		Action<?> action = player.getDecider().decide(player, HopshackleUtilities.convertList(allActions));
 		action.start();
 		action.run();
 	}
@@ -78,8 +80,7 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 
 	@Override
 	public List<ActionEnum<TestAgent>> getPossibleCurrentActions() {
-		Decider<TestAgent> decider = player.getDecider();
-		return decider.getChooseableOptions(player);
+		return allActions;
 	}
 
 	@Override

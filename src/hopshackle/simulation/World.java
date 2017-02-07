@@ -21,10 +21,15 @@ public class World extends Location {
 	private boolean isAlive = true;
 	private double lastTempPublished = 999;
 	private long actualEndOfWorldTime;
+	private Map<String, WorldLogic<?>> logicMap = new HashMap<String, WorldLogic<?>>();
 
-	public World(ActionProcessor ap, String suffix){
-		this(ap, suffix, 60000);
+	public World(ActionProcessor ap, String suffix, WorldLogic<?> logic){
+		this(ap, suffix, 60000, logic);
 		this.setLocationMap(new SquareMap(10, 10));
+	}
+	
+	public World() {
+		this(new SimpleWorldLogic<Agent>(null));
 	}
 
 	/**
@@ -39,8 +44,9 @@ public class World extends Location {
 	 * A convenience method without full functionality. For use primarily in unit-testing.
 	 * 
 	 */
-	public World() {
+	public World(WorldLogic<?> logic) {
 		super();
+		registerWorldLogic(logic, "AGENT");
 		MAX_POPULATION = Integer.valueOf(SimProperties.getProperty("MaxAgentPopulation", "10000"));
 		suffix = "dummy";
 		this.setName(suffix);
@@ -48,8 +54,8 @@ public class World extends Location {
 		initialiseTemperature(new Temperature(0, 0));
 	}
 
-	public World(ActionProcessor ap, String suffix, long end) {
-		this();
+	public World(ActionProcessor ap, String suffix, long end, WorldLogic<?> logic) {
+		this(logic);
 		this.setName(suffix);
 		actionProcessor = ap;
 		if (ap != null)
@@ -276,5 +282,14 @@ public class World extends Location {
 	@Override
 	public World getWorld() {
 		return this;
+	}
+	public <A extends Agent> void registerWorldLogic(WorldLogic<A> logic, String forAgentType) {
+		logicMap.put(forAgentType, logic);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <A extends Agent> WorldLogic<A> getWorldLogic(A agent) {
+		String key = agent.getType();
+		return (WorldLogic<A>) logicMap.get(key);
 	}
 }

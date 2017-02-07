@@ -1,7 +1,5 @@
 package hopshackle.simulation.test;
 
-import java.util.List;
-
 import hopshackle.simulation.*;
 import hopshackle.simulation.basic.*;
 
@@ -38,9 +36,8 @@ public class LinearStateTestLookahead implements State<BasicAgent> {
 
 class LookaheadTestDecider extends LookaheadDecider<BasicAgent> {
 
-	public LookaheadTestDecider(StateFactory<BasicAgent> stateFactory,
-			List<ActionEnum<BasicAgent>> actions) {
-		super(stateFactory, actions);
+	public LookaheadTestDecider(StateFactory<BasicAgent> stateFactory) {
+		super(stateFactory);
 	}
 
 	@Override

@@ -15,11 +15,12 @@ public class ActionProcessorTests {
 	List<TestAgent> allAgents = new ArrayList<TestAgent>();
 	TestActionFactory taf;
 	TestAgent one, two, three;
+	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	
 	@Before
 	public void setup() {
 		ap = new ActionProcessor("test", false);
-		w = new World(ap, "test");
+		w = new World(ap, "test", new SimpleWorldLogic<TestAgent>(allActions));
 		w.setCalendar(new FastCalendar(0l));
 		ap.start();
 		for (int i = 0; i < 10; i++) {

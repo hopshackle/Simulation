@@ -1,11 +1,9 @@
 package hopshackle.simulation;
 
-import java.util.ArrayList;
-
 public class StateGreedyDecider<A extends Agent> extends StateDecider<A> {
 
-	public StateGreedyDecider(StateFactory<A> stateFactory, ArrayList<ActionEnum<A>> actions) {
-		super(stateFactory, actions);
+	public StateGreedyDecider(StateFactory<A> stateFactory) {
+		super(stateFactory);
 	}
 	
 	@Override

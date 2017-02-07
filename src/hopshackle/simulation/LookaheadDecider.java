@@ -1,16 +1,9 @@
 package hopshackle.simulation;
 
-import java.util.*;
-
 public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
 
-	protected List<ActionEnum<A>> dummyActionSet;
-
-	@SuppressWarnings("unchecked")
-	public LookaheadDecider(StateFactory<A> stateFactory, List<ActionEnum<A>> actions) {
-		super(stateFactory, actions);
-		dummyActionSet = new ArrayList<ActionEnum<A>>();
-		dummyActionSet.add(DummyAction.DUMMY);
+	public LookaheadDecider(StateFactory<A> stateFactory) {
+		super(stateFactory);
 	}
 
 	@Override

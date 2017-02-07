@@ -25,6 +25,7 @@ public abstract class Agent extends Observable {
 	protected Location location;
 	protected World world;
 	protected Decider decider, doNothingDecider;
+	protected WorldLogic whatCanIDo;
 	protected ActionPlan actionPlan;
 	protected int generation;
 	protected boolean culled = false;
@@ -81,6 +82,7 @@ public abstract class Agent extends Observable {
 		children = new ArrayList<Long>();
 		listeners = new ArrayList<AgentListener>();
 		knowledgeOfLocations = new MapKnowledge(this);
+		whatCanIDo = world.getWorldLogic(this);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -96,9 +98,11 @@ public abstract class Agent extends Observable {
 	public void decide() {
 		if (getDecider() == null)
 			errorLogger.severe("No decider in Agent.decide() for " + this.toString());
-		if (!isDead() && getDecider() != null) {
+		if (whatCanIDo == null) 
+			errorLogger.severe("No WorldLogic in Agent.decide() for " + this.toString());
+		if (!isDead() && getDecider() != null && whatCanIDo != null) {
 			Decider decider = getDecider();
-			decider.decide(this);
+			decider.decide(this, whatCanIDo.getPossibleActions(this));
 		}
 	}
 
@@ -501,6 +505,12 @@ public abstract class Agent extends Observable {
 	}
 	public void setPolicy(Policy<?> newPolicy) {
 		policies.put(newPolicy.type, newPolicy);
+	}
+	public void setWorldLogic(WorldLogic<?> wl) {
+		whatCanIDo = wl;
+	}
+	public WorldLogic<?> getWorldLogic() {
+		return whatCanIDo;
 	}
 	public ActionPlan getActionPlan() {
 		return actionPlan;

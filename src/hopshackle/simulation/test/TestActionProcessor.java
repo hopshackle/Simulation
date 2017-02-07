@@ -2,16 +2,19 @@ package hopshackle.simulation.test;
 
 import static org.junit.Assert.assertTrue;
 import hopshackle.simulation.*;
+import hopshackle.simulation.basic.*;
 
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 public class TestActionProcessor {
 
+	private List<ActionEnum<BasicAgent>> allActions = new ArrayList<ActionEnum<BasicAgent>>(EnumSet.allOf(BasicActions.class));
 	private ActionProcessor ap;
 	World w;
 
 	public TestActionProcessor() {
 		ap = new ActionProcessor("test", false);
-		w = new World(ap, "test");
+		w = new World(ap, "test", new SimpleWorldLogic<BasicAgent>(allActions));
 		w.setCalendar(new FastCalendar(0l));
 		ap.start();
 		ap.setTestingMode(true);

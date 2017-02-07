@@ -16,7 +16,7 @@ public class TestHexMapFromWesnothFile {
 		File f = new File(baseDir + "\\maps", args[0]);
 		HexMap<Hex> map = new HexMap<Hex>(f, Hex.getHexFactory());
 		
-		World w = new World();
+		World w = new World(new SimpleWorldLogic<Agent>(null));
 		w.setLocationMap(map);
 		
 		JFrame frame = new JFrame("Test of Wesnoth Map");

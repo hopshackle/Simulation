@@ -11,11 +11,11 @@ public class SimpleMazeDecider extends BaseDecider<TestAgent> {
 	List<TestActionEnum> lastMoves = new ArrayList<TestActionEnum>();
 
 	public SimpleMazeDecider() {
-		super(new LinearStateFactory<TestAgent>(genVar), actionList);
+		super(new LinearStateFactory<TestAgent>(genVar));
 	}
 
 	@Override
-	public ActionEnum<TestAgent> makeDecision(TestAgent agent) {
+	public ActionEnum<TestAgent> makeDecision(TestAgent agent, List<ActionEnum<TestAgent>> options) {
 		TestActionEnum retValue = TestActionEnum.RIGHT;
 		if (lastMoves.size() < 2) {
 			retValue = TestActionEnum.LEFT;

@@ -17,9 +17,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	private static boolean reuseOldTree = SimProperties.getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
 	private static boolean debug = true;
 
-	public MCTSMasterDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions, 
-			Decider<A> rolloutDecider, Decider<A> opponentModel) {
-		super(stateFactory, actions);
+	public MCTSMasterDecider(StateFactory<A> stateFactory, Decider<A> rolloutDecider, Decider<A> opponentModel) {
+		super(stateFactory);
 		this.rolloutDecider = rolloutDecider;
 		this.opponentModel = opponentModel;
 	}
@@ -27,13 +26,13 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree) {
 		if (useAVDForRollout)
-			return new MCTSChildDecider<A>(stateFactory, actionSet, tree, new MCActionValueDecider<A>(tree, stateFactory, actionSet));
+			return new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory));
 		else 
-			return new MCTSChildDecider<A>(stateFactory, actionSet, tree, rolloutDecider);
+			return new MCTSChildDecider<A>(stateFactory, tree, rolloutDecider);
 	}
 
 	@Override
-	public ActionEnum<A> makeDecision(A agent) {
+	public ActionEnum<A> makeDecision(A agent, List<ActionEnum<A>> chooseableOptions) {
 		Game<A, ActionEnum<A>> game = agent.getGame();
 		int currentPlayer = game.getPlayerNumber(agent);
 		State<A> currentState = stateFactory.getCurrentState(agent);
@@ -77,10 +76,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		}
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(), new FollowOnEventFilter());
 		teacher.registerToERStream(erc);
-		//		if (optionsOverride != null)
-		//			System.out.println("MCTSMasterDecider spawning with optionsOverride: " + optionsOverride);
-		if (chooseableOptions == null || chooseableOptions.isEmpty())
-			chooseableOptions = getChooseableOptions(agent);
+
 		if (chooseableOptions.size() == 1) {
 			agent.log("Only one action possible...skipping MCTS");
 			return chooseableOptions.get(0);
@@ -96,7 +92,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			for (A player : clonedGame.getAllPlayers()) {
 				if (player != clonedAgent) {
 					if (useAVDForOpponent)
-						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory, this.actionSet));
+						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory));
 					else 
 						player.setDecider(opponentModel);
 				} else {

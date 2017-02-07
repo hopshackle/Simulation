@@ -172,7 +172,7 @@ public class RunBasicWorldGUI {
 
 		World w = new World(new ActionProcessor(runName, realTime), 
 				runName + "_" + iterationNumber,
-				((long)endTime) * 60l * 1000l);
+				((long)endTime) * 60l * 1000l, null);
 		w.initialiseMarket();
 		if (realTime) {
 			w.setCalendar(new RealtimeCalendar());

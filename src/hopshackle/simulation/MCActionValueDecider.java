@@ -7,8 +7,8 @@ public class MCActionValueDecider<A extends Agent> extends BaseDecider<A> {
 	private MonteCarloTree<A> tree;
 	private double actionTemperature = SimProperties.getPropertyAsDouble("MonteCarloActionValueDeciderTemperature", "0.00");
 	
-	public MCActionValueDecider(MonteCarloTree<A> tree, StateFactory<A> stateFactory, List<ActionEnum<A>> actions) {
-		super(stateFactory, actions);
+	public MCActionValueDecider(MonteCarloTree<A> tree, StateFactory<A> stateFactory) {
+		super(stateFactory);
 		this.tree = tree;
 		localDebug = false;
 	}

@@ -12,6 +12,7 @@ import org.junit.*;
 
 public class ActionPlanTests {
 	
+	static List<ActionEnum<TestAgent>> actionList = new ArrayList<ActionEnum<TestAgent>> (EnumSet.allOf(TestActionEnum.class));
 	World w;
 	List<TestAgent> allAgents = new ArrayList<TestAgent>();
 	List<Agent> emptyList = new ArrayList<Agent>();
@@ -22,7 +23,7 @@ public class ActionPlanTests {
 	
 	@Before
 	public void setup() {
-		w = new World();
+		w = new World(new SimpleWorldLogic<TestAgent>(actionList));
 		for (int i = 0; i < 10; i++) {
 			allAgents.add(new TestAgent(w));
 			allAgents.get(i).setPolicy(actionPolicy);

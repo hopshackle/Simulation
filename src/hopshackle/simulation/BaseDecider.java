@@ -13,7 +13,6 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	public static String newline = System.getProperty("line.separator");
-	protected List<ActionEnum<A>> actionSet = new ArrayList<ActionEnum<A>>();
 	protected String name = "DEFAULT";
 	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMinChance", "0.0");
@@ -25,13 +24,8 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	private static AtomicInteger idFountain = new AtomicInteger(0);
 	protected StateFactory<A> stateFactory;
 	private int id;
-	protected List<ActionEnum<A>> chooseableOptions;
 
-	public BaseDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions) {
-		if (actions != null) {
-			for (ActionEnum<A> ae : actions)
-				actionSet.add(ae);
-		}
+	public BaseDecider(StateFactory<A> stateFactory) {
 		this.stateFactory = stateFactory;
 		id = idFountain.incrementAndGet();
 	}
@@ -64,16 +58,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	@Override
 	public Action<A> decide(A decidingAgent, List<ActionEnum<A>> possibleActions) {
-//		decidingAgent.log("Setting override options " + possibleActions.size() + " in " + this);
-		chooseableOptions = possibleActions;
-		Action<A> retValue = decide(decidingAgent);
-		chooseableOptions = null;
-		return retValue;
-	}
-
-	@Override
-	public Action<A> decide(A decidingAgent) {
-		ActionEnum<A> decisionMade = makeDecision(decidingAgent);
+		ActionEnum<A> decisionMade = makeDecision(decidingAgent, possibleActions);
 		Action<A> action = null;
 		long chosenDuration = 0;
 		long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
@@ -85,7 +70,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			action = null;
 		} else {
 			AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, 
-					this, HopshackleUtilities.convertList(chooseableOptions));
+					this, HopshackleUtilities.convertList(possibleActions));
 			action.eventDispatch(learningEvent);
 			decidingAgent.actionPlan.addActionToAllPlans(action);
 		}
@@ -94,39 +79,20 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	@Override
 	public ActionEnum<A> makeDecision(A decidingAgent, List<ActionEnum<A>> options) {
-		chooseableOptions = options;
-		ActionEnum<A> retValue = makeDecision(decidingAgent);
-		chooseableOptions = null;
-		return retValue;
-	}
-
-	@Override
-	public ActionEnum<A> makeDecision(A decidingAgent) {
 		double temp = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		double explorationChance = (maxChanceOfRandomChoice - minChanceOfRandomChoice) * temp + minChanceOfRandomChoice;
-		return makeDecision(decidingAgent, explorationChance);
+		return makeDecision(decidingAgent, explorationChance, options);
 	}
 
 	@Override
-	public ActionEnum<A> getOptimalDecision(A decidingAgent) {
-		return makeDecision(decidingAgent, 0.0);
+	public ActionEnum<A> getOptimalDecision(A decidingAgent, List<ActionEnum<A>> options) {
+		return makeDecision(decidingAgent, 0.0, options);
 	}
 
-	protected ActionEnum<A> makeDecision(A decidingAgent, double explorationChance) {
+	protected ActionEnum<A> makeDecision(A decidingAgent, double explorationChance, List<ActionEnum<A>> chooseableOptions) {
 		if (decidingAgent.isDead()) return null;
 
 		ActionEnum<A> winningChoice = null;
-		/*
-		 * TODO: At some point I suspect I will move the selection of possible actions completely out of the Decider
-		 * As that should really be delegated elsewhere. At that point I can remove this hack with a temporary variable being set
-		 * to contain the list of actions if the override is being used
-		 */
-		if (chooseableOptions == null || chooseableOptions.isEmpty()) {
-			chooseableOptions = getChooseableOptions(decidingAgent);
-	//		decidingAgent.log("Using local list " + this);
-		} else {
-	//		decidingAgent.log("Using override option list");
-		}
 		if (chooseableOptions.isEmpty()) return null;
 
 		double chance = Math.random();
@@ -137,17 +103,6 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		}
 
 		return winningChoice;
-	}
-
-	@Override
-	public List<ActionEnum<A>> getChooseableOptions(A decidingAgent) {
-		List<ActionEnum<A>> retValue = new ArrayList<ActionEnum<A>>();
-		for (ActionEnum<A> option : actionSet) {
-			if (option.isChooseable(decidingAgent)) {
-				retValue.add(option);
-			}
-		}
-		return retValue;
 	}
 
 	protected ActionEnum<A> selectOption(List<ActionEnum<A>> optionList, A decidingAgent) {
@@ -269,21 +224,10 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 
 	@Override
-	public ActionEnum<A> decideWithoutLearning(A decidingAgent) {
-		return makeDecision(decidingAgent);
+	public ActionEnum<A> decideWithoutLearning(A decidingAgent, List<ActionEnum<A>> options) {
+		return makeDecision(decidingAgent, options);
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public <V extends ActionEnum<A>> List<V> getActions() {
-		return (List<V>) HopshackleUtilities.cloneList(actionSet);
-	}
-	public void setActions(List<? extends ActionEnum<A>> actionList) {
-		actionSet = new ArrayList<ActionEnum<A>>();
-		for (ActionEnum<A> ae : actionList) {
-			actionSet.add(ae);
-		}
-	}
 	@Override
 	public <V extends GeneticVariable<A>> List<V> getVariables() {
 		return stateFactory.getVariables();

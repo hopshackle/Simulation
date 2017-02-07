@@ -9,7 +9,6 @@ import org.junit.*;
 
 public class MCTSTest {
 	
-	List<ActionEnum<TestAgent>> actionList = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	List<GeneticVariable<TestAgent>> genVar = new ArrayList<GeneticVariable<TestAgent>>(EnumSet.allOf(TestGenVar.class));
 	StateFactory<TestAgent> factory = new LinearStateFactory<TestAgent>(genVar);
 	Decider<TestAgent> rolloutDecider = new SimpleMazeDecider();
@@ -38,7 +37,7 @@ public class MCTSTest {
 		MCStatistics.refresh();
 		ExperienceRecord.refreshProperties();
 		mazeGame = new SimpleMazeGame(2, agent);
-		masterDecider = new MCTSMasterDecider<TestAgent>(factory, actionList, rolloutDecider, null);
+		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, null);
 		agent.setDecider(masterDecider);
 		Dice.setSeed(6l);
 	}

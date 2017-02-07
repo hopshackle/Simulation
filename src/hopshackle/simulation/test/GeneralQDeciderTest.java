@@ -96,11 +96,11 @@ public class GeneralQDeciderTest {
 	@Test
 	public void teachingDecisionUpdatesWeights() {
 		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				decider.getChooseableOptions(testAgent));
+				actions);
 		exp.updateWithResults(2.0, decider.getCurrentState(testAgent));
 		w.setCurrentTime(1000l); // move forward before taking next action, so that discounting works
 		ExperienceRecord<Agent> exp2 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.LEFT.getAction(testAgent), 
-				decider.getChooseableOptions(testAgent));
+				actions);
 		exp.updateNextActions(exp2);
 		decider.learnFrom(exp, 10.0);
 		// reward of 2.0 versus an expected 0.0
@@ -114,7 +114,7 @@ public class GeneralQDeciderTest {
 		testAgent.addGold(-2.0);
 		exp2.updateWithResults(-2.0, decider.getCurrentState(testAgent));
 		ExperienceRecord<Agent> exp3 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				decider.getChooseableOptions(testAgent));
+				actions);
 		w.setCurrentTime(2000l); // move forward before taking next action, so that discounting works
 		exp2.updateNextActions(exp3);
 		decider.learnFrom(exp2, 10.0);
@@ -130,7 +130,7 @@ public class GeneralQDeciderTest {
 		testAgent.addGold(1.0);
 		exp3.updateWithResults(1.0, decider.getCurrentState(testAgent));
 		ExperienceRecord<Agent> exp4 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				decider.getChooseableOptions(testAgent));
+				actions);
 		exp3.updateNextActions(exp4);
 		decider.learnFrom(exp3, 10.0);
 		// prediction would be 0.4 from starting State
@@ -145,9 +145,9 @@ public class GeneralQDeciderTest {
 	@Test
 	public void teachingDecisionWithNoDifferenceDoesNotUpdateWeights() {
 		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				decider.getChooseableOptions(testAgent));
+				actions);
 		ExperienceRecord<Agent> exp2 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				decider.getChooseableOptions(testAgent));
+				actions);
 		exp.updateWithResults(0.0, decider.getCurrentState(testAgent));
 		exp.updateNextActions(exp2);
 		decider.learnFrom(exp, 10.0);
@@ -163,7 +163,7 @@ public class GeneralQDeciderTest {
 
 class TestLinearQDecider extends GeneralLinearQDecider<Agent> {
 
-	public TestLinearQDecider(List<? extends ActionEnum<Agent>> actions, List<GeneticVariable<Agent>> variables) {
+	public TestLinearQDecider(List<ActionEnum<Agent>> actions, List<GeneticVariable<Agent>> variables) {
 		super(new LinearStateFactory<Agent>(variables), actions);
 	}
 	

@@ -34,6 +34,7 @@ public class BasicMarriageTest {
 		baseDecider = new GeneralLinearQDecider<BasicAgent>(sf, actions);
 		ap = new TestActionProcessor();
 		world = ap.w;
+		world.registerWorldLogic(new SimpleWorldLogic<BasicAgent>(actions), "AGENT");
 		homeHex = new BasicHex(0, 0);
 		homeHex.setParentLocation(world);
 		maleAgent1 = createAgent(50, 20, true);

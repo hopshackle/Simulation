@@ -1,18 +1,18 @@
 package hopshackle.simulation;
 
-import java.util.ArrayList;
+import java.util.*;
 
 public class HardCodedDecider<A extends Agent> extends BaseDecider<A> {
 
 	private ActionEnum<A> hardCode;
 
 	public HardCodedDecider(ActionEnum<A> decision) {
-		super(null, new ArrayList<ActionEnum<A>>());
+		super(null);
 		hardCode = decision;
 	}
 	
 	@Override 
-	public ActionEnum<A> makeDecision(A decidingAgent) {
+	public ActionEnum<A> makeDecision(A decidingAgent, List<ActionEnum<A>> ignored) {
 		return hardCode;
 	}
 

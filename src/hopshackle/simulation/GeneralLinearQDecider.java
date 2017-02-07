@@ -7,10 +7,12 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 	protected double[][] weights;
 	protected int variableLength;
 	protected int actionLength;
+	protected List<ActionEnum<A>> actionSet;
 	public static String newline = System.getProperty("line.separator");
 
-	public GeneralLinearQDecider(StateFactory<A> stateFactory, List<? extends ActionEnum<A>> actions) {
-		super(stateFactory, actions);
+	public GeneralLinearQDecider(StateFactory<A> stateFactory, List<ActionEnum<A>> actions) {
+		super(stateFactory);
+		actionSet = actions;
 		actionLength = actionSet.size();
 		variableLength = stateFactory.getVariables().size();
 		weights = new double[actionLength][variableLength];

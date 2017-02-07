@@ -14,25 +14,18 @@ public interface Decider<A extends Agent> {
 	
 	public State<A> getCurrentState(A agent);
 
-	public Action<A> decide(A decidingAgent);
-	
 	public Action<A> decide(A decidingAgent, List<ActionEnum<A>> possibleActions);
 
-	public List<ActionEnum<A>> getChooseableOptions(A a);
+	public ActionEnum<A> decideWithoutLearning(A decidingAgent, List<ActionEnum<A>> possibleActions);
 
+	public ActionEnum<A> getOptimalDecision(A decidingAgent, List<ActionEnum<A>> possibleActions);
+	
+	public ActionEnum<A> makeDecision(A decidingAgent, List<ActionEnum<A>> possibleActions);
+	
 	public Decider<A> crossWith(Decider<A> decider);
 	
 	public void setName(String name);
 
 	public <V extends GeneticVariable<A>> List<V> getVariables();
 
-	public <V extends ActionEnum<A>> List<V> getActions();
-
-	public ActionEnum<A> decideWithoutLearning(A decidingAgent);
-
-	public ActionEnum<A> getOptimalDecision(A decidingAgent);
-
-	public ActionEnum<A> makeDecision(A decidingAgent);
-	
-	public ActionEnum<A> makeDecision(A decidingAgent, List<ActionEnum<A>> possibleActions);
 }

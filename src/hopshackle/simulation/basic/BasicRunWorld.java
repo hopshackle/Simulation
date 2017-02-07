@@ -194,6 +194,7 @@ public class BasicRunWorld {
 		actionsToUse.remove(BasicActions.FIND_WATER);
 
 		StateFactory<BasicAgent> stateFactory = new LinearStateFactory<BasicAgent>(variablesToUse);
+		w.registerWorldLogic(new SimpleWorldLogic<BasicAgent>(actionsToUse), "AGENT");
 		maleBasicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory, actionsToUse);
 		femaleBasicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory, actionsToUse);
 		

@@ -65,7 +65,7 @@ public class WorldHexMap extends SimpleAnimationPanel {
 	
 	public static void main(String[] args) {
 		HexMap<BasicHex> testMap = new HexMap<BasicHex>(5, 5, BasicHex.getHexFactory());
-		World w = new World();
+		World w = new World(new SimpleWorldLogic<Agent>(null));
 		w.setLocationMap(testMap);
 		JFrame frame = new JFrame("Test of Hex Map");
 

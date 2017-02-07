@@ -1,7 +1,5 @@
 package hopshackle.simulation;
 
-import java.util.*;
-
 public abstract class StateDecider<A extends Agent> extends QDecider<A> {
 
 	private String stateType;
@@ -9,8 +7,8 @@ public abstract class StateDecider<A extends Agent> extends QDecider<A> {
 	private double baseValue;
 	private double maxNoise, minNoise;
 
-	public StateDecider(StateFactory<A> stateFactory, ArrayList<ActionEnum<A>> actions){
-		super(stateFactory, actions);
+	public StateDecider(StateFactory<A> stateFactory){
+		super(stateFactory);
 		setStateType("DEFAULT");
 		pigeonHoles = 4;
 		baseValue = SimProperties.getPropertyAsDouble("StateBaseValue", "10000");

@@ -174,7 +174,7 @@ class TestDecider extends BaseDecider<TestAgent> {
 	}
 
 	public TestDecider() {
-		super(new LinearStateFactory<TestAgent>(gvList), actionList);
+		super(new LinearStateFactory<TestAgent>(gvList));
 	}
 
 	@Override
