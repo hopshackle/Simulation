@@ -2,7 +2,7 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
+public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements WorldLogic<P> {
 
 	protected Stack<Action<P>> actionStack = new Stack<Action<P>>(); 
 
@@ -54,10 +54,16 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 				// we have completed the last one, so pick a new action
 				if (!actionStack.isEmpty()) { // actionStack first, to complete interrupts and consequences
 					options = actionStack.peek().getNextOptions();
-					currentPlayer = actionStack.peek().getNextActor();
-					decider = currentPlayer.getDecider();
-					action = decider.decide(currentPlayer, options);
-				} else {	// otherwise we get a new action
+					if (options.isEmpty()) {
+						// then we take the followOnAction instead
+						action = nextFollowOnActionFromStack();
+					} else {
+						currentPlayer = actionStack.peek().getNextActor();
+						decider = currentPlayer.getDecider();
+						action = decider.decide(currentPlayer, options);
+					}
+				}
+				if (action == null) {	// otherwise we get a new action
 					currentPlayer = getCurrentPlayer();
 					options = getPossibleActions(currentPlayer);
 					decider = currentPlayer.getDecider();
@@ -73,9 +79,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 				if (actionStack.isEmpty()) {
 					action = null;
 				} else {
-					do {
-						action = actionStack.pop().getFollowOnAction();
-					} while (action == null && !actionStack.isEmpty());
+					action = nextFollowOnActionFromStack();
 				}
 			} else {
 				actionStack.push(action);
@@ -89,6 +93,14 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 			if (singleAction && action == null) break;
 
 		} while (action != null || !actionStack.isEmpty());
+	}
+
+	private Action<P> nextFollowOnActionFromStack() {
+		Action<P> retValue = null;
+		do {
+			retValue = actionStack.pop().getFollowOnAction();
+		} while (retValue == null && !actionStack.isEmpty());
+		return retValue;
 	}
 
 }
