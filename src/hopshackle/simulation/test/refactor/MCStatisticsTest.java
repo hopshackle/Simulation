@@ -134,7 +134,72 @@ public class MCStatisticsTest {
 	}
 	
 	@Test
+	public void qAndvMinVisits() {
+		SimProperties.setProperty("MonteCarloMinVisitsOnActionForQType", "1");
+		SimProperties.setProperty("MonteCarloMinVisitsOnActionForVType", "2");
+		MCStatistics.refresh();
+		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>();
+		tree.insertState(A, leftRightOnly);
+		tree.insertState(B, leftRightOnly);
+		tree.insertState(C, leftRightOnly);
+
+		// all updates on MC basis
+		tree.updateState(A, TestActionEnum.LEFT, C, 10);
+		tree.updateState(C, TestActionEnum.RIGHT, END, 10);
+		
+		assertEquals(tree.getStatisticsFor(A).getV(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(A).getQ(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getV(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getQ(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getV(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getQ(), 0.0, 0.01);
+		
+		// all updates still on MC basis
+		tree.updateState(A, TestActionEnum.RIGHT, B, 3);
+		tree.updateState(B, TestActionEnum.RIGHT, END, 3);
+		
+		// V on A now at min Visits, and so is Q (1 for each action)
+		assertEquals(tree.getStatisticsFor(A).getV(), 6.5, 0.01);
+		assertEquals(tree.getStatisticsFor(A).getQ(), 10.0, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getV(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getQ(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getV(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getQ(), 0.0, 0.01);
+		
+		// all updates on MC basis (as A is only state that meets criteria, and nothing transitions to it)
+		tree.updateState(A, TestActionEnum.LEFT, B, 4);
+		tree.updateState(B, TestActionEnum.RIGHT, END, 4);
+			
+		// A retains full Q, V calculations (but all updates used MC)
+		// B is now clear for V, but not yet for Q
+		assertEquals(tree.getStatisticsFor(A).getV(), 5.667, 0.01);
+		assertEquals(tree.getStatisticsFor(A).getQ(), 7.0, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getV(), 3.5, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getQ(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getV(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getQ(), 0.0, 0.01);
+		
+		// update for A -> B is now MC for Q, but V for V
+		tree.updateState(A, TestActionEnum.LEFT, B, 6);
+		tree.updateState(B, TestActionEnum.LEFT, END, 6);
+		tree.insertState(END, leftRightOnly);
+			
+		assertEquals(tree.getStatisticsFor(A).getV(), 5.125, 0.01);
+		assertEquals(tree.getStatisticsFor(A).getQ(), 6.667, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getV(), 4.333, 0.01);
+		assertEquals(tree.getStatisticsFor(B).getQ(), 6.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getV(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(C).getQ(), 0.0, 0.01);
+		assertEquals(tree.getStatisticsFor(END).getV(), 0, 0.01);
+		assertEquals(tree.getStatisticsFor(END).getQ(), 0, 0.01);
+	}
+	
+
+	@Test
 	public void qAndvUpdated() {
+		SimProperties.setProperty("MonteCarloMinVisitsOnActionForQType", "0");
+		SimProperties.setProperty("MonteCarloMinVisitsOnActionForVType", "0");
+		MCStatistics.refresh();
 		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>();
 		tree.insertState(A, leftRightOnly);
 		tree.insertState(B, leftRightOnly);

@@ -61,6 +61,7 @@ public class MCTreeTest {
 		world = new World();
 		agent = new TestAgent(world);
 		SimProperties.setProperty("MonteCarloUCTC", "1");
+		MCStatistics.refresh();
 	}
 
 	@Test

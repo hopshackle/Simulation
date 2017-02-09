@@ -13,16 +13,25 @@ public class MCStatistics<P extends Agent> {
 	private static double C = SimProperties.getPropertyAsDouble("MonteCarloUCTC", "1.0");
 	private static double actionWeight = SimProperties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
 	private static String UCTType = SimProperties.getProperty("MonteCarloUCTType", "MC");
+	private static int minVisitsForQ = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
+	private static int minVisitsForV = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
+	private static int visitLimit = SimProperties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
 
 	public MCStatistics(List<ActionEnum<P>> possibleActions) {
 		this(possibleActions, new MonteCarloTree<P>());
 	}
 	public MCStatistics(List<ActionEnum<P>> possibleActions, MonteCarloTree<P> tree) {
 		allActions = HopshackleUtilities.cloneList(possibleActions);
+		for (ActionEnum<P> a : possibleActions) {
+			map.put(a.toString(), new MCData(a.toString(), 0, 0, visitLimit));
+		}
 		this.tree = tree;
 	}
 	public static void refresh() {
 		actionWeight = SimProperties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
+		minVisitsForQ = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
+		minVisitsForV = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
+		visitLimit = SimProperties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
 	}
 	public void update(ActionEnum<P> action, double reward) {
 		update(action, new State<P>() {
@@ -52,6 +61,8 @@ public class MCStatistics<P extends Agent> {
 			MCStatistics<P> nextStateStats = tree.getStatisticsFor(nextState);
 			V = nextStateStats.getV();
 			Q = nextStateStats.getQ();
+			if (V < 0.001) V = reward;
+			if (Q < 0.001) Q = reward;
 		}
 		if (map.containsKey(key)) {
 			MCData old = map.get(key);
@@ -96,7 +107,7 @@ public class MCStatistics<P extends Agent> {
 		}
 	}
 	public double getV() {
-		if (totalVisits == 0) return 0.0;
+		if (totalVisits < minVisitsForV || totalVisits == 0) return 0.0;
 		double V = 0.0;
 		for (String actionKey : map.keySet()) {
 			MCData data = map.get(actionKey);
@@ -106,20 +117,31 @@ public class MCStatistics<P extends Agent> {
 	}
 	public double getQ() {
 		if (totalVisits == 0) return 0.0;
+		int minVisits = minVisitsForQ;
 		double Q = 0.0;
 		for (String actionKey : map.keySet()) {
 			MCData data = map.get(actionKey);
 			if (data.Q > Q) Q = data.Q;
+			if (data.visits < minVisits) minVisits = data.visits;
 		}
+		if (minVisits < minVisitsForQ) Q = 0.0;
 		return Q;
+	}
+
+	private boolean hasActionBeenTried(ActionEnum<P> action) {
+		if (!map.containsKey(action.toString())) {
+			addAction(action);
+			return false;
+		} else {
+			if (map.get(action.toString()).visits == 0)
+				return false;
+		}
+		return true;
 	}
 
 	public boolean hasUntriedAction(List<ActionEnum<P>> availableActions) {
 		for (ActionEnum<P> action : availableActions) {
-			if (!map.containsKey(action.toString())) {
-				addAction(action);
-				return true;
-			}
+			if (!hasActionBeenTried(action)) return true;
 		}
 		return false;
 	}
@@ -127,10 +149,7 @@ public class MCStatistics<P extends Agent> {
 	public ActionEnum<P> getRandomUntriedAction(List<ActionEnum<P>> availableActions) {
 		List<ActionEnum<P>> untried = new ArrayList<ActionEnum<P>>();
 		for (ActionEnum<P> action : availableActions) {
-			if (!map.containsKey(action.toString())) {
-				untried.add(action);
-				addAction(action);
-			}
+			if (!hasActionBeenTried(action)) untried.add(action);
 		}
 		if (untried.isEmpty())
 			throw new AssertionError("Cannot call getRandomUntriedAction is there aren't any");
