@@ -8,7 +8,6 @@ public class MonteCarloTree<P extends Agent> {
 	private Map<String, MCStatistics<P>> tree;
 	private int updatesLeft;
 	private Map<String, MCData> actionValues;
-	private int visitLimit = SimProperties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
 
 	public MonteCarloTree() {
 		tree = new HashMap<String, MCStatistics<P>>();
@@ -52,7 +51,7 @@ public class MonteCarloTree<P extends Agent> {
 		if (actionValues.containsKey(actionAsString)) {
 			actionValues.put(actionAsString, new MCData(actionValues.get(actionAsString), reward));
 		} else {
-			actionValues.put(actionAsString, new MCData(actionAsString, 1, reward, visitLimit));
+			actionValues.put(actionAsString, new MCData(actionAsString, reward));
 		}
 	}
 

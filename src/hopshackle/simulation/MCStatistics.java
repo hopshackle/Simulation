@@ -15,7 +15,6 @@ public class MCStatistics<P extends Agent> {
 	private static String UCTType = SimProperties.getProperty("MonteCarloUCTType", "MC");
 	private static int minVisitsForQ = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
 	private static int minVisitsForV = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
-	private static int visitLimit = SimProperties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
 
 	public MCStatistics(List<ActionEnum<P>> possibleActions) {
 		this(possibleActions, new MonteCarloTree<P>());
@@ -23,7 +22,7 @@ public class MCStatistics<P extends Agent> {
 	public MCStatistics(List<ActionEnum<P>> possibleActions, MonteCarloTree<P> tree) {
 		allActions = HopshackleUtilities.cloneList(possibleActions);
 		for (ActionEnum<P> a : possibleActions) {
-			map.put(a.toString(), new MCData(a.toString(), 0, 0, visitLimit));
+			map.put(a.toString(), new MCData(a.toString()));
 		}
 		this.tree = tree;
 	}
@@ -31,7 +30,7 @@ public class MCStatistics<P extends Agent> {
 		actionWeight = SimProperties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
 		minVisitsForQ = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
 		minVisitsForV = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
-		visitLimit = SimProperties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
+		MCData.refresh();
 	}
 	public void update(ActionEnum<P> action, double reward) {
 		update(action, new State<P>() {
@@ -68,7 +67,7 @@ public class MCStatistics<P extends Agent> {
 			MCData old = map.get(key);
 			map.put(key, new MCData(old, reward, V, Q));
 		} else {
-			map.put(key, new MCData(key, 1, reward));
+			map.put(key, new MCData(key, reward));
 		}
 		totalVisits++;
 	}
@@ -107,7 +106,11 @@ public class MCStatistics<P extends Agent> {
 		}
 	}
 	public double getV() {
-		if (totalVisits < minVisitsForV || totalVisits == 0) return 0.0;
+		if (MCData.useBaseValue) {
+			if (totalVisits == 0) return MCData.baseValue;
+		} else {
+			if (totalVisits < minVisitsForV || totalVisits == 0) return 0.0;
+		}
 		double V = 0.0;
 		for (String actionKey : map.keySet()) {
 			MCData data = map.get(actionKey);
@@ -116,8 +119,13 @@ public class MCStatistics<P extends Agent> {
 		return V / (double) totalVisits;
 	}
 	public double getQ() {
-		if (totalVisits == 0) return 0.0;
 		int minVisits = minVisitsForQ;
+		if (MCData.useBaseValue) {
+			if (totalVisits == 0) return MCData.baseValue;
+			minVisitsForQ = 0;
+		} else {
+			if (totalVisits == 0) return 0.0;
+		}
 		double Q = 0.0;
 		for (String actionKey : map.keySet()) {
 			MCData data = map.get(actionKey);
@@ -240,24 +248,42 @@ public class MCStatistics<P extends Agent> {
 }
 
 class MCData implements Comparable<MCData> {
+
+	private static double alpha = SimProperties.getPropertyAsDouble("Alpha", "0.05");
+	protected static double baseValue = SimProperties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
+	protected static boolean useBaseValue = SimProperties.getProperty("MonteCarloRL", "false").equals("true");
+	private static int visitLimit = SimProperties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
+	static {
+		if (visitLimit < 1) visitLimit = Integer.MAX_VALUE;
+		if (!useBaseValue) baseValue = 0.0;
+	}
+
+	public static void refresh() {
+		alpha = SimProperties.getPropertyAsDouble("Alpha", "0.05");
+		baseValue = SimProperties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
+		useBaseValue = SimProperties.getProperty("MonteCarloRL", "false").equals("true");
+		visitLimit = SimProperties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
+	}
+
 	double mean, Q, V;
 	int visits;
-	int limit;
+	int limit = visitLimit;
 	String key;
 
-	public MCData(String key, int n, double r, int limit) {
+	public MCData(String key) {
+		this(key, 0, baseValue);
+	}
+
+	public MCData(String key, double r) {
+		this(key, 1, r);
+	}
+
+	private MCData(String key, int n, double r) {
+		this.key = key;
 		visits = n;
 		mean = r;
 		Q = r;
 		V = r;
-		this.key = key;
-		this.limit = limit;
-		if (this.limit < 1) 
-			this.limit = Integer.MAX_VALUE;
-	}
-
-	public MCData(String key, int n, double r) {
-		this(key, n, r, 0);
 	}
 
 	public MCData(MCData old, double r) {
@@ -270,8 +296,13 @@ class MCData implements Comparable<MCData> {
 		visits = old.visits + 1;
 		if (visits > limit) visits = limit;
 		mean = old.mean + (r - old.mean) / (double) visits;
-		this.V = old.V + (V - old.V) / (double) visits;
-		this.Q = old.Q + (Q - old.Q) / (double) visits;
+		if (useBaseValue) {
+			this.V = (1.0 - alpha) * old.V + alpha * V;
+			this.Q = (1.0 - alpha) * old.Q + alpha * Q;
+		} else {
+			this.V = old.V + (V - old.V) / (double) visits;
+			this.Q = old.Q + (Q - old.Q) / (double) visits;
+		}
 	}
 
 	@Override
