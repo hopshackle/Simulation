@@ -5,12 +5,12 @@ import java.util.logging.Logger;
 
 public class EntityLog {
 
-	protected static String logDir = SimProperties.getProperty("LogDirectory", "C:\\Simulation");
+	public static String logDir = SimProperties.getProperty("LogDirectory", "C:\\Simulation");
 	protected static boolean logUsingDate = SimProperties.getProperty("LogUsingDate", "false").equals("true");
+	public static String newline = System.getProperty("line.separator");
 	protected static Logger errorLogger = Logger.getLogger("hopshackle.simulation");
 	protected File logFile;
 	protected boolean logFileOpen;
-	public static String newline = System.getProperty("line.separator");
 	protected FileWriter logWriter;
 	protected World world;
 	private long birth;

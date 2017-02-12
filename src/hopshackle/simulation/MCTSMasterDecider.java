@@ -109,10 +109,22 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 		// Then we look at the statistics in the tree for the current state to make a decision
 		agent.log(tree.getStatisticsFor(currentState).toString());
+		
+		String logFile = agent.toString() + "_" + agent.getWorld().getCurrentTime() + ".log";
+		tree.exportToFile(logFile, currentState.getAsString());
+		
+		agent.log("Now Sweeping...");
+		for (int i = 0; i < 10; i++) {
+			tree.sweep();
+		};
+		agent.log(tree.getStatisticsFor(currentState).toString());
+		
 		ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions);
 		if (best == null) {
 			throw new AssertionError("No action chosen");
 		}
+
+		
 		treeMap.put(agent, tree);
 		return best;
 	}

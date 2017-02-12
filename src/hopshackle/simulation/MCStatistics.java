@@ -7,7 +7,7 @@ public class MCStatistics<P extends Agent> {
 	private List<ActionEnum<P>> allActions;
 	private MonteCarloTree<P> tree;
 	private Map<String, MCData> map = new HashMap<String, MCData>();
-	private Map<String, Set<String>> successorStatesByAction = new HashMap<String, Set<String>>();
+	private Map<String, Map<String, Integer>> successorStatesByAction = new HashMap<String, Map<String, Integer>>();
 	private int totalVisits = 0;
 
 	private static double C = SimProperties.getPropertyAsDouble("MonteCarloUCTC", "1.0");
@@ -32,44 +32,56 @@ public class MCStatistics<P extends Agent> {
 		minVisitsForV = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
 		MCData.refresh();
 	}
-	public void update(ActionEnum<P> action, double reward) {
-		update(action, new State<P>() {
-			public double[] getAsArray() {return new double[0];}
-			public String getAsString() {return "UNKNOWN";}
-			public State<P> apply(ActionEnum<P> proposedAction) {return this;}
-			public State<P> clone() {return this;}
-		}, reward);
+
+	public void updateExcludingVisits(ActionEnum<P> action, double reward) {
+		update(action, null, reward, false);
 	}
+
+	public void update(ActionEnum<P> action, double reward) {
+		update(action, null, reward, true);
+	}
+	
 	public void update(ActionEnum<P> action, State<P> nextState, double reward) {
-		boolean nextStateInTree = tree.containsState(nextState);
+		update(action, nextState, reward, true);
+	}
+
+	private void update(ActionEnum<P> action, State<P> nextState, double reward, boolean incrementVisits) {
 		double V = reward;
 		double Q = reward;
 		if (!allActions.contains(action)) {
 			addAction(action);
 		}
 		String key = action.toString();
-		Set<String> currentStates = successorStatesByAction.get(key);
+		Map<String, Integer> currentStates = successorStatesByAction.get(key);
 		if (currentStates == null) {
-			currentStates = new HashSet<String>();
+			currentStates = new HashMap<String, Integer>();
 			successorStatesByAction.put(key, currentStates);
 		}
-		if (!currentStates.contains(nextState)) {
-			currentStates.add(nextState.getAsString());
-		}
-		if (nextStateInTree) {
-			MCStatistics<P> nextStateStats = tree.getStatisticsFor(nextState);
-			V = nextStateStats.getV();
-			Q = nextStateStats.getQ();
-			if (V < 0.001) V = reward;
-			if (Q < 0.001) Q = reward;
+		if (nextState != null) {
+			boolean nextStateInTree = tree.containsState(nextState);
+			String nextStateAsString = nextState.getAsString();
+			if (!currentStates.containsKey(nextStateAsString)) {
+				currentStates.put(nextStateAsString, 1);
+			} else {
+				currentStates.put(nextStateAsString, currentStates.get(nextStateAsString) + 1);
+			}
+			if (nextStateInTree) {
+				MCStatistics<P> nextStateStats = tree.getStatisticsFor(nextState);
+				V = nextStateStats.getV();
+				Q = nextStateStats.getQ();
+				if (V < 0.001) V = reward;
+				if (Q < 0.001) Q = reward;
+			}
 		}
 		if (map.containsKey(key)) {
 			MCData old = map.get(key);
-			map.put(key, new MCData(old, reward, V, Q));
-		} else {
+			MCData newMCD =  new MCData(old, reward, V, Q);
+			if (!incrementVisits) newMCD.visits -= 1;
+			map.put(key, newMCD);
+		} else if (incrementVisits) {
 			map.put(key, new MCData(key, reward));
 		}
-		totalVisits++;
+		if (incrementVisits) totalVisits++;
 	}
 	private void addAction(ActionEnum<P> newAction) {
 		if (!allActions.contains(newAction))
@@ -79,10 +91,14 @@ public class MCStatistics<P extends Agent> {
 		return allActions;
 	}
 
+	public Map<String, Integer> getSuccessorStatesFrom(ActionEnum<P> action) {
+		return successorStatesByAction.getOrDefault(action.toString(), new HashMap<String, Integer>());
+	}
+
 	public Set<String> getSuccessorStates() {
 		Set<String> successors = new HashSet<String>();
-		for (Set<String> states : successorStatesByAction.values()) {
-			successors.addAll(states);
+		for (Map<String, Integer> states : successorStatesByAction.values()) {
+			successors.addAll(states.keySet());
 		}
 		return successors;
 	}
@@ -196,6 +212,12 @@ public class MCStatistics<P extends Agent> {
 				output = String.format("\t%s\t%s\n", k, map.get(k).toString());
 			}
 			retValue.append(output);
+			Map<String, Integer> successors = successorStatesByAction.getOrDefault(k, new HashMap<String, Integer>());
+			for (String succKey : successors.keySet()) {
+				if (tree.stateRef(succKey) != "") {
+					retValue.append(String.format("\t\tState %s transitioned to %d times\n", tree.stateRef(succKey), successors.get(succKey)));
+				}
+			}
 		}
 		for (ActionEnum<P> action : allActions) {
 			String key = action.toString();
@@ -294,14 +316,14 @@ class MCData implements Comparable<MCData> {
 		this.key = old.key;
 		limit = old.limit;
 		visits = old.visits + 1;
-		if (visits > limit) visits = limit;
-		mean = old.mean + (r - old.mean) / (double) visits;
+		double effectiveVisits = (visitLimit > visits) ? visits : visitLimit;
+		mean = old.mean + (r - old.mean) / effectiveVisits;
 		if (useBaseValue) {
 			this.V = (1.0 - alpha) * old.V + alpha * V;
 			this.Q = (1.0 - alpha) * old.Q + alpha * Q;
 		} else {
-			this.V = old.V + (V - old.V) / (double) visits;
-			this.Q = old.Q + (Q - old.Q) / (double) visits;
+			this.V = old.V + (V - old.V) / effectiveVisits;
+			this.Q = old.Q + (Q - old.Q) / effectiveVisits;
 		}
 	}
 

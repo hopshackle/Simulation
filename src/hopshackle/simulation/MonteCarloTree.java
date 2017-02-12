@@ -1,10 +1,14 @@
 package hopshackle.simulation;
 
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MonteCarloTree<P extends Agent> {
 
+	private static String UCTType = SimProperties.getProperty("MonteCarloUCTType", "MC");
+
+	private Map<String, String> stateRefs = new HashMap<String, String>();
 	private Map<String, MCStatistics<P>> tree;
 	private int updatesLeft;
 	private Map<String, MCData> actionValues;
@@ -16,6 +20,7 @@ public class MonteCarloTree<P extends Agent> {
 
 	public void reset() {
 		tree.clear();
+		stateRefs.clear();
 		// leave actionValues unchanged
 	}
 
@@ -39,6 +44,32 @@ public class MonteCarloTree<P extends Agent> {
 			return;
 		tree.put(stateAsString, new MCStatistics<P>(actions, this));
 		updatesLeft--;
+	}
+
+	public void sweep() {
+		// we run through each state, a random action from that state, and a random successor state for that action
+		// and then run an update (with no reward)
+		if (UCTType.equals("MC")) return;
+		String[] allStates = tree.keySet().toArray(new String[0]);
+		for (int i = 0; i < allStates.length; i++) {
+			String startState = allStates[i];
+			MCStatistics<P> startStateStats = tree.get(startState);
+			for (ActionEnum<P> action : startStateStats.getPossibleActions()) {
+				Map<String, Integer> successorMap = startStateStats.getSuccessorStatesFrom(action);
+				double target = 0.0;
+				for (String successorStateString : successorMap.keySet()) {
+					double stateVisits = successorMap.get(successorStateString);
+					MCStatistics<P> successorStats = tree.get(successorStateString);
+					if (successorStats == null) continue;
+					if (UCTType.equals("Q")) 
+						target += stateVisits * successorStats.getQ();
+					if (UCTType.equals("V")) 
+						target += stateVisits * successorStats.getV();
+					target = target / (double) successorStats.getVisits();
+				}
+				startStateStats.updateExcludingVisits(action, target);
+			}
+		}
 	}
 
 	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double reward) {
@@ -101,7 +132,6 @@ public class MonteCarloTree<P extends Agent> {
 			Add all child states of state to statesToCopy
 			Add state to new Tree
 		 */
-
 		Map<String, MCStatistics<P>> newTree = new HashMap<String, MCStatistics<P>>();
 		Queue<String> q = new LinkedBlockingQueue<String>();
 		Set<String> processed = new HashSet<String>();
@@ -138,5 +168,48 @@ public class MonteCarloTree<P extends Agent> {
 			}
 		}
 		return retValue.toString();
+	}
+
+	protected String stateRef(String stateDescription) {
+		return stateRefs.getOrDefault(stateDescription, "");
+	}
+
+	public void exportToFile(String fileName, String fromRoot) {
+		File logFile = new File(EntityLog.logDir + File.separator + fileName + ".txt");
+		try {
+			FileWriter logWriter = new FileWriter(logFile, true);
+			logWriter.write("Monte Carlo Tree with " + tree.size() + " states.\n");
+
+			Queue<String> q = new LinkedBlockingQueue<String>();
+
+			Set<String> processed = new HashSet<String>();
+			q.add(fromRoot);
+			stateRefs.put(fromRoot, "1");
+			int refCount = 1;
+			do {
+				String state = q.poll();
+				processed.add(state);
+				MCStatistics<P> toCopy = tree.get(state);
+				if (toCopy != null) {
+					for (String successor : toCopy.getSuccessorStates())
+						if (tree.containsKey(successor) && !processed.contains(successor) && !q.contains(successor)) {
+							if (!stateRefs.containsKey(successor)) {
+								refCount++;
+								stateRefs.put(successor, String.valueOf(refCount));
+								q.add(successor);
+							}
+						}
+					logWriter.write("--------------------------------------" + EntityLog.newline);
+					logWriter.write("State Reference: " + stateRef(state) + EntityLog.newline);
+					logWriter.write(toCopy.toString() + EntityLog.newline);
+				}
+			} while (!q.isEmpty());
+			stateRefs.clear();
+			logWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return;
+		} finally {
+		}
 	}
 }
