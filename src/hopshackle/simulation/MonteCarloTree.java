@@ -3,24 +3,37 @@ package hopshackle.simulation;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MonteCarloTree<P extends Agent> {
 
 	private static String UCTType = SimProperties.getProperty("MonteCarloUCTType", "MC");
 
-	private Map<String, String> stateRefs = new HashMap<String, String>();
+	private Map<String, Integer> stateRefs = new HashMap<String, Integer>();
 	private Map<String, MCStatistics<P>> tree;
 	private int updatesLeft;
 	private Map<String, MCData> actionValues;
+	private static AtomicLong idFountain = new AtomicLong(1);
+	private int nextRef = 1;
+	private long id;
+	private EntityLog entityLogger;
+	protected boolean debug = false;
 
 	public MonteCarloTree() {
 		tree = new HashMap<String, MCStatistics<P>>();
 		actionValues = new HashMap<String, MCData>();
+		id = idFountain.getAndIncrement();
 	}
 
 	public void reset() {
 		tree.clear();
 		stateRefs.clear();
+		if (entityLogger != null) {
+			entityLogger.close();
+			entityLogger = null;
+		}
+		id = idFountain.getAndIncrement();
+		nextRef = 1;
 		// leave actionValues unchanged
 	}
 
@@ -43,6 +56,8 @@ public class MonteCarloTree<P extends Agent> {
 		if (tree.containsKey(stateAsString))
 			return;
 		tree.put(stateAsString, new MCStatistics<P>(actions, this));
+		stateRefs.put(stateAsString, nextRef);
+		nextRef++;
 		updatesLeft--;
 	}
 
@@ -67,16 +82,22 @@ public class MonteCarloTree<P extends Agent> {
 						target += stateVisits * successorStats.getV();
 					target = target / (double) successorStats.getVisits();
 				}
-				startStateStats.updateExcludingVisits(action, target);
+				startStateStats.updateAsSweep(action, target);
 			}
 		}
 	}
 
 	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double reward) {
 		String stateAsString = state.getAsString();
+		if (debug) log(String.format("Updating State %s to State %s with Action %s and reward %.2f", stateRef(stateAsString), stateRef(nextState.getAsString()), action.toString(), reward));
 		if (tree.containsKey(stateAsString)) {
 			MCStatistics<P> stats = tree.get(stateAsString);
+			if (debug) log(String.format("Before update: MC:%.2f\tV:%.2f\tQ:%.2f", stats.getMean(action), stats.getV(), stats.getQ()));
 			stats.update(action, nextState, reward);
+			if (debug) log(String.format("After update: MC:%.2f\tV:%.2f\tQ:%.2f", stats.getMean(action), stats.getV(), stats.getQ()));
+			if (debug) log("");
+		} else {
+			if (debug) log("State not yet in tree");
 		}
 		String actionAsString = action.toString();
 		if (actionValues.containsKey(actionAsString)) {
@@ -171,7 +192,14 @@ public class MonteCarloTree<P extends Agent> {
 	}
 
 	protected String stateRef(String stateDescription) {
-		return stateRefs.getOrDefault(stateDescription, "");
+		return stateRefs.getOrDefault(stateDescription, 0).toString();
+	}
+
+	public void log(String s) {
+		if (entityLogger == null) {
+			entityLogger = new EntityLog("MCTree_" + id, null);
+		}
+		entityLogger.log(s);
 	}
 
 	public void exportToFile(String fileName, String fromRoot) {
@@ -184,8 +212,6 @@ public class MonteCarloTree<P extends Agent> {
 
 			Set<String> processed = new HashSet<String>();
 			q.add(fromRoot);
-			stateRefs.put(fromRoot, "1");
-			int refCount = 1;
 			do {
 				String state = q.poll();
 				processed.add(state);
@@ -193,18 +219,13 @@ public class MonteCarloTree<P extends Agent> {
 				if (toCopy != null) {
 					for (String successor : toCopy.getSuccessorStates())
 						if (tree.containsKey(successor) && !processed.contains(successor) && !q.contains(successor)) {
-							if (!stateRefs.containsKey(successor)) {
-								refCount++;
-								stateRefs.put(successor, String.valueOf(refCount));
-								q.add(successor);
-							}
+							q.add(successor);
 						}
 					logWriter.write("--------------------------------------" + EntityLog.newline);
 					logWriter.write("State Reference: " + stateRef(state) + EntityLog.newline);
 					logWriter.write(toCopy.toString() + EntityLog.newline);
 				}
 			} while (!q.isEmpty());
-			stateRefs.clear();
 			logWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -9,6 +9,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 
 	public MCTSChildDecider(StateFactory<P> stateFactory, MonteCarloTree<P> tree, Decider<P> rolloutDecider) {
 		super(stateFactory);
+		localDebug = false;
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
 		boolean monteCarlo = SimProperties.getProperty("MonteCarloReward", "false").equals("true");
@@ -45,15 +46,17 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 	public void learnFrom(ExperienceRecord<P> exp, double maxResult) {
 		// 'Learning' in this context means updating the MonteCarloTree
 		if (tree.containsState(exp.getStartState())) {
-			tree.updateState(exp.getStartState(), exp.getActionTaken().actionType, exp.getEndState(), exp.getReward());
-			if (tree.updatesLeft() > 0 && !exp.isFinalState) {
+			if (!tree.containsState(exp.getEndState()) && tree.updatesLeft() > 0 && !exp.isFinalState) {
+				// this will insert the state, so that the update will use the base value...the s', a, s'' update
+				// will then update this state using the reward
 				tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
 			}
+			tree.updateState(exp.getStartState(), exp.getActionTaken().actionType, exp.getEndState(), exp.getReward());
 		} else if (tree.updatesLeft() > 0) {
 			throw new AssertionError("Tree should contain previous state");
 		}
-		// This relies on us going forward through the ER (if backwards, then we still insert the additional state, 
-		// but do not update its statistics
+		// This relies on us going forward through the ER (if backwards, then we will error as state is not found, and we
+		// have updates left).
 	}
 
 	public Decider<P> getRolloutDecider() {

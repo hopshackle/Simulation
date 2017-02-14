@@ -15,7 +15,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	private static boolean useAVDForRollout = SimProperties.getProperty("MonteCarloActionValueRollout", "false").equals("true");
 	private static boolean useAVDForOpponent = SimProperties.getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
 	private static boolean reuseOldTree = SimProperties.getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
-	private static boolean debug = true;
+	private static String sweepMethodology = SimProperties.getProperty("MonteCarloSweep", "terminal");
+	private static int sweepIterations = SimProperties.getPropertyAsInteger("MonteCarloSweepIterations", "0");
+	private static boolean debug = false;
 
 	public MCTSMasterDecider(StateFactory<A> stateFactory, Decider<A> rolloutDecider, Decider<A> opponentModel) {
 		super(stateFactory);
@@ -54,7 +56,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 				}
 			});
 		}
-		MonteCarloTree<A> tree = treeMap.getOrDefault(agent, new MonteCarloTree<A>());
+		MonteCarloTree<A> tree = treeMap.get(agent);
+		if (tree == null) tree = new MonteCarloTree<A>();
 		if (reuseOldTree) {
 			int before = tree.numberOfStates();
 			tree.pruneTree(currentState.getAsString());
@@ -105,28 +108,37 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			erc.registerAgent(clonedAgent);
 			clonedGame.playGame();
 			teacher.teach();
+
+			if (sweepMethodology.equals("iteration")) {
+				sweep(tree);
+			}
 		}
 
 		// Then we look at the statistics in the tree for the current state to make a decision
 		agent.log(tree.getStatisticsFor(currentState).toString());
-		
-		String logFile = agent.toString() + "_" + agent.getWorld().getCurrentTime() + ".log";
-		tree.exportToFile(logFile, currentState.getAsString());
-		
-		agent.log("Now Sweeping...");
-		for (int i = 0; i < 10; i++) {
-			tree.sweep();
-		};
-		agent.log(tree.getStatisticsFor(currentState).toString());
-		
+
+//		String logFile = agent.toString() + "_" + agent.getWorld().getCurrentTime() + ".log";
+//		tree.exportToFile(logFile, currentState.getAsString());
+
+		if (sweepMethodology.equals("terminal")) {
+			sweep(tree);
+//			logFile = agent.toString() + "_" + agent.getWorld().getCurrentTime() + "_postSweep.log";
+//			tree.exportToFile(logFile, currentState.getAsString());
+		}
+
 		ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions);
 		if (best == null) {
 			throw new AssertionError("No action chosen");
 		}
 
-		
 		treeMap.put(agent, tree);
 		return best;
+	}
+
+	private void sweep(MonteCarloTree<A> tree) {
+		for (int i = 0; i < sweepIterations; i++) {
+			tree.sweep();
+		};
 	}
 
 	@Override

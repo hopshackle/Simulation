@@ -243,15 +243,18 @@ public class MCTreeTest {
 		tree = new MonteCarloTree<TestAgent>();
 		tree.insertState(test, allActions);
 		tree.updateState(test, TestActionEnum.LEFT, other, 0.0);
-		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 1);
+		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 0);
+
 		assertEquals(tree.numberOfStates(), 1);
 		tree.updateState(test, TestActionEnum.RIGHT, yetAnother, 0.0);
 		tree.updateState(test, TestActionEnum.RIGHT, other, 0.0);
-		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 2);
+		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 0);
 		assertEquals(tree.numberOfStates(), 1);
 		
 		tree.insertState(other, allActions);
 		tree.insertState(yetAnother, allActions);
+		tree.updateState(test, TestActionEnum.RIGHT, yetAnother, 0.0);
+		tree.updateState(test, TestActionEnum.RIGHT, other, 0.0);
 		tree.updateState(other, TestActionEnum.RIGHT, yetAnother, 0.0);
 		tree.updateState(yetAnother, TestActionEnum.RIGHT, yetAnother, 0.0);
 		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 2);

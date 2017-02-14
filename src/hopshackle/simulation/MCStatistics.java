@@ -33,19 +33,19 @@ public class MCStatistics<P extends Agent> {
 		MCData.refresh();
 	}
 
-	public void updateExcludingVisits(ActionEnum<P> action, double reward) {
-		update(action, null, reward, false);
+	public void updateAsSweep(ActionEnum<P> action, double reward) {
+		update(action, null, reward, true);
 	}
 
 	public void update(ActionEnum<P> action, double reward) {
-		update(action, null, reward, true);
-	}
-	
-	public void update(ActionEnum<P> action, State<P> nextState, double reward) {
-		update(action, nextState, reward, true);
+		update(action, null, reward, false);
 	}
 
-	private void update(ActionEnum<P> action, State<P> nextState, double reward, boolean incrementVisits) {
+	public void update(ActionEnum<P> action, State<P> nextState, double reward) {
+		update(action, nextState, reward, false);
+	}
+
+	private void update(ActionEnum<P> action, State<P> nextState, double reward, boolean sweep) {
 		double V = reward;
 		double Q = reward;
 		if (!allActions.contains(action)) {
@@ -57,31 +57,33 @@ public class MCStatistics<P extends Agent> {
 			currentStates = new HashMap<String, Integer>();
 			successorStatesByAction.put(key, currentStates);
 		}
-		if (nextState != null) {
-			boolean nextStateInTree = tree.containsState(nextState);
+		if (sweep && currentStates.isEmpty())
+			return;
+			// this is a leaf node, so we cannot update its value
+		if (nextState != null && tree.containsState(nextState)) {
 			String nextStateAsString = nextState.getAsString();
 			if (!currentStates.containsKey(nextStateAsString)) {
 				currentStates.put(nextStateAsString, 1);
 			} else {
 				currentStates.put(nextStateAsString, currentStates.get(nextStateAsString) + 1);
 			}
-			if (nextStateInTree) {
-				MCStatistics<P> nextStateStats = tree.getStatisticsFor(nextState);
-				V = nextStateStats.getV();
-				Q = nextStateStats.getQ();
-				if (V < 0.001) V = reward;
-				if (Q < 0.001) Q = reward;
-			}
+			MCStatistics<P> nextStateStats = tree.getStatisticsFor(nextState);
+			V = nextStateStats.getV();
+			Q = nextStateStats.getQ();
+			if (Double.isNaN(V)) V = reward;
+			if (Double.isNaN(Q)) Q = reward;
 		}
 		if (map.containsKey(key)) {
 			MCData old = map.get(key);
-			MCData newMCD =  new MCData(old, reward, V, Q);
-			if (!incrementVisits) newMCD.visits -= 1;
+			if (tree.debug) tree.log(String.format("\tInitial Action values MC:%.2f\tV:%.2f\tQ:%.2f", old.mean, old.V, old.Q));
+			if (tree.debug) tree.log(String.format("\tAction update         MC:%.2f\tV:%.2f\tQ:%.2f", reward, V, Q));
+			MCData newMCD =  new MCData(old, reward, V, Q, sweep);
+			if (tree.debug) tree.log(String.format("\tNew Action values     MC:%.2f\tV:%.2f\tQ:%.2f", newMCD.mean, newMCD.V, newMCD.Q));
 			map.put(key, newMCD);
-		} else if (incrementVisits) {
+		} else if (!sweep) {
 			map.put(key, new MCData(key, reward));
 		}
-		if (incrementVisits) totalVisits++;
+		if (!sweep) totalVisits++;
 	}
 	private void addAction(ActionEnum<P> newAction) {
 		if (!allActions.contains(newAction))
@@ -125,7 +127,7 @@ public class MCStatistics<P extends Agent> {
 		if (MCData.useBaseValue) {
 			if (totalVisits == 0) return MCData.baseValue;
 		} else {
-			if (totalVisits < minVisitsForV || totalVisits == 0) return 0.0;
+			if (totalVisits < minVisitsForV || totalVisits == 0) return Double.NaN;
 		}
 		double V = 0.0;
 		for (String actionKey : map.keySet()) {
@@ -140,7 +142,7 @@ public class MCStatistics<P extends Agent> {
 			if (totalVisits == 0) return MCData.baseValue;
 			minVisitsForQ = 0;
 		} else {
-			if (totalVisits == 0) return 0.0;
+			if (totalVisits == 0) return Double.NaN;
 		}
 		double Q = 0.0;
 		for (String actionKey : map.keySet()) {
@@ -148,7 +150,7 @@ public class MCStatistics<P extends Agent> {
 			if (data.Q > Q) Q = data.Q;
 			if (data.visits < minVisits) minVisits = data.visits;
 		}
-		if (minVisits < minVisitsForQ) Q = 0.0;
+		if (minVisits < minVisitsForQ) Q = Double.NaN;
 		return Q;
 	}
 
@@ -214,7 +216,7 @@ public class MCStatistics<P extends Agent> {
 			retValue.append(output);
 			Map<String, Integer> successors = successorStatesByAction.getOrDefault(k, new HashMap<String, Integer>());
 			for (String succKey : successors.keySet()) {
-				if (tree.stateRef(succKey) != "") {
+				if (tree.stateRef(succKey) != "0") {
 					retValue.append(String.format("\t\tState %s transitioned to %d times\n", tree.stateRef(succKey), successors.get(succKey)));
 				}
 			}
@@ -311,13 +313,20 @@ class MCData implements Comparable<MCData> {
 	public MCData(MCData old, double r) {
 		this(old, r, r, r);
 	}
-
+	
 	public MCData(MCData old, double r, double V, double Q) {
+		this(old, r, V, Q, false);
+	}
+
+	public MCData(MCData old, double r, double V, double Q, boolean sweep) {
+		if (sweep && !useBaseValue) {
+			throw new AssertionError("Sweeping only to be used with RL");
+		}
 		this.key = old.key;
 		limit = old.limit;
-		visits = old.visits + 1;
+		visits = sweep ? old.visits : old.visits + 1;
 		double effectiveVisits = (visitLimit > visits) ? visits : visitLimit;
-		mean = old.mean + (r - old.mean) / effectiveVisits;
+		mean = sweep ? old.mean : old.mean + (r - old.mean) / effectiveVisits;
 		if (useBaseValue) {
 			this.V = (1.0 - alpha) * old.V + alpha * V;
 			this.Q = (1.0 - alpha) * old.Q + alpha * Q;
