@@ -25,6 +25,8 @@ public class MCTSTest {
 	public void setup()  {
 		world.setCalendar(new FastCalendar(0l));
 		SimProperties.setProperty("MonteCarloReward", "true");
+		SimProperties.setProperty("MonteCarloRL", "false");
+		SimProperties.setProperty("MonteCarloUCTType", "MC");
 		SimProperties.setProperty("MonteCarloUCTC", "1.0");
 		SimProperties.setProperty("Gamma", "0.95");
 		SimProperties.setProperty("IncrementalScoreReward", "false");

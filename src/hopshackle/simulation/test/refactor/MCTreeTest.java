@@ -18,6 +18,8 @@ public class MCTreeTest {
 
 	@Before 
 	public void setup() {
+		SimProperties.setProperty("MonteCarloRL", "false");
+		SimProperties.setProperty("MonteCarloUCTType", "MC");
 		leftRightOnly.remove(TestActionEnum.TEST);
 		test = new State<TestAgent>() {
 			@Override
