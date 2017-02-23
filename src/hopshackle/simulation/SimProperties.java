@@ -46,6 +46,7 @@ public class SimProperties {
 			DeciderProperties dp = DeciderProperties.factory(decider, geneticProperties);
 			deciderPropertiesMap.put(decider, dp);
 		}
+		deciderPropertiesMap.put("GLOBAL", new DeciderProperties("GLOBAL", geneticProperties));
 	}
 	
 	public static Set<String> extractDeciderNames(Properties prop) {
@@ -96,6 +97,7 @@ public class SimProperties {
 	}
 	
 	public static DeciderProperties getDeciderProperties(String type) {
+		if (!initialised) initialiseProperties();
 		return deciderPropertiesMap.get(type);
 	}
 }

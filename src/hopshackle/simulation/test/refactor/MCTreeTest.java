@@ -15,11 +15,14 @@ public class MCTreeTest {
 	MonteCarloTree<TestAgent> tree;
 	World world;
 	TestAgent agent;
+	DeciderProperties localProp;
 
 	@Before 
 	public void setup() {
-		SimProperties.setProperty("MonteCarloRL", "false");
-		SimProperties.setProperty("MonteCarloUCTType", "MC");
+		localProp = SimProperties.getDeciderProperties("GLOBAL");
+		localProp.setProperty("MonteCarloRL", "false");
+		localProp.setProperty("MonteCarloUCTType", "MC");
+		localProp.setProperty("MonteCarloUCTC", "1");
 		leftRightOnly.remove(TestActionEnum.TEST);
 		test = new State<TestAgent>() {
 			@Override
@@ -62,13 +65,11 @@ public class MCTreeTest {
 		};
 		world = new World();
 		agent = new TestAgent(world);
-		SimProperties.setProperty("MonteCarloUCTC", "1");
-		MCStatistics.refresh();
 	}
 
 	@Test
 	public void settingUpdatesLeft() {
-		tree = new MonteCarloTree<TestAgent>();
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		assertEquals(tree.updatesLeft(), 0);
 		assertFalse(tree.containsState(test));
 		tree.setUpdatesLeft(1);
@@ -77,7 +78,7 @@ public class MCTreeTest {
 
 	@Test
 	public void addANode() {
-		tree = new MonteCarloTree<TestAgent>();
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.setUpdatesLeft(1);
 		tree.insertState(test, leftRightOnly);
 		assertTrue(tree.containsState(test));
@@ -89,7 +90,7 @@ public class MCTreeTest {
 	public void seriesOfActionsFromSameStateThroughUCTLogic() {
 		// This uses the same numeric test case as in MCStatisticsTest (but one level higher in 
 		// the object hierarchy)
-		tree = new MonteCarloTree<TestAgent>();
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(test, leftRightOnly);
 		TestActionEnum next = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		boolean firstLeft = false;
@@ -127,7 +128,7 @@ public class MCTreeTest {
 
 	@Test
 	public void getNextActionWithAPreviouslyUnseenActionShouldReturnIt() {
-		tree = new MonteCarloTree<TestAgent>();
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(test, leftRightOnly);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
@@ -140,7 +141,7 @@ public class MCTreeTest {
 
 	@Test
 	public void getNextActionWithRestrictedListShouldObeyRestrictions() {
-		tree = new MonteCarloTree<TestAgent>();
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(test, allActions);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
@@ -154,7 +155,7 @@ public class MCTreeTest {
 
 	@Test
 	public void getBestActionWithAPreviouslyUnseenActionShouldNotReturnIt() {
-		tree = new MonteCarloTree<TestAgent>();
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(test, leftRightOnly);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
@@ -167,7 +168,7 @@ public class MCTreeTest {
 
 	@Test
 	public void getBestActionWithRestrictedListShouldObeyRestrictions() {
-		tree = new MonteCarloTree<TestAgent>();
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(test, allActions);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
@@ -182,7 +183,7 @@ public class MCTreeTest {
 
 	@Test
 	public void updateStateWithAPreviouslyUnseenActionShouldError() {
-		tree = new MonteCarloTree<TestAgent>();
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(test, leftRightOnly);
 		try {
 			tree.updateState(test, TestActionEnum.TEST, test, 1.0);
@@ -194,8 +195,8 @@ public class MCTreeTest {
 
 	@Test
 	public void actionValueDeciderInGreedyMode() {
-		tree = new MonteCarloTree<TestAgent>();
-		SimProperties.setProperty("MonteCarloActionValueDeciderTemperature", "0.00");
+		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.00");
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
 		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString()), 5.0, 0.001);
@@ -210,8 +211,8 @@ public class MCTreeTest {
 
 	@Test
 	public void actionValueDeciderinBoltzmannMode() {
-		tree = new MonteCarloTree<TestAgent>();
-		SimProperties.setProperty("MonteCarloActionValueDeciderTemperature", "0.1");
+		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.1");
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
 		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString()), 5.0, 0.001);
@@ -233,7 +234,6 @@ public class MCTreeTest {
 				break;
 			}
 		}	
-		System.out.println(rightCount + " : " + leftCount + " : " + testCount);
 		assertEquals(rightCount+leftCount+testCount, 100);
 		assertTrue(rightCount > leftCount);
 		assertTrue(leftCount > testCount);
@@ -242,7 +242,7 @@ public class MCTreeTest {
 	
 	@Test
 	public void successorStatesInTree() {
-		tree = new MonteCarloTree<TestAgent>();
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(test, allActions);
 		tree.updateState(test, TestActionEnum.LEFT, other, 0.0);
 		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 0);

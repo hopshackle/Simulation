@@ -14,25 +14,26 @@ public class MCStatisticsWithPriorWeightTest {
 	List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	MCStatistics<TestAgent> stats;
 	MonteCarloTree<TestAgent> startingTree;
-	
+	DeciderProperties localProp;
+	State<TestAgent> dummyState = new State<TestAgent>() {
+		@Override
+		public String getAsString() {return "DUMMY";}
+		@Override
+		public double[] getAsArray() {return new double[1];}
+		@Override
+		public State<TestAgent> apply(ActionEnum<TestAgent> proposedAction) {return this;}
+		@Override
+		public State<TestAgent> clone() {return this;}
+	};
 	
 	@Before 
 	public void setup() {
+		localProp = SimProperties.getDeciderProperties("GLOBAL");
 		leftRightOnly.remove(TestActionEnum.TEST);
-		SimProperties.setProperty("MonteCarloUCTC", "1");
-		SimProperties.setProperty("MonteCarloPriorActionWeightingForBestAction", "5");
-		MCStatistics.refresh();
-		State<TestAgent> dummyState = new State<TestAgent>() {
-			@Override
-			public String getAsString() {return "DUMMY";}
-			@Override
-			public double[] getAsArray() {return new double[1];}
-			@Override
-			public State<TestAgent> apply(ActionEnum<TestAgent> proposedAction) {return this;}
-			@Override
-			public State<TestAgent> clone() {return this;}
-		};
-		startingTree = new MonteCarloTree<TestAgent>();
+		localProp.setProperty("MonteCarloUCTC", "1");
+		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "5");
+		
+		startingTree = new MonteCarloTree<TestAgent>(localProp);
 		startingTree.insertState(dummyState, leftRightOnly);
 		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, 2.0);
 	}
@@ -113,8 +114,10 @@ public class MCStatisticsWithPriorWeightTest {
 	
 	@Test
 	public void uctReturnsBestActionWithActionValueWeighting() {
-		SimProperties.setProperty("MonteCarloPriorActionWeightingForBestAction", "5");
-		MCStatistics.refresh();
+		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "5");
+		startingTree = new MonteCarloTree<TestAgent>(localProp);
+		startingTree.insertState(dummyState, leftRightOnly);
+		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, 2.0);
 		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree);
 		stats.update(TestActionEnum.LEFT, 2.0);
 		stats.update(TestActionEnum.RIGHT, 1.0);

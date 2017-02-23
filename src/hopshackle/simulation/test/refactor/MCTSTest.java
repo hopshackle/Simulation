@@ -12,9 +12,10 @@ public class MCTSTest {
 	List<GeneticVariable<TestAgent>> genVar = new ArrayList<GeneticVariable<TestAgent>>(EnumSet.allOf(TestGenVar.class));
 	StateFactory<TestAgent> factory = new LinearStateFactory<TestAgent>(genVar);
 	Decider<TestAgent> rolloutDecider = new SimpleMazeDecider();
-	MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>();
+	MonteCarloTree<TestAgent> tree;
 	// This is a single agent test, so no opponent model is needed, and the last parameter is safely null
 	MCTSMasterDecider<TestAgent> masterDecider;
+	DeciderProperties localProp;
 	
 	World world = new World();
 	TestAgent agent = new TestAgent(world);
@@ -24,22 +25,23 @@ public class MCTSTest {
 	@Before
 	public void setup()  {
 		world.setCalendar(new FastCalendar(0l));
-		SimProperties.setProperty("MonteCarloReward", "true");
-		SimProperties.setProperty("MonteCarloRL", "false");
-		SimProperties.setProperty("MonteCarloUCTType", "MC");
-		SimProperties.setProperty("MonteCarloUCTC", "1.0");
-		SimProperties.setProperty("Gamma", "0.95");
-		SimProperties.setProperty("IncrementalScoreReward", "false");
-		SimProperties.setProperty("MonteCarloRolloutCount", "99");
-		SimProperties.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
-		SimProperties.setProperty("MonteCarloActionValueRollout", "false");
-		SimProperties.setProperty("MonteCarloActionValueOpponentModel", "false");
-		SimProperties.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
-		SimProperties.setProperty("MonteCarloRetainTreeBetweenActions", "false");
-		MCStatistics.refresh();
-		ExperienceRecord.refreshProperties();
+		localProp = SimProperties.getDeciderProperties("GLOBAL");
+		localProp.setProperty("MonteCarloReward", "true");
+		localProp.setProperty("MonteCarloRL", "false");
+		localProp.setProperty("MonteCarloUCTType", "MC");
+		localProp.setProperty("MonteCarloUCTC", "1.0");
+		localProp.setProperty("Gamma", "0.95");
+		localProp.setProperty("IncrementalScoreReward", "false");
+		localProp.setProperty("MonteCarloRolloutCount", "99");
+		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
+		localProp.setProperty("MonteCarloActionValueRollout", "false");
+		localProp.setProperty("MonteCarloActionValueOpponentModel", "false");
+		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
+		localProp.setProperty("MonteCarloRetainTreeBetweenActions", "false");
+		tree = new MonteCarloTree<TestAgent>(localProp);
 		mazeGame = new SimpleMazeGame(2, agent);
 		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, null);
+		masterDecider.injectProperties(localProp);
 		agent.setDecider(masterDecider);
 		Dice.setSeed(6l);
 	}

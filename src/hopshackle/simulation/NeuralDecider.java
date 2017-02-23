@@ -14,12 +14,12 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	protected BasicNetwork brain;
 	protected static double temperature;
-	protected double baseMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum", "0.0");
-	protected String propagationType = SimProperties.getProperty("NeuralPropagationType", "back");
-	protected boolean applyTemperatureToLearning = SimProperties.getProperty("NeuralAnnealLearning", "false").equals("true");
-	protected int learningIterations = Integer.valueOf(SimProperties.getProperty("NeuralLearningIterations", "1"));
-	private static boolean learnWithValidation = SimProperties.getProperty("NeuralLearnUntilValidationError", "false").equals("true");
-	private static boolean logTrainingErrors = SimProperties.getProperty("NeuralLogTrainingErrors", "false").equals("true");
+	protected double baseMomentum = getPropertyAsDouble("NeuralLearningMomentum", "0.0");
+	protected String propagationType = getProperty("NeuralPropagationType", "back");
+	protected boolean applyTemperatureToLearning = getProperty("NeuralAnnealLearning", "false").equals("true");
+	protected int learningIterations = Integer.valueOf(getProperty("NeuralLearningIterations", "1"));
+	private boolean learnWithValidation = getProperty("NeuralLearnUntilValidationError", "false").equals("true");
+	private boolean logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
 	private double overrideLearningCoefficient, overrideMomentum, scaleFactor; 
 	private static boolean extraDebug = true;
 	private SimpleWorldLogic<A> actions;
@@ -27,9 +27,9 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	public NeuralDecider(StateFactory<A> stateFactory, SimpleWorldLogic<A> worldLogic, double scaleFactor){
 		super(stateFactory);
 		actions = worldLogic;
-		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), worldLogic.actionSet.size());
-		overrideLearningCoefficient = SimProperties.getPropertyAsDouble("NeuralLearningCoefficient." + toString(), "-99.0");
-		overrideMomentum = SimProperties.getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");
+		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), worldLogic.actionSet.size(), decProp);
+		overrideLearningCoefficient = getPropertyAsDouble("NeuralLearningCoefficient." + toString(), "-99.0");
+		overrideMomentum = getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");
 		if (overrideLearningCoefficient > -98) alpha = overrideLearningCoefficient;
 		if (overrideMomentum > -98) baseMomentum = overrideMomentum;
 		this.scaleFactor = scaleFactor;

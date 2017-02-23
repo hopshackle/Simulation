@@ -15,20 +15,21 @@ public class GeneralQLambdaTest {
 	private List<ActionEnum<Agent>> actions;
 	private List<GeneticVariable<Agent>> variables;
 	private World w;
+	DeciderProperties localProp;
 
 	public static GeneticVariable<Agent> gold = GeneralQDeciderTest.gold;
 	public static GeneticVariable<Agent> constantTerm = GeneralQDeciderTest.constantTerm;
 	
 	@Before
 	public void setup() {
-		SimProperties.setProperty("Gamma", "0.90");
-		SimProperties.setProperty("Alpha", "0.20");
-		SimProperties.setProperty("Lambda", "0.00");
-		SimProperties.setProperty("QTraceLambda", "0.50");
-		SimProperties.setProperty("QTraceMaximum", "2.0");
-		SimProperties.setProperty("TimePeriodForGamma", "1000");
-		SimProperties.setProperty("MonteCarloReward", "false");
-		ExperienceRecord.refreshProperties();
+		localProp = SimProperties.getDeciderProperties("GLOBAL");
+		localProp.setProperty("Gamma", "0.90");
+		localProp.setProperty("Alpha", "0.20");
+		localProp.setProperty("Lambda", "0.00");
+		localProp.setProperty("QTraceLambda", "0.50");
+		localProp.setProperty("QTraceMaximum", "2.0");
+		localProp.setProperty("TimePeriodForGamma", "1000");
+		localProp.setProperty("MonteCarloReward", "false");
 		actions = new ArrayList<ActionEnum<Agent>>();
 		actions.add(RightLeft.RIGHT);
 		actions.add(RightLeft.LEFT);
@@ -38,6 +39,7 @@ public class GeneralQLambdaTest {
 		variables.add(gold);
 
 		decider = new TestLinearQDecider(actions, variables);
+		decider.injectProperties(localProp);
 		decider.setWeights(new double[3][2]);
 		// so we have two actions, right and left
 		// and two inputs, one is just equal to the Agents Gold, and the other is equal to a constant
@@ -49,13 +51,13 @@ public class GeneralQLambdaTest {
 	@Test
 	public void teachingDecisionUpdatesWeights() {
 		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				actions);
+				actions, localProp);
 		exp.updateWithResults(2.0, decider.getCurrentState(testAgent));
 		// Feature traces of exp are 1.0 for Constant, and 0.0 for Gold
 		assertEquals(exp.getFeatureTrace()[0], 1.00, 0.001);
 		w.setCurrentTime(1000l); // move forward before taking next action, so that discounting works
 		ExperienceRecord<Agent> exp2 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.LEFT.getAction(testAgent), 
-				actions);
+				actions, localProp);
 		exp.updateNextActions(exp2);
 		decider.learnFrom(exp, 10.0);
 		// reward of 2.0 versus an expected 0.0
@@ -72,7 +74,7 @@ public class GeneralQLambdaTest {
 		exp2.updateWithResults(-2.0, decider.getCurrentState(testAgent));
 		w.setCurrentTime(3000l); // move forward before taking next action, so that discounting works
 		ExperienceRecord<Agent> exp3 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				actions);
+				actions, localProp);
 		exp2.updateNextActions(exp3);
 		// New feature traces for constant is 1.293625 (1.0 + 1.45 * gamma * gamma * lambda * lambda)
 		assertEquals(exp3.getFeatureTrace()[0], 1.293625, 0.001);
@@ -92,7 +94,7 @@ public class GeneralQLambdaTest {
 		exp3.updateWithResults(1.0, decider.getCurrentState(testAgent));
 		w.setCurrentTime(4500l); // move forward before taking next action, so that discounting works
 		ExperienceRecord<Agent> exp4 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				actions);
+				actions, localProp);
 		exp3.updateNextActions(exp4);
 		// Constant = 1.0 + 1.293625 * (lambda * gamma) ^ 1.5 = 1.3905055
 		// Gold = -1.0 + (-2.0) * (lambda * gamma) ^ 1.5 = -1.603738354

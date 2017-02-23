@@ -3,6 +3,8 @@ package hopshackle.simulation;
 import java.util.List;
 
 public interface Decider<A extends Agent> {
+	
+	public void injectProperties(DeciderProperties decProp);
 
 	public double valueOption(ActionEnum<A> option, A decidingAgent);
 	

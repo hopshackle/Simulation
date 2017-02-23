@@ -16,7 +16,7 @@ public class BasicRunWorld {
 	
 	protected RealTimeTeacher<BasicAgent> femaleTeacher = new RealTimeTeacher<BasicAgent>();
 	protected RealTimeTeacher<BasicAgent> maleTeacher = new RealTimeTeacher<BasicAgent>();
-	protected ExperienceRecordFactory<BasicAgent> erFactory = new StandardERFactory<BasicAgent>();
+	protected ExperienceRecordFactory<BasicAgent> erFactory;
 	protected ExperienceRecordCollector<BasicAgent> femaleERCollector = new ExperienceRecordCollector<BasicAgent>(erFactory);
 	protected ExperienceRecordCollector<BasicAgent> maleERCollector = new ExperienceRecordCollector<BasicAgent>(erFactory);
 	protected boolean genderSpecificTeacher = SimProperties.getProperty("BasicGenderSpecificTeacher", "true").equals("true");
@@ -64,6 +64,7 @@ public class BasicRunWorld {
 			e.printStackTrace();
 		}
 
+		erFactory = new StandardERFactory<BasicAgent>(SimProperties.getDeciderProperties("GLOBAL"));
 		this.showGUI = showGUI;
 		endTime = runTime;
 		w = w1;

@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class MonteCarloTree<P extends Agent> {
 
-	private static String UCTType = SimProperties.getProperty("MonteCarloUCTType", "MC");
+	private String UCTType;
 
 	private Map<String, Integer> stateRefs = new HashMap<String, Integer>();
 	private Map<String, MCStatistics<P>> tree;
@@ -18,10 +18,13 @@ public class MonteCarloTree<P extends Agent> {
 	private long id;
 	private EntityLog entityLogger;
 	protected boolean debug = false;
+	protected DeciderProperties properties;
 
-	public MonteCarloTree() {
+	public MonteCarloTree(DeciderProperties properties) {
 		tree = new HashMap<String, MCStatistics<P>>();
 		actionValues = new HashMap<String, MCData>();
+		this.properties = properties;
+		UCTType = properties.getProperty("MonteCarloUCTType", "MC");
 		id = idFountain.getAndIncrement();
 	}
 
@@ -103,7 +106,7 @@ public class MonteCarloTree<P extends Agent> {
 		if (actionValues.containsKey(actionAsString)) {
 			actionValues.put(actionAsString, new MCData(actionValues.get(actionAsString), reward));
 		} else {
-			actionValues.put(actionAsString, new MCData(actionAsString, reward));
+			actionValues.put(actionAsString, new MCData(actionAsString, reward, properties));
 		}
 	}
 

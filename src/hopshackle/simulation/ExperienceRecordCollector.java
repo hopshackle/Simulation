@@ -5,7 +5,7 @@ import hopshackle.simulation.ExperienceRecord.ERState;
 import java.util.*;
 
 public class ExperienceRecordCollector<A extends Agent> implements AgentListener {
-	
+
 	public interface ERCAllocationPolicy<A> {
 		public void apply(A agent);
 	}

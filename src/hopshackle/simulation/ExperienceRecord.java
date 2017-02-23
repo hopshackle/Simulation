@@ -11,12 +11,10 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
 	}
 
-	private static boolean lookaheadQLearning = SimProperties.getProperty("LookaheadQLearning", "false").equals("true");
-
-	private static boolean incrementalScoreAffectsReward, dbStorage, monteCarlo;
+	private DeciderProperties properties;
+	private boolean incrementalScoreAffectsReward, dbStorage, monteCarlo, lookaheadQLearning;
 	private static DatabaseWriter<ExperienceRecord<?>> writer = new DatabaseWriter<ExperienceRecord<?>>(new ExpRecDAO());
-	protected static double lambda, gamma, traceCap, timePeriod;
-	static {refreshProperties();}
+	protected double lambda, gamma, traceCap, timePeriod;
 	protected State<A> startState, endState;
 	protected double[] startStateAsArray, endStateAsArray;
 	protected double[] featureTrace;
@@ -29,17 +27,19 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	private ExperienceRecord<A> previousRecord;
 	protected long timeOfDecision, timeOfResolution;
 
-	public static void refreshProperties() {
-		lambda = SimProperties.getPropertyAsDouble("QTraceLambda", "0.0");
-		gamma = SimProperties.getPropertyAsDouble("Gamma", "1.0");
-		traceCap = SimProperties.getPropertyAsDouble("QTraceMaximum", "10.0");
-		incrementalScoreAffectsReward = SimProperties.getProperty("IncrementalScoreReward", "true").equals("true");
-		dbStorage = SimProperties.getProperty("ExperienceRecordDBStorage", "false").equals("true");
-		monteCarlo = SimProperties.getProperty("MonteCarloReward", "false").equals("true");
-		timePeriod = SimProperties.getPropertyAsDouble("TimePeriodForGamma", "1000");
+	public void refreshProperties() {
+		lambda = properties.getPropertyAsDouble("QTraceLambda", "0.0");
+		gamma = properties.getPropertyAsDouble("Gamma", "1.0");
+		traceCap = properties.getPropertyAsDouble("QTraceMaximum", "10.0");
+		incrementalScoreAffectsReward = properties.getProperty("IncrementalScoreReward", "true").equals("true");
+		dbStorage = properties.getProperty("ExperienceRecordDBStorage", "false").equals("true");
+		monteCarlo = properties.getProperty("MonteCarloReward", "false").equals("true");
+		timePeriod = properties.getPropertyAsDouble("TimePeriodForGamma", "1000");
 	}
 
-	public ExperienceRecord(A a, State<A> state, Action<A> action, List<ActionEnum<A>> possibleActions) {
+	public ExperienceRecord(A a, State<A> state, Action<A> action, List<ActionEnum<A>> possibleActions, DeciderProperties properties) {
+		this.properties = properties;
+		refreshProperties();
 		actionTaken = action;
 		if (lookaheadQLearning) {
 			startState = state.apply(action.getType());	
