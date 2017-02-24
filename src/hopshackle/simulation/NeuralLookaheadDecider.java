@@ -14,6 +14,12 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
 	}
 	
 	@Override
+	public void injectProperties(DeciderProperties dp) {
+		super.injectProperties(dp);
+		internalNeuralDecider.injectProperties(dp);
+	}
+	
+	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		logResult(exp);
 		internalNeuralDecider.learnFrom(exp, maxResult);

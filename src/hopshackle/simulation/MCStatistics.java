@@ -62,7 +62,7 @@ public class MCStatistics<P extends Agent> {
 		}
 		if (sweep && currentStates.isEmpty())
 			return;
-			// this is a leaf node, so we cannot update its value
+		// this is a leaf node, so we cannot update its value
 		if (nextState != null && tree.containsState(nextState)) {
 			String nextStateAsString = nextState.getAsString();
 			if (!currentStates.containsKey(nextStateAsString)) {
@@ -206,6 +206,9 @@ public class MCStatistics<P extends Agent> {
 
 	@Override
 	public String toString() {
+		return toString(false);
+	}
+	public String toString(boolean verbose) {
 		StringBuffer retValue = new StringBuffer(
 				String.format("MC Statistics\tVisits: %d\tV:%.2f\tQ:%.2f\n", totalVisits, getV(), getQ())
 				);
@@ -217,10 +220,12 @@ public class MCStatistics<P extends Agent> {
 				output = String.format("\t%s\t%s\n", k, map.get(k).toString());
 			}
 			retValue.append(output);
-			Map<String, Integer> successors = successorStatesByAction.getOrDefault(k, new HashMap<String, Integer>());
-			for (String succKey : successors.keySet()) {
-				if (tree.stateRef(succKey) != "0") {
-					retValue.append(String.format("\t\tState %s transitioned to %d times\n", tree.stateRef(succKey), successors.get(succKey)));
+			if (verbose) {
+				Map<String, Integer> successors = successorStatesByAction.getOrDefault(k, new HashMap<String, Integer>());
+				for (String succKey : successors.keySet()) {
+					if (tree.stateRef(succKey) != "0") {
+						retValue.append(String.format("\t\tState %s transitioned to %d times\n", tree.stateRef(succKey), successors.get(succKey)));
+					}
 				}
 			}
 		}
@@ -315,7 +320,7 @@ class MCData implements Comparable<MCData> {
 	public MCData(MCData old, double r) {
 		this(old, r, r, r);
 	}
-	
+
 	public MCData(MCData old, double r, double V, double Q) {
 		this(old, r, V, Q, false);
 	}

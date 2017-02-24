@@ -115,7 +115,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		}
 
 		// Then we look at the statistics in the tree for the current state to make a decision
-		agent.log(tree.getStatisticsFor(currentState).toString());
+		agent.log(tree.getStatisticsFor(currentState).toString(debug));
 
 //		String logFile = agent.toString() + "_" + agent.getWorld().getCurrentTime() + ".log";
 //		tree.exportToFile(logFile, currentState.getAsString());

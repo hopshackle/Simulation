@@ -267,6 +267,10 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	public void injectProperties(DeciderProperties dp) {
 		decProp = dp;
 	}
+	@Override
+	public DeciderProperties getProperties() {
+		return decProp;
+	}
 	
 	public double getPropertyAsDouble(String prop, String defaultValue) {
 		if (decProp == null) {

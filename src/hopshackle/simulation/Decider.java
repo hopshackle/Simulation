@@ -5,6 +5,8 @@ import java.util.List;
 public interface Decider<A extends Agent> {
 	
 	public void injectProperties(DeciderProperties decProp);
+	
+	public DeciderProperties getProperties();
 
 	public double valueOption(ActionEnum<A> option, A decidingAgent);
 	

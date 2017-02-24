@@ -187,7 +187,7 @@ public class MonteCarloTree<P extends Agent> {
 			retValue.append("\t" + s + "\t" + stats.getVisits() + " visits\n");
 			if (full) {
 				retValue.append("------------------\n");
-				retValue.append(stats.toString());
+				retValue.append(stats.toString(debug));
 				retValue.append("------------------\n");
 			}
 		}

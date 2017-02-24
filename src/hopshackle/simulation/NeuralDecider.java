@@ -27,13 +27,18 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	public NeuralDecider(StateFactory<A> stateFactory, SimpleWorldLogic<A> worldLogic, double scaleFactor){
 		super(stateFactory);
 		actions = worldLogic;
-		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), worldLogic.actionSet.size(), decProp);
+		this.scaleFactor = scaleFactor;
+	}
+	
+	@Override 
+	public void injectProperties(DeciderProperties dp) {
+		super.injectProperties(dp);
+		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), actions.actionSet.size(), decProp);
 		overrideLearningCoefficient = getPropertyAsDouble("NeuralLearningCoefficient." + toString(), "-99.0");
 		overrideMomentum = getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");
 		if (overrideLearningCoefficient > -98) alpha = overrideLearningCoefficient;
 		if (overrideMomentum > -98) baseMomentum = overrideMomentum;
-		this.scaleFactor = scaleFactor;
-	}
+	};
 
 	/*
 	 * allVar is a list of all possible genetic variables that could be used

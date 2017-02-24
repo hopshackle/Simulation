@@ -62,6 +62,16 @@ public class SimProperties {
 		return retValue;
 	}
 
+	public static Set<String> allDeciderNames() {
+		if (!initialised) initialiseProperties();
+		return deciderPropertiesMap.keySet();
+	}
+	
+	public static DeciderProperties getDeciderProperties(String type) {
+		if (!initialised) initialiseProperties();
+		return deciderPropertiesMap.get(type);
+	}
+
 	public static void setProperty(String propertyName, String value) {
 		if (!initialised) initialiseProperties();
 		geneticProperties.setProperty(propertyName, value);
@@ -94,10 +104,5 @@ public class SimProperties {
 		}
 		String temp = getProperty(name, defaultValue);
 		return Integer.valueOf(temp);
-	}
-	
-	public static DeciderProperties getDeciderProperties(String type) {
-		if (!initialised) initialiseProperties();
-		return deciderPropertiesMap.get(type);
 	}
 }
