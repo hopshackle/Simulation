@@ -14,10 +14,10 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	public static String newline = System.getProperty("line.separator");
 	protected String name = "DEFAULT";
+	protected boolean localDebug = false;
 	protected DeciderProperties decProp;
 	protected double maxChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMinChance", "0.0");
-	protected boolean localDebug = false;
 	protected double gamma = getPropertyAsDouble("Gamma", "0.95");
 	protected double alpha = getPropertyAsDouble("Alpha", "0.05");
 	protected double lambda = getPropertyAsDouble("Lambda", "0.001");
@@ -266,6 +266,11 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	@Override
 	public void injectProperties(DeciderProperties dp) {
 		decProp = dp;
+		maxChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
+		minChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMinChance", "0.0");
+		gamma = getPropertyAsDouble("Gamma", "0.95");
+		alpha = getPropertyAsDouble("Alpha", "0.05");
+		lambda = getPropertyAsDouble("Lambda", "0.001");
 	}
 	@Override
 	public DeciderProperties getProperties() {

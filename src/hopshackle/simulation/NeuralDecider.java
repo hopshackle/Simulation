@@ -33,6 +33,12 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	@Override 
 	public void injectProperties(DeciderProperties dp) {
 		super.injectProperties(dp);
+		baseMomentum = getPropertyAsDouble("NeuralLearningMomentum", "0.0");
+		propagationType = getProperty("NeuralPropagationType", "back");
+		applyTemperatureToLearning = getProperty("NeuralAnnealLearning", "false").equals("true");
+		learningIterations = Integer.valueOf(getProperty("NeuralLearningIterations", "1"));
+		learnWithValidation = getProperty("NeuralLearnUntilValidationError", "false").equals("true");
+		logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
 		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), actions.actionSet.size(), decProp);
 		overrideLearningCoefficient = getPropertyAsDouble("NeuralLearningCoefficient." + toString(), "-99.0");
 		overrideMomentum = getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");

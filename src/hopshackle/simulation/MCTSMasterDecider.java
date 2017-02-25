@@ -27,10 +27,14 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 
 	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree) {
+		MCTSChildDecider<A> retValue = null;
 		if (useAVDForRollout)
-			return new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory));
+			retValue = new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory), decProp);
 		else 
-			return new MCTSChildDecider<A>(stateFactory, tree, rolloutDecider);
+			retValue = new MCTSChildDecider<A>(stateFactory, tree, rolloutDecider, decProp);
+
+		retValue.setName("Child_MCTS");
+		return retValue;
 	}
 
 	@Override
@@ -156,6 +160,18 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 	public Decider<A> getRolloutDecider() {
 		return rolloutDecider;
+	}
+	
+	@Override
+	public void injectProperties(DeciderProperties dp) {
+		super.injectProperties(dp);
+		maxRollouts = getPropertyAsInteger("MonteCarloRolloutCount", "99");
+		maxRolloutsPerOption = getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
+		useAVDForRollout = getProperty("MonteCarloActionValueRollout", "false").equals("true");
+		useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
+		reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
+		sweepMethodology = getProperty("MonteCarloSweep", "terminal");
+		sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
 	}
 
 }

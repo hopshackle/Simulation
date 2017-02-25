@@ -7,8 +7,9 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 	private Decider<P> rolloutDecider;
 	private MonteCarloTree<P> tree;
 
-	public MCTSChildDecider(StateFactory<P> stateFactory, MonteCarloTree<P> tree, Decider<P> rolloutDecider) {
+	public MCTSChildDecider(StateFactory<P> stateFactory, MonteCarloTree<P> tree, Decider<P> rolloutDecider, DeciderProperties prop) {
 		super(stateFactory);
+		injectProperties(prop);
 		localDebug = false;
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
