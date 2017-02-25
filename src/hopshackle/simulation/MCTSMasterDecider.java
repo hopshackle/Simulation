@@ -10,14 +10,14 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	protected Decider<A> rolloutDecider;
 	private Decider<A> opponentModel;
 	private MCTSChildDecider<A> childDecider;
-	private static int maxRollouts = SimProperties.getPropertyAsInteger("MonteCarloRolloutCount", "99");
-	private static int maxRolloutsPerOption = SimProperties.getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
-	private static boolean useAVDForRollout = SimProperties.getProperty("MonteCarloActionValueRollout", "false").equals("true");
-	private static boolean useAVDForOpponent = SimProperties.getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
-	private static boolean reuseOldTree = SimProperties.getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
-	private static String sweepMethodology = SimProperties.getProperty("MonteCarloSweep", "terminal");
-	private static int sweepIterations = SimProperties.getPropertyAsInteger("MonteCarloSweepIterations", "0");
-	private static boolean debug = false;
+	private int maxRollouts = getPropertyAsInteger("MonteCarloRolloutCount", "99");
+	private int maxRolloutsPerOption = getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
+	private boolean useAVDForRollout = getProperty("MonteCarloActionValueRollout", "false").equals("true");
+	private boolean useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
+	private boolean reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
+	private String sweepMethodology = getProperty("MonteCarloSweep", "terminal");
+	private int sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
+	private boolean debug = false;
 
 	public MCTSMasterDecider(StateFactory<A> stateFactory, Decider<A> rolloutDecider, Decider<A> opponentModel) {
 		super(stateFactory);
@@ -57,7 +57,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			});
 		}
 		MonteCarloTree<A> tree = treeMap.get(agent);
-		if (tree == null) tree = new MonteCarloTree<A>();
+		if (tree == null) tree = new MonteCarloTree<A>(decProp);
 		if (reuseOldTree) {
 			int before = tree.numberOfStates();
 			tree.pruneTree(currentState.getAsString());
@@ -77,7 +77,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 				return (event.getAction() == null) ? false : event.getAction().isFollowOnAction();
 			}
 		}
-		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(), new FollowOnEventFilter());
+		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(decProp), new FollowOnEventFilter());
 		teacher.registerToERStream(erc);
 
 		if (chooseableOptions.size() == 1) {
@@ -113,9 +113,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 				sweep(tree);
 			}
 		}
-
-//		String logFile = agent.toString() + "_" + agent.getWorld().getCurrentTime() + ".log";
-//		tree.exportToFile(logFile, currentState.getAsString());
 
 		if (sweepMethodology.equals("terminal")) {
 			sweep(tree);
@@ -153,7 +150,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		if (treeMap.containsKey(agent)) {
 			return treeMap.get(agent);
 		}
-		treeMap.put(agent, new MonteCarloTree<A>());
+		treeMap.put(agent, new MonteCarloTree<A>(decProp));
 		return treeMap.get(agent);
 	}
 

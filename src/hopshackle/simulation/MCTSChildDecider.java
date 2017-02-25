@@ -12,7 +12,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 		localDebug = false;
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
-		boolean monteCarlo = SimProperties.getProperty("MonteCarloReward", "false").equals("true");
+		boolean monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
 		if (!monteCarlo) {
 			throw new AssertionError("MCTS Deciders should only be used with MonteCarlo switched on! Update GeneticProperties.txt");
 		}

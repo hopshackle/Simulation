@@ -14,12 +14,13 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	public static String newline = System.getProperty("line.separator");
 	protected String name = "DEFAULT";
-	protected double maxChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
-	protected double minChanceOfRandomChoice = SimProperties.getPropertyAsDouble("RandomDeciderMinChance", "0.0");
+	protected DeciderProperties decProp;
+	protected double maxChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
+	protected double minChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMinChance", "0.0");
 	protected boolean localDebug = false;
-	protected double gamma = SimProperties.getPropertyAsDouble("Gamma", "0.95");
-	protected double alpha = SimProperties.getPropertyAsDouble("Alpha", "0.05");
-	protected double lambda = SimProperties.getPropertyAsDouble("Lambda", "0.001");
+	protected double gamma = getPropertyAsDouble("Gamma", "0.95");
+	protected double alpha = getPropertyAsDouble("Alpha", "0.05");
+	protected double lambda = getPropertyAsDouble("Lambda", "0.001");
 	private EntityLog entityLogger;
 	private static AtomicInteger idFountain = new AtomicInteger(0);
 	protected StateFactory<A> stateFactory;
@@ -262,4 +263,31 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		entityLogger.log(s);
 	}
 
+	@Override
+	public void injectProperties(DeciderProperties dp) {
+		decProp = dp;
+	}
+	@Override
+	public DeciderProperties getProperties() {
+		return decProp;
+	}
+	
+	public double getPropertyAsDouble(String prop, String defaultValue) {
+		if (decProp == null) {
+			return SimProperties.getPropertyAsDouble(prop, defaultValue);
+		}
+		return decProp.getPropertyAsDouble(prop, defaultValue);
+	}
+	public int getPropertyAsInteger(String prop, String defaultValue) {
+		if (decProp == null) {
+			return SimProperties.getPropertyAsInteger(prop, defaultValue);
+		}
+		return decProp.getPropertyAsInteger(prop, defaultValue);
+	}
+	public String getProperty(String prop, String defaultValue) {
+		if (decProp == null) {
+			return SimProperties.getProperty(prop, defaultValue);
+		}
+		return decProp.getProperty(prop, defaultValue);
+	}
 }

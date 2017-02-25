@@ -8,8 +8,6 @@ import org.encog.neural.networks.training.propagation.back.Backpropagation;
 
 public class BrainFactory {
 
-	static boolean initialOptimismTraining = SimProperties.getProperty("NeuralDeciderInitialOptimismTraining", "true").equals("true");
-
 	/**
 	 * This static function returns a new Feedforward Network. 
 	 * The parameter taken is a integer array indicating the number of neurons to
@@ -18,8 +16,10 @@ public class BrainFactory {
 	 * @author $James Goodman$
 	 * @version $1$
 	 */
-	public static BasicNetwork newFFNetwork(int[] layers) {
+	public static BasicNetwork newFFNetwork(int[] layers, DeciderProperties properties) {
 	
+		boolean initialOptimismTraining = properties.getProperty("NeuralDeciderInitialOptimismTraining", "true").equals("true");
+
 		BasicNetwork network = new BasicNetwork();
 	
 		int maxLoop = layers.length;
@@ -51,8 +51,8 @@ public class BrainFactory {
 		trainer.iteration();
 	}
 
-	public static <A extends Agent> BasicNetwork initialiseBrain(int inputNeurons, int outputNeurons) {
-		String networkArchitecture = SimProperties.getProperty("NeuralDeciderArchitecture", "10");
+	public static <A extends Agent> BasicNetwork initialiseBrain(int inputNeurons, int outputNeurons, DeciderProperties properties) {
+		String networkArchitecture = properties.getProperty("NeuralDeciderArchitecture", "10");
 		// NeuralDeciderArchitecture defines the hidden layers, with colon delimiters.
 		String[] layerArchitecture = networkArchitecture.split(":");
 		int neuronLayers = layerArchitecture.length;
@@ -63,7 +63,7 @@ public class BrainFactory {
 			layers[hiddenLayer+1] = Integer.valueOf(layerArchitecture[hiddenLayer]);
 		}
 		layers[neuronLayers+1] = outputNeurons;	
-		return newFFNetwork(layers);
+		return newFFNetwork(layers, properties);
 	}
 
 }

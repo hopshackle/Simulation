@@ -1,7 +1,7 @@
 package hopshackle.simulation.test;
 
 import static org.junit.Assert.*;
-import hopshackle.simulation.BrainFactory;
+import hopshackle.simulation.*;
 
 import org.encog.ml.data.basic.BasicMLData;
 import org.encog.neural.NeuralNetworkError;
@@ -10,16 +10,17 @@ import org.junit.*;
 
 public class NNFactoryTest {
 
+	DeciderProperties localProp;
 	
 	@Before
 	public void setUp() {
-		// nothing yet
+		localProp = SimProperties.getDeciderProperties("GLOBAL");
 	}
 
 	@Test
 	public void threeLayer() {
 		int[] layers = {3, 2, 1};
-		BasicNetwork n = BrainFactory.newFFNetwork(layers);
+		BasicNetwork n = BrainFactory.newFFNetwork(layers, localProp);
 		
 		assertTrue (n instanceof BasicNetwork);
 		assertEquals(n.getLayerCount(), 3, 0);

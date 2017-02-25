@@ -10,27 +10,30 @@ public class MCStatistics<P extends Agent> {
 	private Map<String, Map<String, Integer>> successorStatesByAction = new HashMap<String, Map<String, Integer>>();
 	private int totalVisits = 0;
 
-	private static double C = SimProperties.getPropertyAsDouble("MonteCarloUCTC", "1.0");
-	private static double actionWeight = SimProperties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
-	private static String UCTType = SimProperties.getProperty("MonteCarloUCTType", "MC");
-	private static int minVisitsForQ = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
-	private static int minVisitsForV = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
+	private boolean useBaseValue;
+	private double C, actionWeight, baseValue;
+	private String UCTType;
+	private int minVisitsForQ, minVisitsForV;
 
-	public MCStatistics(List<ActionEnum<P>> possibleActions) {
-		this(possibleActions, new MonteCarloTree<P>());
+	public MCStatistics(List<ActionEnum<P>> possibleActions, DeciderProperties properties) {
+		this(possibleActions, new MonteCarloTree<P>(properties));
 	}
 	public MCStatistics(List<ActionEnum<P>> possibleActions, MonteCarloTree<P> tree) {
 		allActions = HopshackleUtilities.cloneList(possibleActions);
 		for (ActionEnum<P> a : possibleActions) {
-			map.put(a.toString(), new MCData(a.toString()));
+			map.put(a.toString(), new MCData(a.toString(), tree.properties));
 		}
 		this.tree = tree;
+		refresh();
 	}
-	public static void refresh() {
-		actionWeight = SimProperties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
-		minVisitsForQ = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
-		minVisitsForV = SimProperties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
-		MCData.refresh();
+	public void refresh() {
+		C = tree.properties.getPropertyAsDouble("MonteCarloUCTC", "1.0");
+		UCTType = tree.properties.getProperty("MonteCarloUCTType", "MC");
+		actionWeight = tree.properties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
+		minVisitsForQ = tree.properties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
+		minVisitsForV = tree.properties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
+		baseValue = tree.properties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
+		useBaseValue = tree.properties.getProperty("MonteCarloRL", "false").equals("true");
 	}
 
 	public void updateAsSweep(ActionEnum<P> action, double reward) {
@@ -81,7 +84,7 @@ public class MCStatistics<P extends Agent> {
 			if (tree.debug) tree.log(String.format("\tNew Action values     MC:%.2f\tV:%.2f\tQ:%.2f", newMCD.mean, newMCD.V, newMCD.Q));
 			map.put(key, newMCD);
 		} else if (!sweep) {
-			map.put(key, new MCData(key, reward));
+			map.put(key, new MCData(key, reward, tree.properties));
 		}
 		if (!sweep) totalVisits++;
 	}
@@ -124,8 +127,8 @@ public class MCStatistics<P extends Agent> {
 		}
 	}
 	public double getV() {
-		if (MCData.useBaseValue) {
-			if (totalVisits == 0) return MCData.baseValue;
+		if (useBaseValue) {
+			if (totalVisits == 0) return baseValue;
 		} else {
 			if (totalVisits < minVisitsForV || totalVisits == 0) return Double.NaN;
 		}
@@ -138,8 +141,8 @@ public class MCStatistics<P extends Agent> {
 	}
 	public double getQ() {
 		int minVisits = minVisitsForQ;
-		if (MCData.useBaseValue) {
-			if (totalVisits == 0) return MCData.baseValue;
+		if (useBaseValue) {
+			if (totalVisits == 0) return baseValue;
 			minVisitsForQ = 0;
 		} else {
 			if (totalVisits == 0) return Double.NaN;
@@ -279,20 +282,17 @@ public class MCStatistics<P extends Agent> {
 
 class MCData implements Comparable<MCData> {
 
-	private static double alpha = SimProperties.getPropertyAsDouble("Alpha", "0.05");
-	protected static double baseValue = SimProperties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
-	protected static boolean useBaseValue = SimProperties.getProperty("MonteCarloRL", "false").equals("true");
-	private static int visitLimit = SimProperties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
-	static {
+	private double alpha, baseValue;
+	protected boolean useBaseValue;
+	private int visitLimit;
+
+	public void refresh(DeciderProperties properties) {
+		alpha = properties.getPropertyAsDouble("Alpha", "0.05");
+		baseValue = properties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
+		useBaseValue = properties.getProperty("MonteCarloRL", "false").equals("true");
+		visitLimit = properties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
 		if (visitLimit < 1) visitLimit = Integer.MAX_VALUE;
 		if (!useBaseValue) baseValue = 0.0;
-	}
-
-	public static void refresh() {
-		alpha = SimProperties.getPropertyAsDouble("Alpha", "0.05");
-		baseValue = SimProperties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
-		useBaseValue = SimProperties.getProperty("MonteCarloRL", "false").equals("true");
-		visitLimit = SimProperties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
 	}
 
 	double mean, Q, V;
@@ -300,15 +300,17 @@ class MCData implements Comparable<MCData> {
 	int limit = visitLimit;
 	String key;
 
-	public MCData(String key) {
-		this(key, 0, baseValue);
+	public MCData(String key, DeciderProperties properties) {
+		this(key, 0, 0, properties);
 	}
 
-	public MCData(String key, double r) {
-		this(key, 1, r);
+	public MCData(String key, double r, DeciderProperties properties) {
+		this(key, 1, r, properties);
 	}
 
-	private MCData(String key, int n, double r) {
+	private MCData(String key, int n, double r, DeciderProperties properties) {
+		refresh(properties);
+		if (useBaseValue && n == 0) r = baseValue;
 		this.key = key;
 		visits = n;
 		mean = r;
@@ -325,6 +327,10 @@ class MCData implements Comparable<MCData> {
 	}
 
 	public MCData(MCData old, double r, double V, double Q, boolean sweep) {
+		useBaseValue = old.useBaseValue;
+		alpha = old.alpha;
+		visitLimit = old.visitLimit;
+		baseValue = old.baseValue;
 		if (sweep && !useBaseValue) {
 			throw new AssertionError("Sweeping only to be used with RL");
 		}

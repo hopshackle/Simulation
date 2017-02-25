@@ -11,9 +11,9 @@ public abstract class StateDecider<A extends Agent> extends QDecider<A> {
 		super(stateFactory);
 		setStateType("DEFAULT");
 		pigeonHoles = 4;
-		baseValue = SimProperties.getPropertyAsDouble("StateBaseValue", "10000");
-		maxNoise = SimProperties.getPropertyAsDouble("StateMaxNoise", "1.0");
-		minNoise = SimProperties.getPropertyAsDouble("StateMinNoise", "0.0");
+		baseValue = getPropertyAsDouble("StateBaseValue", "10000");
+		maxNoise = getPropertyAsDouble("StateMaxNoise", "1.0");
+		minNoise = getPropertyAsDouble("StateMinNoise", "0.0");
 	}
 
 	@Override

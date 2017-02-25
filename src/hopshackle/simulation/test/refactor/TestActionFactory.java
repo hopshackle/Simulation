@@ -225,7 +225,7 @@ class TestActionPolicy extends Policy<TestAction> {
 class TestERCollector extends ExperienceRecordCollector<TestAgent> {
 
 	public TestERCollector() {
-		super(new StandardERFactory<TestAgent>());
+		super(new StandardERFactory<TestAgent>(SimProperties.getDeciderProperties(("GLOBAL"))));
 	}
 
 	public boolean agentKnown(TestAgent testAgent) {

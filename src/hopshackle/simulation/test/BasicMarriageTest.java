@@ -15,16 +15,18 @@ public class BasicMarriageTest {
 	private BasicAgent maleAgent1, maleAgent2, maleAgent3;
 	private BasicAgent femaleAgent1, femaleAgent2, femaleAgent3;
 	private TestActionProcessor ap;
-	private ExperienceRecordCollector<BasicAgent> teacher = new ExperienceRecordCollector<BasicAgent>(new StandardERFactory<BasicAgent>());
+	private ExperienceRecordCollector<BasicAgent> teacher;
 	private List<ActionEnum<BasicAgent>> actions;
 	private List<GeneticVariable<BasicAgent>> variables = new ArrayList<GeneticVariable<BasicAgent>>(EnumSet.allOf(BasicVariables.class));
 	private Decider<BasicAgent> baseDecider;
 	private Decider<BasicAgent> restDecider = new HardCodedDecider<BasicAgent>(BasicActions.REST);
+	DeciderProperties localProp;
 
 	@Before
 	public void setUp() {
-		SimProperties.setProperty("IncrementalScoreReward", "true");
-		ExperienceRecord.refreshProperties();
+		localProp = SimProperties.getDeciderProperties("GLOBAL");
+		localProp.setProperty("IncrementalScoreReward", "true");
+		teacher = new ExperienceRecordCollector<BasicAgent>(new StandardERFactory<BasicAgent>(localProp));
 		actions = new ArrayList<ActionEnum<BasicAgent>>();
 		actions.add(BasicActions.REST);
 		actions.add(BasicActions.FORAGE);

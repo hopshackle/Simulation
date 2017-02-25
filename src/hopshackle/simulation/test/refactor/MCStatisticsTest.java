@@ -13,6 +13,7 @@ public class MCStatisticsTest {
 	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	MCStatistics<TestAgent> stats;
+	DeciderProperties localProp;
 	TestState A, B, C, END;
 
 	@Before 
@@ -22,15 +23,16 @@ public class MCStatisticsTest {
 		C = new TestState("C");
 		END = new TestState("END");
 		leftRightOnly.remove(TestActionEnum.TEST);
-		SimProperties.setProperty("MonteCarloUCTC", "1");
-		SimProperties.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
-		SimProperties.setProperty("MonteCarloRL", "false");
-		MCStatistics.refresh();
+		localProp = SimProperties.getDeciderProperties("GLOBAL").clone();
+		localProp.setProperty("MonteCarloUCTC", "1");
+		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
+		localProp.setProperty("MonteCarloRL", "false");
+		
 	}
 
 	@Test
 	public void createEmpty() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp);
 		assertEquals(stats.getVisits(TestActionEnum.LEFT), 0);
 		assertEquals(stats.getVisits(TestActionEnum.RIGHT), 0);
 		assertEquals(stats.getVisits(TestActionEnum.TEST), 0);
@@ -41,7 +43,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void updateWithNewVisit() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp);
 		stats.update(TestActionEnum.LEFT, 2.0);
 		stats.update(TestActionEnum.LEFT, 3.5);
 		stats.update(TestActionEnum.LEFT, -1.0);
@@ -60,7 +62,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void cycleThroughActionsIfNotAllTried() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly);
+		stats = new MCStatistics<TestAgent>(leftRightOnly,localProp);
 		assertTrue(stats.hasUntriedAction(leftRightOnly));
 		TestActionEnum newAction = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly);
 		stats.update(newAction, 1.0);
@@ -73,7 +75,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void uctActionReturnsBestBound() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp);
 		stats.update(TestActionEnum.LEFT, 2.0);
 		stats.update(TestActionEnum.RIGHT, 1.0);
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
@@ -125,7 +127,7 @@ public class MCStatisticsTest {
 	
 	@Test
 	public void updateWithPreviouslyUnknownActionShouldError() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp);
 		try {
 			stats.update(TestActionEnum.LEFT, 5.0);
 			fail("Error should be thrown if unseen action used.");
@@ -136,10 +138,9 @@ public class MCStatisticsTest {
 	
 	@Test
 	public void qAndvMinVisits() {
-		SimProperties.setProperty("MonteCarloMinVisitsOnActionForQType", "1");
-		SimProperties.setProperty("MonteCarloMinVisitsOnActionForVType", "2");
-		MCStatistics.refresh();
-		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>();
+		localProp.setProperty("MonteCarloMinVisitsOnActionForQType", "1");
+		localProp.setProperty("MonteCarloMinVisitsOnActionForVType", "2");
+		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(A, leftRightOnly);
 
 		// all updates on MC basis
@@ -197,10 +198,9 @@ public class MCStatisticsTest {
 	
 	@Test
 	public void qAndvUpdated() {
-		SimProperties.setProperty("MonteCarloMinVisitsOnActionForQType", "0");
-		SimProperties.setProperty("MonteCarloMinVisitsOnActionForVType", "0");
-		MCStatistics.refresh();
-		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>();
+		localProp.setProperty("MonteCarloMinVisitsOnActionForQType", "0");
+		localProp.setProperty("MonteCarloMinVisitsOnActionForVType", "0");
+		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(A, leftRightOnly);
 		tree.insertState(B, leftRightOnly);
 		tree.insertState(C, leftRightOnly);
@@ -248,11 +248,10 @@ public class MCStatisticsTest {
 	
 	@Test
 	public void qAndvWithBaseValue() {
-		SimProperties.setProperty("MonteCarloRL", "true");
-		SimProperties.setProperty("MonteCarloRLBaseValue", "50.0");
-		SimProperties.setProperty("Alpha", "0.05");
-		MCStatistics.refresh();
-		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>();
+		localProp.setProperty("MonteCarloRL", "true");
+		localProp.setProperty("MonteCarloRLBaseValue", "50.0");
+		localProp.setProperty("Alpha", "0.05");
+		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(A, leftRightOnly);
 		tree.insertState(B, leftRightOnly);
 		tree.insertState(C, leftRightOnly);
@@ -300,11 +299,10 @@ public class MCStatisticsTest {
 	
 	@Test
 	public void updateTowardsAStateWithZeroValue() {
-		SimProperties.setProperty("MonteCarloRL", "true");
-		SimProperties.setProperty("MonteCarloRLBaseValue", "0.0");
-		SimProperties.setProperty("Alpha", "0.1");
-		MCStatistics.refresh();
-		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>();
+		localProp.setProperty("MonteCarloRL", "true");
+		localProp.setProperty("MonteCarloRLBaseValue", "0.0");
+		localProp.setProperty("Alpha", "0.1");
+		MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(A, leftRightOnly);
 		tree.insertState(B, leftRightOnly);
 		

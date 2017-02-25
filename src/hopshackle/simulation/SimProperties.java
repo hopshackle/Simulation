@@ -1,7 +1,7 @@
 package hopshackle.simulation;
 
 import java.io.*;
-import java.util.Properties;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class SimProperties {
@@ -10,7 +10,8 @@ public class SimProperties {
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	private static boolean initialised = false;
 	private static String fileLocation = "C:\\Users\\James\\Google Drive\\Simulations\\Genomes\\GeneticProperties.txt";
-
+	private static Map<String, DeciderProperties> deciderPropertiesMap = new HashMap<String, DeciderProperties>();
+	
 	public static void clear() {
 		initialised = false;
 		initialiseProperties();
@@ -18,6 +19,13 @@ public class SimProperties {
 	
 	public static void setFileLocation(String newLocation) {
 		fileLocation = newLocation;
+	}
+	
+	public static void initialiseProperties(Properties baseline) {
+		geneticProperties = baseline;
+		initialised = true;
+		deciderPropertiesMap = new HashMap<String, DeciderProperties>();
+		initialiseProperties();
 	}
 	
 	private static void initialiseProperties() {
@@ -31,29 +39,37 @@ public class SimProperties {
 				initialised = true;
 			} catch (IOException e) {
 				logger.warning("Error loading genetic properties: " + e.toString());
-				// so we use some default values
-				setProperty("MaxModifierChange", "0.05");
-				setProperty("MaxPriorityChange", "0.05");
-				setProperty("NewCodon", "0.005");
-				setProperty("RemoveCodon", "0.0025");
-				setProperty("SwapCodon", "0.01");
-				setProperty("DuplicateCodon", "0.00125");
-				setProperty("NewGeneticTerm", "0.005");
-				setProperty("RemoveGeneticTerm", "0.00125");
-				setProperty("ModfierShift", "0.003");
-				setProperty("CodonRemovalProportionalToNumber", "false");
-
-				// and write to File
-
-				try {
-					FileOutputStream fos = new FileOutputStream(f, false);
-					geneticProperties.store(fos, "Genetic Properties for hopshackle.simulation");
-					fos.close();
-				} catch (IOException e2) {
-					logger.warning("Error storing genetic properties: " + e2.toString());
-				}			
 			}		
 		}
+		Set<String> deciderNames = extractDeciderNames(geneticProperties);
+		for (String decider : deciderNames) {
+			DeciderProperties dp = DeciderProperties.factory(decider, geneticProperties);
+			deciderPropertiesMap.put(decider, dp);
+		}
+		deciderPropertiesMap.put("GLOBAL", new DeciderProperties("GLOBAL", geneticProperties));
+	}
+	
+	public static Set<String> extractDeciderNames(Properties prop) {
+		Set<String> retValue = new HashSet<String>();
+		Enumeration<?> allProperties = prop.propertyNames();
+		while (allProperties.hasMoreElements()) {
+			String pName = (String) allProperties.nextElement();
+			String[] parse = pName.split("\\.");
+			if (parse.length > 1) {
+				retValue.add(parse[0]);
+			}
+		}
+		return retValue;
+	}
+
+	public static Set<String> allDeciderNames() {
+		if (!initialised) initialiseProperties();
+		return deciderPropertiesMap.keySet();
+	}
+	
+	public static DeciderProperties getDeciderProperties(String type) {
+		if (!initialised) initialiseProperties();
+		return deciderPropertiesMap.get(type);
 	}
 
 	public static void setProperty(String propertyName, String value) {

@@ -15,6 +15,7 @@ public class GeneralQDeciderTest {
 	private List<ActionEnum<Agent>> actions;
 	private List<GeneticVariable<Agent>> variables;
 	private World w;
+	DeciderProperties localProp;
 
 	public static GeneticVariable<Agent> gold = new GeneticVariable<Agent>() {
 		@Override
@@ -39,14 +40,14 @@ public class GeneralQDeciderTest {
 	
 	@Before
 	public void setup() {
-		SimProperties.setProperty("Gamma", "0.90");
-		SimProperties.setProperty("Alpha", "0.20");
-		SimProperties.setProperty("Lambda", "0.00");
-		SimProperties.setProperty("QTraceLambda", "0.00");
-		SimProperties.setProperty("QTraceMaximum", "2.0");
-		SimProperties.setProperty("TimePeriodForGamma", "1000");
-		SimProperties.setProperty("MonteCarloReward", "false");
-		ExperienceRecord.refreshProperties();
+		localProp = SimProperties.getDeciderProperties("GLOBAL");
+		localProp.setProperty("Gamma", "0.90");
+		localProp.setProperty("Alpha", "0.20");
+		localProp.setProperty("Lambda", "0.00");
+		localProp.setProperty("QTraceLambda", "0.00");
+		localProp.setProperty("QTraceMaximum", "2.0");
+		localProp.setProperty("TimePeriodForGamma", "1000");
+		localProp.setProperty("MonteCarloReward", "false");
 		actions = new ArrayList<ActionEnum<Agent>>();
 		actions.add(RightLeft.RIGHT);
 		actions.add(RightLeft.LEFT);
@@ -56,6 +57,7 @@ public class GeneralQDeciderTest {
 		variables.add(gold);
 
 		decider = new TestLinearQDecider(actions, variables);
+		decider.injectProperties(localProp);
 		decider.setWeights(new double[3][2]);
 		// so we have two actions, right and left
 		// and two inputs, one is just equal to the Agents Gold, and the other is equal to a constant
@@ -96,11 +98,11 @@ public class GeneralQDeciderTest {
 	@Test
 	public void teachingDecisionUpdatesWeights() {
 		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				actions);
+				actions, localProp);
 		exp.updateWithResults(2.0, decider.getCurrentState(testAgent));
 		w.setCurrentTime(1000l); // move forward before taking next action, so that discounting works
 		ExperienceRecord<Agent> exp2 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.LEFT.getAction(testAgent), 
-				actions);
+				actions, localProp);
 		exp.updateNextActions(exp2);
 		decider.learnFrom(exp, 10.0);
 		// reward of 2.0 versus an expected 0.0
@@ -114,7 +116,7 @@ public class GeneralQDeciderTest {
 		testAgent.addGold(-2.0);
 		exp2.updateWithResults(-2.0, decider.getCurrentState(testAgent));
 		ExperienceRecord<Agent> exp3 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				actions);
+				actions, localProp);
 		w.setCurrentTime(2000l); // move forward before taking next action, so that discounting works
 		exp2.updateNextActions(exp3);
 		decider.learnFrom(exp2, 10.0);
@@ -130,7 +132,7 @@ public class GeneralQDeciderTest {
 		testAgent.addGold(1.0);
 		exp3.updateWithResults(1.0, decider.getCurrentState(testAgent));
 		ExperienceRecord<Agent> exp4 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				actions);
+				actions, localProp);
 		exp3.updateNextActions(exp4);
 		decider.learnFrom(exp3, 10.0);
 		// prediction would be 0.4 from starting State
@@ -145,9 +147,9 @@ public class GeneralQDeciderTest {
 	@Test
 	public void teachingDecisionWithNoDifferenceDoesNotUpdateWeights() {
 		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				actions);
+				actions, localProp);
 		ExperienceRecord<Agent> exp2 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
-				actions);
+				actions, localProp);
 		exp.updateWithResults(0.0, decider.getCurrentState(testAgent));
 		exp.updateNextActions(exp2);
 		decider.learnFrom(exp, 10.0);
