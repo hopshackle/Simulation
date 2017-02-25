@@ -20,7 +20,7 @@ public class AgentCachingTest {
 		Thread t = new Thread(testJunit);
 		t.start();
 		world.setDatabaseAccessUtility(testJunit);
-		BasicAgent.getAgentWriter().setBufferLimit(1);
+		SimProperties.setProperty("DatabaseWriterBufferLimit", "1");
 		Agent.clearAndResetCacheBuffer(1);
 		
 		testAgent = new BasicAgent(world);

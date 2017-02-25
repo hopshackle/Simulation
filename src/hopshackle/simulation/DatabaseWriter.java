@@ -7,14 +7,14 @@ public class DatabaseWriter<T extends Persistent> {
 
 	private String lastSuffix;
 	private StringBuffer buffer;
-	private int numberInBuffer, bufferLimit;
+	private int numberInBuffer;
+	private static int bufferLimit = SimProperties.getPropertyAsInteger("DatabaseWriterBufferLimit", "10");
 	private ArrayList<World> worlds;
 	private DAO<T> DAO;
 
 	public DatabaseWriter(DAO<T> DAO) {
 		this.DAO = DAO;
 		numberInBuffer = 0;
-		bufferLimit = 10;
 		worlds = new ArrayList<World>();
 	}
 
@@ -74,12 +74,4 @@ public class DatabaseWriter<T extends Persistent> {
 
 		numberInBuffer = 0;
 	}
-
-	public void setBufferLimit(int newLimit) {
-		bufferLimit = newLimit;
-	}
-	public int getBufferLimit() {
-		return bufferLimit;
-	}
-
 }
