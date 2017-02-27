@@ -54,8 +54,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 				@Override
 				public void processEvent(AgentEvent event) {
 					if (event.getEvent() == Type.DEATH) {
-						//				agent.log("Removing Tree from MCTS decider");
 						treeMap.remove(agent);
+						agent.log("Removing Tree from MCTS decider, leaving " + treeMap.size());
 					}
 				}
 			});
