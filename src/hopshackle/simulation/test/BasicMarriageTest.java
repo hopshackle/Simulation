@@ -289,8 +289,8 @@ public class BasicMarriageTest {
 		assertTrue(maleER.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
 		assertTrue(femaleRestER.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
 		assertTrue(femaleNewRestER.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
-		assertEquals(maleER.getReward(), -2.0, 0.01);
-		assertEquals(femaleRestER.getReward(), -4.0, 0.01);	
+		assertEquals(maleER.getReward()[0], -2.0, 0.01);
+		assertEquals(femaleRestER.getReward()[0], -4.0, 0.01);	
 		assertTrue(maleER.getStartState() != femaleRestER.getStartState());
 		assertEquals(maleER.getPossibleActionsFromEndState().size(), 2);
 		assertEquals(femaleMarryER.getPossibleActionsFromEndState().size(), 1);

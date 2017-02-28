@@ -89,5 +89,4 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 			player.die("Game Over");
 		}
 	}
-
 }

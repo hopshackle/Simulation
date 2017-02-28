@@ -3,9 +3,10 @@ package hopshackle.simulation;
 import java.util.List;
 
 public class LinearState<A extends Agent> implements State<A> {
-	
+
 	private List<GeneticVariable<A>> variables;
 	private double[] values;
+	private double[] score = new double[1];
 
 	public LinearState(A agent, List<GeneticVariable<A>> var) {
 		variables = var;
@@ -14,6 +15,7 @@ public class LinearState<A extends Agent> implements State<A> {
 			GeneticVariable<A> gv = variables.get(i);
 			values[i] = gv.getValue(agent);
 		}
+		score[0] = agent.getScore();
 	}
 
 	@Override
@@ -29,16 +31,25 @@ public class LinearState<A extends Agent> implements State<A> {
 		}
 		return retValue.toString();
 	}
-	
+
 	@Override
 	public LinearState<A> clone() {
 		return this;
 	}
-	
+
 	@Override
 	public LinearState<A> apply(ActionEnum<A> action) {
 		return this;
 	}
 
+	@Override
+	public int getActorRef() {
+		return 0;
+	}
+
+	@Override
+	public double[] getScore() {
+		return score;
+	}
 
 }

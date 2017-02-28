@@ -6,7 +6,7 @@ import java.util.*;
  * 
  */
 public class ExperienceRecord<A extends Agent> implements Persistent {
-	
+
 	public enum ERState {
 		UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
 	}
@@ -20,7 +20,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	protected double[] featureTrace;
 	protected Action<A> actionTaken, nextActionTaken;
 	protected List<ActionEnum<A>> possibleActionsFromEndState, possibleActionsFromStartState;
-	protected double startScore, endScore, reward;
+	protected double[] startScore, endScore, reward;
 	protected boolean isFinalState;
 	protected ERState expRecState = ERState.UNSEEN;
 	private A agent;
@@ -50,7 +50,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		featureTrace = startStateAsArray;
 		possibleActionsFromStartState = HopshackleUtilities.cloneList(possibleActions);
 		setState(ERState.DECISION_TAKEN);
-		startScore = a.getScore();
+		startScore = state.getScore();
 		agent = a;
 		timeOfDecision = a.getWorld().getCurrentTime();
 		timeOfResolution = -1;
@@ -68,16 +68,20 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 			}
 		}
 	}
-	
+
 	public void updateWithResults(double reward, State<A> newState) {
+		this.updateWithResults(toArray(reward), newState);
+	}
+	
+	public void updateWithResults(double[] reward, State<A> newState) {
 		endState = newState;
 		endStateAsArray = endState.getAsArray();
 		this.reward = reward;
 		timeOfResolution = getAgent().getWorld().getCurrentTime();
-//		getAgent().log("ACTION_COMPLETED for " + this.actionTaken);
+		//		getAgent().log("ACTION_COMPLETED for " + this.actionTaken);
 		setState(ERState.ACTION_COMPLETED);
 	}
-	
+
 	public void updateNextActions(ExperienceRecord<A> nextER) {
 		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		if (nextER != null) {
@@ -88,31 +92,40 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 			endState = nextER.getStartState();
 			endStateAsArray = endState.getAsArray();
 			endScore = nextER.getStartScore();
-//			getAgent().log("Updated ER for Action " + actionTaken + " after new action " + nextER.getActionTaken());
+			//			getAgent().log("Updated ER for Action " + actionTaken + " after new action " + nextER.getActionTaken());
 		} else {
 			possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
-			endScore = agent.getScore();
+			for (int i = 0; i < startScore.length; i++) endScore[i] = startScore[i] + reward[i]; // Not ideal, but we have no information to go on
 			setIsFinal();
 		}
 		setState(ERState.NEXT_ACTION_TAKEN);
 	}
 	
+	public void updateWithFinalScores(double[] finalScores) {
+		timeOfResolution = getAgent().getWorld().getCurrentTime();
+		possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
+		endScore = finalScores;
+		setIsFinal();
+	}
+
+
 	public void setIsFinal() {
 		isFinalState = true;
-		endScore = agent.getScore();
 		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		setState(ERState.NEXT_ACTION_TAKEN);
 		if (monteCarlo) {
 			updatePreviousRecord(getReward());
 		}
 	}
-	
-	private void updatePreviousRecord(double score) {
+
+	private void updatePreviousRecord(double[] score) {
 		if (previousRecord != null) {
-			double newScore = score * gamma + previousRecord.getReward();
+			double[] prevReward = previousRecord.getReward();
+			double[] newScore = score;
+			for (int i = 0; i < score.length; i++) newScore[i] = newScore[i] * gamma + prevReward[i];
 			previousRecord.reward = newScore;
-			previousRecord.endScore = 0.0;
-			previousRecord.startScore = 0.0;
+			previousRecord.endScore = new double[score.length];
+			previousRecord.startScore = new double[score.length];
 			previousRecord.updatePreviousRecord(newScore);
 		} else {
 			// end of the chain
@@ -132,7 +145,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	public double[] getEndStateAsArray() {
 		return endStateAsArray;
 	}
-	
+
 	public double[] getFeatureTrace() {
 		return featureTrace;
 	}
@@ -144,31 +157,34 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	public List<ActionEnum<A>> getPossibleActionsFromEndState() {
 		return possibleActionsFromEndState;
 	}
-	
+
 	public List<ActionEnum<A>> getPossibleActionsFromStartState() {
 		return possibleActionsFromStartState;
 	}
 
-	public double getReward() {
-		if (getState() == ERState.NEXT_ACTION_TAKEN && incrementalScoreAffectsReward) 
-			return (reward + endScore - startScore);
-		if (isInFinalState() && !incrementalScoreAffectsReward) {
-			return reward + endScore;
+	public double[] getReward() {
+		double[] retValue = new double[reward.length];
+		if (getState() == ERState.NEXT_ACTION_TAKEN && incrementalScoreAffectsReward) {
+			for (int i = 0; i < reward.length; i++) retValue[i] = reward[i] + endScore[i] - startScore[i];
+		} else if (isInFinalState() && !incrementalScoreAffectsReward) {
+			for (int i = 0; i < reward.length; i++) retValue[i] = reward[i] + endScore[i];
+		} else {
+			retValue = reward;
 		}
-		return reward;
+		return retValue;
 	}
-	
-	public double getStartScore() {
+
+	public double[] getStartScore() {
 		return startScore;
 	}
-	public double getEndScore() {
+	public double[] getEndScore() {
 		return endScore;
 	}
 
 	public boolean isInFinalState() {
 		return isFinalState;
 	}
-	
+
 	public ERState getState() {
 		return expRecState;
 	}
@@ -189,5 +205,11 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 			return (timeOfResolution - timeOfDecision) / timePeriod;
 		else
 			return 0.0;
+	}
+	
+	private double[] toArray(double single) {
+		double[] retValue = new double[1];
+		retValue[0] = single;
+		return retValue;
 	}
 }

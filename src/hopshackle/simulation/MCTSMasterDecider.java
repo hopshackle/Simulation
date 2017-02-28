@@ -26,10 +26,10 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	}
 
 
-	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree) {
+	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree, int currentPlayer) {
 		MCTSChildDecider<A> retValue = null;
 		if (useAVDForRollout)
-			retValue = new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory), decProp);
+			retValue = new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory, currentPlayer), decProp);
 		else 
 			retValue = new MCTSChildDecider<A>(stateFactory, tree, rolloutDecider, decProp);
 
@@ -55,13 +55,13 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 				public void processEvent(AgentEvent event) {
 					if (event.getEvent() == Type.DEATH) {
 						treeMap.remove(agent);
-						agent.log("Removing Tree from MCTS decider, leaving " + treeMap.size());
+			//			agent.log("Removing Tree from MCTS decider, leaving " + treeMap.size());
 					}
 				}
 			});
 		}
 		MonteCarloTree<A> tree = treeMap.get(agent);
-		if (tree == null) tree = new MonteCarloTree<A>(decProp);
+		if (tree == null) tree = new MonteCarloTree<A>(decProp, game.getAllPlayers().size());
 		if (reuseOldTree) {
 			int before = tree.numberOfStates();
 			tree.pruneTree(currentState.getAsString());
@@ -73,7 +73,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		}
 
 		OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
-		childDecider = createChildDecider(tree);
+		childDecider = createChildDecider(tree, currentPlayer-1);
 		teacher.registerDecider(childDecider);
 		class FollowOnEventFilter implements EventFilter {
 			@Override
@@ -99,7 +99,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			for (A player : clonedGame.getAllPlayers()) {
 				if (player != clonedAgent) {
 					if (useAVDForOpponent)
-						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory));
+						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory, currentPlayer-1));
 					else 
 						player.setDecider(opponentModel);
 				} else {
@@ -154,7 +154,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		if (treeMap.containsKey(agent)) {
 			return treeMap.get(agent);
 		}
-		treeMap.put(agent, new MonteCarloTree<A>(decProp));
+		treeMap.put(agent, new MonteCarloTree<A>(decProp, agent.getGame().getAllPlayers().size()));
 		return treeMap.get(agent);
 	}
 

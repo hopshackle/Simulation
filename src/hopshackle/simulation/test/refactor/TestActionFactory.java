@@ -281,5 +281,15 @@ class TestState implements State<TestAgent> {
 	public State<TestAgent> clone() {
 		return this;
 	}
+
+	@Override
+	public int getActorRef() {
+		return 0;
+	}
+
+	@Override
+	public double[] getScore() {
+		return new double[1];
+	}
 	
 }

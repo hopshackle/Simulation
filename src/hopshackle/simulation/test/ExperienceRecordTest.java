@@ -44,19 +44,19 @@ public class ExperienceRecordTest {
 		assertFalse(er.isInFinalState());
 		assertTrue(er.getEndState() == null);
 		assertTrue(er.getActionTaken().getType() == BasicActions.FARM);
-		assertEquals(er.getReward(), 0.0, 0.01);
+		assertEquals(er.getReward()[0], 0.0, 0.01);
 		assertTrue(er.getPossibleActionsFromEndState() == null);
 		assertEquals(er.getPossibleActionsFromStartState().size(), 2);
 
 		possibleActions.add(BasicActions.BREED);
 		er.updateWithResults(30.0, new LinearState<BasicAgent>(agent, varList));
 		agent.addHealth(-15.0);
-		assertEquals(er.getReward(), 30.0, 0.01);
+		assertEquals(er.getReward()[0], 30.0, 0.01);
 		er.setIsFinal();
 		assertTrue(er.isInFinalState());
 		assertFalse(er.getEndState() == null);
 		assertTrue(er.getActionTaken().getType() == BasicActions.FARM);
-		assertEquals(er.getReward(), 15.0, 0.01);	// -15 in change of score from full health, plus 30 reward
+		assertEquals(er.getReward()[0], 15.0, 0.01);	// -15 in change of score from full health, plus 30 reward
 		assertEquals(er.getPossibleActionsFromStartState().size(), 2);
 	}
 	
@@ -70,12 +70,12 @@ public class ExperienceRecordTest {
 		ExperienceRecord<BasicAgent> nextER = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions, localProp);
 		er.updateNextActions(nextER);
 		nextER.updateWithResults(0.0, new LinearState<BasicAgent>(agent, varList));
-		assertEquals(er.getReward(), 30.0, 0.001);
-		assertEquals(nextER.getReward(), 0.0, 0.001);
+		assertEquals(er.getReward()[0], 30.0, 0.001);
+		assertEquals(nextER.getReward()[0], 0.0, 0.001);
 		agent.addHealth(-2.0);
 		nextER.setIsFinal();
-		assertEquals(nextER.getReward(), -2.0, 0.001);
-		assertEquals(er.getReward(), -2.0 * 0.9 + 30.0, 0.001);
+		assertEquals(nextER.getReward()[0], -2.0, 0.001);
+		assertEquals(er.getReward()[0], -2.0 * 0.9 + 30.0, 0.001);
 	}
 	
 	@Test
@@ -89,12 +89,12 @@ public class ExperienceRecordTest {
 		ExperienceRecord<BasicAgent> nextER = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions, localProp);
 		er.updateNextActions(nextER);
 		nextER.updateWithResults(0.0, new LinearState<BasicAgent>(agent, varList));
-		assertEquals(er.getReward(), 3.0, 0.001);
-		assertEquals(nextER.getReward(), 0.0, 0.001);
+		assertEquals(er.getReward()[0], 3.0, 0.001);
+		assertEquals(nextER.getReward()[0], 0.0, 0.001);
 		agent.addHealth(-2.0);
 		nextER.setIsFinal();
-		assertEquals(nextER.getReward(), 18.0, 0.001);
-		assertEquals(er.getReward(), 18.0 * 0.9 + 3.0, 0.001);
+		assertEquals(nextER.getReward()[0], 18.0, 0.001);
+		assertEquals(er.getReward()[0], 18.0 * 0.9 + 3.0, 0.001);
 	}
 	
 	@Test

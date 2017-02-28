@@ -15,7 +15,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	private ERCAllocationPolicy<A> birthPolicy;
 	private ExperienceRecordFactory<A> erFactory;
 	protected EventFilter filter;
-	
+
 	public ExperienceRecordCollector(ExperienceRecordFactory<A> factory) {
 		this(factory, new EventFilter() {
 			@Override
@@ -35,7 +35,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			listenToAgent(a);
 		}
 	}
-	
+
 	public List<ExperienceRecord<A>> getExperienceRecords(A a) {
 		if (agentAlreadySeen(a)) {
 			List<ExperienceRecord<A>> tdArray = erListMap.get(a);
@@ -55,28 +55,28 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		}
 		return new ArrayList<ExperienceRecord<A>>();
 	}
-	
+
 	public List<A> getAllAgentsWithER() {
 		return HopshackleUtilities.cloneList(erListMap.keySet());
 	}
-	
+
 	public List<ExperienceRecord<A>> getAllExperienceRecords() {
 		List<ExperienceRecord<A>> retList = new ArrayList<ExperienceRecord<A>>();
 		for (List<ExperienceRecord<A>> l : erListMap.values())
 			retList.addAll(l);
 		return retList;
 	}
-	
+
 	public void clearAllExperienceRecord() {
 		erListMap.clear();
 	}
-	
+
 	public void removeER(A agent, ExperienceRecord<A> er) {
 		if (agentAlreadySeen(agent)) {
 			erListMap.get(agent).remove(er);
 		}
 	}
-	
+
 	public void removeAgent(A agent) {
 		erListMap.remove(agent);
 	}
@@ -86,28 +86,28 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			return true;
 		return false;
 	}
-	
+
 	private void addAgentToList(A a) {
 		List<ExperienceRecord<A>> tdList = new ArrayList<ExperienceRecord<A>>();
 		erListMap.put(a, tdList);
 	}
-	
+
 	private boolean processNewER(ExperienceRecord<A> newlyRegisteredER, A agent) {
 		boolean passOnEvent = false;
 		List<ExperienceRecord<A>> tdListForAgent = erListMap.getOrDefault(agent, new ArrayList<ExperienceRecord<A>>());
 		for (ExperienceRecord<A> existingER : tdListForAgent) {
-	//		System.out.println("\tProcessing: " + existingER.getActionTaken() + " (" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
+			//		System.out.println("\tProcessing: " + existingER.getActionTaken() + " (" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
 			if (existingER.getState() == ERState.ACTION_COMPLETED && 
 					!newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken())) {
 				existingER.updateNextActions(newlyRegisteredER);
-	//			System.out.println("Linking " + newlyRegisteredER.getActionTaken() + " to " + existingER.getActionTaken());
+				//			System.out.println("Linking " + newlyRegisteredER.getActionTaken() + " to " + existingER.getActionTaken());
 				passOnEvent = true;
 			}
 		}
 		tdListForAgent.add(newlyRegisteredER);
 		return passOnEvent;
 	}
-	
+
 	private void listenToAgent(A a) {
 		a.addListener(this);
 	}
@@ -117,13 +117,13 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	public synchronized void processEvent(AgentEvent event) {
 		if (filter.ignore(event)) 
 			return;
-//		System.out.println("Through Filter: " + event.getAction() + " ; " + event.getEvent());
+		//		System.out.println("Through Filter: " + event.getAction() + " ; " + event.getEvent());
 		A a = (A) event.getAgent();
 		Action<A> action = (Action<A>)event.getAction();
 		Decider<A> eventDecider = (Decider<A>) event.getDecider();
 		ExperienceRecord<A> newER = null;
 		boolean passOnEvent = false;
-//		if (!a.isDead()) System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
+		//		if (!a.isDead()) System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
 		switch (event.getEvent()) {
 		case BIRTH:
 			if (birthPolicy != null) {
@@ -150,13 +150,13 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			passOnEvent = passOnEvent || passOn1;
 			break;
 		}
-		
+
 		if (passOnEvent) {
-//			System.out.println("Event passed on");
+			//			System.out.println("Event passed on");
 			passOnEventAfterExperienceRecordsUpdated(event);
 		}
 	} 
-	
+
 	private boolean actionPreviouslySeen(A agent, Action<A> action) {
 		if (agentAlreadySeen(agent)) {
 			List<ExperienceRecord<A>> tdArray = erListMap.get(agent);
@@ -168,7 +168,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		}
 		return false;
 	}
-	
+
 	private boolean createAndProcessNewERIfNeeded(A a, Action<A> action, Decider<A> agentDecider) {
 		if (action!= null && !actionPreviouslySeen(a, action) && agentDecider != null) {
 			// we need to create a new ER first
@@ -179,10 +179,10 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 		}
 		return false;
 	}
-	
+
 	protected boolean processDecisionForAgent(A agent, Action<A> action) {
 		boolean passOnEvent = false;
-//		agent.log("Processing Decision " + action);
+		//		agent.log("Processing Decision " + action);
 		List<ExperienceRecord<A>> tdArray = erListMap.get(agent);
 		ExperienceRecord<A> ERForActionReceived = null;
 		for (ExperienceRecord<A> td : tdArray) {
@@ -190,13 +190,12 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 				ERForActionReceived = td;
 				switch (td.getState()) {
 				case UNSEEN:
-					assert false : "Should not be reachable";
-				break;
+					throw new AssertionError("Should not be reachable");
 				case DECISION_TAKEN:
 					Decider<A> d = agent.getDecider();
 					if (d != null) {
 						State<A> newState = d.getCurrentState(agent);
-						td.updateWithResults(0.0, newState);
+						td.updateWithResults(new double[newState.getScore().length], newState);
 					}
 				case ACTION_COMPLETED:
 				case NEXT_ACTION_TAKEN:
@@ -229,16 +228,21 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			case DECISION_TAKEN:
 				Decider<A> d = agent.getDecider();
 				State<A> newState = d.getCurrentState(agent);
-				td.updateWithResults(0.0, newState);
+				td.updateWithResults(new double[newState.getScore().length], newState);
 			case ACTION_COMPLETED:
-				td.updateNextActions(null);
+				Game<A, ActionEnum<A>> game = agent.getGame();
+				if (game != null) {
+					td.updateWithFinalScores(game.getFinalScores());
+				} else {
+					td.updateNextActions(null);
+				}
 			case NEXT_ACTION_TAKEN:
 			case UNSEEN:
 				// Do nothing
 			}
 		}
 	}
-	
+
 	public void addListener(AgentListener el) {
 		if (!listeners.contains(el))
 			listeners.add(el);
@@ -254,6 +258,6 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	public void setAllocationPolicy(ERCAllocationPolicy<A> newPolicy) {
 		birthPolicy = newPolicy;
 	}
-	
+
 }
 

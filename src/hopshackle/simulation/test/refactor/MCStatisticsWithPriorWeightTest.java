@@ -24,6 +24,10 @@ public class MCStatisticsWithPriorWeightTest {
 		public State<TestAgent> apply(ActionEnum<TestAgent> proposedAction) {return this;}
 		@Override
 		public State<TestAgent> clone() {return this;}
+		@Override
+		public int getActorRef() {return 0;	}
+		@Override
+		public double[] getScore() {return new double[1];}
 	};
 	
 	@Before 
@@ -33,25 +37,25 @@ public class MCStatisticsWithPriorWeightTest {
 		localProp.setProperty("MonteCarloUCTC", "1");
 		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "5");
 		
-		startingTree = new MonteCarloTree<TestAgent>(localProp);
+		startingTree = new MonteCarloTree<TestAgent>(localProp, 1);
 		startingTree.insertState(dummyState, leftRightOnly);
-		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, 2.0);
+		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, toArray(2.0));
 	}
 
 	@Test
 	public void priorWeightWillShiftDecisionOnUCT() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree);
-		stats.update(TestActionEnum.LEFT, 2.0);
-		stats.update(TestActionEnum.LEFT, 3.5);
-		stats.update(TestActionEnum.LEFT, -1.0);
-		stats.update(TestActionEnum.RIGHT, 1.0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 1);
+		stats.update(TestActionEnum.LEFT, toArray(2.0));
+		stats.update(TestActionEnum.LEFT, toArray(3.5));
+		stats.update(TestActionEnum.LEFT, toArray(-1.0));
+		stats.update(TestActionEnum.RIGHT, toArray(1.0));
 
 		assertEquals(stats.getVisits(TestActionEnum.LEFT), 3);
 		assertEquals(stats.getVisits(TestActionEnum.RIGHT), 1);
 		assertEquals(stats.getVisits(TestActionEnum.TEST), 0);
-		assertEquals(stats.getMean(TestActionEnum.LEFT), 1.5, 0.001);
-		assertEquals(stats.getMean(TestActionEnum.RIGHT), 1.0, 0.001);
-		assertEquals(stats.getMean(TestActionEnum.TEST), 0.0, 0.001);
+		assertEquals(stats.getMean(TestActionEnum.LEFT)[0], 1.5, 0.001);
+		assertEquals(stats.getMean(TestActionEnum.RIGHT)[0], 1.0, 0.001);
+		assertEquals(stats.getMean(TestActionEnum.TEST)[0], 0.0, 0.001);
 		
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
 		assertTrue(stats.getUCTAction(leftRightOnly) == TestActionEnum.RIGHT);
@@ -59,39 +63,39 @@ public class MCStatisticsWithPriorWeightTest {
 
 	@Test
 	public void cycleThroughActionsIfNotAllTried() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 1);
 		assertTrue(stats.hasUntriedAction(leftRightOnly));
 		TestActionEnum newAction = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly);
-		stats.update(newAction, 1.0);
+		stats.update(newAction, toArray(1.0));
 		assertTrue(stats.hasUntriedAction(leftRightOnly));
 		TestActionEnum newAction2 = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly);
 		assertTrue(newAction != newAction2);
-		stats.update(newAction2, 1.0);
+		stats.update(newAction2, toArray(1.0));
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
 	}
 
 	@Test
 	public void uctActionReturnsBestBound() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree);
-		stats.update(TestActionEnum.LEFT, 2.0);
-		stats.update(TestActionEnum.RIGHT, 1.0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 1);
+		stats.update(TestActionEnum.LEFT, toArray(2.0));
+		stats.update(TestActionEnum.RIGHT, toArray(1.0));
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
 		TestActionEnum nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.RIGHT);
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
-		stats.update(nextPick, -2.0);
+		stats.update(nextPick, toArray(-2.0));
 		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.RIGHT);
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
-		stats.update(nextPick, 0.0);
+		stats.update(nextPick, toArray(0.0));
 		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.RIGHT);
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
-		stats.update(nextPick, -1.0);
+		stats.update(nextPick, toArray(-1.0));
 		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.LEFT);
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
-		stats.update(nextPick, 1.0);
+		stats.update(nextPick, toArray(1.0));
 		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.RIGHT);
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
@@ -115,29 +119,29 @@ public class MCStatisticsWithPriorWeightTest {
 	@Test
 	public void uctReturnsBestActionWithActionValueWeighting() {
 		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "5");
-		startingTree = new MonteCarloTree<TestAgent>(localProp);
+		startingTree = new MonteCarloTree<TestAgent>(localProp, 1);
 		startingTree.insertState(dummyState, leftRightOnly);
-		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, 2.0);
-		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree);
-		stats.update(TestActionEnum.LEFT, 2.0);
-		stats.update(TestActionEnum.RIGHT, 1.0);
+		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, toArray(2.0));
+		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 1);
+		stats.update(TestActionEnum.LEFT, toArray(2.0));
+		stats.update(TestActionEnum.RIGHT, toArray(1.0));
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
 		TestActionEnum nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.RIGHT);
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
-		stats.update(nextPick, -2.0);
+		stats.update(nextPick, toArray(-2.0));
 		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.RIGHT);
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
-		stats.update(nextPick, 0.0);
+		stats.update(nextPick, toArray(0.0));
 		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.RIGHT);
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
-		stats.update(nextPick, -1.0);
+		stats.update(nextPick, toArray(-1.0));
 		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.LEFT);
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
-		stats.update(nextPick, 1.0);
+		stats.update(nextPick, toArray(1.0));
 		nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly);
 		assertTrue(nextPick == TestActionEnum.RIGHT);
 		assertTrue(stats.getBestAction(leftRightOnly) == TestActionEnum.RIGHT);
@@ -176,13 +180,19 @@ public class MCStatisticsWithPriorWeightTest {
 	
 	@Test
 	public void updateWithPreviouslyUnknownActionShouldError() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 1);
 		try {
-			stats.update(TestActionEnum.LEFT, 5.0);
+			stats.update(TestActionEnum.LEFT, toArray(5.0));
 			fail("Error should be thrown if unseen action used.");
 		} catch (AssertionError e) {
 			// as expected
 		}
+	}
+	
+	private double[] toArray(double single) {
+		double[] retValue = new double[1];
+		retValue[0] = single;
+		return retValue;
 	}
 }
 

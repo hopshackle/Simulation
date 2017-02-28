@@ -11,18 +11,25 @@ public class MonteCarloTree<P extends Agent> {
 
 	private Map<String, Integer> stateRefs = new HashMap<String, Integer>();
 	private Map<String, MCStatistics<P>> tree;
-	private int updatesLeft;
-	private Map<String, MCData> actionValues;
+	private int updatesLeft, maxActors;
+	private List<Map<String, MCData>> actionValues;
 	private static AtomicLong idFountain = new AtomicLong(1);
 	private int nextRef = 1;
 	private long id;
 	private EntityLog entityLogger;
 	protected boolean debug = false;
 	protected DeciderProperties properties;
-
+	
 	public MonteCarloTree(DeciderProperties properties) {
+		this (properties, 1);
+	}
+
+	public MonteCarloTree(DeciderProperties properties, int numberOfAgents) {
+		maxActors = numberOfAgents;
 		tree = new HashMap<String, MCStatistics<P>>();
-		actionValues = new HashMap<String, MCData>();
+		actionValues = new ArrayList<Map<String, MCData>>(numberOfAgents);
+		for (int i = 0; i < numberOfAgents; i++)
+			actionValues.add(i, new HashMap<String, MCData>());
 		this.properties = properties;
 		UCTType = properties.getProperty("MonteCarloUCTType", "MC");
 		id = idFountain.getAndIncrement();
@@ -58,7 +65,7 @@ public class MonteCarloTree<P extends Agent> {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString))
 			return;
-		tree.put(stateAsString, new MCStatistics<P>(actions, this));
+		tree.put(stateAsString, new MCStatistics<P>(actions, this, maxActors, state.getActorRef()));
 		stateRefs.put(stateAsString, nextRef);
 		nextRef++;
 		updatesLeft--;
@@ -74,16 +81,20 @@ public class MonteCarloTree<P extends Agent> {
 			MCStatistics<P> startStateStats = tree.get(startState);
 			for (ActionEnum<P> action : startStateStats.getPossibleActions()) {
 				Map<String, Integer> successorMap = startStateStats.getSuccessorStatesFrom(action);
-				double target = 0.0;
+				double[] target = new double[maxActors];
 				for (String successorStateString : successorMap.keySet()) {
 					double stateVisits = successorMap.get(successorStateString);
 					MCStatistics<P> successorStats = tree.get(successorStateString);
 					if (successorStats == null) continue;
-					if (UCTType.equals("Q")) 
-						target += stateVisits * successorStats.getQ();
-					if (UCTType.equals("V")) 
-						target += stateVisits * successorStats.getV();
-					target = target / (double) successorStats.getVisits();
+					if (UCTType.equals("Q")) {
+						double[] Q = successorStats.getQ();
+						for (int j =0; j < maxActors; j++) target[j] += stateVisits * Q[j];
+					}
+					if (UCTType.equals("V")) {
+						double[] V = successorStats.getV();
+						for (int j =0; j < maxActors; j++) target[j] += stateVisits * V[j];
+					}
+					for (int j =0; j < maxActors; j++) target[j] = target[j] / (double) successorStats.getVisits();
 				}
 				startStateStats.updateAsSweep(action, target);
 			}
@@ -91,6 +102,10 @@ public class MonteCarloTree<P extends Agent> {
 	}
 
 	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double reward) {
+		this.updateState(state, action, nextState, toArray(reward));
+	}
+	
+	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double[] reward) {
 		String stateAsString = state.getAsString();
 		if (debug) log(String.format("Updating State %s to State %s with Action %s and reward %.2f", stateRef(stateAsString), stateRef(nextState.getAsString()), action.toString(), reward));
 		if (tree.containsKey(stateAsString)) {
@@ -103,10 +118,14 @@ public class MonteCarloTree<P extends Agent> {
 			if (debug) log("State not yet in tree");
 		}
 		String actionAsString = action.toString();
-		if (actionValues.containsKey(actionAsString)) {
-			actionValues.put(actionAsString, new MCData(actionValues.get(actionAsString), reward));
+		int actingPlayer = state.getActorRef();
+		double[] actionReward = new double[1];
+		actionReward[0] = reward[actingPlayer];
+		Map<String, MCData> av = actionValues.get(actingPlayer);
+		if (av.containsKey(actionAsString)) {
+			av.put(actionAsString, new MCData(av.get(actionAsString), actionReward));
 		} else {
-			actionValues.put(actionAsString, new MCData(actionAsString, reward, properties));
+			av.put(actionAsString, new MCData(actionAsString, actionReward, properties));
 		}
 	}
 
@@ -132,16 +151,16 @@ public class MonteCarloTree<P extends Agent> {
 	public int numberOfStates() {
 		return tree.size();
 	}
-	public double getActionValue(String k) {
-		if (actionValues.containsKey(k)) {
-			return actionValues.get(k).mean;
+	public double getActionValue(String k, int playerRef) {
+		if (actionValues.get(playerRef).containsKey(k)) {
+			return actionValues.get(playerRef).get(k).mean[0];
 		} 
 		return 0.0;
 	}
 
-	public int getActionCount(String k) {
-		if (actionValues.containsKey(k)) {
-			return actionValues.get(k).visits;
+	public int getActionCount(String k, int playerRef) {
+		if (actionValues.get(playerRef).containsKey(k)) {
+			return actionValues.get(playerRef).get(k).visits;
 		} 
 		return 0;
 	}
@@ -205,6 +224,12 @@ public class MonteCarloTree<P extends Agent> {
 		entityLogger.log(s);
 	}
 
+	private double[] toArray(double single) {
+		double[] retValue = new double[1];
+		retValue[0] = single;
+		return retValue;
+	}
+	
 	public void exportToFile(String fileName, String fromRoot) {
 		File logFile = new File(EntityLog.logDir + File.separator + fileName + ".txt");
 		try {

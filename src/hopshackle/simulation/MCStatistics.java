@@ -9,21 +9,25 @@ public class MCStatistics<P extends Agent> {
 	private Map<String, MCData> map = new HashMap<String, MCData>();
 	private Map<String, Map<String, Integer>> successorStatesByAction = new HashMap<String, Map<String, Integer>>();
 	private int totalVisits = 0;
-
+	private int actingAgent = -1;
 	private boolean useBaseValue;
-	private double C, actionWeight, baseValue;
+	private double C, actionWeight;
+	private double[] baseValue;
 	private String UCTType;
 	private int minVisitsForQ, minVisitsForV;
+	private int maxActors;
 
-	public MCStatistics(List<ActionEnum<P>> possibleActions, DeciderProperties properties) {
-		this(possibleActions, new MonteCarloTree<P>(properties));
+	public MCStatistics(List<ActionEnum<P>> possibleActions, DeciderProperties properties, int players, int actor) {
+		this(possibleActions, new MonteCarloTree<P>(properties, players), players, actor);
 	}
-	public MCStatistics(List<ActionEnum<P>> possibleActions, MonteCarloTree<P> tree) {
+	public MCStatistics(List<ActionEnum<P>> possibleActions, MonteCarloTree<P> tree, int players, int actor) {
 		allActions = HopshackleUtilities.cloneList(possibleActions);
 		for (ActionEnum<P> a : possibleActions) {
-			map.put(a.toString(), new MCData(a.toString(), tree.properties));
+			map.put(a.toString(), new MCData(a.toString(), tree.properties, players));
 		}
 		this.tree = tree;
+		maxActors = players;
+		actingAgent = actor-1;
 		refresh();
 	}
 	public void refresh() {
@@ -32,25 +36,28 @@ public class MCStatistics<P extends Agent> {
 		actionWeight = tree.properties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
 		minVisitsForQ = tree.properties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
 		minVisitsForV = tree.properties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
-		baseValue = tree.properties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
+		double base = tree.properties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
 		useBaseValue = tree.properties.getProperty("MonteCarloRL", "false").equals("true");
+		if (!useBaseValue) base = 0.0;
+		baseValue = new double[maxActors];
+		for (int i = 0; i < maxActors; i++) baseValue[i] = base;
 	}
 
-	public void updateAsSweep(ActionEnum<P> action, double reward) {
+	public void updateAsSweep(ActionEnum<P> action, double[] reward) {
 		update(action, null, reward, true);
 	}
 
-	public void update(ActionEnum<P> action, double reward) {
+	public void update(ActionEnum<P> action, double[] reward) {
 		update(action, null, reward, false);
 	}
 
-	public void update(ActionEnum<P> action, State<P> nextState, double reward) {
+	public void update(ActionEnum<P> action, State<P> nextState, double[] reward) {
 		update(action, nextState, reward, false);
 	}
 
-	private void update(ActionEnum<P> action, State<P> nextState, double reward, boolean sweep) {
-		double V = reward;
-		double Q = reward;
+	private void update(ActionEnum<P> action, State<P> nextState, double[] reward, boolean sweep) {
+		double[] V = reward;
+		double[] Q = reward;
 		if (!allActions.contains(action)) {
 			addAction(action);
 		}
@@ -73,8 +80,8 @@ public class MCStatistics<P extends Agent> {
 			MCStatistics<P> nextStateStats = tree.getStatisticsFor(nextState);
 			V = nextStateStats.getV();
 			Q = nextStateStats.getQ();
-			if (Double.isNaN(V)) V = reward;
-			if (Double.isNaN(Q)) Q = reward;
+			if (Q.length == 0) V = reward;
+			if (Q.length == 0) Q = reward;
 		}
 		if (map.containsKey(key)) {
 			MCData old = map.get(key);
@@ -118,42 +125,43 @@ public class MCStatistics<P extends Agent> {
 			return 0;
 		}
 	}
-	public double getMean(ActionEnum<P> action) {
+	public double[] getMean(ActionEnum<P> action) {
 		String key = action.toString();
 		if (map.containsKey(key)) {
 			return map.get(key).mean;
 		} else {
-			return 0.0;
+			return new double[maxActors];
 		}
 	}
-	public double getV() {
+	public double[] getV() {
 		if (useBaseValue) {
 			if (totalVisits == 0) return baseValue;
 		} else {
-			if (totalVisits < minVisitsForV || totalVisits == 0) return Double.NaN;
+			if (totalVisits < minVisitsForV || totalVisits == 0) return new double[0];
 		}
-		double V = 0.0;
+		double[] V = new double[maxActors];
 		for (String actionKey : map.keySet()) {
 			MCData data = map.get(actionKey);
-			V += data.V * data.visits;
+			for (int i = 0; i < maxActors; i++) V[i] += data.V[i] * data.visits;
 		}
-		return V / (double) totalVisits;
+		for (int i = 0; i < maxActors; i++) V[i] = V[i] / (double) totalVisits;
+		return V;
 	}
-	public double getQ() {
+	public double[] getQ() {
 		int minVisits = minVisitsForQ;
 		if (useBaseValue) {
 			if (totalVisits == 0) return baseValue;
 			minVisitsForQ = 0;
 		} else {
-			if (totalVisits == 0) return Double.NaN;
+			if (totalVisits == 0) return new double[0];
 		}
-		double Q = 0.0;
+		double Q[] = new double[maxActors];
 		for (String actionKey : map.keySet()) {
 			MCData data = map.get(actionKey);
-			if (data.Q > Q) Q = data.Q;
+			if (data.Q[actingAgent] > Q[actingAgent]) Q = data.Q;
 			if (data.visits < minVisits) minVisits = data.visits;
 		}
-		if (minVisits < minVisitsForQ) Q = Double.NaN;
+		if (minVisits < minVisitsForQ) Q = new double[0];
 		return Q;
 	}
 
@@ -203,7 +211,7 @@ public class MCStatistics<P extends Agent> {
 		}
 		return retValue;
 	}
-	
+
 	@Override
 	public String toString() {
 		return toString(false);
@@ -216,7 +224,7 @@ public class MCStatistics<P extends Agent> {
 		for (String k : keysInVisitOrder()) {
 			String output = "";
 			if (actionWeight > 0.0) {
-				output = String.format("\t%s\t%s\t(AV:%.2f | %d)\n", k, map.get(k).toString(), tree.getActionValue(k), tree.getActionCount(k));
+				output = String.format("\t%s\t%s\t(AV:%.2f | %d)\n", k, map.get(k).toString(), tree.getActionValue(k, actingAgent), tree.getActionCount(k, actingAgent));
 			} else {
 				output = String.format("\t%s\t%s\n", k, map.get(k).toString());
 			}
@@ -254,11 +262,11 @@ public class MCStatistics<P extends Agent> {
 	}
 
 	private double score(MCData data, String actionKey) {
-		double baseValue = data.mean;
-		if (UCTType.equals("Q")) baseValue = data.Q;
-		if (UCTType.equals("V")) baseValue = data.V;
+		double baseValue = data.mean[actingAgent];
+		if (UCTType.equals("Q")) baseValue = data.Q[actingAgent];
+		if (UCTType.equals("V")) baseValue = data.V[actingAgent];
 		if (actionWeight > 0.0)
-			return (baseValue * data.visits + tree.getActionValue(actionKey) * actionWeight) / (actionWeight + data.visits);
+			return (baseValue * data.visits + tree.getActionValue(actionKey, actingAgent) * actionWeight) / (actionWeight + data.visits);
 		return baseValue;
 	}
 
@@ -282,34 +290,42 @@ public class MCStatistics<P extends Agent> {
 
 class MCData implements Comparable<MCData> {
 
-	private double alpha, baseValue;
+	private double alpha;
+	private double[] baseValue;
 	protected boolean useBaseValue;
 	private int visitLimit;
 
 	public void refresh(DeciderProperties properties) {
 		alpha = properties.getPropertyAsDouble("Alpha", "0.05");
-		baseValue = properties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
+		double base = properties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
 		useBaseValue = properties.getProperty("MonteCarloRL", "false").equals("true");
 		visitLimit = properties.getPropertyAsInteger("MonteCarloActionVisitLimit", "0");
 		if (visitLimit < 1) visitLimit = Integer.MAX_VALUE;
-		if (!useBaseValue) baseValue = 0.0;
+		if (!useBaseValue) base = 0.0;
+		baseValue = new double[maxActors];
+		for (int i = 0; i < maxActors; i++) baseValue[i] = base;
 	}
 
-	double mean, Q, V;
+	int maxActors;
+	double[] mean, Q, V;
 	int visits;
 	int limit = visitLimit;
 	String key;
 
-	public MCData(String key, DeciderProperties properties) {
-		this(key, 0, 0, properties);
+	public MCData(String key, DeciderProperties properties, int players) {
+		this(key, 0, new double[players], properties);
 	}
 
-	public MCData(String key, double r, DeciderProperties properties) {
+	public MCData(String key, double[] r, DeciderProperties properties) {
 		this(key, 1, r, properties);
 	}
 
-	private MCData(String key, int n, double r, DeciderProperties properties) {
+	private MCData(String key, int n, double[] r, DeciderProperties properties) {
 		refresh(properties);
+		maxActors = r.length;
+		mean = new double[maxActors];
+		Q = new double[maxActors];
+		V = new double[maxActors];
 		if (useBaseValue && n == 0) r = baseValue;
 		this.key = key;
 		visits = n;
@@ -318,16 +334,17 @@ class MCData implements Comparable<MCData> {
 		V = r;
 	}
 
-	public MCData(MCData old, double r) {
+	public MCData(MCData old, double[] r) {
 		this(old, r, r, r);
 	}
 
-	public MCData(MCData old, double r, double V, double Q) {
+	public MCData(MCData old, double[] r, double[] V, double[] Q) {
 		this(old, r, V, Q, false);
 	}
 
-	public MCData(MCData old, double r, double V, double Q, boolean sweep) {
+	public MCData(MCData old, double[] r, double[] V, double[] Q, boolean sweep) {
 		useBaseValue = old.useBaseValue;
+		maxActors = old.maxActors;
 		alpha = old.alpha;
 		visitLimit = old.visitLimit;
 		baseValue = old.baseValue;
@@ -338,19 +355,33 @@ class MCData implements Comparable<MCData> {
 		limit = old.limit;
 		visits = sweep ? old.visits : old.visits + 1;
 		double effectiveVisits = (visitLimit > visits) ? visits : visitLimit;
-		mean = sweep ? old.mean : old.mean + (r - old.mean) / effectiveVisits;
-		if (useBaseValue) {
-			this.V = (1.0 - alpha) * old.V + alpha * V;
-			this.Q = (1.0 - alpha) * old.Q + alpha * Q;
+		if (sweep) {
+			mean = old.mean;
 		} else {
-			this.V = old.V + (V - old.V) / effectiveVisits;
-			this.Q = old.Q + (Q - old.Q) / effectiveVisits;
+			for (int i = 0; i < maxActors; i++) {
+				mean[i] = old.mean[i] + (r[i] - old.mean[i]) / effectiveVisits;
+			}
+		}
+		if (useBaseValue) {
+			for (int i = 0; i < maxActors; i++) {
+				this.V[i] = (1.0 - alpha) * old.V[i] + alpha * V[i];
+				this.Q[i] = (1.0 - alpha) * old.Q[i] + alpha * Q[i];
+			}
+		} else {
+			for (int i = 0; i < maxActors; i++) {
+				this.V[i] = old.V[i] + (V[i] - old.V[i]) / effectiveVisits;
+				this.Q[i] = old.Q[i] + (Q[i] - old.Q[i]) / effectiveVisits;
+			}
 		}
 	}
 
 	@Override
 	public String toString() {
-		return String.format("Visits:%d \tMC:%.2f \tV:%.2f \tQ:%.2f", visits, mean, V, Q);
+		StringBuffer retValue = new StringBuffer();
+		for (int i = 0; i < maxActors; i++) {
+			retValue.append(String.format("Player:%d\tVisits:%d \tMC:%.2f \tV:%.2f \tQ:%.2f", i+1, visits, mean[i], V[i], Q[i]));
+		}
+		return retValue.toString();
 	}
 
 	@Override

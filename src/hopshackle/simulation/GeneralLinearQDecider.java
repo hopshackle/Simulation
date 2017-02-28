@@ -81,7 +81,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 		double[] featureTrace = exp.getFeatureTrace();
 		double predictedValue = valueOption(exp.getActionTaken().actionType, exp.getStartState());
 		double discountPeriod = exp.getDiscountPeriod();
-		double delta = exp.getReward() + Math.pow(gamma, discountPeriod) * bestNextAction - predictedValue;
+		double delta = exp.getReward()[0] + Math.pow(gamma, discountPeriod) * bestNextAction - predictedValue;
 		if (localDebug) {
 			String message = String.format("Learning:\t%-15sReward: %.2f, NextValue: %.2f, Predicted: %.2f, Delta: %.4f, NextAction: %s", 
 					exp.getActionTaken(), exp.getReward(), bestNextAction, predictedValue, delta, nextAction == null ? "NULL" : nextAction.toString());

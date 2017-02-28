@@ -5,6 +5,7 @@ import java.util.*;
 public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements WorldLogic<P> {
 
 	protected Stack<Action<P>> actionStack = new Stack<Action<P>>(); 
+	protected double[] finalScores;
 
 	public abstract Game<P, A> clone(P perspectivePlayer);
 
@@ -29,13 +30,26 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 		while (!gameOver()) {
 			oneAction();
 		}
-		double[] retValue = new double[getAllPlayers().size()];
-		for (int i = 1; i <= retValue.length; i++) {
-			retValue[i-1] = getPlayer(i).getScore();
+		endOfGameHouseKeeping();
+		
+		finalScores = new double[getAllPlayers().size()];
+		for (int i = 1; i <= finalScores.length; i++) {
+			finalScores[i-1] = getPlayer(i).getScore();
 		}
-		return retValue;
+		return finalScores;
+	}
+	
+	public double[] getFinalScores() {
+		if (gameOver()) {
+			return finalScores;
+		}
+		throw new AssertionError("Game is not yet over");
 	}
 
+	protected void endOfGameHouseKeeping(){
+		// may be overridden
+	}
+	
 	public final void oneAction() {
 		oneAction(false, false);
 	}

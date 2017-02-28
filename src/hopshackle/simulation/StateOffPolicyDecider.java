@@ -38,7 +38,7 @@ public abstract class StateOffPolicyDecider<A extends Agent> extends StateDecide
 		} else {
 			HopshackleState startState = getState(exp.getStartState());
 			HopshackleState endState = getState(exp.getEndState());
-			startState.addExperience(exp.getActionTaken().actionType, endState, exp.getReward());
+			startState.addExperience(exp.getActionTaken().actionType, endState, exp.getReward()[0]);
 			// but we omit the updateStateValue section
 		}
 	}

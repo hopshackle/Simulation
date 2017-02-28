@@ -36,6 +36,8 @@ public class MCTreeTest {
 			}
 			@Override public State<TestAgent> clone() { return this;}
 			@Override public State<TestAgent> apply(ActionEnum<TestAgent> action) { return this;}
+			@Override public int getActorRef() {return 0;}
+			@Override public double[] getScore() {return new double[1];}
 		};
 		other = new State<TestAgent>() {
 			@Override
@@ -49,6 +51,8 @@ public class MCTreeTest {
 			}
 			@Override public State<TestAgent> clone() { return this;}
 			@Override public State<TestAgent> apply(ActionEnum<TestAgent> action) { return this;}
+			@Override public int getActorRef() {return 0;}
+			@Override public double[] getScore() {return new double[1];}
 		};
 		yetAnother = new State<TestAgent>() {
 			@Override
@@ -62,6 +66,8 @@ public class MCTreeTest {
 			}
 			@Override public State<TestAgent> clone() { return this;}
 			@Override public State<TestAgent> apply(ActionEnum<TestAgent> action) { return this;}
+			@Override public int getActorRef() {return 0;}
+			@Override public double[] getScore() {return new double[1];}
 		};
 		world = new World();
 		agent = new TestAgent(world);
@@ -69,7 +75,7 @@ public class MCTreeTest {
 
 	@Test
 	public void settingUpdatesLeft() {
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new MonteCarloTree<TestAgent>(localProp, 1);
 		assertEquals(tree.updatesLeft(), 0);
 		assertFalse(tree.containsState(test));
 		tree.setUpdatesLeft(1);
@@ -78,7 +84,7 @@ public class MCTreeTest {
 
 	@Test
 	public void addANode() {
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new MonteCarloTree<TestAgent>(localProp, 1);
 		tree.setUpdatesLeft(1);
 		tree.insertState(test, leftRightOnly);
 		assertTrue(tree.containsState(test));
@@ -199,10 +205,10 @@ public class MCTreeTest {
 		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
-		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString()), 5.0, 0.001);
-		assertEquals(tree.getActionValue(TestActionEnum.LEFT.toString()), 4.0, 0.001);
-		assertEquals(tree.getActionValue(TestActionEnum.TEST.toString()), 0.0, 0.001);
-		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null);
+		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString(), 0), 5.0, 0.001);
+		assertEquals(tree.getActionValue(TestActionEnum.LEFT.toString(), 0), 4.0, 0.001);
+		assertEquals(tree.getActionValue(TestActionEnum.TEST.toString(), 0), 0.0, 0.001);
+		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null, 1);
 		for (int i = 0; i < 100; i++) {
 			assertTrue(avDecider.makeDecision(agent, leftRightOnly) == TestActionEnum.RIGHT);
 			assertTrue(avDecider.makeDecision(agent, allActions) == TestActionEnum.RIGHT);
@@ -215,10 +221,10 @@ public class MCTreeTest {
 		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
-		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString()), 5.0, 0.001);
-		assertEquals(tree.getActionValue(TestActionEnum.LEFT.toString()), 4.0, 0.001);
-		assertEquals(tree.getActionValue(TestActionEnum.TEST.toString()), 0.0, 0.001);
-		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null);
+		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString(), 0), 5.0, 0.001);
+		assertEquals(tree.getActionValue(TestActionEnum.LEFT.toString(), 0), 4.0, 0.001);
+		assertEquals(tree.getActionValue(TestActionEnum.TEST.toString(), 0), 0.0, 0.001);
+		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null, 1);
 		int rightCount = 0, leftCount = 0, testCount = 0;
 		for (int i = 0; i < 100; i++) {
 			ActionEnum<TestAgent> d = avDecider.makeDecision(agent, allActions);

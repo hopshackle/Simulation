@@ -32,6 +32,16 @@ public class LinearStateTestLookahead implements State<BasicAgent> {
 	public State<BasicAgent> clone() {
 		return this;
 	}
+
+	@Override
+	public int getActorRef() {
+		return 0;
+	}
+
+	@Override
+	public double[] getScore() {
+		return new double[1];
+	}
 }
 
 class LookaheadTestDecider extends LookaheadDecider<BasicAgent> {

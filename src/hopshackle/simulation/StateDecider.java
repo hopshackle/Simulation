@@ -96,7 +96,7 @@ public abstract class StateDecider<A extends Agent> extends QDecider<A> {
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		ActionEnum<A> actionTaken = exp.getActionTaken().actionType;
-		double observedResult = exp.getReward();
+		double observedResult = exp.getReward()[0];
 		HopshackleState startState = getState(exp.getStartState());
 		HopshackleState endState = getState(exp.getEndState());
 		if (exp.isInFinalState())

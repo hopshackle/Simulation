@@ -6,16 +6,25 @@ public class MCActionValueDecider<A extends Agent> extends BaseDecider<A> {
 
 	private MonteCarloTree<A> tree;
 	private double actionTemperature = getPropertyAsDouble("MonteCarloActionValueDeciderTemperature", "0.00");
+	private int actorRef;
 	
-	public MCActionValueDecider(MonteCarloTree<A> tree, StateFactory<A> stateFactory) {
+	public MCActionValueDecider(MonteCarloTree<A> tree, StateFactory<A> stateFactory, int actorRef) {
 		super(stateFactory);
 		this.tree = tree;
+		this.actorRef = actorRef;
 		localDebug = false;
 	}
 	
 	@Override
+	public void injectProperties(DeciderProperties dp) {
+		super.injectProperties(dp);
+		actionTemperature = getPropertyAsDouble("MonteCarloActionValueDeciderTemperature", "0.00");
+	};
+	
+	
+	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent) {
-		return tree.getActionValue(option.toString());
+		return tree.getActionValue(option.toString(), actorRef);
 	}
 	
 	@Override

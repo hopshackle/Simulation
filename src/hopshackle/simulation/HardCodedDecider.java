@@ -46,6 +46,16 @@ public class HardCodedDecider<A extends Agent> extends BaseDecider<A> {
 			public State<A> apply(ActionEnum<A> action) {
 				return this;
 			}
+
+			@Override
+			public int getActorRef() {
+				return 0;
+			}
+
+			@Override
+			public double[] getScore() {
+				return new double[1];
+			}
 		};
 	}
 }
