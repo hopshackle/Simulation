@@ -27,7 +27,7 @@ public class MCStatistics<P extends Agent> {
 		}
 		this.tree = tree;
 		maxActors = players;
-		actingAgent = actor-1;
+		actingAgent = actor;
 		refresh();
 	}
 	public void refresh() {
@@ -80,7 +80,7 @@ public class MCStatistics<P extends Agent> {
 			MCStatistics<P> nextStateStats = tree.getStatisticsFor(nextState);
 			V = nextStateStats.getV();
 			Q = nextStateStats.getQ();
-			if (Q.length == 0) V = reward;
+			if (V.length == 0) V = reward;
 			if (Q.length == 0) Q = reward;
 		}
 		if (map.containsKey(key)) {
@@ -219,7 +219,7 @@ public class MCStatistics<P extends Agent> {
 
 	public String toString(boolean verbose) {
 		StringBuffer retValue = new StringBuffer(
-				String.format("MC Statistics\tVisits: %d\tV:%.2f\tQ:%.2f\n", totalVisits, getV(), getQ())
+				String.format("MC Statistics\tVisits: %d\tV:%.2f\tQ:%.2f\n", totalVisits, getV()[actingAgent], getQ()[actingAgent])
 				);
 		for (String k : keysInVisitOrder()) {
 			String output = "";
@@ -266,7 +266,7 @@ public class MCStatistics<P extends Agent> {
 		if (UCTType.equals("Q")) baseValue = data.Q[actingAgent];
 		if (UCTType.equals("V")) baseValue = data.V[actingAgent];
 		if (actionWeight > 0.0)
-			return (baseValue * data.visits + tree.getActionValue(actionKey, actingAgent) * actionWeight) / (actionWeight + data.visits);
+			return (baseValue * data.visits + tree.getActionValue(actionKey, actingAgent+1) * actionWeight) / (actionWeight + data.visits);
 		return baseValue;
 	}
 
@@ -321,17 +321,19 @@ class MCData implements Comparable<MCData> {
 	}
 
 	private MCData(String key, int n, double[] r, DeciderProperties properties) {
-		refresh(properties);
 		maxActors = r.length;
+		refresh(properties);
 		mean = new double[maxActors];
 		Q = new double[maxActors];
 		V = new double[maxActors];
 		if (useBaseValue && n == 0) r = baseValue;
+		for (int i = 0; i < maxActors; i++) {
+			mean[i] = r[i];
+			Q[i] = r[i];
+			V[i] = r[i];
+		}
 		this.key = key;
 		visits = n;
-		mean = r;
-		Q = r;
-		V = r;
 	}
 
 	public MCData(MCData old, double[] r) {
@@ -355,6 +357,9 @@ class MCData implements Comparable<MCData> {
 		limit = old.limit;
 		visits = sweep ? old.visits : old.visits + 1;
 		double effectiveVisits = (visitLimit > visits) ? visits : visitLimit;
+		mean = new double[maxActors];
+		this.Q = new double[maxActors];
+		this.V = new double[maxActors]; 
 		if (sweep) {
 			mean = old.mean;
 		} else {

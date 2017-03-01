@@ -43,7 +43,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void updateWithNewVisit() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 1);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 0);
 		stats.update(TestActionEnum.LEFT, toArray(2.0));
 		stats.update(TestActionEnum.LEFT, toArray(3.5));
 		stats.update(TestActionEnum.LEFT, toArray(-1.0));
@@ -62,7 +62,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void cycleThroughActionsIfNotAllTried() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly,localProp, 1, 1);
+		stats = new MCStatistics<TestAgent>(leftRightOnly,localProp, 1, 0);
 		assertTrue(stats.hasUntriedAction(leftRightOnly));
 		TestActionEnum newAction = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly);
 		stats.update(newAction, toArray(1.0));
@@ -75,7 +75,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void uctActionReturnsBestBound() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 1);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 0);
 		stats.update(TestActionEnum.LEFT, toArray(2.0));
 		stats.update(TestActionEnum.RIGHT, toArray(1.0));
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
@@ -127,7 +127,7 @@ public class MCStatisticsTest {
 	
 	@Test
 	public void updateWithPreviouslyUnknownActionShouldError() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 1);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 0);
 		try {
 			stats.update(TestActionEnum.LEFT, toArray(5.0));
 			fail("Error should be thrown if unseen action used.");
@@ -255,7 +255,10 @@ public class MCStatisticsTest {
 		tree.insertState(A, leftRightOnly);
 		tree.insertState(B, leftRightOnly);
 		tree.insertState(C, leftRightOnly);
-
+		
+		assertEquals(tree.getStatisticsFor(A).getV()[0], 50.0, 0.01);
+		assertEquals(tree.getStatisticsFor(A).getQ()[0], 50.0, 0.01);
+		
 		tree.updateState(A, TestActionEnum.LEFT, C, toArray(10));
 		tree.updateState(C, TestActionEnum.RIGHT, END, toArray(10));
 		

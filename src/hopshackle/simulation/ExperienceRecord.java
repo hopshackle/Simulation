@@ -51,6 +51,8 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		possibleActionsFromStartState = HopshackleUtilities.cloneList(possibleActions);
 		setState(ERState.DECISION_TAKEN);
 		startScore = state.getScore();
+		reward = new double[startScore.length];
+		endScore = new double[startScore.length];
 		agent = a;
 		timeOfDecision = a.getWorld().getCurrentTime();
 		timeOfResolution = -1;
@@ -72,7 +74,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	public void updateWithResults(double reward, State<A> newState) {
 		this.updateWithResults(toArray(reward), newState);
 	}
-	
+
 	public void updateWithResults(double[] reward, State<A> newState) {
 		endState = newState;
 		endStateAsArray = endState.getAsArray();
@@ -100,7 +102,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		}
 		setState(ERState.NEXT_ACTION_TAKEN);
 	}
-	
+
 	public void updateWithFinalScores(double[] finalScores) {
 		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
@@ -206,7 +208,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		else
 			return 0.0;
 	}
-	
+
 	private double[] toArray(double single) {
 		double[] retValue = new double[1];
 		retValue[0] = single;

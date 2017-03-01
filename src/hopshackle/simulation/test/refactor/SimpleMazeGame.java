@@ -37,8 +37,11 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 	
 	public boolean gameOver() {
 		boolean retValue  = (player.position >= target || reward[0] < -100);
-		if (retValue && !player.isDead())
+		if (retValue && !player.isDead()) {
+			finalScores = new double[1];
+			finalScores[0] = player.getScore();
 			player.die("End of game");
+		}
 		return retValue;
 	}
 	

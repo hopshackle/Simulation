@@ -152,15 +152,15 @@ public class MonteCarloTree<P extends Agent> {
 		return tree.size();
 	}
 	public double getActionValue(String k, int playerRef) {
-		if (actionValues.get(playerRef).containsKey(k)) {
-			return actionValues.get(playerRef).get(k).mean[0];
+		if (actionValues.get(playerRef-1).containsKey(k)) {
+			return actionValues.get(playerRef-1).get(k).mean[0];
 		} 
 		return 0.0;
 	}
 
 	public int getActionCount(String k, int playerRef) {
-		if (actionValues.get(playerRef).containsKey(k)) {
-			return actionValues.get(playerRef).get(k).visits;
+		if (actionValues.get(playerRef-1).containsKey(k)) {
+			return actionValues.get(playerRef-1).get(k).visits;
 		} 
 		return 0;
 	}
