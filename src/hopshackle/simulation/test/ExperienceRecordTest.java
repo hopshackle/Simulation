@@ -52,7 +52,7 @@ public class ExperienceRecordTest {
 		er.updateWithResults(30.0, new LinearState<BasicAgent>(agent, varList));
 		agent.addHealth(-15.0);
 		assertEquals(er.getReward()[0], 30.0, 0.01);
-		er.setIsFinal();
+		er.updateWithFinalScores(new double[] {agent.getScore()});
 		assertTrue(er.isInFinalState());
 		assertFalse(er.getEndState() == null);
 		assertTrue(er.getActionTaken().getType() == BasicActions.FARM);
@@ -73,7 +73,7 @@ public class ExperienceRecordTest {
 		assertEquals(er.getReward()[0], 30.0, 0.001);
 		assertEquals(nextER.getReward()[0], 0.0, 0.001);
 		agent.addHealth(-2.0);
-		nextER.setIsFinal();
+		nextER.updateWithFinalScores(new double[] {agent.getScore()});
 		assertEquals(nextER.getReward()[0], -2.0, 0.001);
 		assertEquals(er.getReward()[0], -2.0 * 0.9 + 30.0, 0.001);
 	}
@@ -92,7 +92,7 @@ public class ExperienceRecordTest {
 		assertEquals(er.getReward()[0], 3.0, 0.001);
 		assertEquals(nextER.getReward()[0], 0.0, 0.001);
 		agent.addHealth(-2.0);
-		nextER.setIsFinal();
+		nextER.updateWithFinalScores(new double[] {agent.getScore()});
 		assertEquals(nextER.getReward()[0], 18.0, 0.001);
 		assertEquals(er.getReward()[0], 18.0 * 0.9 + 3.0, 0.001);
 	}

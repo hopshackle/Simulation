@@ -17,6 +17,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	private boolean reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
 	private String sweepMethodology = getProperty("MonteCarloSweep", "terminal");
 	private int sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
+	private boolean singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
 	private boolean debug = false;
 
 	public MCTSMasterDecider(StateFactory<A> stateFactory, Decider<A> rolloutDecider, Decider<A> opponentModel) {
@@ -74,13 +75,17 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 		OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
 		childDecider = createChildDecider(tree, currentPlayer-1);
+		// TODO: create new decider for each of the opponents if we are using singleTree
+		// using the same tree, but different currentPlayers
 		teacher.registerDecider(childDecider);
+		// TODO: we only register one of them with the teacher
 		class FollowOnEventFilter implements EventFilter {
 			@Override
 			public boolean ignore(AgentEvent event) {
 				return (event.getAction() == null) ? false : event.getAction().isFollowOnAction();
 			}
 		}
+
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(decProp), new FollowOnEventFilter());
 		teacher.registerToERStream(erc);
 
@@ -109,6 +114,11 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 				// For this player (from whose perspective the MonteCarloTree is being constructed)
 				// we use MCTSChildDecider
 			}
+			//TODO: We then register all agents with the ERC...however we need these to be used to create a 
+			// single stream of experiential data
+			// so we need a new method of ERC that registers with a reference agent/object, which indicates how the
+			// streams are to be crossed
+
 			erc.registerAgent(clonedAgent);
 			clonedGame.playGame();
 			teacher.teach();
@@ -172,6 +182,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
 		sweepMethodology = getProperty("MonteCarloSweep", "terminal");
 		sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
+		singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
 	}
 
 }

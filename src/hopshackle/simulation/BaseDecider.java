@@ -274,6 +274,8 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 	@Override
 	public DeciderProperties getProperties() {
+		if (decProp == null)
+			return SimProperties.getDeciderProperties("GLOBAL");
 		return decProp;
 	}
 	
