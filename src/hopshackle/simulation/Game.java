@@ -23,6 +23,10 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 
 	public abstract boolean gameOver();
 
+	/*
+	 * Called after each move processed, and the stack is empty.
+	 * Implement game specific housekeeping to move game status forward (such as incrementing turn number, changing the active player)
+	 */
 	public abstract void updateGameStatus();
 
 	public final double[] playGame() {
@@ -36,6 +40,10 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 		for (int i = 1; i <= finalScores.length; i++) {
 			finalScores[i-1] = getPlayer(i).getScore();
 		}
+		
+		for (int i = 1; i <= finalScores.length; i++) 
+			getPlayer(i).die("Game Over");
+		
 		return finalScores;
 	}
 	

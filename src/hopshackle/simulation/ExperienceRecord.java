@@ -18,13 +18,13 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	protected State<A> startState, endState;
 	protected double[] startStateAsArray, endStateAsArray;
 	protected double[] featureTrace;
-	protected Action<A> actionTaken, nextActionTaken;
-	protected List<ActionEnum<A>> possibleActionsFromEndState, possibleActionsFromStartState;
-	protected double[] startScore, endScore, reward;
+	protected Action<A> actionTaken;
+	protected List<ActionEnum<A>> possibleActionsFromStartState;
+	protected double[] startScore, reward;
 	protected boolean isFinalState;
 	protected ERState expRecState = ERState.UNSEEN;
-	private A agent;
-	private ExperienceRecord<A> previousRecord;
+	private A actingAgent;
+	private ExperienceRecord<A> previousRecord, nextRecord;
 	protected long timeOfDecision, timeOfResolution;
 
 	public void refreshProperties() {
@@ -52,8 +52,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		setState(ERState.DECISION_TAKEN);
 		startScore = state.getScore();
 		reward = new double[startScore.length];
-		endScore = new double[startScore.length];
-		agent = a;
+		actingAgent = a;
 		timeOfDecision = a.getWorld().getCurrentTime();
 		timeOfResolution = -1;
 	}
@@ -85,15 +84,19 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	}
 
 	public void updateNextActions(ExperienceRecord<A> nextER) {
+		nextRecord = nextER;
 		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		if (nextER != null) {
 			nextER.previousRecord = this;
-			nextER.constructFeatureTrace(this);
-			possibleActionsFromEndState = nextER.getPossibleActionsFromStartState();
-			nextActionTaken = nextER.actionTaken;
-			endState = nextER.getStartState();
-			endStateAsArray = endState.getAsArray();
-			endScore = nextER.getStartScore();
+			if (nextER.actingAgent == this.actingAgent) {
+				nextER.constructFeatureTrace(this);
+				endState = nextER.getStartState();
+				endStateAsArray = nextER.getStartStateAsArray();
+			} else {
+				Decider<A> d = actingAgent.getDecider();
+				endState = d.getCurrentState(actingAgent);
+				endStateAsArray = endState.getAsArray();
+			}
 			//			getAgent().log("Updated ER for Action " + actionTaken + " after new action " + nextER.getActionTaken());
 		} else {
 			double[] finalScores = new double[startScore.length];
@@ -105,8 +108,10 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 
 	public void updateWithFinalScores(double[] finalScores) {
 		timeOfResolution = getAgent().getWorld().getCurrentTime();
-		possibleActionsFromEndState = new ArrayList<ActionEnum<A>>();
-		endScore = finalScores;
+		for (int i = 0; i < finalScores.length; i++) {
+			reward[i] = reward[i] + finalScores[i];
+			if (incrementalScoreAffectsReward) reward[i] = reward[i] - startScore[i];
+		}
 		isFinalState = true;
 		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		setState(ERState.NEXT_ACTION_TAKEN);
@@ -118,10 +123,10 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	private void updatePreviousRecord(double[] score) {
 		if (previousRecord != null) {
 			double[] prevReward = previousRecord.getReward();
-			double[] newScore = score;
-			for (int i = 0; i < score.length; i++) newScore[i] = newScore[i] * gamma + prevReward[i];
+			double[] newScore = new double[score.length];
+			// TODO: This discounting should use the discount period correctly, not assume 1.0
+			for (int i = 0; i < score.length; i++) newScore[i] = score[i] * gamma + prevReward[i];
 			previousRecord.reward = newScore;
-			previousRecord.endScore = new double[score.length];
 			previousRecord.startScore = new double[score.length];
 			previousRecord.updatePreviousRecord(newScore);
 		} else {
@@ -152,7 +157,13 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	}
 
 	public List<ActionEnum<A>> getPossibleActionsFromEndState() {
-		return possibleActionsFromEndState;
+		if (nextRecord != null) return nextRecord.getPossibleActionsFromStartState();
+		return new ArrayList<ActionEnum<A>>();
+	}
+
+	public A nextAgentToAct() {
+		if (nextRecord != null) return nextRecord.actingAgent;
+		return null;
 	}
 
 	public List<ActionEnum<A>> getPossibleActionsFromStartState() {
@@ -162,9 +173,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	public double[] getReward() {
 		double[] retValue = new double[reward.length];
 		if (getState() == ERState.NEXT_ACTION_TAKEN && incrementalScoreAffectsReward) {
-			for (int i = 0; i < reward.length; i++) retValue[i] = reward[i] + endScore[i] - startScore[i];
-		} else if (isInFinalState() && !incrementalScoreAffectsReward) {
-			for (int i = 0; i < reward.length; i++) retValue[i] = reward[i] + endScore[i];
+			for (int i = 0; i < reward.length; i++) retValue[i] = reward[i] + getEndScore()[i] - startScore[i];
 		} else {
 			retValue = reward;
 		}
@@ -175,7 +184,8 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		return startScore;
 	}
 	public double[] getEndScore() {
-		return endScore;
+		if (nextRecord != null) return nextRecord.getStartScore();
+		return new double[startScore.length];
 	}
 
 	public boolean isInFinalState() {
@@ -186,10 +196,10 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		return expRecState;
 	}
 	public A getAgent() {
-		return agent;
+		return actingAgent;
 	}
 	public World getWorld() {
-		return agent.getWorld();
+		return actingAgent.getWorld();
 	}
 	protected void setState(ExperienceRecord.ERState newState) {
 		if (dbStorage && newState == ERState.NEXT_ACTION_TAKEN && getState() != ERState.NEXT_ACTION_TAKEN) {

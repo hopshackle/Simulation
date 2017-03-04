@@ -6,16 +6,28 @@ public class LinearState<A extends Agent> implements State<A> {
 
 	private List<GeneticVariable<A>> variables;
 	private double[] values;
-	private double[] score = new double[1];
+	private double[] score;
+	private int actingAgentNumber;
 
 	public LinearState(A agent, List<GeneticVariable<A>> var) {
+		if (agent.getGame() != null) {
+			actingAgentNumber = agent.getGame().getPlayerNumber(agent)-1;
+			List<Agent> players = agent.getGame().getAllPlayers();
+			score = new double[players.size()];
+			for (int i = 0; i < players.size(); i++){
+				score[i] = agent.getScore();
+			}
+		} else {
+			actingAgentNumber = 0;
+			score = new double[1];
+			score[0] = agent.getScore();
+		}
 		variables = var;
 		values = new double[variables.size()];
 		for (int i = 0; i < variables.size(); i ++) {
 			GeneticVariable<A> gv = variables.get(i);
 			values[i] = gv.getValue(agent);
 		}
-		score[0] = agent.getScore();
 	}
 
 	@Override
@@ -44,7 +56,7 @@ public class LinearState<A extends Agent> implements State<A> {
 
 	@Override
 	public int getActorRef() {
-		return 0;
+		return actingAgentNumber;
 	}
 
 	@Override

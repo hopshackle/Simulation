@@ -63,9 +63,9 @@ public class MCTSTest {
 		assertEquals(tree.numberOfStates(), 7);
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], -1.96, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -5.33, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -6.3, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 7.499, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], 1.737, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], 0.0, 0.01);
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
@@ -77,9 +77,9 @@ public class MCTSTest {
 		startStats = tree.getStatisticsFor(startState);
 		assertEquals(tree.numberOfStates(), 3);
 		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], -2.00, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.29, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.88, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 8.00, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], 4.29, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], 1.47, 0.01);
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 97);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 1);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);

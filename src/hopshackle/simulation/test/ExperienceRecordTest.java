@@ -45,7 +45,7 @@ public class ExperienceRecordTest {
 		assertTrue(er.getEndState() == null);
 		assertTrue(er.getActionTaken().getType() == BasicActions.FARM);
 		assertEquals(er.getReward()[0], 0.0, 0.01);
-		assertTrue(er.getPossibleActionsFromEndState() == null);
+		assertTrue(er.getPossibleActionsFromEndState().isEmpty());
 		assertEquals(er.getPossibleActionsFromStartState().size(), 2);
 
 		possibleActions.add(BasicActions.BREED);

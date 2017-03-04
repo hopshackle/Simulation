@@ -29,8 +29,6 @@ class TestAction extends Action<TestAgent> {
 				a.die("Oops");
 			}
 		}
-		if (actor.game != null)
-			actor.game.reward[0] -= 1.0;
 		actor.getWorld().setCurrentTime(actor.getWorld().getCurrentTime()+1000);
 		switch ((TestActionEnum)actionType) {
 		case LEFT:
@@ -141,6 +139,7 @@ class TestAgent extends Agent {
 		decisionsTaken++;
 		super.decide();
 	}
+
 	@Override
 	public void eventDispatch(AgentEvent ae) {
 		super.eventDispatch(ae);
@@ -148,7 +147,9 @@ class TestAgent extends Agent {
 	@Override
 	public double getScore() {
 		if (game != null) {
-			return ((SimpleMazeGame) game).reward[0];
+			int target = ((SimpleMazeGame) game).target;
+			if (target <= position) return 10.0 - (world.getCurrentTime()/1000.0);
+			return - world.getCurrentTime()/1000.0;
 		}
 		return 0.0;
 	}

@@ -17,12 +17,17 @@ public class ActionLearningTests {
 	Decider<TestAgent> decider;
 	TestERCollector erc = new TestERCollector();
 	TestTeacher teacher = new TestTeacher();
+	DeciderProperties localProp;
 	
 	@Before
 	public void setup() {
+		TestActionEnum.defaultMakeNextDecision = true;
+		localProp = SimProperties.getDeciderProperties("GLOBAL");
 		w = new World(new SimpleWorldLogic<TestAgent>(actionList));
 		for (int i = 0; i < 10; i++) {
-			allAgents.add(new TestAgent(w));
+			TestAgent a = new TestAgent(w);
+			a.getDecider().injectProperties(localProp);
+			allAgents.add(a);
 		}
 		taf = new TestActionFactory(allAgents);
 		testAgent = allAgents.get(0);
@@ -153,7 +158,7 @@ public class ActionLearningTests {
 		ExperienceRecord<TestAgent> er1 = erc.getExperienceRecords(testAgent).get(0);
 		ExperienceRecord<TestAgent> er2 = erc.getExperienceRecords(testAgent).get(1);
 		assertEquals(teacher.eventsReceived.size(), 0);
-		actionTaken.run();
+		actionTaken.run();	// the call to decide() should then trigger a new decision and learning event
 		assertEquals(teacher.eventsReceived.size(), 1); // DECISION_STEP_COMPLETE
 		assertTrue(er1.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
 		assertTrue(erc.agentActionState(testAgent, forwardAction) == ExperienceRecord.ERState.DECISION_TAKEN);
@@ -176,8 +181,8 @@ public class ActionLearningTests {
 		assertEquals(teacher.eventsReceived.size(), 0);
 		assertTrue(erc.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.ERState.ACTION_COMPLETED);
 		assertTrue(erc.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.ERState.DECISION_TAKEN);
-		assertTrue(er1.getPossibleActionsFromEndState() == null);
-		assertTrue(er2.getPossibleActionsFromEndState() == null);
+		assertEquals(er1.getPossibleActionsFromEndState().size(), 0);
+		assertEquals(er2.getPossibleActionsFromEndState().size(), 0);
 		
 		testAgent.setDecider(decider);
 		testAgent.decide();		// this will now make a new decision...which should close off the completed action
@@ -185,7 +190,7 @@ public class ActionLearningTests {
 		assertTrue(er1.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
 		assertTrue(erc.agentActionState(testAgent, er2.getActionTaken()) == ExperienceRecord.ERState.DECISION_TAKEN);
 		assertTrue(er1.getPossibleActionsFromEndState().size() > 0);
-		assertTrue(er2.getPossibleActionsFromEndState() == null);
+		assertEquals(er2.getPossibleActionsFromEndState().size(), 0);
 	}
 	
 	@Test
@@ -199,7 +204,7 @@ public class ActionLearningTests {
 		actionTaken.run();
 		assertEquals(teacher.eventsReceived.size(), 0);
 		assertTrue(erc.agentActionState(testAgent, er1.getActionTaken()) == ExperienceRecord.ERState.ACTION_COMPLETED);
-		assertTrue(er1.getPossibleActionsFromEndState() == null);
+		assertEquals(er1.getPossibleActionsFromEndState().size(), 0);
 		testAgent.setDecider(decider);
 		System.out.println("About to dispatch event");
 		dispatchLearningEvent(testAgent, taf.factory(1, 0, 0, 1000));
@@ -218,7 +223,7 @@ public class ActionLearningTests {
 		actionTaken.run();
 		assertEquals(teacher.eventsReceived.size(), 0);
 		assertTrue(er1.getState() == ExperienceRecord.ERState.ACTION_COMPLETED);
-		assertTrue(er1.getPossibleActionsFromEndState() == null);
+		assertTrue(er1.getPossibleActionsFromEndState().isEmpty());
 		
 		testAgent.die("Ooops");
 		assertTrue(er1.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);

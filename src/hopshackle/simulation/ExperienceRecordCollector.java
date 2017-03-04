@@ -11,6 +11,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	}
 
 	private HashMap<A, List<ExperienceRecord<A>>> erListMap = new HashMap<A, List<ExperienceRecord<A>>>();
+	private HashMap<A, A> referenceAgents = new HashMap<A, A>();
 	private List<AgentListener> listeners = new ArrayList<AgentListener>();
 	private ERCAllocationPolicy<A> birthPolicy;
 	private ExperienceRecordFactory<A> erFactory;
@@ -34,6 +35,13 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			addAgentToList(a);
 			listenToAgent(a);
 		}
+	}
+	public void registerAgentWithReference(A a, A reference) {
+		if (agentAlreadySeen(a)) {
+			throw new AssertionError("Agent " + a + " already registered");
+		}
+		referenceAgents.put(a, reference);
+		this.registerAgent(a);
 	}
 
 	public List<ExperienceRecord<A>> getExperienceRecords(A a) {
@@ -79,6 +87,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 
 	public void removeAgent(A agent) {
 		erListMap.remove(agent);
+		referenceAgents.remove(agent);
 	}
 
 	protected boolean agentAlreadySeen(A a) {
@@ -93,14 +102,15 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	}
 
 	private boolean processNewER(ExperienceRecord<A> newlyRegisteredER, A agent) {
+		A referenceAgent = referenceAgents.getOrDefault(agent, agent);
 		boolean passOnEvent = false;
-		List<ExperienceRecord<A>> tdListForAgent = erListMap.getOrDefault(agent, new ArrayList<ExperienceRecord<A>>());
+		List<ExperienceRecord<A>> tdListForAgent = erListMap.getOrDefault(referenceAgent, new ArrayList<ExperienceRecord<A>>());
 		for (ExperienceRecord<A> existingER : tdListForAgent) {
-			//		System.out.println("\tProcessing: " + existingER.getActionTaken() + " (" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
+	//				System.out.println("\tProcessing: " + existingER.getActionTaken() + " (" + existingER.getActionTaken().getState() + ") for " + newlyRegisteredER.getActionTaken().getActor());
 			if (existingER.getState() == ERState.ACTION_COMPLETED && 
 					!newlyRegisteredER.getActionTaken().equals(existingER.getActionTaken())) {
 				existingER.updateNextActions(newlyRegisteredER);
-				//			System.out.println("Linking " + newlyRegisteredER.getActionTaken() + " to " + existingER.getActionTaken());
+		//					System.out.println("Linking " + newlyRegisteredER.getActionTaken() + " to " + existingER.getActionTaken());
 				passOnEvent = true;
 			}
 		}
@@ -117,13 +127,13 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	public synchronized void processEvent(AgentEvent event) {
 		if (filter.ignore(event)) 
 			return;
-		//		System.out.println("Through Filter: " + event.getAction() + " ; " + event.getEvent());
+	//			System.out.println("Through Filter: " + event.getAction() + " ; " + event.getEvent());
 		A a = (A) event.getAgent();
 		Action<A> action = (Action<A>)event.getAction();
 		Decider<A> eventDecider = (Decider<A>) event.getDecider();
 		ExperienceRecord<A> newER = null;
 		boolean passOnEvent = false;
-		//		if (!a.isDead()) System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
+	//			if (!a.isDead()) System.out.println("Event received: " + action.actionType + "(" + action.getState() + ") : "+ event.getEvent() + " for " + a);
 		switch (event.getEvent()) {
 		case BIRTH:
 			if (birthPolicy != null) {
@@ -159,7 +169,8 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 
 	private boolean actionPreviouslySeen(A agent, Action<A> action) {
 		if (agentAlreadySeen(agent)) {
-			List<ExperienceRecord<A>> tdArray = erListMap.get(agent);
+			A reference = referenceAgents.getOrDefault(agent, agent);
+			List<ExperienceRecord<A>> tdArray = erListMap.get(reference);
 			for (ExperienceRecord<A> er : tdArray) {
 				Action<A> act = er.getActionTaken();
 				if (act.equals(action))
@@ -182,8 +193,9 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 
 	protected boolean processDecisionForAgent(A agent, Action<A> action) {
 		boolean passOnEvent = false;
-		//		agent.log("Processing Decision " + action);
-		List<ExperienceRecord<A>> tdArray = erListMap.get(agent);
+		//  agent.log("Processing Decision " + action);
+		A referenceAgent = referenceAgents.getOrDefault(agent, agent);
+		List<ExperienceRecord<A>> tdArray = erListMap.get(referenceAgent);
 		ExperienceRecord<A> ERForActionReceived = null;
 		for (ExperienceRecord<A> td : tdArray) {
 			if (td.getActionTaken().equals(action)) {
