@@ -1,5 +1,8 @@
 package hopshackle.simulation.test;
 import static org.junit.Assert.*;
+
+import java.util.*;
+
 import hopshackle.simulation.*;
 import hopshackle.simulation.basic.*;
 
@@ -9,11 +12,14 @@ public class WildernessMatcherTest {
 	private Hex[] locations;
 	private Agent testAgent, builder;
 	private TestActionProcessor ap;
+	private List<ActionEnum<BasicAgent>> allActions = new ArrayList<ActionEnum<BasicAgent>>(EnumSet.allOf(BasicActions.class));
+
 	
 	@Before
 	public void setUp() {
-		ap = new TestActionProcessor();
-		w = ap.w;
+		w = new World(null, "test", new SimpleWorldLogic<BasicAgent>(allActions));
+		w.setCalendar(new FastCalendar(0l));
+		ap = new TestActionProcessor(w);
 		testAgent = new BasicAgent(w);
 		builder = new BasicAgent(w);
 		locations = new Hex[11];

@@ -21,6 +21,8 @@ public class BasicMarriageTest {
 	private Decider<BasicAgent> baseDecider;
 	private Decider<BasicAgent> restDecider = new HardCodedDecider<BasicAgent>(BasicActions.REST);
 	DeciderProperties localProp;
+	private List<ActionEnum<BasicAgent>> allActions = new ArrayList<ActionEnum<BasicAgent>>(EnumSet.allOf(BasicActions.class));
+
 
 	@Before
 	public void setUp() {
@@ -34,8 +36,9 @@ public class BasicMarriageTest {
 		actions.add(BasicActions.LOOK_FOR_PARTNER);
 		StateFactory<BasicAgent> sf = new LinearStateFactory<BasicAgent>(variables);
 		baseDecider = new GeneralLinearQDecider<BasicAgent>(sf, actions);
-		ap = new TestActionProcessor();
-		world = ap.w;
+		world = new World(null, "test", new SimpleWorldLogic<BasicAgent>(allActions));
+		world.setCalendar(new FastCalendar(0l));
+		ap = new TestActionProcessor(world);
 		world.registerWorldLogic(new SimpleWorldLogic<BasicAgent>(actions), "AGENT");
 		homeHex = new BasicHex(0, 0);
 		homeHex.setParentLocation(world);

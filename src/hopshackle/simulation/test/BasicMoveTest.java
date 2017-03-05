@@ -1,6 +1,9 @@
 package hopshackle.simulation.test;
 
 import static org.junit.Assert.*;
+
+import java.util.*;
+
 import hopshackle.simulation.*;
 import hopshackle.simulation.basic.*;
 
@@ -12,13 +15,15 @@ public class BasicMoveTest {
 	private BasicAgent testAgent;
 	private Location startLocation;
 	private TestActionProcessor testAP;
+	private List<ActionEnum<BasicAgent>> allActions = new ArrayList<ActionEnum<BasicAgent>>(EnumSet.allOf(BasicActions.class));
 
 	@Before
 	public void setUp() {
 		SimProperties.setProperty("ReforestationRate", "0.00");
 		SimProperties.setProperty("ForestationRate", "0.00");
-		testAP = new TestActionProcessor();
-		w = testAP.w;
+		w = new World(null, "test", new SimpleWorldLogic<BasicAgent>(allActions));
+		w.setCalendar(new FastCalendar(0l));
+		testAP = new TestActionProcessor(w);
 		hexMap = new HexMap<BasicHex>(10, 10, BasicHex.getHexFactory());
 		setTerrainAtHex(hexMap, 2, 2, TerrainType.OCEAN);
 		setTerrainAtHex(hexMap, 3, 2, TerrainType.OCEAN);

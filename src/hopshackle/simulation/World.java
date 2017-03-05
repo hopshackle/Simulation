@@ -166,6 +166,8 @@ public class World extends Location {
 
 	public void setActionProcessor(ActionProcessor actionProcessor) {
 		this.actionProcessor = actionProcessor;
+		if (actionProcessor != null)
+			actionProcessor.setWorld(this);
 	}
 
 	public Long getCurrentTime() {
@@ -177,6 +179,7 @@ public class World extends Location {
 	}
 
 	public void setCurrentTime(Long newTime) {
+//		System.out.println("Setting time to " + newTime);
 		if (calendar != null)
 			calendar.setTime(newTime);
 	}

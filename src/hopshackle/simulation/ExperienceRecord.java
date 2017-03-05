@@ -78,6 +78,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		endState = newState;
 		endStateAsArray = endState.getAsArray();
 		this.reward = reward;
+		// we will take account of change in score only when the nextER is added (or the state is marked as final)
 		timeOfResolution = getAgent().getWorld().getCurrentTime();
 		//		getAgent().log("ACTION_COMPLETED for " + this.actionTaken);
 		setState(ERState.ACTION_COMPLETED);
@@ -97,6 +98,10 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 				endState = d.getCurrentState(actingAgent);
 				endStateAsArray = endState.getAsArray();
 			}
+			if (incrementalScoreAffectsReward) {
+				for (int i = 0; i < reward.length; i++) 
+					reward[i] = reward[i] + getEndScore()[i] - startScore[i];
+			}
 			//			getAgent().log("Updated ER for Action " + actionTaken + " after new action " + nextER.getActionTaken());
 		} else {
 			double[] finalScores = new double[startScore.length];
@@ -111,6 +116,8 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		for (int i = 0; i < finalScores.length; i++) {
 			reward[i] = reward[i] + finalScores[i];
 			if (incrementalScoreAffectsReward) reward[i] = reward[i] - startScore[i];
+			System.out.println("Final: " + finalScores[i] + " - " + startScore[i] + " = " + this.reward[i]);
+
 		}
 		isFinalState = true;
 		timeOfResolution = getAgent().getWorld().getCurrentTime();
@@ -171,13 +178,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	}
 
 	public double[] getReward() {
-		double[] retValue = new double[reward.length];
-		if (getState() == ERState.NEXT_ACTION_TAKEN && incrementalScoreAffectsReward) {
-			for (int i = 0; i < reward.length; i++) retValue[i] = reward[i] + getEndScore()[i] - startScore[i];
-		} else {
-			retValue = reward;
-		}
-		return retValue;
+		return reward;
 	}
 
 	public double[] getStartScore() {

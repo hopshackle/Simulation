@@ -3,7 +3,7 @@ import static org.junit.Assert.*;
 import hopshackle.simulation.*;
 import hopshackle.simulation.basic.*;
 
-import java.util.List;
+import java.util.*;
 
 import org.junit.*;
 
@@ -13,14 +13,16 @@ public class BasicBreedTest {
 	private BasicHex homeHex;
 	private BasicAgent testAgent1, testAgent2, testAgent3;
 	private TestActionProcessor ap;
+	private List<ActionEnum<BasicAgent>> allActions = new ArrayList<ActionEnum<BasicAgent>>(EnumSet.allOf(BasicActions.class));
 
 	@Before
 	public void setUp() {
 		SimProperties.setProperty("FemaleBreedingAgeRange", "20-100");
 		SimProperties.setProperty("MaleBreedingAgeRange", "20-180");
 		BasicAgent.refreshBreedingAges();
-		ap = new TestActionProcessor();
-		world = ap.w;
+		world = new World(null, "test", new SimpleWorldLogic<BasicAgent>(allActions));
+		world.setCalendar(new FastCalendar(0l));
+		ap = new TestActionProcessor(world);
 		homeHex = new BasicHex(0, 0);
 		homeHex.setParentLocation(world);
 		testAgent1 = new BasicAgent(world);

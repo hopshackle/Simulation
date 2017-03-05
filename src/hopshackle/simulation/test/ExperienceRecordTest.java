@@ -50,8 +50,10 @@ public class ExperienceRecordTest {
 
 		possibleActions.add(BasicActions.BREED);
 		er.updateWithResults(30.0, new LinearState<BasicAgent>(agent, varList));
+		assertEquals(agent.getScore(), 20.0, 0.001);
 		agent.addHealth(-15.0);
 		assertEquals(er.getReward()[0], 30.0, 0.01);
+		assertEquals(agent.getScore(), 5.0, 0.001);
 		er.updateWithFinalScores(new double[] {agent.getScore()});
 		assertTrue(er.isInFinalState());
 		assertFalse(er.getEndState() == null);

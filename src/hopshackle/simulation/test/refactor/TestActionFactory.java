@@ -9,6 +9,7 @@ class TestAction extends Action<TestAgent> {
 
 	boolean dieInMiddle = false;
 	boolean makeNextDecision = true;
+	public static boolean incrementTime = true;
 	int waitTime;
 
 	public TestAction(TestActionEnum action, List<TestAgent> mandatory, List<TestAgent> optional, long startOffset, long duration, boolean recordAction, boolean makeNext, int wait) {
@@ -29,7 +30,8 @@ class TestAction extends Action<TestAgent> {
 				a.die("Oops");
 			}
 		}
-		actor.getWorld().setCurrentTime(actor.getWorld().getCurrentTime()+1000);
+		if (incrementTime)
+			actor.getWorld().setCurrentTime(actor.getWorld().getCurrentTime()+1000);
 		switch ((TestActionEnum)actionType) {
 		case LEFT:
 			actor.position++;
@@ -258,11 +260,11 @@ class TestTeacher extends Teacher<TestAgent> {
 class TestState implements State<TestAgent> {
 
 	private String name;
-	
+
 	public TestState(String name) {
 		this.name = name;
 	}
-	
+
 	@Override
 	public double[] getAsArray() {
 		return new double[0];
@@ -292,5 +294,5 @@ class TestState implements State<TestAgent> {
 	public double[] getScore() {
 		return new double[1];
 	}
-	
+
 }
