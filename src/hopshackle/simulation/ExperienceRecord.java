@@ -116,7 +116,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		for (int i = 0; i < finalScores.length; i++) {
 			reward[i] = reward[i] + finalScores[i];
 			if (incrementalScoreAffectsReward) reward[i] = reward[i] - startScore[i];
-			System.out.println("Final: " + finalScores[i] + " - " + startScore[i] + " = " + this.reward[i]);
+	//		System.out.println("Final: " + finalScores[i] + " - " + startScore[i] + " = " + this.reward[i]);
 
 		}
 		isFinalState = true;

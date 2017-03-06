@@ -38,9 +38,7 @@ public class MCTSTest {
 		localProp.setProperty("MonteCarloActionValueOpponentModel", "false");
 		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
 		localProp.setProperty("MonteCarloRetainTreeBetweenActions", "false");
-		tree = new MonteCarloTree<TestAgent>(localProp, 1);
-		mazeGame = new SimpleMazeGame(2, agent);
-		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, null);
+		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
 		masterDecider.injectProperties(localProp);
 		agent.setDecider(masterDecider);
 		Dice.setSeed(6l);
@@ -55,11 +53,13 @@ public class MCTSTest {
 		 * The test plan is to cycle through decisions, and check that the MonteCarloTree is working as expected
 		 * 
 		 */
+		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+		mazeGame = new SimpleMazeGame(2, agent);
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
 		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
-		System.out.println(tree.toString(true));
+	//	System.out.println(tree.toString(true));
 		assertEquals(tree.numberOfStates(), 7);
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
@@ -82,6 +82,94 @@ public class MCTSTest {
 		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], 1.47, 0.01);
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 97);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 1);
+		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
+	}
+	
+	@Test
+	public void multiplePlayersWithMultipleTrees() {
+		localProp.setProperty("MonteCarloSingleTree", "false");
+		masterDecider.injectProperties(localProp);
+		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+		TestAgent[] players = new TestAgent[3];
+		players[0] = agent;
+		players[1] = new TestAgent(world);
+		players[2] = new TestAgent(world);
+		mazeGame = new SimpleMazeGame(2, players);
+		for (TestAgent a : players) {
+			a.setDecider(masterDecider);
+		}
+		
+		State<TestAgent> startState = masterDecider.getCurrentState(agent);
+		assertEquals(mazeGame.playerToMove, 0);
+		mazeGame.oneMove();
+		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
+		System.out.println(tree.toString(true));
+		assertEquals(tree.numberOfStates(), 4);
+		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
+		assertEquals(startStats.getVisits(), 99);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 5.472, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.75, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.7, 0.01);
+		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
+		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
+		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
+		
+//		startState = masterDecider.getCurrentState(players[1]);
+		assertEquals(mazeGame.playerToMove, 1);
+		mazeGame.oneMove();
+		tree = masterDecider.getTree(agent);	// should be unchanged from other players turn
+		assertEquals(tree.numberOfStates(), 4);
+		startStats = tree.getStatisticsFor(startState);
+		assertEquals(startStats.getVisits(), 99);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 5.472, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.75, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.7, 0.01);
+		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
+		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
+		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
+	}
+	
+	@Test
+	public void singleTree() {
+		localProp.setProperty("MonteCarloSingleTree", "true");
+		masterDecider.injectProperties(localProp);
+		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+		TestAgent[] players = new TestAgent[3];
+		players[0] = agent;
+		players[1] = new TestAgent(world);
+		players[2] = new TestAgent(world);
+		mazeGame = new SimpleMazeGame(2, players);
+		for (TestAgent a : players) {
+			a.setDecider(masterDecider);
+		}
+		
+		State<TestAgent> startState = masterDecider.getCurrentState(agent);
+		mazeGame.oneMove();
+		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
+		System.out.println(tree.toString(true));
+		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
+		assertEquals(tree.numberOfStates(), 4);
+		startStats = tree.getStatisticsFor(startState);
+		assertEquals(startStats.getVisits(), 99);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 5.472, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.75, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.7, 0.01);
+		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
+		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
+		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
+		
+//		startState = masterDecider.getCurrentState(players[1]);
+		assertEquals(mazeGame.playerToMove, 1);
+		mazeGame.oneMove();
+		tree = masterDecider.getTree(agent);	// should be changed from other players turn
+		assertEquals(tree.numberOfStates(), 7);
+		startStats = tree.getStatisticsFor(startState);
+		assertEquals(startStats.getVisits(), 99);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 7.499, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], 1.737, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], 0.0, 0.01);
+		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
+		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
 	}
 

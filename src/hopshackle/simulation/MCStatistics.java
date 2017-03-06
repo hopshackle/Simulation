@@ -218,15 +218,18 @@ public class MCStatistics<P extends Agent> {
 	}
 
 	public String toString(boolean verbose) {
-		StringBuffer retValue = new StringBuffer(
-				String.format("MC Statistics\tVisits: %d\tV:%.2f\tQ:%.2f\n", totalVisits, getV()[actingAgent], getQ()[actingAgent])
-				);
+		double[] V = getV();
+		double[] Q = getQ();
+		StringBuffer retValue = new StringBuffer(String.format("MC Statistics\tVisits: %d\tV|Q", totalVisits));
+		for (int i = 0; i < V.length; i++) 
+			retValue.append(String.format("\t[%.2f|%.2f]", V[i], Q[i]));
+		retValue.append("\n");
 		for (String k : keysInVisitOrder()) {
 			String output = "";
 			if (actionWeight > 0.0) {
 				output = String.format("\t%s\t%s\t(AV:%.2f | %d)\n", k, map.get(k).toString(), tree.getActionValue(k, actingAgent), tree.getActionCount(k, actingAgent));
 			} else {
-				output = String.format("\t%s\t%s\n", k, map.get(k).toString());
+				output = String.format("\t%-35s\t%s\n", k, map.get(k).toString());
 			}
 			retValue.append(output);
 			if (verbose) {
@@ -384,7 +387,11 @@ class MCData implements Comparable<MCData> {
 	public String toString() {
 		StringBuffer retValue = new StringBuffer();
 		for (int i = 0; i < maxActors; i++) {
-			retValue.append(String.format("Player:%d\tVisits:%d \tMC:%.2f \tV:%.2f \tQ:%.2f", i+1, visits, mean[i], V[i], Q[i]));
+			if (i == 0) 
+				retValue.append(String.format("Visits:%d\tMC|V|Q\t[%.2f|%.2f|%.2f]", visits, mean[i], V[i], Q[i]));
+			else 
+				retValue.append(String.format("\t[%.2f|%.2f|%.2f]", mean[i], V[i], Q[i]));
+
 		}
 		return retValue.toString();
 	}

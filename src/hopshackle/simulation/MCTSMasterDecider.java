@@ -27,9 +27,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	}
 
 
-	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree, int currentPlayer) {
+	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
 		MCTSChildDecider<A> retValue = null;
-		if (useAVDForRollout)
+		if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
 			retValue = new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory, currentPlayer), decProp);
 		else 
 			retValue = new MCTSChildDecider<A>(stateFactory, tree, rolloutDecider, decProp);
@@ -56,7 +56,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 				public void processEvent(AgentEvent event) {
 					if (event.getEvent() == Type.DEATH) {
 						treeMap.remove(agent);
-			//			agent.log("Removing Tree from MCTS decider, leaving " + treeMap.size());
+						//			agent.log("Removing Tree from MCTS decider, leaving " + treeMap.size());
 					}
 				}
 			});
@@ -73,20 +73,17 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			tree.reset();
 		}
 
-		OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
-		childDecider = createChildDecider(tree, currentPlayer-1);
-		// TODO: create new decider for each of the opponents if we are using singleTree
-		// using the same tree, but different currentPlayers
-		teacher.registerDecider(childDecider);
-		// TODO: we only register one of them with the teacher
 		class FollowOnEventFilter implements EventFilter {
 			@Override
 			public boolean ignore(AgentEvent event) {
 				return (event.getAction() == null) ? false : event.getAction().isFollowOnAction();
 			}
 		}
-
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(decProp), new FollowOnEventFilter());
+
+		OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
+		childDecider = createChildDecider(tree, currentPlayer-1, false);
+		teacher.registerDecider(childDecider);
 		teacher.registerToERStream(erc);
 
 		if (chooseableOptions.size() == 1) {
@@ -103,7 +100,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			A clonedAgent = clonedGame.getPlayer(currentPlayer);
 			for (A player : clonedGame.getAllPlayers()) {
 				if (player != clonedAgent) {
-					if (useAVDForOpponent)
+					if (singleTree)
+						player.setDecider(createChildDecider(tree, game.getPlayerNumber(player)-1, true));
+					else if (useAVDForOpponent)
 						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory, currentPlayer-1));
 					else 
 						player.setDecider(opponentModel);
@@ -114,12 +113,13 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 				// For this player (from whose perspective the MonteCarloTree is being constructed)
 				// we use MCTSChildDecider
 			}
-			//TODO: We then register all agents with the ERC...however we need these to be used to create a 
-			// single stream of experiential data
-			// so we need a new method of ERC that registers with a reference agent/object, which indicates how the
-			// streams are to be crossed
 
-			erc.registerAgent(clonedAgent);
+			if (singleTree) {
+				for (A player : clonedGame.getAllPlayers()) 
+					erc.registerAgentWithReference(player, clonedAgent);
+			} else {
+				erc.registerAgent(clonedAgent);
+			}
 			clonedGame.playGame();
 			teacher.teach();
 
@@ -130,8 +130,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 		if (sweepMethodology.equals("terminal")) {
 			sweep(tree);
-//			logFile = agent.toString() + "_" + agent.getWorld().getCurrentTime() + "_postSweep.log";
-//			tree.exportToFile(logFile, currentState.getAsString());
+			//			logFile = agent.toString() + "_" + agent.getWorld().getCurrentTime() + "_postSweep.log";
+			//			tree.exportToFile(logFile, currentState.getAsString());
 		}
 		// Then we look at the statistics in the tree for the current state to make a decision
 		agent.log(tree.getStatisticsFor(currentState).toString(debug));
@@ -171,7 +171,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	public Decider<A> getRolloutDecider() {
 		return rolloutDecider;
 	}
-	
+
 	@Override
 	public void injectProperties(DeciderProperties dp) {
 		super.injectProperties(dp);
