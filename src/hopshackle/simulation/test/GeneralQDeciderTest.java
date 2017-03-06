@@ -99,7 +99,7 @@ public class GeneralQDeciderTest {
 	public void teachingDecisionUpdatesWeights() {
 		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
 				actions, localProp);
-		exp.updateWithResults(2.0, decider.getCurrentState(testAgent));
+		exp.updateWithResults(2.0);
 		w.setCurrentTime(1000l); // move forward before taking next action, so that discounting works
 		ExperienceRecord<Agent> exp2 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.LEFT.getAction(testAgent), 
 				actions, localProp);
@@ -114,7 +114,7 @@ public class GeneralQDeciderTest {
 		assertEquals(decider.getWeightOf(0, RightLeft.LEFT), 0.0, 0.001);
 		
 		testAgent.addGold(-2.0);
-		exp2.updateWithResults(-2.0, decider.getCurrentState(testAgent));
+		exp2.updateWithResults(-2.0);
 		ExperienceRecord<Agent> exp3 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
 				actions, localProp);
 		w.setCurrentTime(2000l); // move forward before taking next action, so that discounting works
@@ -130,7 +130,7 @@ public class GeneralQDeciderTest {
 		assertEquals(decider.getWeightOf(0, RightLeft.LEFT), -0.328, 0.001);
 		
 		testAgent.addGold(1.0);
-		exp3.updateWithResults(1.0, decider.getCurrentState(testAgent));
+		exp3.updateWithResults(1.0);
 		ExperienceRecord<Agent> exp4 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
 				actions, localProp);
 		exp3.updateNextActions(exp4);
@@ -150,7 +150,7 @@ public class GeneralQDeciderTest {
 				actions, localProp);
 		ExperienceRecord<Agent> exp2 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
 				actions, localProp);
-		exp.updateWithResults(0.0, decider.getCurrentState(testAgent));
+		exp.updateWithResults(0.0);
 		exp.updateNextActions(exp2);
 		decider.learnFrom(exp, 10.0);
 		// reward of 0.0, with value of best action = 0.0, so difference = 0.0 + gamma * 0.0 - 0.0 = 0.00

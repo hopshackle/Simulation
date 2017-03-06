@@ -63,5 +63,10 @@ public class LinearState<A extends Agent> implements State<A> {
 	public double[] getScore() {
 		return score;
 	}
+	
+	@Override
+	public String toString() {
+		return getAsString();
+	}
 
 }

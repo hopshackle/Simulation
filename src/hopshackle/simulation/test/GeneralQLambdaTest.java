@@ -52,7 +52,7 @@ public class GeneralQLambdaTest {
 	public void teachingDecisionUpdatesWeights() {
 		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
 				actions, localProp);
-		exp.updateWithResults(2.0, decider.getCurrentState(testAgent));
+		exp.updateWithResults(2.0);
 		// Feature traces of exp are 1.0 for Constant, and 0.0 for Gold
 		assertEquals(exp.getFeatureTrace()[0], 1.00, 0.001);
 		w.setCurrentTime(1000l); // move forward before taking next action, so that discounting works
@@ -71,7 +71,7 @@ public class GeneralQLambdaTest {
 		assertEquals(decider.getWeightOf(0, RightLeft.LEFT), 0.0, 0.001);
 		
 		testAgent.addGold(-2.0);
-		exp2.updateWithResults(-2.0, decider.getCurrentState(testAgent));
+		exp2.updateWithResults(-2.0);
 		w.setCurrentTime(3000l); // move forward before taking next action, so that discounting works
 		ExperienceRecord<Agent> exp3 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
 				actions, localProp);
@@ -91,7 +91,7 @@ public class GeneralQLambdaTest {
 		assertEquals(decider.getWeightOf(0, RightLeft.LEFT), -0.3352 * 1.45, 0.001);
 		
 		testAgent.addGold(1.0);
-		exp3.updateWithResults(1.0, decider.getCurrentState(testAgent));
+		exp3.updateWithResults(1.0);
 		w.setCurrentTime(4500l); // move forward before taking next action, so that discounting works
 		ExperienceRecord<Agent> exp4 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
 				actions, localProp);

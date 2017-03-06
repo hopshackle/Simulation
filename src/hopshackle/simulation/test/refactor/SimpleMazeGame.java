@@ -43,6 +43,7 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 			TestAgent clonedPlayer = new TestAgent(clonedWorld);
 			clonedPlayer.setAge(original.getAge());
 			clonedPlayer.position = original.position;
+			clonedPlayer.addGold(original.getGold());
 			clonedPlayers[i] = clonedPlayer;
 		}
 		

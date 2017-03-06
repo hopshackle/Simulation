@@ -207,7 +207,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 					Decider<A> d = agent.getDecider();
 					if (d != null) {
 						State<A> newState = d.getCurrentState(agent);
-						td.updateWithResults(new double[newState.getScore().length], newState);
+						td.updateWithResults(new double[newState.getScore().length]);
 					}
 				case ACTION_COMPLETED:
 				case NEXT_ACTION_TAKEN:
@@ -240,7 +240,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 			case DECISION_TAKEN:
 				Decider<A> d = agent.getDecider();
 				State<A> newState = d.getCurrentState(agent);
-				td.updateWithResults(new double[newState.getScore().length], newState);
+				td.updateWithResults(new double[newState.getScore().length]);
 			case ACTION_COMPLETED:
 				Game<A, ActionEnum<A>> game = agent.getGame();
 				if (game != null) {

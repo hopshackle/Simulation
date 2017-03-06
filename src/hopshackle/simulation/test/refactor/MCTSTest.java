@@ -93,7 +93,9 @@ public class MCTSTest {
 		TestAgent[] players = new TestAgent[3];
 		players[0] = agent;
 		players[1] = new TestAgent(world);
+		players[1].addGold(0.1);
 		players[2] = new TestAgent(world);
+		players[2].addGold(0.2);
 		mazeGame = new SimpleMazeGame(2, players);
 		for (TestAgent a : players) {
 			a.setDecider(masterDecider);
@@ -114,19 +116,14 @@ public class MCTSTest {
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
 		
-//		startState = masterDecider.getCurrentState(players[1]);
 		assertEquals(mazeGame.playerToMove, 1);
+		State<TestAgent> secondPlayerState = masterDecider.getCurrentState(players[1]);
+		assertFalse(tree.containsState(secondPlayerState));
+		
 		mazeGame.oneMove();
-		tree = masterDecider.getTree(agent);	// should be unchanged from other players turn
-		assertEquals(tree.numberOfStates(), 4);
-		startStats = tree.getStatisticsFor(startState);
-		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 5.472, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.75, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.7, 0.01);
-		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
-		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
-		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
+		assertEquals(mazeGame.playerToMove, 2);
+		State<TestAgent> thirdPlayerState = masterDecider.getCurrentState(players[2]);
+		assertFalse(tree.containsState(thirdPlayerState));
 	}
 	
 	@Test
@@ -137,40 +134,42 @@ public class MCTSTest {
 		TestAgent[] players = new TestAgent[3];
 		players[0] = agent;
 		players[1] = new TestAgent(world);
+		players[1].addGold(0.1);
 		players[2] = new TestAgent(world);
+		players[2].addGold(0.2);
 		mazeGame = new SimpleMazeGame(2, players);
 		for (TestAgent a : players) {
 			a.setDecider(masterDecider);
 		}
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
+		assertEquals(mazeGame.playerToMove, 0);
+
 		mazeGame.oneMove();
 		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
-		assertEquals(tree.numberOfStates(), 4);
+		assertEquals(tree.numberOfStates(), 7);	// more states visited as we use state of other players
 		startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 5.472, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.75, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.7, 0.01);
-		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
-		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 4.8533, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.643, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.587, 0.01);
+		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 97);
+		assertEquals(startStats.getVisits(TestActionEnum.TEST), 1);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
 		
-//		startState = masterDecider.getCurrentState(players[1]);
 		assertEquals(mazeGame.playerToMove, 1);
+		State<TestAgent> secondPlayerState = masterDecider.getCurrentState(players[1]);
+		assertTrue(tree.containsState(secondPlayerState));
+		assertEquals(tree.getStatisticsFor(secondPlayerState).getVisits(), 99);
+		
 		mazeGame.oneMove();
-		tree = masterDecider.getTree(agent);	// should be changed from other players turn
-		assertEquals(tree.numberOfStates(), 7);
-		startStats = tree.getStatisticsFor(startState);
-		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 7.499, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], 1.737, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], 0.0, 0.01);
-		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
-		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
-		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
+		assertEquals(mazeGame.playerToMove, 2);
+		State<TestAgent> thirdPlayerState = masterDecider.getCurrentState(players[2]);
+		assertTrue(tree.containsState(thirdPlayerState));
+		assertEquals(tree.getStatisticsFor(thirdPlayerState).getVisits(), 98);
+		
 	}
 
 }
