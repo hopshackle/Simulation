@@ -58,12 +58,12 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 	}
 
 	private void constructFeatureTrace(ExperienceRecord<A> previousER) {
-		if (previousER.featureTrace.length != startStateAsArray.length) {
+		if (previousER.featureTrace.length != startStateAsArray.length || lambda == 0.0) {
 			featureTrace = startStateAsArray;
 		} else {
 			featureTrace = new double[startStateAsArray.length];
 			for (int i = 0; i < startStateAsArray.length; i++) {
-				// We discount feature trace over time that has passed
+				// We discount feature trace over time that has passed from the start of the last feature trace snapshot to now
 				featureTrace[i] = Math.pow(gamma * lambda, previousER.getDiscountPeriod()) * previousER.featureTrace[i] + startStateAsArray[i];
 				if (featureTrace[i] > traceCap)	featureTrace[i] = traceCap;
 			}
@@ -135,8 +135,10 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		if (previousRecord != null) {
 			double[] prevReward = previousRecord.getReward();
 			double[] newScore = new double[score.length];
-			// TODO: This discounting should use the discount period correctly, not assume 1.0
-			for (int i = 0; i < score.length; i++) newScore[i] = score[i] * gamma + prevReward[i];
+			double discountFactor = gamma;
+			// we discount over the elapsed time of this ER (i.e. from end, back to start..which is the end of the previous record)
+			if (gamma < 1.0) discountFactor = Math.pow(gamma, getDiscountPeriod());
+			for (int i = 0; i < score.length; i++) newScore[i] = score[i] * discountFactor + prevReward[i];
 			previousRecord.reward = newScore;
 			previousRecord.startScore = new double[score.length];
 			previousRecord.updatePreviousRecord(newScore);

@@ -40,6 +40,7 @@ public class MultipleAgentRewardVector {
 		localProp.setProperty("MonteCarloUCTType", "MC");
 		localProp.setProperty("MonteCarloUCTC", "1.0");
 		localProp.setProperty("Gamma", "0.95");
+		localProp.setProperty("TimePeriodForGamma", "1000");
 		localProp.setProperty("IncrementalScoreReward", "false");
 		localProp.setProperty("MonteCarloRolloutCount", "99");
 		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");

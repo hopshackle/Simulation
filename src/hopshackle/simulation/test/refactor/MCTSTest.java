@@ -31,6 +31,7 @@ public class MCTSTest {
 		localProp.setProperty("MonteCarloUCTType", "MC");
 		localProp.setProperty("MonteCarloUCTC", "1.0");
 		localProp.setProperty("Gamma", "0.95");
+		localProp.setProperty("TimePeriodForGamma", "1000");
 		localProp.setProperty("IncrementalScoreReward", "false");
 		localProp.setProperty("MonteCarloRolloutCount", "99");
 		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
@@ -110,8 +111,8 @@ public class MCTSTest {
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
 		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 5.472, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.75, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.7, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.5125, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.14, 0.01);
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);

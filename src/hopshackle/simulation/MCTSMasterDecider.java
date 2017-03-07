@@ -23,7 +23,11 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	public MCTSMasterDecider(StateFactory<A> stateFactory, Decider<A> rolloutDecider, Decider<A> opponentModel) {
 		super(stateFactory);
 		this.rolloutDecider = rolloutDecider;
+		if (rolloutDecider == null)
+			this.rolloutDecider = new RandomDecider<A>(stateFactory);
 		this.opponentModel = opponentModel;
+		if (opponentModel == null)
+			this.opponentModel = new RandomDecider<A>(stateFactory);
 	}
 
 
@@ -82,7 +86,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(decProp), new FollowOnEventFilter());
 
 		OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
-		childDecider = createChildDecider(tree, currentPlayer-1, false);
+		childDecider = createChildDecider(tree, currentPlayer, false);
 		teacher.registerDecider(childDecider);
 		teacher.registerToERStream(erc);
 
@@ -101,9 +105,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			for (A player : clonedGame.getAllPlayers()) {
 				if (player != clonedAgent) {
 					if (singleTree)
-						player.setDecider(createChildDecider(tree, game.getPlayerNumber(player)-1, true));
+						player.setDecider(createChildDecider(tree, game.getPlayerNumber(player), true));
 					else if (useAVDForOpponent)
-						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory, currentPlayer-1));
+						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory, currentPlayer));
 					else 
 						player.setDecider(opponentModel);
 				} else {

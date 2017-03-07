@@ -19,7 +19,7 @@ public class ExperienceRecordTest {
 	StateFactory<BasicAgent> stateFactory;
 	DeciderProperties localProp;
 	Decider <BasicAgent> basicDecider;
-	
+
 	@Before
 	public void setUp() throws Exception {
 		localProp = SimProperties.getDeciderProperties("GLOBAL");
@@ -34,11 +34,11 @@ public class ExperienceRecordTest {
 		loc = new BasicHex(0, 0);
 		loc.setParentLocation(w);
 		agent.setLocation(loc);
-		
+
 		possibleActions = new ArrayList<ActionEnum<BasicAgent>>();
 		possibleActions.add(BasicActions.FARM);
 		possibleActions.add(BasicActions.FIND_UNKNOWN);
-		
+
 		basicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory, possibleActions);
 		basicDecider.injectProperties(localProp);
 		agent.setDecider(basicDecider);
@@ -68,44 +68,55 @@ public class ExperienceRecordTest {
 		assertEquals(er.getReward()[0], 15.0, 0.01);	// -15 in change of score from full health, plus 30 reward
 		assertEquals(er.getPossibleActionsFromStartState().size(), 2);
 	}
-	
+
 	@Test
 	public void monteCarloRewardsWithIncremental() {
 		localProp.setProperty("MonteCarloReward", "true");
 		localProp.setProperty("Gamma", "0.9");
-		
+		w.setCurrentTime(0l);
 		er = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions ,localProp);
+		w.setCurrentTime(500l);
 		er.updateWithResults(30.0);
 		ExperienceRecord<BasicAgent> nextER = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions, localProp);
+		w.setCurrentTime(2000l);
 		er.updateNextActions(nextER);
 		nextER.updateWithResults(0.0);
+		w.setCurrentTime(5000l);
 		assertEquals(er.getReward()[0], 30.0, 0.001);
 		assertEquals(nextER.getReward()[0], 0.0, 0.001);
 		agent.addHealth(-2.0);
+		w.setCurrentTime(7500l);
 		nextER.updateWithFinalScores(new double[] {agent.getScore()});
 		assertEquals(nextER.getReward()[0], -2.0, 0.001);
-		assertEquals(er.getReward()[0], -2.0 * 0.9 + 30.0, 0.001);
+		assertEquals(nextER.getDiscountPeriod(), 7.0, 0.01);
+		assertEquals(er.getReward()[0], -2.0 * Math.pow(0.9, 7) + 30.0, 0.001);
 	}
-	
+
 	@Test
 	public void monteCarloRewardsWithoutIncremental() {
 		localProp.setProperty("MonteCarloReward", "true");
 		localProp.setProperty("IncrementalScoreReward", "false");
 		localProp.setProperty("Gamma", "0.9");
 
+		w.setCurrentTime(0l);
+
 		er = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions, localProp);
 		er.updateWithResults(3.0);
+
+		w.setCurrentTime(1000l);
 		ExperienceRecord<BasicAgent> nextER = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions, localProp);
 		er.updateNextActions(nextER);
 		nextER.updateWithResults(0.0);
 		assertEquals(er.getReward()[0], 3.0, 0.001);
 		assertEquals(nextER.getReward()[0], 0.0, 0.001);
 		agent.addHealth(-2.0);
+		w.setCurrentTime(4000l);
 		nextER.updateWithFinalScores(new double[] {agent.getScore()});
 		assertEquals(nextER.getReward()[0], 18.0, 0.001);
-		assertEquals(er.getReward()[0], 18.0 * 0.9 + 3.0, 0.001);
+		assertEquals(nextER.getDiscountPeriod(), 3.0, 0.01);
+		assertEquals(er.getReward()[0], 18.0 * Math.pow(0.9, 3) + 3.0, 0.001);
 	}
-	
+
 	@Test
 	public void discountFactorDefault() {
 		// First set World time
@@ -118,10 +129,10 @@ public class ExperienceRecordTest {
 		w.setCurrentTime(1200l);
 		ExperienceRecord<BasicAgent> nextER = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions, localProp);
 		er.updateNextActions(nextER);
-		
+
 		assertEquals(er.getDiscountPeriod(), 700.0 / 1000.0, 0.001);
 	}
-	
+
 	@Test
 	public void discountFactorWithLookahead() {
 		localProp.setProperty("TimePeriodForGamma", "800");
@@ -140,14 +151,14 @@ public class ExperienceRecordTest {
 				BasicActions.FARM.getAction(agent), 
 				possibleActions, localProp);
 		er.updateNextActions(nextER);
-		
+
 		assertEquals(er.getDiscountPeriod(), 700.0 / 800.0, 0.001);
-		
+
 		w.setCurrentTime(3000l);
 
 		assertEquals(er.getDiscountPeriod(), 700.0 / 800.0, 0.001);
 	}
-	
+
 	@Test public void endStateIsAlwaysStartStateOfNextRecordUnlessFinalState() {
 		er = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions, localProp);
 		State<BasicAgent> state1 = stateFactory.getCurrentState(agent);
@@ -157,14 +168,14 @@ public class ExperienceRecordTest {
 		State<BasicAgent> state2 = stateFactory.getCurrentState(agent);
 		er.updateWithResults(2.0);
 		er.updateNextActions(er2);
-		
+
 		assertFalse(state1.toString().equals(state2.toString()));
 		assertTrue(er.getEndState().toString().equals(state1.toString()));
-		
+
 		er.updateWithFinalScores(new double[1]);
 		assertTrue(er.getEndState().toString().equals(state2.toString()));
 	}
-	
+
 	@Test
 	public void endStateCorrectWithDifferentAgent() {
 		er = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions, localProp);
@@ -180,12 +191,12 @@ public class ExperienceRecordTest {
 		State<BasicAgent> state2 = stateFactory.getCurrentState(agent);
 		er.updateWithResults(2.0);
 		er.updateNextActions(er2);
-		
+
 		assertFalse(state1.toString().equals(state2.toString()));
 		assertTrue(er.getEndState().toString().equals(state1.toString()));
-		
+
 		er.updateWithFinalScores(new double[1]);
 		assertTrue(er.getEndState().toString().equals(state2.toString()));
 	}
-	
+
 }
