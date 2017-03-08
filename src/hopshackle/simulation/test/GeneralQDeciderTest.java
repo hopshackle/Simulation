@@ -37,7 +37,7 @@ public class GeneralQDeciderTest {
 		@Override
 		public boolean unitaryRange() {return false;}
 	};
-	
+
 	@Before
 	public void setup() {
 		localProp = SimProperties.getDeciderProperties("GLOBAL");
@@ -58,7 +58,8 @@ public class GeneralQDeciderTest {
 
 		decider = new TestLinearQDecider(actions, variables);
 		decider.injectProperties(localProp);
-		decider.setWeights(new double[3][2]);
+		for (ActionEnum<Agent> a : actions)
+			decider.setWeights(a, new double[2]);
 		// so we have two actions, right and left
 		// and two inputs, one is just equal to the Agents Gold, and the other is equal to a constant
 		w = new World();
@@ -85,11 +86,11 @@ public class GeneralQDeciderTest {
 		assertEquals(testAgent.getGold(), 0.0, 0.0001);
 		assertEquals(decider.valueOption(RightLeft.RIGHT, testAgent), 0.0, 0.001);
 		assertEquals(decider.valueOption(RightLeft.LEFT, testAgent), 0.0, 0.001);
-		
+
 		testAgent.addGold(0.5);
 		assertEquals(decider.valueOption(RightLeft.RIGHT, testAgent), 0.0, 0.001);
 		assertEquals(decider.valueOption(RightLeft.LEFT, testAgent), 0.0, 0.001);
-		
+
 		decider.updateWeight(1, RightLeft.RIGHT, 1.0);
 		assertEquals(decider.valueOption(RightLeft.RIGHT, testAgent), 0.5, 0.001);
 		assertEquals(decider.valueOption(RightLeft.LEFT, testAgent), 0.0, 0.001);
@@ -112,7 +113,7 @@ public class GeneralQDeciderTest {
 		assertEquals(decider.getWeightOf(1, RightLeft.LEFT), 0.0, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.RIGHT), 0.4, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.LEFT), 0.0, 0.001);
-		
+
 		testAgent.addGold(-2.0);
 		exp2.updateWithResults(-2.0);
 		ExperienceRecord<Agent> exp3 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
@@ -128,7 +129,7 @@ public class GeneralQDeciderTest {
 		assertEquals(decider.getWeightOf(1, RightLeft.LEFT), 0.0, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.RIGHT), 0.4, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.LEFT), -0.328, 0.001);
-		
+
 		testAgent.addGold(1.0);
 		exp3.updateWithResults(1.0);
 		ExperienceRecord<Agent> exp4 = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
@@ -143,7 +144,7 @@ public class GeneralQDeciderTest {
 		assertEquals(decider.getWeightOf(0, RightLeft.RIGHT), 0.4 + 0.2 * 0.96, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.LEFT), -0.328, 0.001);
 	}
-	
+
 	@Test
 	public void teachingDecisionWithNoDifferenceDoesNotUpdateWeights() {
 		ExperienceRecord<Agent> exp = new ExperienceRecord<Agent>(testAgent, decider.getCurrentState(testAgent), RightLeft.RIGHT.getAction(testAgent), 
@@ -159,6 +160,15 @@ public class GeneralQDeciderTest {
 		assertEquals(decider.getWeightOf(0, RightLeft.RIGHT), 0.0, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.LEFT), 0.0, 0.001);
 	}
+
+	@Test
+	public void valuingAnUnknownOptionWorks() {
+		assertEquals(decider.valueOption(RightLeft.DITHER, testAgent), 1.0, 0.001);
+		assertEquals(decider.valueOption(RightLeft.RIGHT, testAgent), 0.0, 0.001);
+		testAgent.addGold(1.5);
+		assertEquals(decider.valueOption(RightLeft.DITHER, testAgent), 2.5, 0.001);
+		assertEquals(decider.valueOption(RightLeft.RIGHT, testAgent), 0.0, 0.001);
+	}
 }
 
 
@@ -168,12 +178,12 @@ class TestLinearQDecider extends GeneralLinearQDecider<Agent> {
 	public TestLinearQDecider(List<ActionEnum<Agent>> actions, List<GeneticVariable<Agent>> variables) {
 		super(new LinearStateFactory<Agent>(variables), actions);
 	}
-	
+
 	@Override
-	public void setWeights(double[][] newWeights) {
-		super.setWeights(newWeights);
+	public void setWeights(ActionEnum<Agent> a, double[] w) {
+		super.setWeights(a, w);
 	}
-	
+
 }
 
 class TestAction extends Action<Agent> {
@@ -184,9 +194,10 @@ class TestAction extends Action<Agent> {
 }
 
 enum RightLeft implements ActionEnum<Agent> {
-	
+
 	RIGHT,
-	LEFT;
+	LEFT,
+	DITHER;
 
 	@Override
 	public String getChromosomeDesc() {
@@ -207,7 +218,4 @@ enum RightLeft implements ActionEnum<Agent> {
 	public Enum<RightLeft> getEnum() {
 		return this;
 	}
-	
-	
-	
 }

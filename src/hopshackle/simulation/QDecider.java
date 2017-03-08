@@ -10,6 +10,12 @@ public abstract class QDecider<A extends Agent> extends BaseDecider<A> {
 		super(stateFactory);
 		monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
 	}
+	
+	@Override
+	public void injectProperties(DeciderProperties decProp) {
+		super.injectProperties(decProp);
+		monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
+	}
 
 	public abstract double valueOption(ActionEnum<A> option, State<A> state);
 

@@ -4,27 +4,32 @@ import java.util.*;
 
 public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 
-	protected double[][] weights;
+	/*
+	 * We need to have a Map to record what actions we have seen so far
+	 * For each action we then maintain a set of weights (initialised at 0.0)
+	 * 
+	 */
+	protected Map<String, double[]> weights = new HashMap<String, double[]>();
 	protected int variableLength;
-	protected int actionLength;
-	protected List<ActionEnum<A>> actionSet;
+	protected int actionLength = 0;
 	public static String newline = System.getProperty("line.separator");
 
 	public GeneralLinearQDecider(StateFactory<A> stateFactory, List<ActionEnum<A>> actions) {
 		super(stateFactory);
-		actionSet = actions;
-		actionLength = actionSet.size();
 		variableLength = stateFactory.getVariables().size();
-		weights = new double[actionLength][variableLength];
-		initialiseWeights();
+		for (ActionEnum<A> action : actions) {
+			getWeightsFor(action);
+		}
 	}
 
-	protected void initialiseWeights() {
-		for (int i=0; i<actionLength; i++) {
-			weights[i][0] = 1.0;	// the constant term. To slightly encourage exploration
-			for (int j=1; j<variableLength; j++) 
-				weights[i][j] = 0.0;	
-		}
+	protected double[] getWeightsFor(ActionEnum<A> action) {
+		String actionKey = action.toString();
+		if (weights.containsKey(actionKey)) return weights.get(actionKey);
+		double[] w = new double[variableLength+1];
+		for (int j = 0; j < variableLength; j++) w[j] = 1.0;	
+		weights.put(actionKey, w);
+		actionLength++;
+		return w;
 	}
 
 	@Override
@@ -35,38 +40,37 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 
 	@Override
 	public double valueOption(ActionEnum<A> option, State<A> state) {
-		int optionIndex = actionSet.indexOf(option);
-		if (optionIndex == -1) logger.severe(option + " not found in actionSet in GLQDecider.valueOption");
+		double[] w = getWeightsFor(option);
 		double retValue = 0.0;
 
 		double[] stateArray = state.getAsArray(); 
 		for (int i = 0; i < variableLength; i++) {
-			retValue += weights[optionIndex][i] * stateArray[i];
+			retValue += w[i] * stateArray[i];
 		}
 		return retValue;
 	}
 
 	public void updateWeight(int varIndex, ActionEnum<A> option, double delta) {
-		int optionIndex = actionSet.indexOf(option);
-		weights[optionIndex][varIndex] += delta - weights[optionIndex][varIndex] * lambda;
+		double[] w = getWeightsFor(option);
+		w[varIndex] += delta - w[varIndex] * lambda;
 	}
-	
-	protected void setWeights(double[][] newWeights) {
+
+	protected void setWeights(ActionEnum<A> option, double[] w) {
 		// for testing only
-		weights = newWeights;
+		weights.put(option.toString(), w);
 	}
 
 	public double getWeightOf(int varIndex, ActionEnum<A> option) {
-		int optionIndex = actionSet.indexOf(option);
-		return weights[optionIndex][varIndex];
+		double[] w = getWeightsFor(option);
+		return w[varIndex];
 	}
 
 	public double getLargestWeight() {
 		double retValue = 0.0;
-		for (int i = 0; i < actionLength; i++) {
+		for (double[] w : weights.values()) {
 			for (int j = 0; j < variableLength; j++) {
-				if (Math.abs(weights[i][j]) > retValue) 
-					retValue = Math.abs(weights[i][j]);
+				if (Math.abs(w[j]) > retValue) 
+					retValue = Math.abs(w[j]);
 			}
 		}
 		return retValue;
@@ -103,7 +107,7 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 			if (localDebug) {
 				GeneticVariable<A> input = stateFactory.getVariables().get(i);
 				String message = String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f", input.toString(), value, weightChange, 
-					getWeightOf(i, exp.getActionTaken().actionType));
+						getWeightOf(i, exp.getActionTaken().actionType));
 				log(message);
 				exp.getAgent().log(message);
 			}

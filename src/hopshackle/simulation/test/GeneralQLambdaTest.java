@@ -19,7 +19,7 @@ public class GeneralQLambdaTest {
 
 	public static GeneticVariable<Agent> gold = GeneralQDeciderTest.gold;
 	public static GeneticVariable<Agent> constantTerm = GeneralQDeciderTest.constantTerm;
-	
+
 	@Before
 	public void setup() {
 		localProp = SimProperties.getDeciderProperties("GLOBAL");
@@ -40,7 +40,8 @@ public class GeneralQLambdaTest {
 
 		decider = new TestLinearQDecider(actions, variables);
 		decider.injectProperties(localProp);
-		decider.setWeights(new double[3][2]);
+		for (ActionEnum<Agent> a : actions)
+			decider.setWeights(a, new double[2]);
 		// so we have two actions, right and left
 		// and two inputs, one is just equal to the Agents Gold, and the other is equal to a constant
 		w = new World();
@@ -69,7 +70,7 @@ public class GeneralQLambdaTest {
 		assertEquals(decider.getWeightOf(1, RightLeft.LEFT), 0.0, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.RIGHT), 0.4, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.LEFT), 0.0, 0.001);
-		
+
 		testAgent.addGold(-2.0);
 		exp2.updateWithResults(-2.0);
 		w.setCurrentTime(3000l); // move forward before taking next action, so that discounting works
@@ -89,7 +90,7 @@ public class GeneralQLambdaTest {
 		assertEquals(decider.getWeightOf(1, RightLeft.LEFT), 0.0, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.RIGHT), 0.4, 0.001);
 		assertEquals(decider.getWeightOf(0, RightLeft.LEFT), -0.3352 * 1.45, 0.001);
-		
+
 		testAgent.addGold(1.0);
 		exp3.updateWithResults(1.0);
 		w.setCurrentTime(4500l); // move forward before taking next action, so that discounting works
