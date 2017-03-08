@@ -208,7 +208,7 @@ public class MCTreeTest {
 		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString(), 1), 5.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.LEFT.toString(), 1), 4.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.TEST.toString(), 1), 0.0, 0.001);
-		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null, 1);
+		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null, 1, localProp);
 		for (int i = 0; i < 100; i++) {
 			assertTrue(avDecider.makeDecision(agent, leftRightOnly) == TestActionEnum.RIGHT);
 			assertTrue(avDecider.makeDecision(agent, allActions) == TestActionEnum.RIGHT);
@@ -224,7 +224,7 @@ public class MCTreeTest {
 		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString(), 1), 5.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.LEFT.toString(), 1), 4.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.TEST.toString(), 1), 0.0, 0.001);
-		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null, 1);
+		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null, 1, localProp);
 		int rightCount = 0, leftCount = 0, testCount = 0;
 		for (int i = 0; i < 100; i++) {
 			ActionEnum<TestAgent> d = avDecider.makeDecision(agent, allActions);

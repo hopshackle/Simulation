@@ -34,7 +34,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
 		MCTSChildDecider<A> retValue = null;
 		if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
-			retValue = new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory, currentPlayer), decProp);
+			retValue = new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory, currentPlayer, decProp), decProp);
 		else 
 			retValue = new MCTSChildDecider<A>(stateFactory, tree, rolloutDecider, decProp);
 
@@ -107,7 +107,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 					if (singleTree)
 						player.setDecider(createChildDecider(tree, game.getPlayerNumber(player), true));
 					else if (useAVDForOpponent)
-						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory, currentPlayer));
+						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory, currentPlayer, this.decProp));
 					else 
 						player.setDecider(opponentModel);
 				} else {

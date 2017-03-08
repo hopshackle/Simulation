@@ -5,14 +5,15 @@ import java.util.List;
 public class MCActionValueDecider<A extends Agent> extends BaseDecider<A> {
 
 	private MonteCarloTree<A> tree;
-	private double actionTemperature = getPropertyAsDouble("MonteCarloActionValueDeciderTemperature", "0.00");
+	private double actionTemperature;
 	private int actorRef;
 	
-	public MCActionValueDecider(MonteCarloTree<A> tree, StateFactory<A> stateFactory, int actorRef) {
+	public MCActionValueDecider(MonteCarloTree<A> tree, StateFactory<A> stateFactory, int actorRef, DeciderProperties decProp) {
 		super(stateFactory);
 		this.tree = tree;
 		this.actorRef = actorRef;
 		localDebug = false;
+		injectProperties(decProp);
 	}
 	
 	@Override
