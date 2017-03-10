@@ -13,6 +13,8 @@ import org.encog.neural.networks.training.propagation.resilient.ResilientPropaga
 public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	protected BasicNetwork brain;
+	protected Map<String, Integer> outputKey = new HashMap<String, Integer>();
+	protected int maxActionIndex = -1;
 	protected static double temperature;
 	protected double baseMomentum = getPropertyAsDouble("NeuralLearningMomentum", "0.0");
 	protected String propagationType = getProperty("NeuralPropagationType", "back");
@@ -21,15 +23,19 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	private boolean learnWithValidation = getProperty("NeuralLearnUntilValidationError", "false").equals("true");
 	private boolean logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
 	private double overrideLearningCoefficient, overrideMomentum, scaleFactor; 
+	private int maximumOutputOptions;
 	private static boolean extraDebug = true;
 	private SimpleWorldLogic<A> actions;
 
 	public NeuralDecider(StateFactory<A> stateFactory, SimpleWorldLogic<A> worldLogic, double scaleFactor){
 		super(stateFactory);
 		actions = worldLogic;
+		for (ActionEnum<A> a : actions.actionSet) {
+			addNewAction(a);
+		}
 		this.scaleFactor = scaleFactor;
 	}
-	
+
 	@Override 
 	public void injectProperties(DeciderProperties dp) {
 		super.injectProperties(dp);
@@ -39,7 +45,8 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		learningIterations = Integer.valueOf(getProperty("NeuralLearningIterations", "1"));
 		learnWithValidation = getProperty("NeuralLearnUntilValidationError", "false").equals("true");
 		logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
-		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), actions.actionSet.size(), decProp);
+		maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
+		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), maximumOutputOptions, decProp);
 		overrideLearningCoefficient = getPropertyAsDouble("NeuralLearningCoefficient." + toString(), "-99.0");
 		overrideMomentum = getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");
 		if (overrideLearningCoefficient > -98) alpha = overrideLearningCoefficient;
@@ -90,15 +97,26 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			decidingAgent.log("Option " + option.toString() + " has base Value of " + retValue);
 		return retValue;
 	}
-	
+
+	public void addNewAction(ActionEnum<A> action) {
+		maxActionIndex++;
+		if (maxActionIndex < maximumOutputOptions)
+			outputKey.put(action.toString(), maxActionIndex);
+		else {
+			maxActionIndex--;
+			logger.severe("Action " + action.toString() + " cannot be allocated to output neuron");
+		}
+	}
+
 	@Override
 	public double valueOption(ActionEnum<A> option, State<A> state) {
 		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());
 		double[] valuation = brain.compute(inputData).getData();
-		int optionIndex = actions.actionSet.indexOf(option);
+		if (!outputKey.containsKey(option.toString())) addNewAction(option);
+		int optionIndex = outputKey.getOrDefault(option.toString(), maxActionIndex);
 		return valuation[optionIndex] * scaleFactor;
 	}
-	
+
 	public void saveBrain(String name, String directory) {
 		File saveFile = new File(directory + "\\" + name + "_" + 
 				actions.actionSet.get(0).getChromosomeDesc() + "_" + stateFactory.getVariables().get(0).getDescriptor() + ".brain");
@@ -126,16 +144,16 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		}
 	}
 	protected boolean isBrainCompatible(BasicNetwork network) {
-		if (network.getInputCount() != stateFactory.getVariables().size()) {
+		if (network.getInputCount() != brain.getInputCount()) {
 			logger.info("Brain supplied wrong size for NeuralDecider " + toString() +
 					". Has " + network.getInputCount() + 
-					" neuron inputs instead of " + stateFactory.getVariables().size());
+					" neuron inputs instead of " + brain.getInputCount());
 			return false;
 		}
-		if (network.getOutputCount() != actions.actionSet.size()) {
+		if (network.getOutputCount() != brain.getOutputCount()) {
 			logger.info("Brain supplied wrong size for NeuralDecider " + toString() +
 					". Has " + network.getOutputCount() + 
-					" neuron outputs instead of " + actions.actionSet.size());
+					" neuron outputs instead of " + brain.getOutputCount());
 			return false;
 		}
 		return true;
@@ -153,7 +171,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 		double[][] outputValues = new double[1][brain.getOutputCount()];
 		double[][] inputValues = new double[1][brain.getInputCount()];
-	
+
 		double[] startState = exp.getStartStateAsArray();
 		for (int n=0; n<startState.length; n++) {
 			inputValues[0][n] = startState[n];
@@ -161,7 +179,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		outputValues[0] = getTarget(exp);
 
 		// So only the action chosen has an updated target value - the others assume the prediction was correct.
-/*		if (localDebug) {
+		/*		if (localDebug) {
 			for (int i = 0; i < inputValues.length; i++) {
 				log(Arrays.toString(inputValues[i]));
 				log(Arrays.toString(outputValues[i]));
@@ -169,11 +187,11 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 				exp.getAgent().log(Arrays.toString(outputValues[i]));
 			}
 		}
-*/
+		 */
 		BasicNeuralDataSet trainingData = new BasicNeuralDataSet(inputValues, outputValues);
 		teach(trainingData);
 	}
-	
+
 	private double[] getTarget(ExperienceRecord<A> exp) {
 		// our target is the reward observed, plus gamma times the predicted value of the end state
 		// which in turn is given by the best action value 
@@ -181,8 +199,11 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		double bestQValue = valueOfBestAction(exp) / scaleFactor; 
 		double discountPeriod = exp.getDiscountPeriod();
 		double output = exp.getReward()[0]/scaleFactor + Math.pow(gamma, discountPeriod) * bestQValue;
-
-		int actionIndex = actions.actionSet.indexOf(exp.actionTaken.getType());
+		int actionIndex = outputKey.getOrDefault(exp.actionTaken.getType().toString(), -1);
+		if (actionIndex == -1) {	// we have not seen this action before, so allocate an output neuron for it
+			addNewAction(exp.actionTaken.getType());
+			actionIndex = outputKey.get(exp.getActionTaken().getType().toString());
+		}
 		if (output > 1.0) {
 			output = 1.0;
 		}
@@ -195,7 +216,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		retValue[actionIndex] = output;
 		return retValue;
 	}
-	
+
 	protected double teach(BasicNeuralDataSet trainingData) {
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		double updatedLearningCoefficient = alpha;
@@ -222,7 +243,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			applyLambda();
 		return trainer.getError();
 	}
-	
+
 	private void applyLambda() {
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		double updatedLambda = lambda;
@@ -242,13 +263,13 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			}
 		}
 	}
-	
+
 
 	@Override
 	public void learnFromBatch(ExperienceRecord<A>[] expArray, double maxResult) {
 		if (alpha < 0.000001)
 			return;	// no learning to take place
-		
+
 		int inputLength = brain.getInputCount();
 		int outputLength = brain.getOutputCount();
 		double[][] batchOutputData = new double[expArray.length][outputLength];
@@ -327,38 +348,38 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		}
 	}
 
-	
+
 	@SuppressWarnings("unchecked")
 	public static <A extends Agent> NeuralDecider<A> createNeuralDecider(StateFactory<A> stateFactory, File saveFile, double scaleFactor) {
 		NeuralDecider<A> retValue = null;
 		try {
 			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(saveFile));
-	
+
 			ArrayList<ActionEnum<A>> actionSet = (ArrayList<ActionEnum<A>>) ois.readObject();
 			// Not used...but written away for...so we read it in to make the code comparable
 			ArrayList<GeneticVariable<A>> variableSet = (ArrayList<GeneticVariable<A>>) ois.readObject();
 			retValue = new NeuralDecider<A>(stateFactory.cloneWithNewVariables(variableSet), 
 					new SimpleWorldLogic<A>(actionSet), scaleFactor);
-	
+
 			BasicNetwork actionNN = (BasicNetwork) ois.readObject();
-	
+
 			ois.close();
 			retValue.setBrain(actionNN);
 			String name = saveFile.getName();
 			String end = ".brain";
 			name = name.substring(0, name.indexOf(end));
 			retValue.setName(name);
-	
+
 		} catch (Exception e) {
 			logger.severe("Error reading combat brain: " + e.toString());
 			for ( StackTraceElement s : e.getStackTrace()) {
 				logger.info(s.toString());
 			}
 		}
-	
+
 		return retValue;
 	}
-	
+
 	@Override
 	public Decider<A> crossWith(Decider<A> otherDecider) {
 		if (otherDecider == null) {
@@ -378,7 +399,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		retValue.setName(this.toString());
 		return retValue;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <V extends GeneticVariable<A>> List<V> combineAndReduceInputs(List<V> list, int mutations) {
 		Set<V> retValue1 = new HashSet<V>();
