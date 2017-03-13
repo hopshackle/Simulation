@@ -15,10 +15,12 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	private boolean useAVDForRollout = getProperty("MonteCarloActionValueRollout", "false").equals("true");
 	private boolean useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
 	private boolean reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
+	private boolean trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
 	private String sweepMethodology = getProperty("MonteCarloSweep", "terminal");
 	private int sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
 	private boolean singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
 	private boolean debug = false;
+	private MCTreeProcessor<A> treeProcessor;
 
 	public MCTSMasterDecider(StateFactory<A> stateFactory, Decider<A> rolloutDecider, Decider<A> opponentModel) {
 		super(stateFactory);
@@ -66,7 +68,12 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			});
 		}
 		MonteCarloTree<A> tree = treeMap.get(agent);
-		if (tree == null) tree = new MonteCarloTree<A>(decProp, game.getAllPlayers().size());
+		if (tree == null) {
+			tree = new MonteCarloTree<A>(decProp, game.getAllPlayers().size());
+			if (treeProcessor != null && trainRolloutDeciderOverGames) {
+				rolloutDecider = treeProcessor.generateDecider(stateFactory, worldLogic, scaleFactor)
+			}
+		}
 		if (reuseOldTree) {
 			int before = tree.numberOfStates();
 			tree.pruneTree(currentState.getAsString());
@@ -132,6 +139,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			}
 		}
 
+		if (treeProcessor != null && trainRolloutDeciderOverGames) {
+			treeProcessor.processTree(tree, currentPlayer);
+		}
 		if (sweepMethodology.equals("terminal")) {
 			sweep(tree);
 			//			logFile = agent.toString() + "_" + agent.getWorld().getCurrentTime() + "_postSweep.log";
@@ -187,6 +197,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		sweepMethodology = getProperty("MonteCarloSweep", "terminal");
 		sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
 		singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
+		trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
+		treeProcessor = new MCTreeProcessor<A>(dp);
 	}
 
 }

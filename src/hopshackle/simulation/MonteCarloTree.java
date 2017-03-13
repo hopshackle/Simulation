@@ -19,7 +19,7 @@ public class MonteCarloTree<P extends Agent> {
 	private EntityLog entityLogger;
 	protected boolean debug = false;
 	protected DeciderProperties properties;
-	
+
 	public MonteCarloTree(DeciderProperties properties) {
 		this (properties, 1);
 	}
@@ -104,7 +104,7 @@ public class MonteCarloTree<P extends Agent> {
 	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double reward) {
 		this.updateState(state, action, nextState, toArray(reward));
 	}
-	
+
 	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double[] reward) {
 		String stateAsString = state.getAsString();
 		if (debug) log(String.format("Updating State %s to State %s with Action %s and reward %.2f", stateRef(stateAsString), stateRef(nextState.getAsString()), action.toString(), reward));
@@ -145,11 +145,22 @@ public class MonteCarloTree<P extends Agent> {
 	public MCStatistics<P> getStatisticsFor(State<P> state) {
 		return tree.get(state.getAsString());
 	}
+	public MCStatistics<P> getStatisticsFor(String state) {
+		return tree.get(state);
+	}
 	public ActionEnum<P> getBestAction(State<P> state, List<ActionEnum<P>> possibleActions) {
 		return tree.get(state.getAsString()).getBestAction(possibleActions);
 	}
 	public int numberOfStates() {
 		return tree.size();
+	}
+	public List<String> getAllStatesWithMinVisits(int minV) {
+		List<String> retValue = new ArrayList<String>();
+		for (String key : tree.keySet()) {
+			if (tree.get(key).getVisits() >= minV)
+				retValue.add(key);
+		}
+		return retValue;
 	}
 	public double getActionValue(String k, int playerRef) {
 		if (actionValues.get(playerRef-1).containsKey(k)) {
@@ -229,7 +240,7 @@ public class MonteCarloTree<P extends Agent> {
 		retValue[0] = single;
 		return retValue;
 	}
-	
+
 	public void exportToFile(String fileName, String fromRoot) {
 		File logFile = new File(EntityLog.logDir + File.separator + fileName + ".txt");
 		try {
