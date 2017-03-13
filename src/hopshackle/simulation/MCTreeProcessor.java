@@ -58,8 +58,8 @@ public class MCTreeProcessor<A extends Agent> {
 		return retValue;
 	}
 
-	public NeuralDecider<A> generateDecider(StateFactory<A> stateFactory, SimpleWorldLogic<A> logic, double scaleFactor) {
-		NeuralDecider<A> retValue = new NeuralDecider<A>(stateFactory, logic, scaleFactor);
+	public NeuralDecider<A> generateDecider(StateFactory<A> stateFactory, double scaleFactor) {
+		NeuralDecider<A> retValue = new NeuralDecider<A>(stateFactory, scaleFactor);
 		retValue.injectProperties(properties);
 		BasicNeuralDataSet trainingData = finalTrainingData();
 		System.out.println("Training decider with " + trainingData.size() + " states");

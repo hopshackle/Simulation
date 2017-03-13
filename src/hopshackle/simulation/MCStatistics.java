@@ -16,7 +16,6 @@ public class MCStatistics<P extends Agent> {
 	private String UCTType;
 	private int minVisitsForQ, minVisitsForV;
 	private int maxActors;
-	private boolean reuseTree;
 
 	public MCStatistics(List<ActionEnum<P>> possibleActions, DeciderProperties properties, int players, int actor) {
 		this(possibleActions, new MonteCarloTree<P>(properties, players), players, actor);
@@ -42,7 +41,6 @@ public class MCStatistics<P extends Agent> {
 		if (!useBaseValue) base = 0.0;
 		baseValue = new double[maxActors];
 		for (int i = 0; i < maxActors; i++) baseValue[i] = base;
-		reuseTree = tree.properties.getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
 	}
 
 	public void updateAsSweep(ActionEnum<P> action, double[] reward) {

@@ -8,9 +8,9 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
 
 	private NeuralDecider<A> internalNeuralDecider;
 
-	public NeuralLookaheadDecider(StateFactory<A> stateFactory, SimpleWorldLogic<A> worldLogic, double scaleFactor) {
+	public NeuralLookaheadDecider(StateFactory<A> stateFactory, double scaleFactor) {
 		super(stateFactory);
-		internalNeuralDecider = new NeuralDecider<A>(stateFactory, worldLogic, scaleFactor);
+		internalNeuralDecider = new NeuralDecider<A>(stateFactory, scaleFactor);
 	}
 	
 	@Override

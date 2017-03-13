@@ -71,7 +71,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		if (tree == null) {
 			tree = new MonteCarloTree<A>(decProp, game.getAllPlayers().size());
 			if (treeProcessor != null && trainRolloutDeciderOverGames) {
-				rolloutDecider = treeProcessor.generateDecider(stateFactory, worldLogic, scaleFactor)
+				// we switch in the rolloutDecider trained on games so far
+				rolloutDecider = treeProcessor.generateDecider(stateFactory, agent.getMaxScore());
 			}
 		}
 		if (reuseOldTree) {
