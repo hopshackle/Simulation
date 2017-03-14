@@ -28,6 +28,7 @@ public class DatabaseAccessUtility implements Runnable{
 	}
 
 	public synchronized void addUpdate(String update) {
+//		System.out.println("Adding to DBU: " +update);
 		if (isAlive())
 			queue.offer(update);
 		else
@@ -43,6 +44,7 @@ public class DatabaseAccessUtility implements Runnable{
 		try {
 			do { 
 				nextUpdate = queue.poll(timeout, TimeUnit.MINUTES);
+	//			System.out.println("Executing " + nextUpdate);
 				if (nextUpdate == null || nextUpdate.equals("EXIT")) {
 					done = true;
 					System.out.println("DBU exiting at " + (System.currentTimeMillis()-startTime));
@@ -53,7 +55,7 @@ public class DatabaseAccessUtility implements Runnable{
 						st.executeUpdate(nextUpdate);
 						st.close();
 						long finish = System.currentTimeMillis();
-						//		System.out.println("DBU access time = " + (finish - start));
+		//						System.out.println("DBU access time = " + (finish - start));
 						nextUpdate = null;
 					} catch (SQLException e) {
 						logger.severe("DBU: Invalid SQL: " + nextUpdate);

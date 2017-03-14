@@ -1,6 +1,6 @@
 package hopshackle.simulation;
 
-import org.encog.engine.network.activation.ActivationSigmoid;
+import org.encog.engine.network.activation.*;
 import org.encog.neural.data.basic.BasicNeuralDataSet;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
@@ -17,21 +17,37 @@ public class BrainFactory {
 	 * @version $1$
 	 */
 	public static BasicNetwork newFFNetwork(int[] layers, DeciderProperties properties) {
-	
+
 		boolean initialOptimismTraining = properties.getProperty("NeuralDeciderInitialOptimismTraining", "true").equals("true");
 
 		BasicNetwork network = new BasicNetwork();
-	
 		int maxLoop = layers.length;
-		for (int loop = 0; loop < maxLoop; loop++)
-			network.addLayer(new BasicLayer(new ActivationSigmoid(), loop < maxLoop-1, layers[loop]));
+		for (int loop = 0; loop < maxLoop; loop++) {
+			ActivationFunction af = new ActivationTANH();
+			switch (properties.getProperty("NeuralNeuronType", "TANH")) {
+			case "TANH":
+				break;
+			case "Sigmoid": 
+				af = new ActivationSigmoid();
+				break;
+			case "Linear":
+				af = new ActivationLinear();
+				break;
+			case "ClippedLinear":
+				af = new ActivationClippedLinear();
+				break;
+			default:
+				throw new AssertionError("Unknown NeuronType "  + properties.getProperty("NeuralNeuronType", "TANH"));
+			}
+			network.addLayer(new BasicLayer(af, loop < maxLoop-1, layers[loop]));
+		}
 		// No bias neuron for output layer
-	
+
 		network.getStructure().finalizeStructure();
 		network.reset();
 		if (initialOptimismTraining)
 			initialOptimismTraining(network, 1.0);
-	
+
 		return network;
 	}
 
@@ -45,7 +61,7 @@ public class BrainFactory {
 				trainingInputData[n][m] = Math.random()*2.0 - 1.0;
 			trainingOutputData[n][0] = (Math.random()/4.0)+ maxValue - 0.25;
 		}
-	
+
 		BasicNeuralDataSet trainingSet = new BasicNeuralDataSet(trainingInputData, trainingOutputData);
 		Backpropagation trainer = new Backpropagation(network, trainingSet, 0.2, 0.00);
 		trainer.iteration();
@@ -57,7 +73,7 @@ public class BrainFactory {
 		String[] layerArchitecture = networkArchitecture.split(":");
 		int neuronLayers = layerArchitecture.length;
 		int[] layers = new int[neuronLayers+2];
-	
+
 		layers[0] = inputNeurons;
 		for (int hiddenLayer = 0; hiddenLayer < neuronLayers; hiddenLayer++) {
 			layers[hiddenLayer+1] = Integer.valueOf(layerArchitecture[hiddenLayer]);

@@ -37,11 +37,17 @@ public class LinearState<A extends Agent> implements State<A> {
 
 	@Override
 	public String getAsString() {
+		double[] values = getAsArray();
 		StringBuffer retValue = new StringBuffer();
 		for (double d : values) {
-			retValue.append(String.format("%.2f|", d));
+			int asInt = (int) ((d + 0.005) * 100.0);
+			String padded = String.valueOf(asInt);
+			while(padded.length() < 3) padded = "0" + padded;
+			retValue.append(padded + "|");
 		}
-		return retValue.toString();
+		retValue.deleteCharAt(retValue.length()-1);
+		String asString = retValue.toString();
+		return asString;
 	}
 
 	@Override

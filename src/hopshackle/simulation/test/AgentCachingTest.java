@@ -16,13 +16,12 @@ public class AgentCachingTest {
 	public void setUp() {
 		world = new World();
 		world.setName("testWorld");
+		SimProperties.setProperty("DatabaseWriterBufferLimit", "1");
 		testJunit = new DatabaseAccessUtility("junit", "root", "Metternich", "");
 		Thread t = new Thread(testJunit);
 		t.start();
 		world.setDatabaseAccessUtility(testJunit);
-		SimProperties.setProperty("DatabaseWriterBufferLimit", "1");
 		Agent.clearAndResetCacheBuffer(1);
-		
 		testAgent = new BasicAgent(world);
 	}
 	
@@ -43,6 +42,7 @@ public class AgentCachingTest {
 		testAgent.die("ooops");
 		BasicAgent test2 = new BasicAgent(world);
 		test2.die("Ooops");
+		wasteTime();
 		wasteTime();
 		Agent agentReturnedFromCache = Agent.getAgent(testAgent.getUniqueID());
 		assertTrue(agentReturnedFromCache == null);

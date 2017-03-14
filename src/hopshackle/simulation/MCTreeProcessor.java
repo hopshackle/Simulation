@@ -6,7 +6,7 @@ import org.encog.neural.data.basic.*;
 
 public class MCTreeProcessor<A extends Agent> {
 
-	private int minVisits;
+	private int minVisits, maxNeurons;
 	private DeciderProperties properties;
 	private List<double[]> inputData;
 	private List<double[]> outputData;
@@ -14,6 +14,7 @@ public class MCTreeProcessor<A extends Agent> {
 
 	public MCTreeProcessor(DeciderProperties prop) {
 		minVisits = prop.getPropertyAsInteger("MonteCarloMinVisitsForRolloutTraining", "50");
+		maxNeurons = prop.getPropertyAsInteger("NeuralMaxOutput", "100");
 		properties = prop;
 		inputData = new ArrayList<double[]>();
 		outputData = new ArrayList<double[]>();
@@ -29,8 +30,8 @@ public class MCTreeProcessor<A extends Agent> {
 		}
 	}
 
-	private double[] convertStateAsStringToArray(String stringRepresentation) {
-		String[] stepOne = stringRepresentation.split("|");
+	protected double[] convertStateAsStringToArray(String stringRepresentation) {
+		String[] stepOne = stringRepresentation.split("\\|");
 		double[] retValue = new double[stepOne.length];
 		for (int i = 0; i < stepOne.length; i++) {
 			double value = Integer.valueOf(stepOne[i]) / 100.0;
@@ -39,7 +40,7 @@ public class MCTreeProcessor<A extends Agent> {
 		return retValue;
 	}
 
-	private double[] getOutputValuesAsArray(MCStatistics<A> stats, int refAgent) {
+	protected double[] getOutputValuesAsArray(MCStatistics<A> stats, int refAgent) {
 		List<ActionEnum<A>> actionsInStats = stats.getPossibleActions();
 		double[] retValue = new double[actionsInStats.size()];
 		for (ActionEnum<A> action : actionsInStats) {
@@ -61,21 +62,24 @@ public class MCTreeProcessor<A extends Agent> {
 	public NeuralDecider<A> generateDecider(StateFactory<A> stateFactory, double scaleFactor) {
 		NeuralDecider<A> retValue = new NeuralDecider<A>(stateFactory, scaleFactor);
 		retValue.injectProperties(properties);
+		for (ActionEnum<A> action : actionsInOutputLayer) {
+			retValue.addNewAction(action);
+			// we inject the actions in the same order as the training data (or else all hell will break loose)
+		}
 		BasicNeuralDataSet trainingData = finalTrainingData();
 		System.out.println("Training decider with " + trainingData.size() + " states");
 		retValue.teach(trainingData);
 		return retValue;
 	}
 	
-	private BasicNeuralDataSet finalTrainingData() {
+	protected BasicNeuralDataSet finalTrainingData() {
 		// the earlier training data will not have seen all possible actions, so the arrays will not extend all the
 		BasicNeuralDataSet retValue = new BasicNeuralDataSet();
-		int outputNeurons = actionsInOutputLayer.size();
 		for (int i = 0; i < inputData.size(); i++) {
 			double[] currentOut = outputData.get(i);
 			double[] input = inputData.get(i);
-			if (currentOut.length < outputNeurons) {
-				double[] newOut = new double[outputNeurons];	// will default to 0.0
+			if (currentOut.length < maxNeurons) {
+				double[] newOut = new double[maxNeurons];	// will default to 0.0
 				for (int j = 0; j < currentOut.length; j++)
 					newOut[j] = currentOut[j];
 				currentOut = newOut;

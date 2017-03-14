@@ -102,7 +102,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			logger.severe("Action " + action.toString() + " cannot be allocated to output neuron");
 		}
 	}
-
+	
 	@Override
 	public double valueOption(ActionEnum<A> option, State<A> state) {
 		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());

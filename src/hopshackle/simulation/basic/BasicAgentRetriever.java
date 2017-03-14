@@ -39,7 +39,10 @@ public class BasicAgentRetriever implements AgentRetriever<BasicAgent> {
 
 			ResultSet rs;
 			rs = st.executeQuery("SELECT * FROM " + agentTable + " WHERE id = " + uniqueID + ";");
-			if (!rs.first()) return null;
+			if (!rs.first()) {
+				logger.warning("No entries in database found when looking for agent id " + uniqueID);
+				return null;
+			}
 			long birth = rs.getLong("birth");
 			long age = rs.getLong("age");
 			long death = birth + age;

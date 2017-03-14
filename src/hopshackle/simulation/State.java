@@ -24,4 +24,5 @@ public interface State<A extends Agent> {
 	public State<A> apply(ActionEnum<A> proposedAction);
 	
 	public State<A> clone();
+
 }
