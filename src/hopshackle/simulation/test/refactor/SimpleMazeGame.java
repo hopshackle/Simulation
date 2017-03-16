@@ -16,6 +16,10 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 	public SimpleMazeGame(int target, TestAgent player) {
 		this(target, new TestAgent[] {player});
 	}
+	
+	public String getRef() {
+		return "SimpleMazeGame";
+	}
 
 	public SimpleMazeGame(int target, TestAgent[] players) {
 		numberOfPlayers = players.length;

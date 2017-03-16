@@ -99,7 +99,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			outputKey.put(action.toString(), maxActionIndex);
 		else {
 			maxActionIndex--;
-			logger.severe("Action " + action.toString() + " cannot be allocated to output neuron");
+	//		logger.severe("Action " + action.toString() + " cannot be allocated to output neuron");
 		}
 	}
 	

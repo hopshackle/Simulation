@@ -201,14 +201,14 @@ public class MCTreeTest {
 
 	@Test
 	public void actionValueDeciderInGreedyMode() {
-		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.00");
+		localProp.setProperty("Temperature", "0.00");
 		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
 		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString(), 1), 5.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.LEFT.toString(), 1), 4.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.TEST.toString(), 1), 0.0, 0.001);
-		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null, 1, localProp);
+		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null, 1);
 		for (int i = 0; i < 100; i++) {
 			assertTrue(avDecider.makeDecision(agent, leftRightOnly) == TestActionEnum.RIGHT);
 			assertTrue(avDecider.makeDecision(agent, allActions) == TestActionEnum.RIGHT);
@@ -217,14 +217,16 @@ public class MCTreeTest {
 
 	@Test
 	public void actionValueDeciderinBoltzmannMode() {
-		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.1");
+		localProp.setProperty("Temperature", "0.1");
+		localProp.setProperty("RandomDeciderMaxChance", "1.0");
+		localProp.setProperty("RandomDeciderMinChance", "1.0");
 		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
 		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString(), 1), 5.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.LEFT.toString(), 1), 4.0, 0.001);
 		assertEquals(tree.getActionValue(TestActionEnum.TEST.toString(), 1), 0.0, 0.001);
-		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null, 1, localProp);
+		MCActionValueDecider<TestAgent> avDecider = new MCActionValueDecider<TestAgent>(tree, null, 1);
 		int rightCount = 0, leftCount = 0, testCount = 0;
 		for (int i = 0; i < 100; i++) {
 			ActionEnum<TestAgent> d = avDecider.makeDecision(agent, allActions);

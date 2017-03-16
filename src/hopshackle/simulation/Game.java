@@ -9,6 +9,8 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 
 	public abstract Game<P, A> clone(P perspectivePlayer);
 
+	public abstract String getRef();
+	
 	public abstract P getCurrentPlayer();
 
 	public abstract List<P> getAllPlayers();

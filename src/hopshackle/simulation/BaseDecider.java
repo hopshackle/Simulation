@@ -113,6 +113,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		double highestScore = Double.NEGATIVE_INFINITY;
 		for (int i = 0; i<optionList.size(); i++) {
 			if (localDebug) {
+				if (!decidingAgent.getDebugLocal()) decidingAgent.setDebugLocal(true);
 				String message = String.format("Option %-20s has value %.3f", optionList.get(i).toString(), optionValues.get(i));
 				log(message);
 				decidingAgent.log(message);
@@ -193,7 +194,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		if (baseValue < 0.01)
 			baseValue = 0.01;
 
-		if (temperature < 0.01) temperature = 0.01;
+		if (temperature < 0.0001) temperature = 0.0001;
 		if (localDebug) {
 			String message = "Base Value is " + baseValue;
 			log(message);

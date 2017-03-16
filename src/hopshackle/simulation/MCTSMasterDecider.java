@@ -7,15 +7,17 @@ import java.util.*;
 public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 	protected Map<A, MonteCarloTree<A>> treeMap = new HashMap<A, MonteCarloTree<A>>();
+	protected Set<String> processedGames = new HashSet<String>();
 	protected Decider<A> rolloutDecider;
 	private Decider<A> opponentModel;
 	private MCTSChildDecider<A> childDecider;
 	private int maxRollouts = getPropertyAsInteger("MonteCarloRolloutCount", "99");
 	private int maxRolloutsPerOption = getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
+	private boolean useRolloutForOpponent = getProperty("MonteCarloUseRolloutForOpponent", "false").equals("true");
 	private boolean useAVDForRollout = getProperty("MonteCarloActionValueRollout", "false").equals("true");
 	private boolean useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
 	private boolean reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
-	private boolean trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
+	private boolean trainRolloutDeciderOverGames;
 	private String sweepMethodology = getProperty("MonteCarloSweep", "terminal");
 	private int sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
 	private boolean singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
@@ -36,7 +38,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
 		MCTSChildDecider<A> retValue = null;
 		if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
-			retValue = new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory, currentPlayer, decProp), decProp);
+			retValue = new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory, currentPlayer), decProp);
 		else 
 			retValue = new MCTSChildDecider<A>(stateFactory, tree, rolloutDecider, decProp);
 
@@ -62,18 +64,19 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 				public void processEvent(AgentEvent event) {
 					if (event.getEvent() == Type.DEATH) {
 						treeMap.remove(agent);
+						if (trainRolloutDeciderOverGames && !processedGames.contains(agent.getGame().getRef())) {
+							processedGames.add(agent.getGame().getRef());
+							rolloutDecider = treeProcessor.generateDecider(stateFactory, agent.getMaxScore());
+							if (useRolloutForOpponent) opponentModel = rolloutDecider;
+						}
 						//			agent.log("Removing Tree from MCTS decider, leaving " + treeMap.size());
 					}
 				}
 			});
 		}
 		MonteCarloTree<A> tree = treeMap.get(agent);
-		if (tree == null) {
+		if (tree == null) {	// i.e. agent has no tree in map, so must be their first turn in a new game
 			tree = new MonteCarloTree<A>(decProp, game.getAllPlayers().size());
-			if (treeProcessor != null && trainRolloutDeciderOverGames) {
-				// we switch in the rolloutDecider trained on games so far
-				rolloutDecider = treeProcessor.generateDecider(stateFactory, agent.getMaxScore());
-			}
 		}
 		if (reuseOldTree) {
 			int before = tree.numberOfStates();
@@ -115,7 +118,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 					if (singleTree)
 						player.setDecider(createChildDecider(tree, game.getPlayerNumber(player), true));
 					else if (useAVDForOpponent)
-						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory, currentPlayer, this.decProp));
+						player.setDecider(new MCActionValueDecider<A>(tree, this.stateFactory, currentPlayer));
 					else 
 						player.setDecider(opponentModel);
 				} else {
@@ -140,7 +143,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 			}
 		}
 
-		if (treeProcessor != null && trainRolloutDeciderOverGames) {
+		if (trainRolloutDeciderOverGames) {
 			treeProcessor.processTree(tree, currentPlayer);
 		}
 		if (sweepMethodology.equals("terminal")) {

@@ -28,7 +28,10 @@ public class MCTreeProcessorTest {
 		leftRightOnly.remove(TestActionEnum.TEST);
 		localProp = SimProperties.getDeciderProperties("GLOBAL").clone();
 		localProp.setProperty("MonteCarloMinVisitsForRolloutTraining", "1");
+		localProp.setProperty("MonteCarloOneHotRolloutTraining", "false");
 		localProp.setProperty("NeuralMaxOutput", "5");
+		localProp.setProperty("NeuralDeciderArchitecture", "10");
+		localProp.setProperty("NeuralNeuronType", "TANH");
 		localProp.setProperty("NeuralPropagationType", "resilient");
 //		localProp.setProperty("NeuralLearningMomentum", "0.98");
 		localProp.setProperty("NeuralLearningIterations", "100");
@@ -111,6 +114,35 @@ public class MCTreeProcessorTest {
 		assertEquals(asArray[2], 0.50, 0.0001);
 	}
 	
+	
+	@Test
+	public void outputValuesWithOneHotEncoding() {
+		localProp.setProperty("MonteCarloOneHotRolloutTraining", "true");
+		processor = new TestMCTreeProcessor(localProp);
+		MCStatistics<TestAgent> stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 2, 1);
+		
+		double[] rewardLeft = {1.0, 0.2};
+		double[] rewardTest = {-0.5, 0.5};
+		stats.update(TestActionEnum.LEFT, rewardLeft);
+		stats.update(TestActionEnum.LEFT, rewardLeft);
+		stats.update(TestActionEnum.TEST, rewardTest);
+		
+		double[] asArray = processor.getOutputValuesAsArray(stats, 1);
+		assertEquals(asArray.length, 1);	// will only include LEFT
+		assertEquals(asArray[0], 1.00, 0.0001);
+		asArray = processor.getOutputValuesAsArray(stats, 2);
+		assertEquals(asArray.length, 1);		// the refAgent has no impact with oneHot encoding switched on
+		assertEquals(asArray[0], 1.00, 0.0001);
+
+		double[] rewardRight = {2.0, 0.5};
+		stats.update(TestActionEnum.RIGHT, rewardRight);
+		asArray = processor.getOutputValuesAsArray(stats, 1);
+		assertEquals(asArray.length, 2);	// will include LEFT and RIGHT, with RIGHT now 1.0
+		assertEquals(asArray[0], 0.00, 0.0001);
+		assertEquals(asArray[1], 1.00, 0.0001);
+	}
+	
+	
 	@Test
 	public void basicTreeProcess() {
 		processor.processTree(generateTree(), 1);
@@ -178,9 +210,31 @@ public class MCTreeProcessorTest {
 				nd.valueOption(TestActionEnum.LEFT, agentState),
 				nd.valueOption(TestActionEnum.RIGHT, agentState),
 				nd.valueOption(TestActionEnum.TEST, agentState));
-		System.out.println(result); */
+		System.out.println(result); */ 
 		assertEquals(nd.valueOption(TestActionEnum.RIGHT, agentState), -0.5, 0.01);
 		assertEquals(nd.valueOption(TestActionEnum.LEFT, agentState), 0.99, 0.01);
+		assertEquals(nd.valueOption(TestActionEnum.TEST, agentState), 0.0, 0.01);
+	}
+	
+	@Test
+	public void createNeuralDeciderFromDataWithOneHotEncoding() {
+		localProp.setProperty("MonteCarloOneHotRolloutTraining", "true");
+		processor = new TestMCTreeProcessor(localProp);
+		processor.processTree(generateTree(), 1);	// this will put actions in order TEST, LEFT, RIGHT
+		NeuralDecider<TestAgent> nd = processor.generateDecider(stateFactory, 1.0);
+		State<TestAgent> agentState = stateFactory.getCurrentState(agent1);
+/*		String result = String.format("LEFT: %.2f, RIGHT: %.2f, TEST: %.2f",
+				nd.valueOption(TestActionEnum.LEFT, agentState),
+				nd.valueOption(TestActionEnum.RIGHT, agentState),
+				nd.valueOption(TestActionEnum.TEST, agentState));
+		System.out.println(result);  */
+		assertEquals(nd.valueOption(TestActionEnum.RIGHT, agentState), 0.0, 0.01);
+		assertEquals(nd.valueOption(TestActionEnum.LEFT, agentState), 0.99, 0.01);
+		assertEquals(nd.valueOption(TestActionEnum.TEST, agentState), 0.0, 0.01);
+		
+		agentState = stateFactory.getCurrentState(agent2);
+		assertEquals(nd.valueOption(TestActionEnum.RIGHT, agentState), 0.99, 0.01);
+		assertEquals(nd.valueOption(TestActionEnum.LEFT, agentState), 0.0, 0.01);
 		assertEquals(nd.valueOption(TestActionEnum.TEST, agentState), 0.0, 0.01);
 	}
 
