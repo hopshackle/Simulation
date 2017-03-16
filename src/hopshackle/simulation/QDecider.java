@@ -16,8 +16,26 @@ public abstract class QDecider<A extends Agent> extends BaseDecider<A> {
 		super.injectProperties(decProp);
 		monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
 	}
-
+	
+	@Override
+	public double valueOption(ActionEnum<A> option, A decidingAgent) {
+		State<A> state = getCurrentState(decidingAgent);
+		double retValue =  valueOption(option, state);
+		if (localDebug)
+			decidingAgent.log("Option " + option.toString() + " has base Value of " + retValue);
+		return retValue;
+	}
+	
+	@Override
+	public List<Double> valueOptions(List<ActionEnum<A>> options, A decidingAgent) {
+		State<A> state = getCurrentState(decidingAgent);
+		List<Double> retValue = this.valueOptions(options, state);
+		return retValue;
+	}
+	
 	public abstract double valueOption(ActionEnum<A> option, State<A> state);
+	
+	public abstract List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state);
 
 	protected <S extends State<A>> double valueOfBestAction(ExperienceRecord<A> exp) {
 		if (exp.isInFinalState() || monteCarlo) 

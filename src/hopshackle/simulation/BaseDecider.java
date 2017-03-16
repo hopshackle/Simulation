@@ -109,7 +109,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected ActionEnum<A> selectOption(List<ActionEnum<A>> optionList, A decidingAgent) {
 		ActionEnum<A> winningChoice = null;
 
-		List<Double> optionValues = getValuesPerOption(optionList, decidingAgent);
+		List<Double> optionValues = valueOptions(optionList, decidingAgent);
 		double highestScore = Double.NEGATIVE_INFINITY;
 		for (int i = 0; i<optionList.size(); i++) {
 			if (localDebug) {
@@ -169,11 +169,13 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		return winningChoice;
 	}
 
-	protected List<Double> getValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent){
-		List<Double> retValue = new ArrayList<Double>();
+	@Override
+	public List<Double> valueOptions(List<ActionEnum<A>> optionList, A decidingAgent){
+		List<Double> retValue = new ArrayList<Double>(optionList.size());
+		for (int i = 0; i < optionList.size(); i++) retValue.add(0.0); 
 		for (int i = 0; i < optionList.size(); i++) {
 			double optionValue = this.valueOption(optionList.get(i), decidingAgent);
-			retValue.add(optionValue);
+			retValue.set(i, optionValue);
 		}
 		return retValue;
 	}
@@ -184,7 +186,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 
 	protected List<Double> getNormalisedBoltzmannValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent, double temperature){
-		List<Double> baseValuesPerOption = getValuesPerOption(optionList, decidingAgent);
+		List<Double> baseValuesPerOption = valueOptions(optionList, decidingAgent);
 		for (int i = 0; i < baseValuesPerOption.size(); i++)
 			if (baseValuesPerOption.get(i) == Double.NaN)
 				baseValuesPerOption.set(i, 0.0);

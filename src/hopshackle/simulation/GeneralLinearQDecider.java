@@ -33,19 +33,29 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 	}
 
 	@Override
-	public double valueOption(ActionEnum<A> option, A decidingAgent) {
-		State<A> currentState = stateFactory.getCurrentState(decidingAgent);
-		return valueOption(option, currentState);
-	}
-
-	@Override
 	public double valueOption(ActionEnum<A> option, State<A> state) {
 		double[] w = getWeightsFor(option);
-		double retValue = 0.0;
-
 		double[] stateArray = state.getAsArray(); 
-		for (int i = 0; i < variableLength; i++) {
-			retValue += w[i] * stateArray[i];
+		return dotProduct(w, stateArray);
+	}
+	
+	private double dotProduct(double[] weights, double[] features) {
+		double retValue = 0.0;
+		for (int i = 0; i < features.length; i++) {
+			retValue += weights[i] * features[i];
+		}
+		return retValue;
+	}
+	
+	@Override
+	public List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state) {
+		List<Double> retValue = new ArrayList<Double>(options.size());
+		for (int i = 0; i < options.size(); i++) retValue.add(0.0); 
+		double[] stateArray = state.getAsArray(); 
+		for (int i = 0; i < options.size(); i++) {
+			ActionEnum<A> option = options.get(i);
+			double[] w = getWeightsFor(option);
+			retValue.set(i, dotProduct(w, stateArray));
 		}
 		return retValue;
 	}

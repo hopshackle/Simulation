@@ -77,32 +77,22 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		return new NeuralDecider<A>(newFactory, scaleFactor);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see hopshackle.simulation.Decider#valueOption(hopshackle.simulation.ActionEnum, hopshackle.simulation.Agent)
-	 * TODO: valueOption will work, but is |A| times slower than the ideal approach, as it calls the NN once for each possible
-	 * action, given the main loop in BaseDecider. So, if performance is a problem here (which it probably shouldn't be...), then 
-	 * getValuesPerOption and getNormalisedValuesPerOption can be overridden. However that would be non-standard and hence confusing.
-	 */
+
 	@Override
-	public double valueOption(ActionEnum<A> option, A decidingAgent) {
-		State<A> state = getCurrentState(decidingAgent);
-		double retValue =  valueOption(option, state);
-		if (localDebug)
-			decidingAgent.log("Option " + option.toString() + " has base Value of " + retValue);
+	public List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state) {
+		List<Double> retValue = new ArrayList<Double>(options.size());
+		for (int i = 0; i < options.size(); i++) retValue.add(0.0); 
+		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());
+		double[] valuation = brain.compute(inputData).getData();
+		for (int i = 0; i < options.size(); i++) {
+			ActionEnum<A> option = options.get(i);
+			if (!outputKey.containsKey(option.toString())) addNewAction(option);
+			int optionIndex = outputKey.getOrDefault(option.toString(), maxActionIndex);
+			retValue.set(i, valuation[optionIndex] * scaleFactor);
+		}
 		return retValue;
 	}
 
-	public void addNewAction(ActionEnum<A> action) {
-		maxActionIndex++;
-		if (maxActionIndex < maximumOutputOptions)
-			outputKey.put(action.toString(), maxActionIndex);
-		else {
-			maxActionIndex--;
-	//		logger.severe("Action " + action.toString() + " cannot be allocated to output neuron");
-		}
-	}
-	
 	@Override
 	public double valueOption(ActionEnum<A> option, State<A> state) {
 		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());
@@ -112,13 +102,24 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		return valuation[optionIndex] * scaleFactor;
 	}
 
+	public void addNewAction(ActionEnum<A> action) {
+		maxActionIndex++;
+		if (maxActionIndex < maximumOutputOptions)
+			outputKey.put(action.toString(), maxActionIndex);
+		else {
+			maxActionIndex--;
+			//		logger.severe("Action " + action.toString() + " cannot be allocated to output neuron");
+		}
+	}
+
+
 	public void saveBrain(String name, String directory) {
 		File saveFile = new File(directory + "\\" + name + "_" + "_" + stateFactory.getVariables().get(0).getDescriptor() + ".brain");
 
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(saveFile));
 
-		//	oos.writeObject(actions.actionSet);
+			//	oos.writeObject(actions.actionSet);
 			oos.writeObject(stateFactory.getVariables());
 			oos.writeObject(brain);
 
@@ -349,7 +350,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		try {
 			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(saveFile));
 
-		//	ArrayList<ActionEnum<A>> actionSet = (ArrayList<ActionEnum<A>>) ois.readObject();
+			//	ArrayList<ActionEnum<A>> actionSet = (ArrayList<ActionEnum<A>>) ois.readObject();
 			// Not used...but written away for...so we read it in to make the code comparable
 			ArrayList<GeneticVariable<A>> variableSet = (ArrayList<GeneticVariable<A>>) ois.readObject();
 			retValue = new NeuralDecider<A>(stateFactory.cloneWithNewVariables(variableSet), scaleFactor);

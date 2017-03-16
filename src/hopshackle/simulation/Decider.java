@@ -10,6 +10,8 @@ public interface Decider<A extends Agent> {
 
 	public double valueOption(ActionEnum<A> option, A decidingAgent);
 	
+	public List<Double> valueOptions(List<ActionEnum<A>> options, A decidingAgent);
+	
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult);
 
 	public void learnFromBatch(List<ExperienceRecord<A>> exp, double maxResult);

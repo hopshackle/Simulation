@@ -202,6 +202,8 @@ public class MCTreeTest {
 	@Test
 	public void actionValueDeciderInGreedyMode() {
 		localProp.setProperty("Temperature", "0.00");
+		localProp.setProperty("RandomDeciderMaxChance", "0.0");
+		localProp.setProperty("RandomDeciderMinChance", "0.0");
 		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);

@@ -1,5 +1,8 @@
 package hopshackle.simulation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class StateDecider<A extends Agent> extends QDecider<A> {
 
 	private String stateType;
@@ -17,17 +20,22 @@ public abstract class StateDecider<A extends Agent> extends QDecider<A> {
 	}
 
 	@Override
-	public double valueOption(ActionEnum<A> option, A decidingAgent) {
-		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
-		HopshackleState agentState = getState(getCurrentState(decidingAgent));
-		return agentState.valueOption(option, temperature * (maxNoise - minNoise) + minNoise );
-	}
-	
-	@Override
 	public double valueOption(ActionEnum<A> option, State<A> state) {
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		HopshackleState agentState = getState(state);
 		return agentState.valueOption(option, temperature * (maxNoise - minNoise) + minNoise );
+	}
+
+	@Override
+	public List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state) {
+		List<Double> retValue = new ArrayList<Double>(options.size());
+		for (int i = 0; i < options.size(); i++) retValue.add(0.0); 
+		HopshackleState agentState = getState(state);
+		for (int i = 0; i < options.size(); i++) {
+			ActionEnum<A> option = options.get(i);
+			retValue.set(i, agentState.valueOptionWithoutExploration(option));
+		}
+		return retValue;
 	}
 
 	protected HopshackleState getState(State<A> state) {
@@ -44,7 +52,7 @@ public abstract class StateDecider<A extends Agent> extends QDecider<A> {
 		// default value to be baseValue
 		return retValue;
 	}
-	
+
 	public HopshackleState getState(A decidingAgent) {
 		if (decidingAgent.isDead()) return HopshackleState.getState(stateType + ":DEAD");
 		return getState(getCurrentState(decidingAgent));
