@@ -7,16 +7,15 @@ import org.encog.neural.data.basic.*;
 public class MCTreeProcessor<A extends Agent> {
 
 	private int minVisits, maxNeurons;
-	private boolean oneHot;
+	private boolean oneHot, controlSignal;
 	private DeciderProperties properties;
 	private List<double[]> inputData;
 	private List<double[]> outputData;
-	private int maximumOutputOptions;
 	private List<ActionEnum<A>> actionsInOutputLayer = new ArrayList<ActionEnum<A>>();
 
 	public MCTreeProcessor(DeciderProperties prop) {
 		oneHot = prop.getProperty("MonteCarloOneHotRolloutTraining", "false").equals("true");
-		maximumOutputOptions = prop.getPropertyAsInteger("NeuralMaxOutput", "100");
+		controlSignal = prop.getProperty("NeuralControlSignal", "false").equals("true");
 		minVisits = prop.getPropertyAsInteger("MonteCarloMinVisitsForRolloutTraining", "50");
 		maxNeurons = prop.getPropertyAsInteger("NeuralMaxOutput", "100");
 		properties = prop;
@@ -48,25 +47,41 @@ public class MCTreeProcessor<A extends Agent> {
 		List<ActionEnum<A>> actionsInStats = stats.getPossibleActions();
 		ActionEnum<A> bestAction = stats.getBestAction(actionsInStats);	// this assumes refAgent is the same as stats.actingAgent
 		double[] retValue = new double[actionsInOutputLayer.size()];
-		if (oneHot) {	// set 1.0 for the best action according to the Tree, and 0.0 is left as the default for all others
-			retValue = setValueForAction(bestAction, retValue, 1.0);
-		} else {
-			for (ActionEnum<A> action : actionsInStats) {
-				double visits = stats.getVisits(action);
-				double value = stats.getMean(action)[refAgent-1];
-				if (visits == 0) value = 0.00;	// this will be true anyway. Added for emphasis.
-				// what we really want to do in this case is signal to the NeuralDecider that the value should be overridden by the prediction
-				// TODO: could be done using Double.NaN, and then modifying NeuralDecider
-				retValue = setValueForAction(action, retValue, value);
+		if (controlSignal)
+			for (int i = 0; i < retValue.length; i++) retValue[i] = Double.NaN;
+		for (ActionEnum<A> action : actionsInStats) {
+			double visits = stats.getVisits(action);
+			if (visits == 0) continue;
+			double value = stats.getMean(action)[refAgent-1];
+			if (oneHot && action.equals(bestAction)) value = 1.0;
+			if (oneHot && !action.equals(bestAction)) value = 0.0;
+			retValue = setValueForAction(action, retValue, value);
+		}
+		if (controlSignal) {
+			List<Integer> indicesToRemove = new ArrayList<Integer>();
+			for (int i = 0; i < retValue.length; i++) {
+				if (Double.isNaN(retValue[i])) {
+					indicesToRemove.add(i);
+				}
 			}
+			double[] newRetValue = new double[retValue.length - indicesToRemove.size()];
+			int removed = 0;
+			for (int i = 0; i < retValue.length; i++) {
+				if (indicesToRemove.contains(i)) {
+					removed++;
+				} else {
+					newRetValue[i-removed] = retValue[i];
+				}
+			}
+			retValue = newRetValue;
 		}
 		return retValue;
 	}
-	
+
 	private double[] setValueForAction(ActionEnum<A> action, double[] initialArray, double value) {
 		double[] retValue = initialArray;
 		int index = actionsInOutputLayer.indexOf(action);
-		if (index == -1 && actionsInOutputLayer.size() < maximumOutputOptions) {
+		if (index == -1 && actionsInOutputLayer.size() < maxNeurons) {
 			actionsInOutputLayer.add(action);
 			double[] oldArray = retValue;
 			retValue = new double[actionsInOutputLayer.size()];
@@ -91,20 +106,38 @@ public class MCTreeProcessor<A extends Agent> {
 	}
 
 	protected BasicNeuralDataSet finalTrainingData() {
-		// the earlier training data will not have seen all possible actions, so the arrays will not extend all the
+		// the earlier training data will not have seen all possible actions, so the arrays will not extend to cover the full requirements of the NN
+		if (controlSignal) return finalTrainingDataWithControlSignal();
 		BasicNeuralDataSet retValue = new BasicNeuralDataSet();
 		for (int i = 0; i < inputData.size(); i++) {
 			double[] currentOut = outputData.get(i);
-			double[] input = inputData.get(i);
+			double[] currentIn = inputData.get(i);
 			if (currentOut.length < maxNeurons) {
 				double[] newOut = new double[maxNeurons];	// will default to 0.0
 				for (int j = 0; j < currentOut.length; j++)
 					newOut[j] = currentOut[j];
 				currentOut = newOut;
 			}
-			retValue.add(new BasicNeuralData(input), new BasicNeuralData(currentOut));
+			retValue.add(new BasicNeuralData(currentIn), new BasicNeuralData(currentOut));
 		}
 		return retValue;
 	}
 
+	private BasicNeuralDataSet finalTrainingDataWithControlSignal() {
+		BasicNeuralDataSet retValue = new BasicNeuralDataSet();
+		for (int i = 0; i < inputData.size(); i++) {
+			double[] startInput = inputData.get(i);
+			double[] startOutput = outputData.get(i);
+			for (int a = 0; a < startOutput.length; a++) {
+				double[] finalInput = new double[startInput.length + maxNeurons];
+				for (int j = 0; j < startInput.length; j++) finalInput[j] = startInput[j];
+				double[] finalOutput = new double[1];
+				// make this the single output, and set the control signal in the input
+				finalOutput[0] = startOutput[a];
+				finalInput[a + startInput.length] = 1.0;
+				retValue.add(new BasicNeuralData(finalInput), new BasicNeuralData(finalOutput));
+			}
+		}
+		return retValue;
+	}
 }

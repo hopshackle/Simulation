@@ -21,8 +21,10 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	protected boolean applyTemperatureToLearning = getProperty("NeuralAnnealLearning", "false").equals("true");
 	protected int learningIterations = Integer.valueOf(getProperty("NeuralLearningIterations", "1"));
 	private boolean learnWithValidation = getProperty("NeuralLearnUntilValidationError", "false").equals("true");
+	private boolean shuffleTrainingData = getProperty("NeuralShuffleData", "true").equals("true");
 	private boolean logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
 	private double overrideLearningCoefficient, overrideMomentum, scaleFactor; 
+	private boolean controlSignal = getProperty("NeuralControlSignal", "false").equals("true");
 	private int maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
 	private static boolean extraDebug = true;
 
@@ -39,9 +41,15 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		applyTemperatureToLearning = getProperty("NeuralAnnealLearning", "false").equals("true");
 		learningIterations = Integer.valueOf(getProperty("NeuralLearningIterations", "1"));
 		learnWithValidation = getProperty("NeuralLearnUntilValidationError", "false").equals("true");
+		shuffleTrainingData = getProperty("NeuralShuffleData", "true").equals("true");
 		logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
 		maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
-		brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), maximumOutputOptions, decProp);
+		controlSignal = getProperty("NeuralControlSignal", "false").equals("true");
+		if (controlSignal) {
+			brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size() + maximumOutputOptions, 1, decProp);
+		} else {
+			brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), maximumOutputOptions, decProp);
+		}
 		overrideLearningCoefficient = getPropertyAsDouble("NeuralLearningCoefficient." + toString(), "-99.0");
 		overrideMomentum = getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");
 		if (overrideLearningCoefficient > -98) alpha = overrideLearningCoefficient;
@@ -77,9 +85,18 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		return new NeuralDecider<A>(newFactory, scaleFactor);
 	}
 
+	@Override
+	public double valueOption(ActionEnum<A> option, State<A> state) {
+		int optionIndex = outputKey.getOrDefault(option.toString(), maxActionIndex);
+		BasicNeuralData inputData = extractInput(state, option);
+		double[] valuation = brain.compute(inputData).getData();
+		if (controlSignal) optionIndex = 0;
+		return valuation[optionIndex] * scaleFactor;
+	}
 
 	@Override
 	public List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state) {
+		if (controlSignal) return valueOptionsWithControlSignal(options, state);
 		List<Double> retValue = new ArrayList<Double>(options.size());
 		for (int i = 0; i < options.size(); i++) retValue.add(0.0); 
 		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());
@@ -92,14 +109,39 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		}
 		return retValue;
 	}
-
-	@Override
-	public double valueOption(ActionEnum<A> option, State<A> state) {
-		BasicNeuralData inputData = new BasicNeuralData(state.getAsArray());
-		double[] valuation = brain.compute(inputData).getData();
+	
+	private List<Double> valueOptionsWithControlSignal(List<ActionEnum<A>> options, State<A> state) {
+		// we still only getArray from State once, but we need to call brain.compute for each option
+		List<Double> retValue = new ArrayList<Double>(options.size());
+		for (int i = 0; i < options.size(); i++) retValue.add(0.0); 
+		BasicNeuralData inputData = extractInput(state, options.get(0));
+		int offset = inputData.size() - maximumOutputOptions;
+		int oldIndex = -1;
+		for (int i = 0; i < options.size(); i++) {
+			ActionEnum<A> option = options.get(i);
+			if (!outputKey.containsKey(option.toString())) addNewAction(option);
+			int optionIndex = outputKey.getOrDefault(option.toString(), maxActionIndex);
+			if (oldIndex > -1) inputData.setData(oldIndex + offset, 0.0);
+			oldIndex = optionIndex;
+			inputData.setData(optionIndex + offset, 1.0);
+			double[] valuation = brain.compute(inputData).getData();
+			retValue.set(i, valuation[0] * scaleFactor);
+		}
+		return retValue;
+	}
+	
+	private BasicNeuralData extractInput(State<A> state, ActionEnum<A> option) {
 		if (!outputKey.containsKey(option.toString())) addNewAction(option);
 		int optionIndex = outputKey.getOrDefault(option.toString(), maxActionIndex);
-		return valuation[optionIndex] * scaleFactor;
+		double[] rawInput = state.getAsArray();
+		int actionOffset = rawInput.length;
+		if (controlSignal) {
+			double[] rawInput2 = new double[rawInput.length + maximumOutputOptions];
+			for (int i = 0; i < actionOffset; i++) rawInput2[i] = rawInput[i];
+			rawInput = rawInput2;
+			rawInput[optionIndex + actionOffset] = 1.0;	// we indicate which option is being considered
+		}
+		return new BasicNeuralData(rawInput);
 	}
 
 	public void addNewAction(ActionEnum<A> action) {
@@ -212,11 +254,35 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		return retValue;
 	}
 
+	private BasicNeuralDataSet shuffle(BasicNeuralDataSet preshuffle) {
+		int length = (int) preshuffle.getRecordCount();
+		int inputLength = preshuffle.getInputSize();
+		int outputLength = preshuffle.getIdealSize();
+		double[][] shuffledInput = new double[length][inputLength];
+		double[][] shuffledOutput = new double[length][outputLength];
+
+		List<Integer> remainingIndices = new ArrayList<Integer>(length);
+		for (int i = 0; i < length; i++) remainingIndices.add(i);
+		for (int i = 0; i < length; i++) {
+			int nextIndex = Dice.roll(1, remainingIndices.size()) - 1;
+			int nextElement = remainingIndices.get(nextIndex);
+			remainingIndices.remove(nextIndex);
+			shuffledInput[i] = preshuffle.get(nextElement).getInputArray();
+			shuffledOutput[i] = preshuffle.get(nextElement).getIdealArray();
+		}
+
+		return new BasicNeuralDataSet(shuffledInput, shuffledOutput);
+	}
+
+	// TODO: This does not properly support validation error checking. I think I can implement that using the Strategy
+	// concept in Encog 3.3. After each iteration I check the validation error, and stop training if this has increased.
 	protected double teach(BasicNeuralDataSet trainingData) {
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		double updatedLearningCoefficient = alpha;
 		if (applyTemperatureToLearning)
 			updatedLearningCoefficient *= temperature;
+		if (shuffleTrainingData) 
+			trainingData = shuffle(trainingData);
 		Propagation trainer = null;
 		switch (propagationType) {
 		case "back":
