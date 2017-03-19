@@ -6,7 +6,8 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 
 	private Decider<P> rolloutDecider;
 	private MonteCarloTree<P> tree;
-
+private boolean RAVE;
+	
 	public MCTSChildDecider(StateFactory<P> stateFactory, MonteCarloTree<P> tree, Decider<P> rolloutDecider, DeciderProperties prop) {
 		super(stateFactory);
 		injectProperties(prop);
@@ -14,6 +15,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
 		boolean monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
+		RAVE = getProperty("MonteCarloRAVE", "false").equals("true");
 		if (!monteCarlo) {
 			throw new AssertionError("MCTS Deciders should only be used with MonteCarlo switched on! Update GeneticProperties.txt");
 		}
@@ -58,10 +60,29 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 		}
 		// This relies on us going forward through the ER (if backwards, then we will error as state is not found, and we
 		// have updates left).
+		
+		if (RAVE) updateRAVE(exp);
+	}
+
+	private void updateRAVE(ExperienceRecord<P> exp) {
+		ActionEnum<P> action = exp.getActionTaken().actionType;
+		double reward[] = exp.getReward();
+		ExperienceRecord<P> previousER = exp.getPreviousRecord();
+		do {
+			tree.updateRAVE(previousER.getStartState(), action, reward);
+			previousER = previousER.getPreviousRecord();
+		} while (previousER != null);
+		
 	}
 
 	public Decider<P> getRolloutDecider() {
 		return rolloutDecider;
+	}
+	
+	@Override
+	public void injectProperties(DeciderProperties prop) {
+		super.injectProperties(prop);
+		RAVE = getProperty("MonteCarloRAVE", "false").equals("true");
 	}
 
 }

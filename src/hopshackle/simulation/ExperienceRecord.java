@@ -228,4 +228,8 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 		retValue[0] = single;
 		return retValue;
 	}
+	
+	public ExperienceRecord<A> getPreviousRecord() {
+		return previousRecord;
+	}
 }

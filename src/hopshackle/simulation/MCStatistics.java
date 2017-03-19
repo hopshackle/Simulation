@@ -7,11 +7,13 @@ public class MCStatistics<P extends Agent> {
 	private List<ActionEnum<P>> allActions;
 	private MonteCarloTree<P> tree;
 	private Map<String, MCData> map = new HashMap<String, MCData>();
+	private Map<String, MCData> RAVE = new HashMap<String, MCData>();
 	private Map<String, Map<String, Integer>> successorStatesByAction = new HashMap<String, Map<String, Integer>>();
 	private int totalVisits = 0;
+	private int RAVEVisits = 0;
 	private int actingAgent = -1;
-	private boolean useBaseValue;
-	private double C, actionWeight;
+	private boolean useBaseValue, useRAVE;
+	private double C, actionWeight, RAVEWeight;
 	private double[] baseValue;
 	private String UCTType;
 	private int minVisitsForQ, minVisitsForV;
@@ -36,6 +38,8 @@ public class MCStatistics<P extends Agent> {
 		actionWeight = tree.properties.getPropertyAsDouble("MonteCarloPriorActionWeightingForBestAction", "0");
 		minVisitsForQ = tree.properties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
 		minVisitsForV = tree.properties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
+		RAVEWeight = tree.properties.getPropertyAsDouble("MonteCarloRAVEWeight", "0.0");
+		useRAVE = tree.properties.getProperty("MonteCarloRAVE", "false").equals("true");
 		double base = tree.properties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
 		useBaseValue = tree.properties.getProperty("MonteCarloRL", "false").equals("true");
 		if (!useBaseValue) base = 0.0;
@@ -95,6 +99,33 @@ public class MCStatistics<P extends Agent> {
 		}
 		if (!sweep) totalVisits++;
 	}
+	
+	protected void updateRAVE(ActionEnum<P> action, double[] reward) {
+		String key = action.toString();
+		if (RAVE.containsKey(key)) {
+			MCData old = RAVE.get(key);
+			MCData newMCD =  new MCData(old, reward);
+			RAVE.put(key, newMCD);
+		} else {
+			RAVE.put(key, new MCData(key, reward, tree.properties));
+		}
+		RAVEVisits++;
+	}
+	
+	public double getRAVEValue(ActionEnum<P> action) {
+		MCData data = RAVE.get(action.toString());
+		if (data == null) return 0.0;
+		return data.mean[actingAgent];
+	}
+	
+	public double getRAVEPlus(ActionEnum<P> action) {
+		MCData data = RAVE.get(action.toString());
+		if (data == null) return 0.0;
+		double retValue = data.mean[actingAgent];
+		retValue += C * Math.sqrt(Math.log(RAVEVisits) / data.visits);
+		return retValue;
+	}
+	
 	private void addAction(ActionEnum<P> newAction) {
 		if (!allActions.contains(newAction))
 			allActions.add(newAction);
@@ -203,7 +234,12 @@ public class MCStatistics<P extends Agent> {
 			String key = action.toString();
 			MCData data = map.get(key);
 			double actionScore = score(data, key);
-			double score = actionScore + C * Math.sqrt(Math.log(totalVisits) / (double)data.visits);
+			double visits = (double)data.visits;
+			double score = actionScore + C * Math.sqrt(Math.log(totalVisits) / visits);
+			if (useRAVE && RAVEWeight > 0.0 && RAVE.containsKey(key)) {
+				double beta = Math.sqrt(RAVEWeight / (3 * visits + RAVEWeight));
+				score = beta * getRAVEPlus(action) + (1.0 - beta) * score;
+			}
 			if (score > best) {
 				best = score;
 				retValue = action;

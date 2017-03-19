@@ -72,6 +72,11 @@ public class MCTreeTest {
 		world = new World();
 		agent = new TestAgent(world);
 	}
+	
+	@After
+	public void tearDown() {
+		SimProperties.clear();
+	}
 
 	@Test
 	public void settingUpdatesLeft() {
@@ -280,6 +285,41 @@ public class MCTreeTest {
 		assertTrue(tree.getStatisticsFor(test) == null);
 		assertEquals(tree.getStatisticsFor(other).getSuccessorStates().size(), 1);
 		assertEquals(tree.numberOfStates(), 2);
+	}
+	
+	@Test
+	public void RAVEvalues() {
+		localProp.setProperty("MonteCarloRAVE", "true");
+		localProp.setProperty("MonteCarloRAVEWeight", "2");
+		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree.insertState(test, allActions);
+		tree.updateState(test, TestActionEnum.LEFT, other, 3.0);
+		MCStatistics<TestAgent> stats = tree.getStatisticsFor(test);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT), 0.0, 0.001);
+		assertEquals(stats.getRAVEPlus(TestActionEnum.RIGHT), 0.0, 0.001);
+		tree.updateState(test, TestActionEnum.RIGHT, other, 0.0);
+		tree.updateState(test, TestActionEnum.TEST, other, 0.0);
+		stats = tree.getStatisticsFor(test);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT), 0.0, 0.001);
+		assertEquals(stats.getRAVEPlus(TestActionEnum.RIGHT), 0.0, 0.001);
+		
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {3.0});
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {5.0});
+		tree.updateRAVE(test, TestActionEnum.TEST, new double[] {0.0});
+		stats = tree.getStatisticsFor(test);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.TEST), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT), 4.0, 0.001);
+		assertEquals(stats.getRAVEPlus(TestActionEnum.RIGHT), 4.0 + Math.sqrt(Math.log(3.0) / 2.0), 0.001);
+		assertEquals(stats.getRAVEPlus(TestActionEnum.TEST), 0.0 + Math.sqrt(Math.log(3.0) / 1.0), 0.001);
+		assertEquals(stats.getRAVEPlus(TestActionEnum.LEFT), 0.0, 0.001);
+		
+		assertTrue(stats.getUCTAction(allActions).equals(TestActionEnum.LEFT));
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {6.0});
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {7.0});
+		assertTrue(stats.getUCTAction(allActions).equals(TestActionEnum.RIGHT));
 	}
 
 }

@@ -107,13 +107,21 @@ public class MonteCarloTree<P extends Agent> {
 
 	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double[] reward) {
 		String stateAsString = state.getAsString();
-		if (debug) log(String.format("Updating State %s to State %s with Action %s and reward %.2f", stateRef(stateAsString), stateRef(nextState.getAsString()), action.toString(), reward));
+		if (debug) {
+			String rewardString = "";
+			for (int i = 0; i < reward.length; i++) rewardString = String.format("%s|%.2f", rewardString, reward[i]);
+			log(String.format("Updating State %s to State %s with Action %s and reward %s", stateRef(stateAsString), stateRef(nextState.getAsString()), action.toString(), rewardString));
+		}
 		if (tree.containsKey(stateAsString)) {
 			MCStatistics<P> stats = tree.get(stateAsString);
-			if (debug) log(String.format("Before update: MC:%.2f\tV:%.2f\tQ:%.2f", stats.getMean(action), stats.getV(), stats.getQ()));
+			//			if (debug) log(String.format("Before update: MC:%.2f\tV:%.2f\tQ:%.2f", stats.getMean(action), stats.getV(), stats.getQ()));
 			stats.update(action, nextState, reward);
-			if (debug) log(String.format("After update: MC:%.2f\tV:%.2f\tQ:%.2f", stats.getMean(action), stats.getV(), stats.getQ()));
-			if (debug) log("");
+			if (debug) {
+				String rewardString = "";
+				for (int i = 0; i < reward.length; i++) rewardString = String.format("%s|%.2f", rewardString, stats.getMean(action)[i]);
+				log("After update: " + rewardString);
+				log("");
+			}
 		} else {
 			if (debug) log("State not yet in tree");
 		}
@@ -126,6 +134,27 @@ public class MonteCarloTree<P extends Agent> {
 			av.put(actionAsString, new MCData(av.get(actionAsString), actionReward));
 		} else {
 			av.put(actionAsString, new MCData(actionAsString, actionReward, properties));
+		}
+	}
+
+	public void updateRAVE(State<P> state, ActionEnum<P> action, double[] reward) {
+		String stateAsString = state.getAsString();
+		if (tree.containsKey(stateAsString)) {
+			if (debug) {
+				String rewardString = "";
+				for (int i = 0; i < reward.length; i++) rewardString = String.format("%s|%.2f", rewardString, reward[i]);
+				log(String.format("Updating RAVE State %s for Action %s and reward %.2f", stateRef(stateAsString), action.toString(), reward));
+			}
+			MCStatistics<P> stats = tree.get(stateAsString);
+			stats.updateRAVE(action, reward);
+			if (debug) {
+				String rewardString = "";
+				for (int i = 0; i < reward.length; i++) rewardString = String.format("%s|%.2f", rewardString, reward[i]);
+				log(String.format("After update: MC:%.2f\tV:%.2f\tQ:%.2f", stats.getMean(action), stats.getV(), stats.getQ()));
+				log("");
+			}
+		} else {
+			if (debug) log("State not yet in tree");
 		}
 	}
 
