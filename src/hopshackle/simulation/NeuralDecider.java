@@ -3,6 +3,7 @@ package hopshackle.simulation;
 import java.io.*;
 import java.util.*;
 
+import org.encog.ml.data.MLDataPair;
 import org.encog.neural.data.basic.*;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.structure.NeuralStructure;
@@ -109,7 +110,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		}
 		return retValue;
 	}
-	
+
 	private List<Double> valueOptionsWithControlSignal(List<ActionEnum<A>> options, State<A> state) {
 		// we still only getArray from State once, but we need to call brain.compute for each option
 		List<Double> retValue = new ArrayList<Double>(options.size());
@@ -129,7 +130,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		}
 		return retValue;
 	}
-	
+
 	private BasicNeuralData extractInput(State<A> state, ActionEnum<A> option) {
 		if (!outputKey.containsKey(option.toString())) addNewAction(option);
 		int optionIndex = outputKey.getOrDefault(option.toString(), maxActionIndex);
@@ -276,13 +277,33 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	// TODO: This does not properly support validation error checking. I think I can implement that using the Strategy
 	// concept in Encog 3.3. After each iteration I check the validation error, and stop training if this has increased.
-	protected double teach(BasicNeuralDataSet trainingData) {
+	protected double teach(BasicNeuralDataSet allData) {
+		
+		if (shuffleTrainingData) 
+			allData = shuffle(allData);
+		
+		BasicNeuralDataSet validationData = new BasicNeuralDataSet();
+		BasicNeuralDataSet trainingData = new BasicNeuralDataSet();
+		
+		if (learnWithValidation && allData.size() >= 10) {
+			int dataSize = allData.size();
+			for (int i = 0; i < dataSize; i++) {
+				MLDataPair next = allData.get(i);
+				if (i % 5 == 4) {
+					validationData.add(next);
+				} else {
+					trainingData.add(next);
+				}
+			}
+		} else {
+			trainingData = allData;
+		}
+		
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		double updatedLearningCoefficient = alpha;
 		if (applyTemperatureToLearning)
 			updatedLearningCoefficient *= temperature;
-		if (shuffleTrainingData) 
-			trainingData = shuffle(trainingData);
+
 		Propagation trainer = null;
 		switch (propagationType) {
 		case "back":
@@ -298,7 +319,33 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			throw new AssertionError(propagationType + " is not a known type. Must be back/quick/resilient.");
 		}
 
-		trainer.iteration(learningIterations);
+		if (validationData.size() == 0) {
+			trainer.iteration(learningIterations);
+		} else {
+			double trainingError = 0.0;
+			double valError = Double.MAX_VALUE;
+			int iteration = 0;
+			boolean terminateLearning = false;
+			BasicNetwork brainCopy = (BasicNetwork) brain.clone();
+			do {
+				double lastTrainingError = trainingError;
+				trainer.iteration(1);
+				double newValError = brain.calculateError(validationData);
+				if (localDebug) {
+					log(String.format("Iteration %d on %s has validation error of %.5f and training error of %.5f", iteration, this.toString(), newValError, trainingError));
+				}
+				if (newValError >= valError || iteration > learningIterations) {
+					terminateLearning = true;
+					brain = brainCopy;
+					if (logTrainingErrors)
+						System.out.println(String.format("%d iterations on %s has validation error of %.5f and training error of %.5f", iteration-1, this.toString(), valError, lastTrainingError));
+				} else {
+					brainCopy = (BasicNetwork) brain.clone();
+					valError = newValError;
+				}
+				iteration++;
+			} while (!terminateLearning);		
+		}
 		trainer.finishTraining();
 		if (lambda > 0.00)
 			applyLambda();
@@ -324,7 +371,6 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			}
 		}
 	}
-
 
 	@Override
 	public void learnFromBatch(ExperienceRecord<A>[] expArray, double maxResult) {
@@ -354,61 +400,11 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			count++;
 		}
 
-		if (learnWithValidation) {
-			double[][] validationOutputData = new double[expArray.length / 5][1];
-			double[][] validationInputData = new double[expArray.length / 5][inputLength];
-
-			double[][] batchOutputData2 = new double[expArray.length - expArray.length / 5][1];
-			double[][] batchInputData2 = new double[expArray.length - expArray.length / 5][inputLength];
-
-			int valCount = 0;
-			for (int i = 0; i < expArray.length; i++) {
-				if (i % 5 == 4) {
-					validationInputData[valCount] = batchInputData[i];
-					validationOutputData[valCount] = batchOutputData[i];
-					valCount++;
-				} else {
-					batchInputData2[i - valCount] = batchInputData[i];
-					batchOutputData2[i - valCount] = batchOutputData[i];
-				}
-			}
-
-			BasicNeuralDataSet trainingData = new BasicNeuralDataSet(batchInputData2, batchOutputData2);
-			BasicNeuralDataSet validationData = new BasicNeuralDataSet(validationInputData, validationOutputData);
-			BasicNetwork brainCopy = (BasicNetwork) brain.clone();
-			double startingError = brain.calculateError(validationData);
-			double valError = 1.00;
-			int iteration = 1;
-			boolean terminateLearning = false;
-			double lastTrainingError = 0.0;
-			double trainingError = 0.0;
-			do {
-				lastTrainingError = trainingError;
-				trainingError = teach(trainingData);
-				double newValError = brain.calculateError(validationData);
-				if (localDebug) {
-					log(String.format("Iteration %d on %s has validation error of %.5f and training error of %.5f (starting validation error %.5f)", iteration, this.toString(), newValError, trainingError, startingError));
-				}
-				if (newValError >= valError || iteration > learningIterations) {
-					terminateLearning = true;
-					brain = brainCopy;
-					if (logTrainingErrors)
-						System.out.println(String.format("%d iterations on %s has validation error of %.5f and training error of %.5f (starting validation error %.5f)", iteration-1, this.toString(), valError, lastTrainingError, startingError));
-				} else {
-					brainCopy = (BasicNetwork) brain.clone();
-					valError = newValError;
-				}
-				iteration++;
-			} while (!terminateLearning);			
-
-		} else {
-			BasicNeuralDataSet trainingData = new BasicNeuralDataSet(batchInputData, batchOutputData);
-			double error = teach(trainingData);
-			if (logTrainingErrors)
-				System.out.println(String.format("%s has training error of %.4f", this.toString(), error));
-		}
+		BasicNeuralDataSet trainingData = new BasicNeuralDataSet(batchInputData, batchOutputData);
+		double error = teach(trainingData);
+		if (logTrainingErrors)
+			System.out.println(String.format("%s has training error of %.4f", this.toString(), error));
 	}
-
 
 	@SuppressWarnings("unchecked")
 	public static <A extends Agent> NeuralDecider<A> createNeuralDecider(StateFactory<A> stateFactory, File saveFile, double scaleFactor) {

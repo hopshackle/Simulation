@@ -12,6 +12,7 @@ public class MCTreeProcessor<A extends Agent> {
 	private List<double[]> inputData;
 	private List<double[]> outputData;
 	private List<ActionEnum<A>> actionsInOutputLayer = new ArrayList<ActionEnum<A>>();
+//	private Map<ActionEnum<A>, Integer> actionCount = new HashMap<ActionEnum<A>, Integer>();
 
 	public MCTreeProcessor(DeciderProperties prop) {
 		oneHot = prop.getProperty("MonteCarloOneHotRolloutTraining", "false").equals("true");
@@ -46,6 +47,7 @@ public class MCTreeProcessor<A extends Agent> {
 	protected double[] getOutputValuesAsArray(MCStatistics<A> stats, int refAgent) {
 		List<ActionEnum<A>> actionsInStats = stats.getPossibleActions();
 		ActionEnum<A> bestAction = stats.getBestAction(actionsInStats);	// this assumes refAgent is the same as stats.actingAgent
+//		actionCount.put(bestAction, actionCount.getOrDefault(bestAction, 0));
 		double[] retValue = new double[actionsInOutputLayer.size()];
 		if (controlSignal)
 			for (int i = 0; i < retValue.length; i++) retValue[i] = Double.NaN;
@@ -88,7 +90,7 @@ public class MCTreeProcessor<A extends Agent> {
 			for (int i = 0; i < oldArray.length; i++) retValue[i] = oldArray[i];
 			index = actionsInOutputLayer.size() - 1;
 		} 
-		retValue[index] = value;
+		if (index > -1) retValue[index] = value;
 		return retValue;
 	}
 
