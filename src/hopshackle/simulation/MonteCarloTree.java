@@ -234,6 +234,43 @@ public class MonteCarloTree<P extends Agent> {
 		tree = newTree;
 	}
 
+	public int[] getDepthsFrom(String root) {
+		Map<String, Integer> depths = new HashMap<String, Integer>();
+		double[] visitDepth = new double[10];
+		int[] atDepth = new int[11];
+		Queue<String> q = new LinkedBlockingQueue<String>();
+		depths.put(root, 0);
+		q.add(root);
+		do {
+			String state = q.poll();
+			int currentDepth = depths.get(state);
+			MCStatistics<P> toCopy = tree.get(state);
+			if (toCopy != null) {
+				for (String successor : toCopy.getSuccessorStates())
+					if (!depths.containsKey(successor)) {
+						depths.put(successor, currentDepth+1);
+						int visits = tree.get(successor).getVisits();
+						if (currentDepth < 10) {
+							visitDepth[currentDepth] += visits;
+							atDepth[currentDepth]++;
+						}
+						if (currentDepth+1 > atDepth[10]) atDepth[10] = currentDepth+1;
+						q.add(successor);
+					}
+			}
+		} while (!q.isEmpty());
+		
+		int[] retValue = new int[21];
+		for (int i = 0; i < 11; i++) {
+			retValue[i] = atDepth[i];
+		}
+		double totalVisits = tree.get(root).getVisits();
+		for (int i = 0; i < 10; i++) {
+			retValue[i+11] = (int) (100.0 * visitDepth[i] / totalVisits);
+		}
+		return retValue;
+	}
+	
 	@Override
 	public String toString() {
 		return toString(false);

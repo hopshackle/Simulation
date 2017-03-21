@@ -330,6 +330,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 			do {
 				double lastTrainingError = trainingError;
 				trainer.iteration(1);
+				trainingError = trainer.getError();
 				double newValError = brain.calculateError(validationData);
 				if (localDebug) {
 					log(String.format("Iteration %d on %s has validation error of %.5f and training error of %.5f", iteration, this.toString(), newValError, trainingError));

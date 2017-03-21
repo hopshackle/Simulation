@@ -153,6 +153,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		}
 		// Then we look at the statistics in the tree for the current state to make a decision
 		agent.log(tree.getStatisticsFor(currentState).toString(debug));
+		int[] atDepth = tree.getDepthsFrom(currentState.getAsString());
+		agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
+		agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[8], atDepth[20]));
 
 		ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions);
 		if (best == null) {

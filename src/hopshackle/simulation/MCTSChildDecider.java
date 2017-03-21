@@ -68,11 +68,10 @@ private boolean RAVE;
 		ActionEnum<P> action = exp.getActionTaken().actionType;
 		double reward[] = exp.getReward();
 		ExperienceRecord<P> previousER = exp.getPreviousRecord();
-		do {
+		while (previousER != null) {
 			tree.updateRAVE(previousER.getStartState(), action, reward);
 			previousER = previousER.getPreviousRecord();
-		} while (previousER != null);
-		
+		}
 	}
 
 	public Decider<P> getRolloutDecider() {

@@ -7,9 +7,10 @@ import java.util.*;
 
 import org.junit.*;
 
-public class MCTSTest {
+public class MCTSDeciderTest {
 	
 	List<GeneticVariable<TestAgent>> genVar = new ArrayList<GeneticVariable<TestAgent>>(EnumSet.allOf(TestGenVar.class));
+	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	StateFactory<TestAgent> factory = new LinearStateFactory<TestAgent>(genVar);
 	Decider<TestAgent> rolloutDecider = new SimpleMazeDecider();
 	MonteCarloTree<TestAgent> tree;
@@ -43,6 +44,11 @@ public class MCTSTest {
 		masterDecider.injectProperties(localProp);
 		agent.setDecider(masterDecider);
 		Dice.setSeed(6l);
+	}
+	
+	@After
+	public void tearDown() {
+		SimProperties.clear();
 	}
 	
 	@Test
@@ -172,7 +178,21 @@ public class MCTSTest {
 		assertEquals(tree.getStatisticsFor(thirdPlayerState).getVisits(), 98);
 		
 	}
-
+	
+	@Test
+	public void RAVEChildDeciderUpdates() {
+		localProp.setProperty("MonteCarloRAVE", "true");
+		localProp.setProperty("MonteCarloRAVEWeight", "2");
+		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+		mazeGame = new SimpleMazeGame(2, agent);
+		
+		State<TestAgent> startState = masterDecider.getCurrentState(agent);
+		mazeGame.oneMove();
+		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT), 7.09, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT), 2.14, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST), 2.88, 0.01);
+	}
 }
 
 

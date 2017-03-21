@@ -99,7 +99,7 @@ public class MCStatistics<P extends Agent> {
 		}
 		if (!sweep) totalVisits++;
 	}
-	
+
 	protected void updateRAVE(ActionEnum<P> action, double[] reward) {
 		String key = action.toString();
 		if (RAVE.containsKey(key)) {
@@ -111,21 +111,34 @@ public class MCStatistics<P extends Agent> {
 		}
 		RAVEVisits++;
 	}
-	
+
 	public double getRAVEValue(ActionEnum<P> action) {
-		MCData data = RAVE.get(action.toString());
+		return getRAVEValue(action.toString());
+	}
+	public double getRAVEPlus(ActionEnum<P> action) {
+		return getRAVEPlus(action.toString());
+	}
+	
+	public double getRAVEValue(String actionAsString) {
+		MCData data = RAVE.get(actionAsString);
 		if (data == null) return 0.0;
 		return data.mean[actingAgent];
 	}
-	
-	public double getRAVEPlus(ActionEnum<P> action) {
-		MCData data = RAVE.get(action.toString());
+
+	public double getRAVEPlus(String actionAsString) {
+		MCData data = RAVE.get(actionAsString);
 		if (data == null) return 0.0;
 		double retValue = data.mean[actingAgent];
 		retValue += C * Math.sqrt(Math.log(RAVEVisits) / data.visits);
 		return retValue;
 	}
 	
+	public int getRAVEVisits(String actionAsString) {
+		MCData data = RAVE.get(actionAsString);
+		if (data == null) return 0;
+		return data.visits;
+	}
+
 	private void addAction(ActionEnum<P> newAction) {
 		if (!allActions.contains(newAction))
 			allActions.add(newAction);
@@ -264,6 +277,8 @@ public class MCStatistics<P extends Agent> {
 			String output = "";
 			if (actionWeight > 0.0) {
 				output = String.format("\t%s\t%s\t(AV:%.2f | %d)\n", k, map.get(k).toString(), tree.getActionValue(k, actingAgent), tree.getActionCount(k, actingAgent));
+			} else if (useRAVE) {
+				output = String.format("\t%-30s\t(RAVE:%.2f|%.2f|%d)\t%s\n", k, getRAVEValue(k), getRAVEPlus(k), getRAVEVisits(k), map.get(k).toString());
 			} else {
 				output = String.format("\t%-35s\t%s\n", k, map.get(k).toString());
 			}
@@ -422,12 +437,9 @@ class MCData implements Comparable<MCData> {
 	@Override
 	public String toString() {
 		StringBuffer retValue = new StringBuffer();
+		retValue.append(String.format("Visits:%d\tMC|V|Q", visits));
 		for (int i = 0; i < maxActors; i++) {
-			if (i == 0) 
-				retValue.append(String.format("Visits:%d\tMC|V|Q\t[%.2f|%.2f|%.2f]", visits, mean[i], V[i], Q[i]));
-			else 
-				retValue.append(String.format("\t[%.2f|%.2f|%.2f]", mean[i], V[i], Q[i]));
-
+			retValue.append(String.format("\t[%.2f|%.2f|%.2f]", mean[i], V[i], Q[i]));
 		}
 		return retValue.toString();
 	}
