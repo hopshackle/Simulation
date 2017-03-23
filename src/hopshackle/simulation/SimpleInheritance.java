@@ -9,7 +9,7 @@ public class SimpleInheritance<T extends Agent> extends Policy<T> {
 	}
 
 	@Override
-	public void apply(Agent testator) {
+	public void apply(T testator) {
 		List<Artefact> tempInv = testator.getInventory();
 		List<Agent> heirs = this.getInheritorsInOrder(testator);
 		for (Agent heir : heirs)
@@ -17,7 +17,7 @@ public class SimpleInheritance<T extends Agent> extends Policy<T> {
 		distributeArtefactsToHeirs(testator, tempInv, heirs);
 	}
 
-	protected List<Agent> getInheritorsInOrder(Agent testator) {
+	protected List<Agent> getInheritorsInOrder(T testator) {
 		List<Agent> inheritors = new ArrayList<Agent>();
 		for (Agent child : testator.getChildren()) {
 			Agent inheritor = child;

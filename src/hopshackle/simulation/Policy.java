@@ -8,7 +8,7 @@ public abstract class Policy<I> {
 		this.type = name;
 	}
 	
-	public void apply(Agent agent){}
+	public void apply(I agent){}
 	public void apply(I input, Agent agent) {}
 	public double getValue(I input, Agent agent) {return 0.0;}
 }

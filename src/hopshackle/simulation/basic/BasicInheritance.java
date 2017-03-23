@@ -4,10 +4,10 @@ import java.util.List;
 
 import hopshackle.simulation.*;
 
-public class BasicInheritance<T extends Agent> extends SimpleInheritance<T> {
+public class BasicInheritance extends SimpleInheritance<BasicAgent> {
 
 	@Override
-	protected List<Agent> getInheritorsInOrder(Agent testator) {
+	protected List<Agent> getInheritorsInOrder(BasicAgent testator) {
 		List<Agent> inheritors = super.getInheritorsInOrder(testator);
 		if (inheritors.isEmpty()) {
 			BasicAgent t = ((BasicAgent) testator);
