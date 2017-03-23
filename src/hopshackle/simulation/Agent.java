@@ -95,15 +95,16 @@ public abstract class Agent extends Observable {
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public void decide() {
+	public Action<?> decide() {
 		if (getDecider() == null)
 			errorLogger.severe("No decider in Agent.decide() for " + this.toString());
 		if (whatCanIDo == null) 
 			errorLogger.severe("No WorldLogic in Agent.decide() for " + this.toString());
 		if (!isDead() && getDecider() != null && whatCanIDo != null) {
 			Decider decider = getDecider();
-			decider.decide(this, whatCanIDo.getPossibleActions(this));
+			return decider.decide(this, whatCanIDo.getPossibleActions(this));
 		}
+		return null;
 	}
 
 	public void die(String reason) {
