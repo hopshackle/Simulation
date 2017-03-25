@@ -17,7 +17,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	private boolean useAVDForRollout = getProperty("MonteCarloActionValueRollout", "false").equals("true");
 	private boolean useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
 	private boolean reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
-	private boolean trainRolloutDeciderOverGames;
+	private boolean trainRolloutDeciderOverGames, trainRolloutDeciderUsingAllPlayerExperiences;
 	private String sweepMethodology = getProperty("MonteCarloSweep", "terminal");
 	private int sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
 	private boolean singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
@@ -145,6 +145,15 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 		if (trainRolloutDeciderOverGames) {
 			treeProcessor.processTree(tree, currentPlayer);
+			if (trainRolloutDeciderUsingAllPlayerExperiences) {
+				for (A p : game.getAllPlayers()) {
+					Decider<A> decider = p.getDecider();
+					if (decider != this && decider instanceof MCTSMasterDecider<?>) {
+						MCTSMasterDecider<A> otherD = (MCTSMasterDecider<A>) decider;
+						otherD.treeProcessor.processTree(tree, currentPlayer);
+					}
+				}
+			}
 		}
 		if (sweepMethodology.equals("terminal")) {
 			sweep(tree);
@@ -155,7 +164,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		agent.log(tree.getStatisticsFor(currentState).toString(debug));
 		int[] atDepth = tree.getDepthsFrom(currentState.getAsString());
 		agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
-		agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[8], atDepth[20]));
+		agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
 
 		ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions);
 		if (best == null) {
@@ -205,6 +214,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
 		singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
 		trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
+		trainRolloutDeciderUsingAllPlayerExperiences = getProperty("MonteCarloTrainRolloutDeciderFromAllPlayers", "false").equals("true");
 		treeProcessor = new MCTreeProcessor<A>(dp);
 	}
 

@@ -200,7 +200,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		case FINISHED:
 		case PLANNED:
 		case CANCELLED:
-			throw new InvalidStateTransition("Cannot start() from " + currentState);
+			throw new InvalidStateTransition("Cannot run() from " + currentState);
 		case EXECUTING:
 			endTime = world.getCurrentTime();
 			doAdmin();
