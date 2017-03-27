@@ -69,7 +69,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
 		if (chosenDuration > availableTime && action != null) {
 			action = null;
-		} else {
+		} else if (action != null) {
 			AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, 
 					this, HopshackleUtilities.convertList(possibleActions));
 			action.eventDispatch(learningEvent);

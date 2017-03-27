@@ -227,7 +227,7 @@ public class World extends Location {
 		return !isAlive;
 	}
 
-	public void recordAction(Action action) {
+	public void recordAction(Action<?> action) {
 		if (actionRecorder != null)
 			actionRecorder.recordAction(action);
 	}

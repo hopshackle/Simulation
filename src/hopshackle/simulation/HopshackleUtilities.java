@@ -8,7 +8,7 @@ public class HopshackleUtilities {
 
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	public static String newline = System.getProperty("line.separator");
-	
+
 	public static <T> List<T> cloneList(Collection<T> listToClone) {
 		List<T> retValue = new ArrayList<T>();
 		if (listToClone == null) return retValue;
@@ -29,6 +29,15 @@ public class HopshackleUtilities {
 	public static <T> List<T> listFromInstance(T instance) {
 		List<T> retList = new ArrayList<T>();
 		retList.add(instance);
+		return retList;
+	}
+
+	@SafeVarargs
+	public static <T> List<T> listFromInstances(T... instances) {
+		List<T> retList = new ArrayList<T>();
+		for (T i : instances) {
+			if (i != null && !retList.contains(i)) retList.add(i);
+		}
 		return retList;
 	}
 
@@ -146,7 +155,7 @@ public class HopshackleUtilities {
 		}
 		return retValue.toString();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static <A, B> List<B> convertList(List<A> input) {
 		List<B> retValue = new ArrayList<B>();

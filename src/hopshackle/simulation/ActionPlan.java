@@ -56,13 +56,13 @@ public class ActionPlan {
 				}
 			}
 			if (willFitInPlan) {
+				newAction.agree(agent);
+				actionQueue.add(newAction);
 				for (Action a : overriddenActions) {
 					a.reject(agent);
 					// TODO: currently all agents accept/reject when the action is created
 					// this will ultimately need to change for asynchronous decisions
 				}
-				newAction.agree(agent);
-				actionQueue.add(newAction);
 			}
 		}
 	}

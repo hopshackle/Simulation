@@ -105,6 +105,10 @@ public abstract class Action<A extends Agent> implements Delayed {
 		}
 		plannedStartTime = world.getCurrentTime() + startOffset;
 		plannedEndTime = plannedStartTime + duration ;
+		if (startOffset > 0) {
+		System.out.println(plannedStartTime + " : " + startOffset);
+		System.out.println(type);
+		}
 		if (recordAction) world.recordAction(this);
 	}
 
@@ -145,7 +149,6 @@ public abstract class Action<A extends Agent> implements Delayed {
 			updateAgreement(a, false);
 			AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_REJECTED, this);
 			eventDispatch(learningEvent);
-			a.actionPlan.actionQueue.remove(this);
 			break;
 		default:
 			a.log("Attempts to reject Action: " + this + " irrelevant from " + currentState + " for " + a);
@@ -238,9 +241,9 @@ public abstract class Action<A extends Agent> implements Delayed {
 					AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_CANCELLED, this);
 					eventDispatch(learningEvent);
 				}
-				a.actionPlan.actionCompleted(this);
-				a.maintenance();
 			}
+			a.actionPlan.actionCompleted(this);
+			a.maintenance();
 		}
 	}
 
