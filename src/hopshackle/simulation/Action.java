@@ -268,7 +268,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 	public long getDelay(TimeUnit tu) {
 		switch (getState()) {
 		case EXECUTING:
-			return tu.convert(getEndTime() - world.getCurrentTime(), TimeUnit.MILLISECONDS);
+			return tu.convert(getEndTime() - world.getCurrentTime() - 1, TimeUnit.MILLISECONDS);
 		default:
 			return tu.convert(getStartTime() - world.getCurrentTime(), TimeUnit.MILLISECONDS);
 		}
@@ -315,6 +315,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 			changeState(State.CANCELLED);
 			endTime = world.getCurrentTime();
 		}
+//		System.out.println( actor + " cancelling " + this);
 		delete();
 		doCleanUp();
 		doNextDecision();

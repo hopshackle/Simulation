@@ -49,6 +49,7 @@ public class ActionPlan {
 					if ((a.getState() != Action.State.EXECUTING) && actionPolicy.getValue(a, agent) < newActionValue) {
 						overriddenActions.add(a);
 					} else {
+	//					System.out.println(agent + " rejects " + this);
 						newAction.reject(agent);
 						willFitInPlan = false;
 						break;

@@ -246,4 +246,14 @@ public class ActionTests {
 		assertTrue(allAgents.get(0).isDead());
 		assertTrue(allAgents.get(0).getNextAction() == null);
 	}
+	@Test
+	public void runProcessedBeforeStartOnSameTime() {
+		TestAction a = taf.factory(1, 1, 0, 1000);
+		TestAction b = taf.factory(1, 1, 1000, 1000);
+		a.addToAllPlans();
+		b.addToAllPlans();
+		assertEquals(a.compareTo(b), -1000);
+		a.start();
+		assertEquals(a.compareTo(b), -1);
+	}
 }

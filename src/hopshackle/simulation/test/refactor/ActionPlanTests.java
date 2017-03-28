@@ -135,6 +135,17 @@ public class ActionPlanTests {
 		assertEquals(two.getExecutedActions().size(), 0);
 		assertEquals(three.getExecutedActions().size(), 0);
 	}
+	
+	@Test
+	public void cancelledActionDoesNotAffectOverlapCalculations() {
+		one.setDecider(new HardCodedDecider<TestAgent>(TestActionEnum.LEFT));
+		TestAction a = taf.factory(2, 1, 0, 1000);
+		a.addToAllPlans();
+		assertTrue(one.getNextAction().getType() == TestActionEnum.TEST);
+		a.reject(two);
+		assertTrue(one.getNextAction().getType() == TestActionEnum.LEFT);
+	}
+	
 	@Test
 	public void purgeActionsRemovesAllPROPOSEDAndPLANNEDActionsFromQueue() {
 		TestAction a = taf.factory(2, 1, 500, 1000);
