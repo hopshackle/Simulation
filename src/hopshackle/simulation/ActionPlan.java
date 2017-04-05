@@ -1,9 +1,8 @@
 package hopshackle.simulation;
-
 import java.util.*;
 
 public class ActionPlan {
-	
+
 	public static long timeUntilAllAvailable(List<? extends Agent> agents) {
 		long retValue = 0;
 		for (Agent a : agents) {
@@ -11,14 +10,14 @@ public class ActionPlan {
 		}
 		return retValue;
 	}
-	
+
 	private static Policy<Action<?>> defaultActionPolicy = new Policy<Action<?>>("action") {
 		@Override
 		public double getValue(Action<?> action, Agent agent) {
 			return 0.0;
 		}
 	};
-	
+
 	protected Agent agent;
 	protected PriorityQueue<Action<?>> actionQueue = new PriorityQueue<Action<?>>();
 	protected List<Action<?>> executedActions = new ArrayList<Action<?>>();
@@ -30,11 +29,11 @@ public class ActionPlan {
 		long currentTime = agent.getWorld().getCurrentTime();
 		long timeToGo = Long.MAX_VALUE;
 		for (Action<?> a : actionQueue) {
-			timeToGo = Math.min(timeToGo, a.getStartTime() - currentTime);
+			if (!a.isDeleted()) timeToGo = Math.min(timeToGo, a.getStartTime() - currentTime);
 		}
 		return timeToGo;	
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public synchronized void addAction(Action newAction) {
 		if (!agent.isDead() && (agent.getWorld() != null) && newAction != null) {
@@ -49,7 +48,7 @@ public class ActionPlan {
 					if ((a.getState() != Action.State.EXECUTING) && actionPolicy.getValue(a, agent) < newActionValue) {
 						overriddenActions.add(a);
 					} else {
-	//					System.out.println(agent + " rejects " + this);
+						//					System.out.println(agent + " rejects " + newAction);
 						newAction.reject(agent);
 						willFitInPlan = false;
 						break;
@@ -67,18 +66,7 @@ public class ActionPlan {
 			}
 		}
 	}
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void addActionToAllPlans(Action newAction) {
-		if (agent.getWorld() != null && newAction != null) {
-			List<Agent> allAgents = new ArrayList<Agent>();
-			allAgents.addAll(newAction.mandatoryActors);
-			allAgents.addAll(newAction.optionalActors);
-			for (Agent participant : allAgents) {
-				participant.actionPlan.addAction(newAction);
-			}
-			agent.getWorld().addAction(newAction);
-		}
-	}
+
 	private boolean overlap(Action<?> a1, Action<?> a2) {
 		// two actions do not overlap iff the one that starts first finishes before the later one starts
 		// otherwise there is an overlap
@@ -90,7 +78,7 @@ public class ActionPlan {
 		}
 		return !(earlier.getEndTime() <= later.getStartTime());
 	}
-	
+
 	public void actionCompleted(Action<?> oldAction) {
 		if (oldAction != null) {
 			actionQueue.remove(oldAction);
@@ -105,8 +93,21 @@ public class ActionPlan {
 			a.reject(agent, overrideExecuting);
 		}
 	}
+	/*
+	 * Only used for testing
+	 */
 	public Action<?> getNextAction() {
-		return actionQueue.peek();
+		Action<?> retValue = null;
+		do {
+			retValue = actionQueue.peek();
+			if (retValue != null) {
+				if (retValue.getState() == Action.State.CANCELLED || retValue.getState() == Action.State.FINISHED) {
+					actionCompleted(retValue);
+					retValue = null;
+				}
+			}
+		} while (retValue == null && !actionQueue.isEmpty());
+		return retValue;
 	}
 	public Action<?> getLastAction() {
 		if (!executedActions.isEmpty()) 
@@ -134,13 +135,22 @@ public class ActionPlan {
 		}
 		return retValue.toString();
 	}
-	
+
 	public boolean contains(ActionEnum<?> forwardAction) {
 		for (Action<?> a : actionQueue) {
 			if (a.actionType == forwardAction)
 				return true;
 		}
 		return false;
+	}
+	public static int getNextAvailableSlot(List<? extends Agent> requiredAgents) {
+		int retValue = 0;
+		for (Agent a : requiredAgents) {
+			int endTime = (int) a.getActionPlan().timeToEndOfQueue();
+			if (a.getActionPlan().timeToEndOfQueue() > retValue)
+				retValue = endTime;
+		}
+		return retValue;
 	}
 }
 

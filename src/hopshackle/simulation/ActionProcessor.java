@@ -167,11 +167,13 @@ public class ActionProcessor {
 							startTime = System.currentTimeMillis();
 
 							switch (currentAction.getState()) {
-							case PROPOSED:
+						case PROPOSED:
 								updateWorldTime(currentAction.getStartTime());
 								currentAction.cancel(); // To late
 							case FINISHED:
 							case CANCELLED:
+					//			System.out.println("Running " + currentAction + " in state " + currentAction.getState() + " for " + currentAction.getActor());
+								currentAction.run(); 	// for clean up
 								break;
 							case PLANNED:
 								updateWorldTime(currentAction.getStartTime());

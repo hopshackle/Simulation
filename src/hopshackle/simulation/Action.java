@@ -64,7 +64,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 
 	private static AtomicLong idFountain = new AtomicLong(1);
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
-	
+
 	protected List<A> mandatoryActors;
 	protected List<A> optionalActors;
 	protected Map<A, Boolean> agentAgreement = new HashMap<A, Boolean>();
@@ -105,10 +105,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		}
 		plannedStartTime = world.getCurrentTime() + startOffset;
 		plannedEndTime = plannedStartTime + duration ;
-		if (startOffset > 0) {
-		System.out.println(plannedStartTime + " : " + startOffset);
-		System.out.println(type);
-		}
+
 		if (recordAction) world.recordAction(this);
 	}
 
@@ -135,7 +132,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		reject(a, false);
 	}
 	public void reject(A a, boolean overrideExecuting) {
-		
+
 		switch (currentState) {
 		case EXECUTING:
 			if (overrideExecuting) {
@@ -170,6 +167,10 @@ public abstract class Action<A extends Agent> implements Delayed {
 				changeState = false;
 			}
 		}
+		if (optionalActors.contains(a) && choice == false) {
+			optionalActors.remove(a);
+			a.actionPlan.actionCompleted(this);
+		}
 		if (changeState) changeState(State.PLANNED);
 	}
 
@@ -184,9 +185,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 	public final void start() {
 		switch (currentState) {
 		case PROPOSED:
-		case FINISHED:
 		case EXECUTING:
-		case CANCELLED:
 			throw new InvalidStateTransition("Cannot start() from " + currentState);
 		case PLANNED:
 			startTime = world.getCurrentTime();
@@ -194,30 +193,35 @@ public abstract class Action<A extends Agent> implements Delayed {
 			plannedEndTime = startTime + duration;
 			changeState(State.EXECUTING);
 			initialisation();
+			if (!isDeleted()) break;
+		case FINISHED:
+		case CANCELLED:
+			doCleanUp();
+			doNextDecision();
 		}
 	}
-	
+
 	public final void run() {
 		switch (currentState) {
 		case PROPOSED:
-		case FINISHED:
 		case PLANNED:
-		case CANCELLED:
 			throw new InvalidStateTransition("Cannot run() from " + currentState);
 		case EXECUTING:
 			endTime = world.getCurrentTime();
 			doAdmin();
 			doStuff();
 			changeState(State.FINISHED);
+		case CANCELLED:
+		case FINISHED:
 			doCleanUp();
 			doNextDecision();
 		}
 	}
 
 	protected void initialisation() {
-		
+
 	}
-	
+
 	protected void doAdmin() {
 
 	}
@@ -305,7 +309,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 			return plannedStartTime;
 		}
 	}
-	
+
 	public boolean isDeleted() {
 		return (currentState == State.CANCELLED);
 	}
@@ -315,10 +319,10 @@ public abstract class Action<A extends Agent> implements Delayed {
 			changeState(State.CANCELLED);
 			endTime = world.getCurrentTime();
 		}
-//		System.out.println( actor + " cancelling " + this);
+		//	System.out.println( actor + " cancelling " + this);
 		delete();
-		doCleanUp();
-		doNextDecision();
+		//		doCleanUp();
+		//		doNextDecision();
 	}
 
 	protected void delete() {
@@ -361,7 +365,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		return uniqueId;
 	}
 	@Override
-    public int hashCode() {
+	public int hashCode() {
 		return (int) uniqueId;
 	}
 	@Override
@@ -372,7 +376,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 			return false;
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return actionType.toString();
@@ -393,10 +397,10 @@ public abstract class Action<A extends Agent> implements Delayed {
 	public A getNextActor() {
 		return nextActor;
 	}
-	
+
 	public boolean isFollowOnAction() {
 		return hasNoAssociatedDecision;
 	}
 
-	
+
 }

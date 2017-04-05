@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import org.omg.CORBA.portable.RemarshalException;
+
 /*
  * The two methods not implemented are:
  * 	valueOption
@@ -59,21 +61,28 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	@Override
 	public Action<A> decide(A decidingAgent, List<ActionEnum<A>> possibleActions) {
-		ActionEnum<A> decisionMade = makeDecision(decidingAgent, possibleActions);
+		List<ActionEnum<A>> remainingDecisions = HopshackleUtilities.cloneList(possibleActions);
 		Action<A> action = null;
-		long chosenDuration = 0;
-		long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
-		if (decisionMade != null)
-			action = decisionMade.getAction(decidingAgent);
-		if (action != null) 
-			chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
-		if (chosenDuration > availableTime && action != null) {
-			action = null;
-		} else if (action != null) {
+		do {
+			ActionEnum<A> decisionMade = makeDecision(decidingAgent, remainingDecisions);
+			long chosenDuration = 0;
+			long availableTime = decidingAgent.actionPlan.timeToNextActionStarts();
+			if (decisionMade != null)
+				action = decisionMade.getAction(decidingAgent);
+			if (action != null) 
+				chosenDuration = action.getEndTime() - decidingAgent.world.getCurrentTime();
+			if (chosenDuration > availableTime && action != null) {
+				action = null;
+			} else if (action != null) {
+				action.addToAllPlans();
+			} 
+			remainingDecisions.remove(decisionMade);
+		} while (action != null && action.isDeleted() && !remainingDecisions.isEmpty());
+		
+		if (action != null) {
 			AgentEvent learningEvent = new AgentEvent(decidingAgent, AgentEvent.Type.DECISION_TAKEN, action, 
-					this, HopshackleUtilities.convertList(possibleActions));
+					this, HopshackleUtilities.convertList(remainingDecisions));
 			action.eventDispatch(learningEvent);
-			decidingAgent.actionPlan.addActionToAllPlans(action);
 		}
 		return action;
 	}
@@ -179,7 +188,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		}
 		return retValue;
 	}
-	
+
 	protected List<Double> getNormalisedBoltzmannValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent){
 		double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		return getNormalisedBoltzmannValuesPerOption(optionList, decidingAgent, temperature);
@@ -281,7 +290,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			return SimProperties.getDeciderProperties("GLOBAL");
 		return decProp;
 	}
-	
+
 	public double getPropertyAsDouble(String prop, String defaultValue) {
 		if (decProp == null) {
 			return SimProperties.getPropertyAsDouble(prop, defaultValue);
