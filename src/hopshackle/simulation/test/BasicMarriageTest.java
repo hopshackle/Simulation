@@ -250,19 +250,26 @@ public class BasicMarriageTest {
 		teacher.registerAgent(femaleAgent2);
 		teacher.registerAgent(maleAgent1);
 		femaleAgent2.setDecider(baseDecider);
-		femaleAgent2.decide();	
+		femaleAgent2.decide();	// Chooses REST for 0-1000
+		femaleAgent2.getNextAction().start();
 		ExperienceRecord<BasicAgent> initialFemaleER = teacher.getExperienceRecords(femaleAgent2).get(0);
 		assertTrue(initialFemaleER.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
 		maleAgent1.setDecider(baseDecider);
 		assertTrue(initialFemaleER.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
 		BasicAction lookForPartner = new LookForPartner(maleAgent1);
 		world.setCurrentTime(600l); // otherwise we have time to REST again
-		run(lookForPartner);
+		run(lookForPartner); // sets Marry for 1100-2100
 		BasicAction marryAction = (BasicAction) maleAgent1.getActionPlan().getNextAction();
 		ExperienceRecord<BasicAgent> femaleMarryER = teacher.getExperienceRecords(femaleAgent2).get(1);
 		assertTrue(femaleMarryER.getActionTaken().equals(marryAction));
 		assertTrue(marryAction instanceof Marry);
-		run(marryAction); 	// this agrees for all participants, then start, then run
+		assertTrue(marryAction.getState() == Action.State.PLANNED);
+		assertTrue(initialFemaleER.getActionTaken().getState() == Action.State.EXECUTING);
+		femaleAgent2.getNextAction().run();
+		assertTrue(initialFemaleER.getActionTaken().getState() == Action.State.FINISHED);
+		marryAction.start();
+		marryAction.run();
+		// this agrees for all participants, then start, then run
 		// male will decide after action execution. Decision should bind spouse as well.
 		// The cancellation of the unexecuted female action will move ER to ACTION_COMPLETED
 		// and then when female agrees to male action, this creates a new dummy ER, which
@@ -270,6 +277,9 @@ public class BasicMarriageTest {
 		// The same thing happens with the Marry action: Marry.run() should move to ACTION_COMPLETED
 		// Then agreement to the next male action takes us to NEXT_ACTION_TAKEN
 		assertTrue(initialFemaleER.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
+		assertTrue(marryAction.getState() == Action.State.FINISHED);
+		System.out.println(femaleMarryER.getState());
+		assertEquals(teacher.getExperienceRecords(femaleAgent2).size(), 3);
 		assertTrue(femaleMarryER.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
 		BasicAction sa = (BasicAction) maleAgent1.getActionPlan().getNextAction();
 		assertEquals(sa.getAllConfirmedParticipants().size(), 2);
@@ -346,8 +356,7 @@ public class BasicMarriageTest {
 	}
 	
 	private void run(BasicAction a) {
-		for (BasicAgent participant : a.getAllInvitedParticipants())
-			a.agree(participant);
+		a.addToAllPlans();
 		a.start();
 		a.run();
 	}

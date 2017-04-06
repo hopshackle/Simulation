@@ -142,8 +142,10 @@ public class ActionPlanTests {
 		TestAction a = taf.factory(2, 1, 0, 1000);
 		a.addToAllPlans();
 		assertTrue(one.getNextAction().getType() == TestActionEnum.TEST);
+		assertEquals(one.getActionPlan().timeToNextActionStarts(), 0);
 		a.reject(two);
-		assertTrue(one.getNextAction().getType() == TestActionEnum.LEFT);
+		assertTrue(one.getNextAction() == null);
+		assertEquals(one.getActionPlan().timeToNextActionStarts(), Long.MAX_VALUE);
 	}
 	
 	@Test

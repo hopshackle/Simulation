@@ -278,15 +278,20 @@ public class ActionLearningTests {
 		erc.registerAgent(allAgents.get(1));
 		TestAction twoParticipants = taf.factory(2, 0, 0, 1000);
 		twoParticipants.addToAllPlans();
-		twoParticipants.agree(testAgent);
+//		twoParticipants.agree(testAgent);
 		assertEquals(teacher.eventsReceived.size(), 0);
 		ExperienceRecord<TestAgent> er1 = erc.getExperienceRecords(testAgent).get(0);
 		ExperienceRecord<TestAgent> er2 = erc.getExperienceRecords(allAgents.get(1)).get(0);
 		assertTrue(er1.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
 		assertTrue(er2.getState() == ExperienceRecord.ERState.DECISION_TAKEN);
 		twoParticipants.reject(allAgents.get(1));
+		System.out.println(er1.getState());
+		System.out.println(er2.getState());
+		assertTrue(er1.getState() == ExperienceRecord.ERState.ACTION_COMPLETED);
+		assertTrue(er2.getState() == ExperienceRecord.ERState.ACTION_COMPLETED);
+		twoParticipants.doNextDecision();
 		assertTrue(er1.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
-		assertTrue(er2.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);	
+		assertTrue(er2.getState() == ExperienceRecord.ERState.NEXT_ACTION_TAKEN);
 		assertEquals(teacher.eventsReceived.size(), 2);
 	}
 	

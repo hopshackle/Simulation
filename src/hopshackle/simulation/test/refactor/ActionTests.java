@@ -144,11 +144,14 @@ public class ActionTests {
 		t.run();
 		t.run();
 	}
-	@Test (expected = InvalidStateTransition.class)
+	@Test
 	public void actionCannotBeFinishedFromCANCELLED() {
 		TestAction t = taf.factory(1, 0, 0, 0);
+		assertTrue(t.getState() == Action.State.PROPOSED);
 		t.reject(allAgents.get(0));
+		assertTrue(t.getState() == Action.State.CANCELLED);
 		t.run();
+		assertTrue(t.getState() == Action.State.CANCELLED);
 	}
 	@Test
 	public void actionCanBeCANCELLEDFromPROPOSEDorPLANNED() {
@@ -223,19 +226,7 @@ public class ActionTests {
 		assertEquals(allAgents.get(1).decisionsTaken, 1);
 		assertEquals(allAgents.get(1).getActionPlan().timeToEndOfQueue(), 1000);
 	}
-	@Test
-	public void cancellingAnEXECUTINGActionTriggersADecisionToo() {
-		TestAction a = taf.factory(1, 1, 0, 1000);
-		a.addToAllPlans();
-		a.start();
-		assertEquals(allAgents.get(0).decisionsTaken, 0);
-		assertEquals(allAgents.get(0).getActionPlan().timeToEndOfQueue(), 1000);
-		a.cancel();
-		assertEquals(allAgents.get(0).decisionsTaken, 1);
-		assertEquals(allAgents.get(0).getActionPlan().timeToEndOfQueue(), 1000);
-		assertEquals(allAgents.get(1).decisionsTaken, 1);
-		assertEquals(allAgents.get(1).getActionPlan().timeToEndOfQueue(), 1000);
-	}
+
 	@Test
 	public void dyingWhenActionIsExecutingPurgesQueue() {
 		TestAction a = taf.factory(1, 1, 0, 1000);

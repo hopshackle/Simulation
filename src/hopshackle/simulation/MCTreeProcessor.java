@@ -1,22 +1,26 @@
 package hopshackle.simulation;
 
+import hopshackle.utilities.*;
+
 import java.util.*;
 
+import org.encog.ml.data.MLDataPair;
 import org.encog.neural.data.basic.*;
 
 public class MCTreeProcessor<A extends Agent> {
 
 	private int minVisits, maxNeurons;
-	private boolean oneHot, controlSignal;
+	private boolean oneHot, controlSignal, logisticModel;
 	private DeciderProperties properties;
 	private List<double[]> inputData;
 	private List<double[]> outputData;
 	private List<ActionEnum<A>> actionsInOutputLayer = new ArrayList<ActionEnum<A>>();
-//	private Map<ActionEnum<A>, Integer> actionCount = new HashMap<ActionEnum<A>, Integer>();
+	//	private Map<ActionEnum<A>, Integer> actionCount = new HashMap<ActionEnum<A>, Integer>();
 
 	public MCTreeProcessor(DeciderProperties prop) {
 		oneHot = prop.getProperty("MonteCarloOneHotRolloutTraining", "false").equals("true");
 		controlSignal = prop.getProperty("NeuralControlSignal", "false").equals("true");
+		logisticModel = prop.getProperty("MonteCarloRolloutLogisticModel", "false").equals("true");
 		minVisits = prop.getPropertyAsInteger("MonteCarloMinVisitsForRolloutTraining", "50");
 		maxNeurons = prop.getPropertyAsInteger("NeuralMaxOutput", "100");
 		properties = prop;
@@ -47,7 +51,7 @@ public class MCTreeProcessor<A extends Agent> {
 	protected double[] getOutputValuesAsArray(MCStatistics<A> stats, int refAgent) {
 		List<ActionEnum<A>> actionsInStats = stats.getPossibleActions();
 		ActionEnum<A> bestAction = stats.getBestAction(actionsInStats);	// this assumes refAgent is the same as stats.actingAgent
-//		actionCount.put(bestAction, actionCount.getOrDefault(bestAction, 0));
+		//		actionCount.put(bestAction, actionCount.getOrDefault(bestAction, 0));
 		double[] retValue = new double[actionsInOutputLayer.size()];
 		if (controlSignal)
 			for (int i = 0; i < retValue.length; i++) retValue[i] = Double.NaN;
@@ -77,6 +81,7 @@ public class MCTreeProcessor<A extends Agent> {
 			}
 			retValue = newRetValue;
 		}
+		if (!oneHot) retValue = Normalise.range(retValue, 0, 1);
 		return retValue;
 	}
 
@@ -94,16 +99,51 @@ public class MCTreeProcessor<A extends Agent> {
 		return retValue;
 	}
 
-	public NeuralDecider<A> generateDecider(StateFactory<A> stateFactory, double scaleFactor) {
-		NeuralDecider<A> retValue = new NeuralDecider<A>(stateFactory, scaleFactor);
-		retValue.injectProperties(properties);
-		for (ActionEnum<A> action : actionsInOutputLayer) {
-			retValue.addNewAction(action);
-			// we inject the actions in the same order as the training data (or else all hell will break loose)
-		}
+	public Decider<A> generateDecider(StateFactory<A> stateFactory, double scaleFactor) {	
+		Decider<A> retValue;
 		BasicNeuralDataSet trainingData = finalTrainingData();
-		double error = retValue.teach(trainingData);
-		System.out.println(String.format("Trained decider with %s states, %s options and error of %.4f", trainingData.size(), actionsInOutputLayer.size(), error));
+		if (logisticModel) {
+			LogisticDecider<A> ld = new LogisticDecider<A>(stateFactory);
+			ld.injectProperties(properties);
+			int count = 0;
+			long startTime = System.currentTimeMillis();
+			for (ActionEnum<A> action : actionsInOutputLayer) {
+				LogisticRegression regressor = new LogisticRegression(trainingData.getInputSize());
+				regressor.train(trainingData, count);
+				ld.addRegressor(action, regressor);
+				count++;
+				// we inject the actions in the same order as the training data (or else all hell will break loose)
+			}
+			long midTime = System.currentTimeMillis();
+			double totalError = 0.0;
+			for (MLDataPair d : trainingData.getData()) {
+				double[] input = d.getInputArray();
+				double[] target = d.getIdealArray();
+				double[] estimate = new double[d.getIdealArray().length];
+				for (int i = 0; i < actionsInOutputLayer.size(); i++)
+					estimate[i] = ld.getRegressor(actionsInOutputLayer.get(i)).classify(input);
+				double error = 0.0;
+				for (int i = 0; i < target.length; i++) {
+					error += Math.pow((target[i] - estimate[i]), 2);
+				}
+				totalError = totalError + error / (double) target.length;
+			}
+			long endTime = System.currentTimeMillis();
+			totalError = totalError / (double) trainingData.getRecordCount();
+			System.out.println(String.format("Trained logistic decider with %s states, %s options, and error %.4f (Training: %ds, Validation: %ds)", 
+					trainingData.size(), actionsInOutputLayer.size(), totalError, (midTime-startTime)/1000, (endTime-midTime)/1000));
+			retValue = ld;
+		} else {
+			NeuralDecider<A> nd = new NeuralDecider<A>(stateFactory, scaleFactor);
+			nd.injectProperties(properties);
+			for (ActionEnum<A> action : actionsInOutputLayer) {
+				nd.addNewAction(action);
+				// we inject the actions in the same order as the training data (or else all hell will break loose)
+			}
+			double error = nd.teach(trainingData);
+			System.out.println(String.format("Trained neural decider with %s states, %s options and error of %.4f", trainingData.size(), actionsInOutputLayer.size(), error));
+			retValue = nd;
+		}
 		return retValue;
 	}
 

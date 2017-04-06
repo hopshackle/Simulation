@@ -3,6 +3,7 @@ package hopshackle.simulation.test.refactor;
 import static org.junit.Assert.*;
 
 import java.util.*;
+
 import hopshackle.simulation.*;
 
 import org.encog.neural.data.basic.*;
@@ -189,7 +190,7 @@ public class MCTreeProcessorTest {
 	@Test
 	public void createNeuralDeciderFromData() {
 		processor.processTree(generateTree(), 1);	// this will put actions in order TEST, LEFT, RIGHT
-		NeuralDecider<TestAgent> nd = processor.generateDecider(stateFactory, 1.0);
+		NeuralDecider<TestAgent> nd = (NeuralDecider<TestAgent>) processor.generateDecider(stateFactory, 1.0);
 		State<TestAgent> agentState = stateFactory.getCurrentState(agent1);
 /*		String result = String.format("LEFT: %.2f, RIGHT: %.2f, TEST: %.2f",
 				nd.valueOption(TestActionEnum.LEFT, agentState),
@@ -206,7 +207,7 @@ public class MCTreeProcessorTest {
 		localProp.setProperty("NeuralShuffleData", "true");
 		processor = new TestMCTreeProcessor(localProp);
 		processor.processTree(generateTree(), 1);	// this will put actions in order TEST, LEFT, RIGHT
-		NeuralDecider<TestAgent> nd = processor.generateDecider(stateFactory, 1.0);
+		NeuralDecider<TestAgent> nd = (NeuralDecider<TestAgent>) processor.generateDecider(stateFactory, 1.0);
 		State<TestAgent> agentState = stateFactory.getCurrentState(agent1);
 /*		String result = String.format("LEFT: %.2f, RIGHT: %.2f, TEST: %.2f",
 				nd.valueOption(TestActionEnum.LEFT, agentState),
@@ -216,6 +217,23 @@ public class MCTreeProcessorTest {
 		assertEquals(nd.valueOption(TestActionEnum.RIGHT, agentState), -0.5, 0.01);
 		assertEquals(nd.valueOption(TestActionEnum.LEFT, agentState), 0.99, 0.01);
 		assertEquals(nd.valueOption(TestActionEnum.TEST, agentState), 0.0, 0.01);
+	}
+	
+	@Test
+	public void createLogisticDeciderFromData() {
+		localProp.setProperty("MonteCarloRolloutLogisticModel", "true");
+		processor = new TestMCTreeProcessor(localProp);
+		processor.processTree(generateTree(), 1);	// this will put actions in order TEST, LEFT, RIGHT
+		LogisticDecider<TestAgent> nd = (LogisticDecider<TestAgent>) processor.generateDecider(stateFactory, 1.0);
+	/*	String result = String.format("LEFT: %.2f, RIGHT: %.2f, TEST: %.2f",
+				nd.valueOption(TestActionEnum.LEFT, agent1),
+				nd.valueOption(TestActionEnum.RIGHT, agent1),
+				nd.valueOption(TestActionEnum.TEST, agent1));
+		System.out.println(result);  */
+		// values are rather screwy; but at least in correct rank order
+		assertEquals(nd.valueOption(TestActionEnum.RIGHT, agent1), 0.26, 0.01);
+		assertEquals(nd.valueOption(TestActionEnum.LEFT, agent1), 0.57, 0.01);
+		assertEquals(nd.valueOption(TestActionEnum.TEST, agent1), 0.37, 0.01);
 	}
 	
 	
@@ -256,7 +274,7 @@ public class MCTreeProcessorTest {
 		assertEquals(input[8], 0.0, 0.001);
 		assertEquals(output[0], -0.5, 0.001);
 		
-		NeuralDecider<TestAgent> nd = processor.generateDecider(stateFactory, 1.0);
+		NeuralDecider<TestAgent> nd = (NeuralDecider<TestAgent>) processor.generateDecider(stateFactory, 1.0);
 		State<TestAgent> agentState = stateFactory.getCurrentState(agent1);
 		String result = String.format("LEFT: %.2f, RIGHT: %.2f, TEST: %.2f",
 				nd.valueOption(TestActionEnum.LEFT, agentState),
@@ -273,7 +291,7 @@ public class MCTreeProcessorTest {
 		localProp.setProperty("MonteCarloOneHotRolloutTraining", "true");
 		processor = new TestMCTreeProcessor(localProp);
 		processor.processTree(generateTree(), 1);	// this will put actions in order TEST, LEFT, RIGHT
-		NeuralDecider<TestAgent> nd = processor.generateDecider(stateFactory, 1.0);
+		NeuralDecider<TestAgent> nd = (NeuralDecider<TestAgent>) processor.generateDecider(stateFactory, 1.0);
 		State<TestAgent> agentState = stateFactory.getCurrentState(agent1);
 /*		String result = String.format("LEFT: %.2f, RIGHT: %.2f, TEST: %.2f",
 				nd.valueOption(TestActionEnum.LEFT, agentState),

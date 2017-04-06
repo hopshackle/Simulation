@@ -251,10 +251,10 @@ public abstract class Action<A extends Agent> implements Delayed {
 		}
 	}
 
-	protected void doNextDecision() {
+	public void doNextDecision() {
 		List<A> allActors = HopshackleUtilities.cloneList(mandatoryActors);
 		allActors.addAll(optionalActors);
-		for (A actor : allActors) {		
+		for (A actor : allActors) {
 			AgentEvent learningEvent = new AgentEvent(actor, AgentEvent.Type.DECISION_STEP_COMPLETE, this);
 			eventDispatch(learningEvent);
 		}
@@ -319,6 +319,11 @@ public abstract class Action<A extends Agent> implements Delayed {
 			changeState(State.CANCELLED);
 			endTime = world.getCurrentTime();
 		}
+		for (A participant : getAllConfirmedParticipants()) {
+			AgentEvent learningEvent = new AgentEvent(participant, AgentEvent.Type.ACTION_REJECTED, this);
+			eventDispatch(learningEvent);
+		}
+
 		//	System.out.println( actor + " cancelling " + this);
 		delete();
 		//		doCleanUp();
@@ -354,6 +359,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 		if (actor.getWorld() != null) {
 			for (Agent participant : getAllInvitedParticipants()) {
 				participant.actionPlan.addAction(this);
+	//			System.out.println(participant + " adds " + this + " to plan");
 			}
 			actor.getWorld().addAction(this);
 		}

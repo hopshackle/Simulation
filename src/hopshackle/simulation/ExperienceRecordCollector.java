@@ -193,7 +193,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 
 	protected boolean processDecisionForAgent(A agent, Action<A> action) {
 		boolean passOnEvent = false;
-		//  agent.log("Processing Decision " + action);
+	//	  agent.log("Processing Decision " + action);
 		A referenceAgent = referenceAgents.getOrDefault(agent, agent);
 		List<ExperienceRecord<A>> tdArray = erListMap.get(referenceAgent);
 		ExperienceRecord<A> ERForActionReceived = null;
