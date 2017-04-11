@@ -2,10 +2,7 @@ package hopshackle.utilities;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 import org.encog.neural.data.basic.BasicNeuralDataSet;
 
@@ -34,9 +31,8 @@ public class LogisticRegression {
 	/*
 	 * n is the number of features 
 	 */
-	public LogisticRegression(int n) {
+	public LogisticRegression() {
 		this.rate = 0.0001;
-		weights = new double[n];
 	}
 
 	private static double sigmoid(double z) {
@@ -52,7 +48,7 @@ public class LogisticRegression {
 			double label = data.get(i).getIdealArray()[labelIndex];
 			convertedData.add(new Instance(label, input));
 		}
-		
+		weights = new double[data.getInputSize()];
 		train(convertedData);
 	}
 	

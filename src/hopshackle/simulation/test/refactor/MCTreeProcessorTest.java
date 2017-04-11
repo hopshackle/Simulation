@@ -25,8 +25,9 @@ public class MCTreeProcessorTest {
 	public void setUp() throws Exception {
 		leftRightOnly.remove(TestActionEnum.TEST);
 		localProp = SimProperties.getDeciderProperties("GLOBAL").clone();
+		localProp.setProperty("MonteCarloRolloutModel", "neural");
 		localProp.setProperty("MonteCarloMinVisitsForRolloutTraining", "1");
-		localProp.setProperty("MonteCarloOneHotRolloutTraining", "false");
+		localProp.setProperty("MonteCarloRolloutTarget", "basic");
 		localProp.setProperty("NeuralShuffleData", "false");
 		localProp.setProperty("NeuralMaxOutput", "5");
 		localProp.setProperty("NeuralControlSignal", "false");
@@ -101,7 +102,7 @@ public class MCTreeProcessorTest {
 	
 	@Test
 	public void outputValuesWithOneHotEncoding() {
-		localProp.setProperty("MonteCarloOneHotRolloutTraining", "true");
+		localProp.setProperty("MonteCarloRolloutTarget", "oneHot");
 		processor = new TestMCTreeProcessor(localProp);
 		MCStatistics<TestAgent> stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 2, 0);
 		
@@ -221,7 +222,7 @@ public class MCTreeProcessorTest {
 	
 	@Test
 	public void createLogisticDeciderFromData() {
-		localProp.setProperty("MonteCarloRolloutLogisticModel", "true");
+		localProp.setProperty("MonteCarloRolloutModel", "logistic");
 		processor = new TestMCTreeProcessor(localProp);
 		processor.processTree(generateTree(), 1);	// this will put actions in order TEST, LEFT, RIGHT
 		LogisticDecider<TestAgent> nd = (LogisticDecider<TestAgent>) processor.generateDecider(stateFactory, 1.0);
@@ -288,7 +289,7 @@ public class MCTreeProcessorTest {
 	
 	@Test
 	public void createNeuralDeciderFromDataWithOneHotEncoding() {
-		localProp.setProperty("MonteCarloOneHotRolloutTraining", "true");
+		localProp.setProperty("MonteCarloRolloutTarget", "oneHot");
 		processor = new TestMCTreeProcessor(localProp);
 		processor.processTree(generateTree(), 1);	// this will put actions in order TEST, LEFT, RIGHT
 		NeuralDecider<TestAgent> nd = (NeuralDecider<TestAgent>) processor.generateDecider(stateFactory, 1.0);

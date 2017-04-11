@@ -39,7 +39,7 @@ public class ExperienceRecordTest {
 		possibleActions.add(BasicActions.FARM);
 		possibleActions.add(BasicActions.FIND_UNKNOWN);
 
-		basicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory, possibleActions);
+		basicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory);
 		basicDecider.injectProperties(localProp);
 		agent.setDecider(basicDecider);
 	}

@@ -10,7 +10,7 @@ import org.encog.neural.data.basic.*;
 public class MCTreeProcessor<A extends Agent> {
 
 	private int minVisits, maxNeurons;
-	private boolean oneHot, controlSignal, logisticModel;
+	private boolean oneHot, controlSignal, logisticModel, linearModel, normalise;
 	private DeciderProperties properties;
 	private List<double[]> inputData;
 	private List<double[]> outputData;
@@ -18,9 +18,11 @@ public class MCTreeProcessor<A extends Agent> {
 	//	private Map<ActionEnum<A>, Integer> actionCount = new HashMap<ActionEnum<A>, Integer>();
 
 	public MCTreeProcessor(DeciderProperties prop) {
-		oneHot = prop.getProperty("MonteCarloOneHotRolloutTraining", "false").equals("true");
+		oneHot = prop.getProperty("MonteCarloRolloutTarget", "basic").equals("oneHot");
+		normalise = prop.getProperty("MonteCarloRolloutTarget", "basic").equals("normalise");
 		controlSignal = prop.getProperty("NeuralControlSignal", "false").equals("true");
-		logisticModel = prop.getProperty("MonteCarloRolloutLogisticModel", "false").equals("true");
+		logisticModel = prop.getProperty("MonteCarloRolloutModel", "neural").equals("logistic");
+		linearModel = prop.getProperty("MonteCarloRolloutModel", "neural").equals("linear");
 		minVisits = prop.getPropertyAsInteger("MonteCarloMinVisitsForRolloutTraining", "50");
 		maxNeurons = prop.getPropertyAsInteger("NeuralMaxOutput", "100");
 		properties = prop;
@@ -81,7 +83,7 @@ public class MCTreeProcessor<A extends Agent> {
 			}
 			retValue = newRetValue;
 		}
-		if (!oneHot) retValue = Normalise.range(retValue, 0, 1);
+		if (normalise) retValue = Normalise.range(retValue, 0, 1);
 		return retValue;
 	}
 
@@ -102,19 +104,31 @@ public class MCTreeProcessor<A extends Agent> {
 	public Decider<A> generateDecider(StateFactory<A> stateFactory, double scaleFactor) {	
 		Decider<A> retValue;
 		BasicNeuralDataSet trainingData = finalTrainingData();
-		if (logisticModel) {
+		if (linearModel) {
+			GeneralLinearQDecider<A> ld = new GeneralLinearQDecider<A>(stateFactory);
+			ld.injectProperties(properties);
+			int count = 0;
+			double totalError = 0.0;
+			for (ActionEnum<A> action : actionsInOutputLayer) {
+				LinearRegression regressor = LinearRegression.createFrom(trainingData, count);
+				ld.setWeights(action, regressor.getWeights());
+				count++;
+				totalError += regressor.getError();
+			}
+			System.out.println(String.format("Trained linear decider with %s states, %s options, and error %.4f", 
+					trainingData.size(), actionsInOutputLayer.size(), totalError / (double) trainingData.getIdealSize()));
+			retValue = ld;
+		} else if (logisticModel) {
 			LogisticDecider<A> ld = new LogisticDecider<A>(stateFactory);
 			ld.injectProperties(properties);
 			int count = 0;
-			long startTime = System.currentTimeMillis();
 			for (ActionEnum<A> action : actionsInOutputLayer) {
-				LogisticRegression regressor = new LogisticRegression(trainingData.getInputSize());
+				LogisticRegression regressor = new LogisticRegression();
 				regressor.train(trainingData, count);
 				ld.addRegressor(action, regressor);
 				count++;
 				// we inject the actions in the same order as the training data (or else all hell will break loose)
 			}
-			long midTime = System.currentTimeMillis();
 			double totalError = 0.0;
 			for (MLDataPair d : trainingData.getData()) {
 				double[] input = d.getInputArray();
@@ -128,10 +142,9 @@ public class MCTreeProcessor<A extends Agent> {
 				}
 				totalError = totalError + error / (double) target.length;
 			}
-			long endTime = System.currentTimeMillis();
 			totalError = totalError / (double) trainingData.getRecordCount();
-			System.out.println(String.format("Trained logistic decider with %s states, %s options, and error %.4f (Training: %ds, Validation: %ds)", 
-					trainingData.size(), actionsInOutputLayer.size(), totalError, (midTime-startTime)/1000, (endTime-midTime)/1000));
+			System.out.println(String.format("Trained logistic decider with %s states, %s options, and error %.4f", 
+					trainingData.size(), actionsInOutputLayer.size(), totalError));
 			retValue = ld;
 		} else {
 			NeuralDecider<A> nd = new NeuralDecider<A>(stateFactory, scaleFactor);

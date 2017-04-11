@@ -35,7 +35,7 @@ public class BasicMarriageTest {
 		actions.add(BasicActions.MARRY);
 		actions.add(BasicActions.LOOK_FOR_PARTNER);
 		StateFactory<BasicAgent> sf = new LinearStateFactory<BasicAgent>(variables);
-		baseDecider = new GeneralLinearQDecider<BasicAgent>(sf, actions);
+		baseDecider = new GeneralLinearQDecider<BasicAgent>(sf);
 		world = new World(null, "test", new SimpleWorldLogic<BasicAgent>(allActions));
 		world.setCalendar(new FastCalendar(0l));
 		ap = new TestActionProcessor(world);

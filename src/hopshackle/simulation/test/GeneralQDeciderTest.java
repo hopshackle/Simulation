@@ -176,7 +176,7 @@ public class GeneralQDeciderTest {
 class TestLinearQDecider extends GeneralLinearQDecider<Agent> {
 
 	public TestLinearQDecider(List<ActionEnum<Agent>> actions, List<GeneticVariable<Agent>> variables) {
-		super(new LinearStateFactory<Agent>(variables), actions);
+		super(new LinearStateFactory<Agent>(variables));
 	}
 
 	@Override

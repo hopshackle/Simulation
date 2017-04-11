@@ -14,12 +14,9 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 	protected int actionLength = 0;
 	public static String newline = System.getProperty("line.separator");
 
-	public GeneralLinearQDecider(StateFactory<A> stateFactory, List<ActionEnum<A>> actions) {
+	public GeneralLinearQDecider(StateFactory<A> stateFactory) {
 		super(stateFactory);
 		variableLength = stateFactory.getVariables().size();
-		for (ActionEnum<A> action : actions) {
-			getWeightsFor(action);
-		}
 	}
 
 	protected double[] getWeightsFor(ActionEnum<A> action) {

@@ -196,8 +196,8 @@ public class BasicRunWorld {
 
 		StateFactory<BasicAgent> stateFactory = new LinearStateFactory<BasicAgent>(variablesToUse);
 		w.registerWorldLogic(new SimpleWorldLogic<BasicAgent>(actionsToUse), "AGENT");
-		maleBasicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory, actionsToUse);
-		femaleBasicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory, actionsToUse);
+		maleBasicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory);
+		femaleBasicDecider = new GeneralLinearQDecider<BasicAgent>(stateFactory);
 		
 		femaleTeacher.registerDecider(femaleBasicDecider);
 		maleTeacher.registerDecider(maleBasicDecider);
