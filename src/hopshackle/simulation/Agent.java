@@ -91,6 +91,7 @@ public abstract class Agent extends Observable {
 	}
 
 	public void setDecider(Decider<?> decider) {
+		log("Setting Decider to " + decider);
 		this.decider = decider;
 	}
 

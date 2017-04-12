@@ -18,6 +18,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected String name = "DEFAULT";
 	protected boolean localDebug = false;
 	protected DeciderProperties decProp;
+	protected boolean absoluteDifferenceNoise;
 	protected double maxChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMinChance", "0.0");
 	protected double gamma = getPropertyAsDouble("Gamma", "0.95");
@@ -120,10 +121,10 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		List<Double> optionValues = valueOptions(optionList, decidingAgent);
 		double highestScore = Double.NEGATIVE_INFINITY;
 		for (int i = 0; i<optionList.size(); i++) {
-			if (localDebug) {
+			if (localDebug || decidingAgent.getDebugLocal()) {
 				if (!decidingAgent.getDebugLocal()) decidingAgent.setDebugLocal(true);
 				String message = String.format("Option %-20s has value %.3f", optionList.get(i).toString(), optionValues.get(i));
-				log(message);
+				if (localDebug) log(message);
 				decidingAgent.log(message);
 			}
 			if (optionValues.get(i) > highestScore) {
@@ -132,9 +133,9 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			}
 		}
 
-		if (localDebug) {
+		if (localDebug || decidingAgent.getDebugLocal()) {
 			String message = "Winning choice is " + winningChoice;
-			log(message);
+			if (localDebug) log(message);
 			decidingAgent.log(message);
 		}
 
@@ -205,30 +206,32 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			baseValue = 0.01;
 
 		if (temperature < 0.0001) temperature = 0.0001;
-		if (localDebug) {
+		if (localDebug || decidingAgent.getDebugLocal()) {
 			String message = "Base Value is " + baseValue;
-			log(message);
+			if (localDebug) log(message);
 			decidingAgent.log(message);
 		}
 
 		double sumOfActionValues = 0.0;
+		double maxValue = decidingAgent.getMaxScore();
 		for (int i = 0; i < optionList.size(); i++) {
 			double val = baseValuesPerOption.get(i) / baseValue / temperature;
+			if (absoluteDifferenceNoise) val = (baseValuesPerOption.get(i) - baseValue) / maxValue / temperature;
 			double boltzmannValue = Math.exp(val);
 			sumOfActionValues += boltzmannValue;
 			baseValuesPerOption.set(i, boltzmannValue);
-			if (localDebug) {
+			if (localDebug || decidingAgent.getDebugLocal()) {
 				String message = String.format("Option %d, %s, has weight %.4g", i, optionList.get(i).toString(), boltzmannValue);
-				log(message);
+				if (localDebug) log(message);
 				decidingAgent.log(message);
 			}
 		}
 		for (int i = 0; i < optionList.size(); i++) {
 			double normalisedValue = baseValuesPerOption.get(i) / sumOfActionValues;
 			baseValuesPerOption.set(i, normalisedValue);
-			if (localDebug) {
-				String message = String.format("Option %-20s has normalised value %.4g", optionList.get(i).toString(), normalisedValue);
-				log(message);
+			if (localDebug || decidingAgent.getDebugLocal()) {
+				String message = String.format("Option %-20s has normalised value %.3f", optionList.get(i).toString(), normalisedValue);
+				if (localDebug) log(message);
 				decidingAgent.log(message);
 			}
 		}
@@ -279,6 +282,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		decProp = dp;
 		maxChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 		minChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMinChance", "0.0");
+		absoluteDifferenceNoise = getProperty("BoltzmannValueDifference", "absolute").equals("absolute");
 		gamma = getPropertyAsDouble("Gamma", "0.95");
 		alpha = getPropertyAsDouble("Alpha", "0.05");
 		lambda = getPropertyAsDouble("Lambda", "0.001");

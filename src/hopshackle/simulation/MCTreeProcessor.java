@@ -12,9 +12,10 @@ public class MCTreeProcessor<A extends Agent> {
 	private int minVisits, maxNeurons;
 	private boolean oneHot, controlSignal, logisticModel, linearModel, normalise;
 	private DeciderProperties properties;
-	private List<double[]> inputData;
-	private List<double[]> outputData;
+	private LinkedList<double[]> inputData;
+	private LinkedList<double[]> outputData;
 	private List<ActionEnum<A>> actionsInOutputLayer = new ArrayList<ActionEnum<A>>();
+	private int windowSize = 1000;
 	//	private Map<ActionEnum<A>, Integer> actionCount = new HashMap<ActionEnum<A>, Integer>();
 
 	public MCTreeProcessor(DeciderProperties prop) {
@@ -25,9 +26,10 @@ public class MCTreeProcessor<A extends Agent> {
 		linearModel = prop.getProperty("MonteCarloRolloutModel", "neural").equals("linear");
 		minVisits = prop.getPropertyAsInteger("MonteCarloMinVisitsForRolloutTraining", "50");
 		maxNeurons = prop.getPropertyAsInteger("NeuralMaxOutput", "100");
+		windowSize = prop.getPropertyAsInteger("MonteCarloRolloutTrainingWindow", "1000");
 		properties = prop;
-		inputData = new ArrayList<double[]>();
-		outputData = new ArrayList<double[]>();
+		inputData = new LinkedList<double[]>();
+		outputData = new LinkedList<double[]>();
 	}
 
 	public void processTree(MonteCarloTree<A> tree, int refAgent) {
@@ -38,6 +40,14 @@ public class MCTreeProcessor<A extends Agent> {
 			double[] targetOutput = getOutputValuesAsArray(stats, refAgent);
 			outputData.add(targetOutput);
 		}
+		int currentSize = inputData.size();
+		if (currentSize > windowSize) {
+			do {
+				inputData.remove();
+				outputData.remove();
+			} while (inputData.size() > windowSize);
+		}
+		if (inputData.size() != outputData.size()) throw new AssertionError("Input and Output queues must be same size");
 	}
 
 	protected double[] convertStateAsStringToArray(String stringRepresentation) {
