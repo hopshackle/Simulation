@@ -23,6 +23,8 @@ public class ActionLearningTests {
 	public void setup() {
 		TestActionEnum.defaultMakeNextDecision = true;
 		localProp = SimProperties.getDeciderProperties("GLOBAL");
+		localProp.setProperty("RandomDeciderMaxChance", "0.0");
+		localProp.setProperty("RandomDeciderMinChance", "0.0");
 		w = new World(new SimpleWorldLogic<TestAgent>(actionList));
 		for (int i = 0; i < 10; i++) {
 			TestAgent a = new TestAgent(w);

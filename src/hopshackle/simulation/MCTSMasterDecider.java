@@ -215,7 +215,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
 		trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
 		trainRolloutDeciderUsingAllPlayerExperiences = getProperty("MonteCarloTrainRolloutDeciderFromAllPlayers", "false").equals("true");
-		treeProcessor = new MCTreeProcessor<A>(dp);
+		treeProcessor = new MCTreeProcessor<A>(dp, this.name);
 	}
 
 }

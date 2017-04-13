@@ -11,14 +11,16 @@ public class MCTreeProcessor<A extends Agent> {
 
 	private int minVisits, maxNeurons;
 	private boolean oneHot, controlSignal, logisticModel, linearModel, normalise;
+	private boolean debug = true;
 	private DeciderProperties properties;
 	private LinkedList<double[]> inputData;
 	private LinkedList<double[]> outputData;
 	private List<ActionEnum<A>> actionsInOutputLayer = new ArrayList<ActionEnum<A>>();
 	private int windowSize = 1000;
+	private String name;
 	//	private Map<ActionEnum<A>, Integer> actionCount = new HashMap<ActionEnum<A>, Integer>();
 
-	public MCTreeProcessor(DeciderProperties prop) {
+	public MCTreeProcessor(DeciderProperties prop, String nameForDeciders) {
 		oneHot = prop.getProperty("MonteCarloRolloutTarget", "basic").equals("oneHot");
 		normalise = prop.getProperty("MonteCarloRolloutTarget", "basic").equals("normalise");
 		controlSignal = prop.getProperty("NeuralControlSignal", "false").equals("true");
@@ -30,11 +32,13 @@ public class MCTreeProcessor<A extends Agent> {
 		properties = prop;
 		inputData = new LinkedList<double[]>();
 		outputData = new LinkedList<double[]>();
+		name = nameForDeciders + "_MTP";
 	}
 
 	public void processTree(MonteCarloTree<A> tree, int refAgent) {
 		for (String key : tree.getAllStatesWithMinVisits(minVisits)) {
 			MCStatistics<A> stats = tree.getStatisticsFor(key);
+			if (stats.getPossibleActions().size() < 2) continue;
 			double[] input = convertStateAsStringToArray(key);
 			inputData.add(input);
 			double[] targetOutput = getOutputValuesAsArray(stats, refAgent);
@@ -65,8 +69,7 @@ public class MCTreeProcessor<A extends Agent> {
 		ActionEnum<A> bestAction = stats.getBestAction(actionsInStats);	// this assumes refAgent is the same as stats.actingAgent
 		//		actionCount.put(bestAction, actionCount.getOrDefault(bestAction, 0));
 		double[] retValue = new double[actionsInOutputLayer.size()];
-		if (controlSignal)
-			for (int i = 0; i < retValue.length; i++) retValue[i] = Double.NaN;
+		for (int i = 0; i < retValue.length; i++) retValue[i] = Double.NaN;
 		for (ActionEnum<A> action : actionsInStats) {
 			double visits = stats.getVisits(action);
 			if (visits == 0) continue;
@@ -75,24 +78,7 @@ public class MCTreeProcessor<A extends Agent> {
 			if (oneHot && !action.equals(bestAction)) value = 0.0;
 			retValue = setValueForAction(action, retValue, value);
 		}
-		if (controlSignal) {
-			List<Integer> indicesToRemove = new ArrayList<Integer>();
-			for (int i = 0; i < retValue.length; i++) {
-				if (Double.isNaN(retValue[i])) {
-					indicesToRemove.add(i);
-				}
-			}
-			double[] newRetValue = new double[retValue.length - indicesToRemove.size()];
-			int removed = 0;
-			for (int i = 0; i < retValue.length; i++) {
-				if (indicesToRemove.contains(i)) {
-					removed++;
-				} else {
-					newRetValue[i-removed] = retValue[i];
-				}
-			}
-			retValue = newRetValue;
-		}
+
 		if (normalise) retValue = Normalise.range(retValue, 0, 1);
 		return retValue;
 	}
@@ -125,7 +111,7 @@ public class MCTreeProcessor<A extends Agent> {
 				count++;
 				totalError += regressor.getError();
 			}
-			System.out.println(String.format("Trained linear decider with %s states, %s options, and error %.4f", 
+			System.out.println(String.format("Trained " + name + " linear decider with %s states, %s options, and error %.4f", 
 					trainingData.size(), actionsInOutputLayer.size(), totalError / (double) trainingData.getIdealSize()));
 			retValue = ld;
 		} else if (logisticModel) {
@@ -153,7 +139,7 @@ public class MCTreeProcessor<A extends Agent> {
 				totalError = totalError + error / (double) target.length;
 			}
 			totalError = totalError / (double) trainingData.getRecordCount();
-			System.out.println(String.format("Trained logistic decider with %s states, %s options, and error %.4f", 
+			System.out.println(String.format("Trained " + name + " logistic decider with %s states, %s options, and error %.4f", 
 					trainingData.size(), actionsInOutputLayer.size(), totalError));
 			retValue = ld;
 		} else {
@@ -164,18 +150,33 @@ public class MCTreeProcessor<A extends Agent> {
 				// we inject the actions in the same order as the training data (or else all hell will break loose)
 			}
 			double error = nd.teach(trainingData);
-			System.out.println(String.format("Trained neural decider with %s states, %s options and error of %.4f", trainingData.size(), actionsInOutputLayer.size(), error));
+			System.out.println(String.format("Trained " + name + " neural decider with %s states, %s options and error of %.4f", trainingData.size(), actionsInOutputLayer.size(), error));
 			retValue = nd;
 		}
+		retValue.setName(name);
 		return retValue;
 	}
 
 	protected BasicNeuralDataSet finalTrainingData() {
 		// the earlier training data will not have seen all possible actions, so the arrays will not extend to cover the full requirements of the NN
+		if (debug) {
+			int[] actionCounts = getValidActionCountsFromData();
+			int[] chosenCounts = getTopActionCountsFromData();
+			if (actionCounts.length != chosenCounts.length) throw new AssertionError("Should be same length");
+			int threshold = outputData.size() / 50;
+			for (int i = 0; i < actionsInOutputLayer.size(); i++) {
+				if (chosenCounts[i] >= threshold)
+					System.out.println(actionsInOutputLayer.get(i).toString() + " : " + chosenCounts[i] + " of " + actionCounts[i]);
+			}
+		}
+
 		if (controlSignal) return finalTrainingDataWithControlSignal();
 		BasicNeuralDataSet retValue = new BasicNeuralDataSet();
 		for (int i = 0; i < inputData.size(); i++) {
 			double[] currentOut = outputData.get(i);
+			for (int k = 0; k < currentOut.length; k++)
+				if (Double.isNaN(currentOut[k]))
+					currentOut[k] = 0.0;
 			double[] currentIn = inputData.get(i);
 			if (currentOut.length < maxNeurons) {
 				double[] newOut = new double[maxNeurons];	// will default to 0.0
@@ -188,12 +189,64 @@ public class MCTreeProcessor<A extends Agent> {
 		return retValue;
 	}
 
+	public int[] getValidActionCountsFromData() {
+		int[] retValue = new int[maxNeurons];
+		for (int i = 0; i < outputData.size(); i++) {
+			double[] output = outputData.get(i);
+			for (int j = 0; j < output.length; j++) {
+				if (!Double.isNaN(output[j])) 
+					retValue[j]++;
+			}
+		}
+		return retValue;
+	}
+	public int[] getTopActionCountsFromData() {
+		int[] retValue = new int[maxNeurons];
+		for (int i = 0; i < outputData.size(); i++) {
+			double[] output = outputData.get(i);
+			for (int j = 0; j < output.length; j++) {
+				if (!Double.isNaN(output[j]) && output[j] > 0.5) 
+					retValue[j]++;
+			}
+		}
+		return retValue;
+	}
+	/*
+	public double[] getRarityOfValidActionsFromData() {
+		// and then we can amend the frequency of records 
+		int[] actionCounts = getValidActionCountsFromData();
+		double totalRecordsToUseInTraining = 10000;
+		double actualRecords = outputData.size();
+		double[] rarityOfOutputOptions = new double[(int) actualRecords];
+		for (int i = 0; i < actualRecords; i++) {
+			double[] output = outputData.get(i);
+			for (int j = 0; j < output.length; j++) {
+				if (!Double.isNaN(output[j]))
+					rarityOfOutputOptions[i] -= Math.log(actionCounts[j]);
+			}
+		}
+		double maxValue = Double.NEGATIVE_INFINITY;
+		for (int i = 0; i < actualRecords; i++) {
+			if (rarityOfOutputOptions[i] > maxValue) maxValue = rarityOfOutputOptions[i];
+		}
+		for (int i = 0; i < actualRecords; i++) {
+			if (rarityOfOutputOptions[i] < 0.0) {
+				rarityOfOutputOptions[i] = Math.exp(rarityOfOutputOptions[i] - maxValue);
+			} else {
+				throw new AssertionError("Should not be possible for rarity to be zero");
+			}
+		}
+		return Normalise.asProbabilityDistribution(rarityOfOutputOptions);
+	}
+	 */
+
 	private BasicNeuralDataSet finalTrainingDataWithControlSignal() {
 		BasicNeuralDataSet retValue = new BasicNeuralDataSet();
 		for (int i = 0; i < inputData.size(); i++) {
 			double[] startInput = inputData.get(i);
 			double[] startOutput = outputData.get(i);
 			for (int a = 0; a < startOutput.length; a++) {
+				if (Double.isNaN(startOutput[a])) continue;
 				double[] finalInput = new double[startInput.length + maxNeurons];
 				for (int j = 0; j < startInput.length; j++) finalInput[j] = startInput[j];
 				double[] finalOutput = new double[1];

@@ -275,6 +275,24 @@ public class MCTreeProcessorTest {
 		assertEquals(input[8], 0.0, 0.001);
 		assertEquals(output[0], -0.5, 0.001);
 		
+		input = trainingData.get(3).getInputArray();
+		output = trainingData.get(3).getIdealArray();
+		assertEquals(input[4], 1.0, 0.001);
+		assertEquals(input[5], 0.0, 0.001);
+		assertEquals(input[6], 0.0, 0.001);
+		assertEquals(input[7], 0.0, 0.001);
+		assertEquals(input[8], 0.0, 0.001);
+		assertEquals(output[0], 0.0, 0.001);
+		
+		input = trainingData.get(4).getInputArray();
+		output = trainingData.get(4).getIdealArray();
+		assertEquals(input[4], 0.0, 0.001);
+		assertEquals(input[5], 0.0, 0.001);
+		assertEquals(input[6], 1.0, 0.001);
+		assertEquals(input[7], 0.0, 0.001);
+		assertEquals(input[8], 0.0, 0.001);
+		assertEquals(output[0], -0.5, 0.001);
+		
 		NeuralDecider<TestAgent> nd = (NeuralDecider<TestAgent>) processor.generateDecider(stateFactory, 1.0);
 		State<TestAgent> agentState = stateFactory.getCurrentState(agent1);
 		String result = String.format("LEFT: %.2f, RIGHT: %.2f, TEST: %.2f",
@@ -330,6 +348,22 @@ public class MCTreeProcessorTest {
 		assertEquals(input1[3], 0.0, 0.001);
 	}
 	
+	@Test
+	public void treeStateWithOneActionIsNotExtracted() {
+		MonteCarloTree<TestAgent> retValue = new MonteCarloTree<TestAgent>(localProp, 2);
+		State<TestAgent> agentState2 = stateFactory.getCurrentState(agent2);
+		retValue.insertState(agentState2, new ArrayList<ActionEnum<TestAgent>>());
+		double[] rewardRight = {-0.5, 0.5};
+		retValue.updateState(agentState2, TestActionEnum.RIGHT, agentState2, rewardRight);
+		
+		processor = new TestMCTreeProcessor(localProp);
+		assertEquals(processor.finalTrainingData().getRecordCount(), 0);
+		processor.processTree(retValue, 1);
+		assertEquals(processor.finalTrainingData().getRecordCount(), 0);
+
+		
+	}
+	
 	private MonteCarloTree<TestAgent> generateTree() {
 		MonteCarloTree<TestAgent> retValue = new MonteCarloTree<TestAgent>(localProp, 2);
 		State<TestAgent> agentState1 = stateFactory.getCurrentState(agent1);
@@ -352,7 +386,7 @@ public class MCTreeProcessorTest {
 class TestMCTreeProcessor extends MCTreeProcessor<TestAgent> {
 
 	public TestMCTreeProcessor(DeciderProperties prop) {
-		super(prop);
+		super(prop, "");
 	}
 
 	@Override
