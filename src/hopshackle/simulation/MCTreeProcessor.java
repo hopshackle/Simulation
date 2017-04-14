@@ -91,6 +91,7 @@ public class MCTreeProcessor<A extends Agent> {
 			double[] oldArray = retValue;
 			retValue = new double[actionsInOutputLayer.size()];
 			for (int i = 0; i < oldArray.length; i++) retValue[i] = oldArray[i];
+			for (int i = oldArray.length; i < retValue.length; i++) retValue[i] = Double.NaN;
 			index = actionsInOutputLayer.size() - 1;
 		} 
 		if (index > -1) retValue[index] = value;
@@ -99,6 +100,19 @@ public class MCTreeProcessor<A extends Agent> {
 
 	public Decider<A> generateDecider(StateFactory<A> stateFactory, double scaleFactor) {	
 		Decider<A> retValue;
+		StringBuffer message = new StringBuffer();
+		if (debug) {
+			message.append(outputData.size() + " total states\n");
+			int[] actionCounts = getValidActionCountsFromData();
+			int[] chosenCounts = getTopActionCountsFromData();
+			if (actionCounts.length != chosenCounts.length) throw new AssertionError("Should be same length");
+			int threshold = outputData.size() / 50;
+			for (int i = 0; i < actionsInOutputLayer.size(); i++) {
+				if (chosenCounts[i] >= threshold) {
+					message.append(String.format("%-20s %d of %d (%d)\n", actionsInOutputLayer.get(i).toString(), chosenCounts[i], actionCounts[i], (chosenCounts[i] * 100 + 5) / actionCounts[i]));
+				}
+			}
+		}
 		BasicNeuralDataSet trainingData = finalTrainingData();
 		if (linearModel) {
 			GeneralLinearQDecider<A> ld = new GeneralLinearQDecider<A>(stateFactory);
@@ -154,22 +168,11 @@ public class MCTreeProcessor<A extends Agent> {
 			retValue = nd;
 		}
 		retValue.setName(name);
+		if (debug) retValue.log(message.toString());
 		return retValue;
 	}
 
 	protected BasicNeuralDataSet finalTrainingData() {
-		// the earlier training data will not have seen all possible actions, so the arrays will not extend to cover the full requirements of the NN
-		if (debug) {
-			int[] actionCounts = getValidActionCountsFromData();
-			int[] chosenCounts = getTopActionCountsFromData();
-			if (actionCounts.length != chosenCounts.length) throw new AssertionError("Should be same length");
-			int threshold = outputData.size() / 50;
-			for (int i = 0; i < actionsInOutputLayer.size(); i++) {
-				if (chosenCounts[i] >= threshold)
-					System.out.println(actionsInOutputLayer.get(i).toString() + " : " + chosenCounts[i] + " of " + actionCounts[i]);
-			}
-		}
-
 		if (controlSignal) return finalTrainingDataWithControlSignal();
 		BasicNeuralDataSet retValue = new BasicNeuralDataSet();
 		for (int i = 0; i < inputData.size(); i++) {

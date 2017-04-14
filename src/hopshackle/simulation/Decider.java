@@ -34,4 +34,6 @@ public interface Decider<A extends Agent> {
 
 	public <V extends GeneticVariable<A>> List<V> getVariables();
 
+	public void log(String s);
+
 }

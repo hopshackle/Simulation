@@ -158,9 +158,9 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			runningSum += optionWeightings.get(loop);
 			if (runningSum > randomNumber) {
 				winningChoice = optionList.get(loop);
-				if (localDebug) {
-					String message = String.format("Boltzmann choice is %s", optionList.get(loop).toString());
-					log(message);
+				if (localDebug || decidingAgent.getDebugLocal()) {
+					String message = String.format("Boltzmann choice is %s (Roll: %.3f)", optionList.get(loop).toString(), randomNumber);
+					if (localDebug) log(message);
 					decidingAgent.log(message);
 				}
 				break;
@@ -270,6 +270,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		return String.valueOf(id);
 	}
 
+	@Override
 	public void log(String s) {
 		if (entityLogger == null) {
 			entityLogger = new EntityLog("Decider_" + toString(), null);
