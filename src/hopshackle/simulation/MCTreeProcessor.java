@@ -79,7 +79,9 @@ public class MCTreeProcessor<A extends Agent> {
 			retValue = setValueForAction(action, retValue, value);
 		}
 
-		if (normalise) retValue = Normalise.range(retValue, 0, 1);
+		if (normalise) {
+			retValue = Normalise.range(retValue, 0, 1);
+		}
 		return retValue;
 	}
 

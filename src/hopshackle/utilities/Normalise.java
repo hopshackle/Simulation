@@ -12,6 +12,7 @@ public class Normalise {
 		}
 
 		double[] retValue = new double[input.length];
+		for (int i = 0; i < retValue.length; i++) retValue[i] = Double.NaN;
 		if (maxInArray == minInArray) {
 			// leave everything as 0.0
 		} else {
