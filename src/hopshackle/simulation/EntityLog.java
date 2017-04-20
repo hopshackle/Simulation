@@ -57,6 +57,17 @@ public class EntityLog {
 		logFile.renameTo(new File(logDir + File.separator + newName + ".txt"));
 	}
 
+	public void flush() {
+		if (logFileOpen) {
+			try {
+				logWriter.flush();
+			} catch (Exception e) {
+				errorLogger.severe(e.toString());
+				e.printStackTrace();
+			}
+		}
+	}
+
 	public void close() {
 		if (logFileOpen)
 			try {

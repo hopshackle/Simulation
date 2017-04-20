@@ -277,6 +277,12 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		}
 		entityLogger.log(s);
 	}
+	
+	@Override
+	public void flushLog() {
+		if (entityLogger != null) 
+			entityLogger.flush();
+	}
 
 	@Override
 	public void injectProperties(DeciderProperties dp) {

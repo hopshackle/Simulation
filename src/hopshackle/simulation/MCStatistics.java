@@ -233,7 +233,7 @@ public class MCStatistics<P extends Agent> {
 			if (!hasActionBeenTried(action)) untried.add(action);
 		}
 		if (untried.isEmpty())
-			throw new AssertionError("Cannot call getRandomUntriedAction is there aren't any");
+			throw new AssertionError("Cannot call getRandomUntriedAction if there aren't any");
 		int diceRoll = Dice.roll(1, untried.size());
 		return untried.get(diceRoll-1);
 	}

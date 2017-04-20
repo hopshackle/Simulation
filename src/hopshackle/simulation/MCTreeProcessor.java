@@ -98,18 +98,19 @@ public class MCTreeProcessor<A extends Agent> {
 		return retValue;
 	}
 
-	public Decider<A> generateDecider(StateFactory<A> stateFactory, double scaleFactor) {	
+	public Decider<A> generateDecider(StateFactory<A> stateFactory, double scaleFactor, double temp) {
+		properties.setProperty("Temperature", String.valueOf(temp));
 		Decider<A> retValue;
 		StringBuffer message = new StringBuffer();
 		if (debug) {
-			message.append(outputData.size() + " total states\n");
+			message.append(String.format("%d total states, T = %.3f\n", outputData.size(), properties.getPropertyAsDouble("Temperature",  "0.0")));
 			int[] actionCounts = getValidActionCountsFromData();
 			int[] chosenCounts = getTopActionCountsFromData();
 			if (actionCounts.length != chosenCounts.length) throw new AssertionError("Should be same length");
-			int threshold = outputData.size() / 50;
+			int threshold = outputData.size() / 100;
 			for (int i = 0; i < actionsInOutputLayer.size(); i++) {
 				if (chosenCounts[i] >= threshold) {
-					message.append(String.format("%-20s %d of %d (%d)\n", actionsInOutputLayer.get(i).toString(), chosenCounts[i], actionCounts[i], (chosenCounts[i] * 100 + 5) / actionCounts[i]));
+					message.append(String.format("%-20s %d of %d (%.0f%%)\n", actionsInOutputLayer.get(i).toString(), chosenCounts[i], actionCounts[i], (chosenCounts[i] * 100.0) / (double)actionCounts[i]));
 				}
 			}
 		}
@@ -168,7 +169,10 @@ public class MCTreeProcessor<A extends Agent> {
 			retValue = nd;
 		}
 		retValue.setName(name);
-		if (debug) retValue.log(message.toString());
+		if (debug) {
+			retValue.log(message.toString());
+			retValue.flushLog();
+		}
 		return retValue;
 	}
 

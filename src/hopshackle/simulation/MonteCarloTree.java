@@ -13,11 +13,13 @@ public class MonteCarloTree<P extends Agent> {
 	private Map<String, MCStatistics<P>> tree;
 	private int updatesLeft, maxActors;
 	private List<Map<String, MCData>> actionValues;
+	private Decider<P> actionValueDecider;
 	private static AtomicLong idFountain = new AtomicLong(1);
 	private int nextRef = 1;
 	private long id;
 	private EntityLog entityLogger;
 	protected boolean debug = false;
+	private boolean useActionValueDecider;
 	protected DeciderProperties properties;
 
 	public MonteCarloTree(DeciderProperties properties) {
@@ -33,6 +35,7 @@ public class MonteCarloTree<P extends Agent> {
 		this.properties = properties;
 		UCTType = properties.getProperty("MonteCarloUCTType", "MC");
 		id = idFountain.getAndIncrement();
+		useActionValueDecider = properties.getProperty("MonteCarloActionValueDecider", "false").equals("true");
 	}
 
 	public void reset() {
@@ -203,6 +206,10 @@ public class MonteCarloTree<P extends Agent> {
 			return actionValues.get(playerRef-1).get(k).visits;
 		} 
 		return 0;
+	}
+	
+	public void setActionValueDecider(Decider<P> decider) {
+		actionValueDecider = decider;
 	}
 
 	public void pruneTree(String newRoot) {

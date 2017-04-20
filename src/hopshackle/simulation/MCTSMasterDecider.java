@@ -22,6 +22,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 	private int sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
 	private boolean singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
 	private boolean debug = false;
+	private double rolloutTemp, rolloutTempChange;
 	private MCTreeProcessor<A> treeProcessor;
 
 	public MCTSMasterDecider(StateFactory<A> stateFactory, Decider<A> rolloutDecider, Decider<A> opponentModel) {
@@ -66,8 +67,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 						treeMap.remove(agent);
 						if (trainRolloutDeciderOverGames && !processedGames.contains(agent.getGame().getRef())) {
 							processedGames.add(agent.getGame().getRef());
-							rolloutDecider = treeProcessor.generateDecider(stateFactory, agent.getMaxScore());
+							rolloutDecider = treeProcessor.generateDecider(stateFactory, agent.getMaxScore(), rolloutTemp);
 							if (useRolloutForOpponent) opponentModel = rolloutDecider;
+							rolloutTemp *= rolloutTempChange;
 						}
 						//			agent.log("Removing Tree from MCTS decider, leaving " + treeMap.size());
 					}
@@ -109,6 +111,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		}
 		tree.insertState(currentState, chooseableOptions);
 		int N = Math.min(maxRollouts, maxRolloutsPerOption * chooseableOptions.size());
+		
 		for (int i = 0; i < N; i++) {
 			tree.setUpdatesLeft(1);
 			Game<A, ActionEnum<A>> clonedGame = game.clone(agent);
@@ -207,6 +210,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		super.injectProperties(dp);
 		maxRollouts = getPropertyAsInteger("MonteCarloRolloutCount", "99");
 		maxRolloutsPerOption = getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
+		rolloutTemp = SimProperties.getPropertyAsDouble("MonteCarloRolloutStartTemperature", "1.0");
+		rolloutTempChange = SimProperties.getPropertyAsDouble("MonteCarloRolloutTemperatureChange", "0.5");
 		useAVDForRollout = getProperty("MonteCarloActionValueRollout", "false").equals("true");
 		useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
 		reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
@@ -215,7 +220,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 		singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
 		trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
 		trainRolloutDeciderUsingAllPlayerExperiences = getProperty("MonteCarloTrainRolloutDeciderFromAllPlayers", "false").equals("true");
-		treeProcessor = new MCTreeProcessor<A>(dp, this.name);
+		if (treeProcessor == null) treeProcessor = new MCTreeProcessor<A>(dp, this.name);
 	}
 
 }
