@@ -181,7 +181,7 @@ public class MCTSDeciderTest {
 	
 	@Test
 	public void RAVEChildDeciderUpdates() {
-		localProp.setProperty("MonteCarloRAVE", "true");
+		localProp.setProperty("MonteCarloRAVE", "GellySilver");
 		localProp.setProperty("MonteCarloRAVEWeight", "2");
 		tree = new MonteCarloTree<TestAgent>(localProp, 1);
 		mazeGame = new SimpleMazeGame(2, agent);
@@ -189,9 +189,9 @@ public class MCTSDeciderTest {
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
 		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT), 7.09, 0.01);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT), 2.14, 0.01);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST), 2.88, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT), 6.77, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT), 0.91, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST), 4.29, 0.01);
 	}
 }
 

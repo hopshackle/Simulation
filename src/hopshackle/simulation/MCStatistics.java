@@ -12,7 +12,7 @@ public class MCStatistics<P extends Agent> {
 	private int totalVisits = 0;
 	private int RAVEVisits = 0;
 	private int actingAgent = -1;
-	private boolean useBaseValue, useRAVE;
+	private boolean useBaseValue, gellySilverRAVE, sironiWinandsRAVE;
 	private double C, actionWeight, RAVEWeight;
 	private double[] baseValue;
 	private String UCTType;
@@ -39,7 +39,8 @@ public class MCStatistics<P extends Agent> {
 		minVisitsForQ = tree.properties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
 		minVisitsForV = tree.properties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
 		RAVEWeight = tree.properties.getPropertyAsDouble("MonteCarloRAVEWeight", "0.0");
-		useRAVE = tree.properties.getProperty("MonteCarloRAVE", "false").equals("true");
+		gellySilverRAVE = tree.properties.getProperty("MonteCarloRAVE", "false").equals("GellySilver");
+		sironiWinandsRAVE = tree.properties.getProperty("MonteCarloRAVE", "false").equals("SironiWinands");
 		double base = tree.properties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
 		useBaseValue = tree.properties.getProperty("MonteCarloRL", "false").equals("true");
 		if (!useBaseValue) base = 0.0;
@@ -249,9 +250,10 @@ public class MCStatistics<P extends Agent> {
 			double actionScore = score(data, key);
 			double visits = (double)data.visits;
 			double score = actionScore + C * Math.sqrt(Math.log(totalVisits) / visits);
-			if (useRAVE && RAVEWeight > 0.0 && RAVE.containsKey(key)) {
-				double beta = Math.sqrt(RAVEWeight / (3 * visits + RAVEWeight));
-				score = beta * getRAVEPlus(action) + (1.0 - beta) * score;
+			if ((gellySilverRAVE || sironiWinandsRAVE) && RAVEWeight > 0.0 && RAVE.containsKey(key)) {
+				double beta = Math.sqrt(RAVEWeight / (3 * totalVisits + RAVEWeight));
+				if (gellySilverRAVE) score = beta * getRAVEPlus(action) + (1.0 - beta) * score;
+				if (sironiWinandsRAVE) score += -beta * actionScore + beta * getRAVEValue(action);
 			}
 			if (score > best) {
 				best = score;
@@ -277,7 +279,7 @@ public class MCStatistics<P extends Agent> {
 			String output = "";
 			if (actionWeight > 0.0) {
 				output = String.format("\t%s\t%s\t(AV:%.2f | %d)\n", k, map.get(k).toString(), tree.getActionValue(k, actingAgent), tree.getActionCount(k, actingAgent));
-			} else if (useRAVE) {
+			} else if (gellySilverRAVE || sironiWinandsRAVE) {
 				output = String.format("\t%-30s\t(RAVE:%.2f|%.2f|%d)\t%s\n", k, getRAVEValue(k), getRAVEPlus(k), getRAVEVisits(k), map.get(k).toString());
 			} else {
 				output = String.format("\t%-35s\t%s\n", k, map.get(k).toString());

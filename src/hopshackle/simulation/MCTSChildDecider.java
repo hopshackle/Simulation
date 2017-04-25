@@ -15,7 +15,7 @@ private boolean RAVE;
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
 		boolean monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
-		RAVE = getProperty("MonteCarloRAVE", "false").equals("true");
+		RAVE = !getProperty("MonteCarloRAVE", "false").equals("false");
 		if (!monteCarlo) {
 			throw new AssertionError("MCTS Deciders should only be used with MonteCarlo switched on! Update GeneticProperties.txt");
 		}

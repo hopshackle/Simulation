@@ -289,11 +289,11 @@ public class MCTreeTest {
 	
 	@Test
 	public void RAVEvalues() {
-		localProp.setProperty("MonteCarloRAVE", "true");
+		localProp.setProperty("MonteCarloRAVE", "GellySilver");
 		localProp.setProperty("MonteCarloRAVEWeight", "2");
 		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.insertState(test, allActions);
-		tree.updateState(test, TestActionEnum.LEFT, other, 3.0);
+		tree.updateState(test, TestActionEnum.LEFT, other, 2.0);
 		MCStatistics<TestAgent> stats = tree.getStatisticsFor(test);
 		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT), 0.0, 0.001);
 		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT), 0.0, 0.001);
@@ -317,8 +317,10 @@ public class MCTreeTest {
 		assertEquals(stats.getRAVEPlus(TestActionEnum.LEFT), 0.0, 0.001);
 		
 		assertTrue(stats.getUCTAction(allActions).equals(TestActionEnum.LEFT));
-		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {6.0});
-		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {7.0});
+		tree.updateRAVE(test, TestActionEnum.TEST, new double[] {-1.0});
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {8.0});
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {9.0});
+		assertEquals(stats.getRAVEPlus(TestActionEnum.RIGHT), 25.0/4.0 + Math.sqrt(Math.log(6.0) / 4.0), 0.001);
 		assertTrue(stats.getUCTAction(allActions).equals(TestActionEnum.RIGHT));
 	}
 
