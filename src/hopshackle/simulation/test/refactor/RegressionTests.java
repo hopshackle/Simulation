@@ -15,16 +15,16 @@ public class RegressionTests {
 	@Before
 	public void setUp() throws Exception {
 		x = new double[10][3];
-		double[] x0 = {1.0, 5.0, 2.0};
-		double[] x1 = {2.0, 5.0, 3.0};
-		double[] x2 = {1.0, 10.0, 4.0};
-		double[] x3 = {2.0, 10.0, 5.0};
-		double[] x4 = {1.0, 15.0, 6.0};
-		double[] x5 = {2.0, 15.0, 7.0};
-		double[] x6 = {1.0, 25.0, 8.0};
-		double[] x7 = {2.0, 25.0, 9.0};
-		double[] x8 = {1.0, 50.0, 12.0};
-		double[] x9 = {2.0, 50.0, 16.0};
+		double[] x0 = {1.0, 1.0, 5.0, 2.0};
+		double[] x1 = {1.0, 2.0, 5.0, 3.0};
+		double[] x2 = {1.0, 1.0, 10.0, 4.0};
+		double[] x3 = {1.0, 2.0, 10.0, 5.0};
+		double[] x4 = {1.0, 1.0, 15.0, 6.0};
+		double[] x5 = {1.0, 2.0, 15.0, 7.0};
+		double[] x6 = {1.0, 1.0, 25.0, 8.0};
+		double[] x7 = {1.0, 2.0, 25.0, 9.0};
+		double[] x8 = {1.0, 1.0, 50.0, 12.0};
+		double[] x9 = {1.0, 2.0, 50.0, 16.0};
 		x[0] = x0; x[1] = x1; x[2] = x2 ; x[3] = x3; x[4] = x4; x[5] = x5;
 		x[6] = x6; x[7] = x7; x[8] = x8; x[9] = x9;
 		
@@ -45,7 +45,7 @@ public class RegressionTests {
 		assertEquals(lr.getWeights()[1], 2.86369, 0.001);
 		assertEquals(lr.getWeights()[2], -0.000675, 0.001);
 		assertEquals(lr.getWeights()[3], 0.08519, 0.001);
-		assertEquals(lr.getError(), 0.076518, 0.001);
+		assertEquals(lr.getError(), 0.0076518, 0.0001);
 	}
 	
 	@Test
@@ -67,7 +67,7 @@ public class RegressionTests {
 		assertEquals(lr.getWeights()[1], 2.86369, 0.001);
 		assertEquals(lr.getWeights()[2], -0.000675, 0.001);
 		assertEquals(lr.getWeights()[3], 0.08519, 0.001);
-		assertEquals(lr.getError(), 0.076518, 0.001);
+		assertEquals(lr.getError(), 0.0076518, 0.0001);
 		
 		lr = LinearRegression.createFrom(data, 2);
 		
@@ -76,7 +76,7 @@ public class RegressionTests {
 		assertEquals(lr.getWeights()[1], 1.06527, 0.001);
 		assertEquals(lr.getWeights()[2], 0.1703, 0.001);
 		assertEquals(lr.getWeights()[3], 0.5592, 0.001);
-		assertEquals(lr.getError(), 4.24134, 0.001);
+		assertEquals(lr.getError(), 0.424134, 0.0001);
 	}
 	
 	@Test
