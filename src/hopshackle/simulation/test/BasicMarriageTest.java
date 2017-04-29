@@ -130,18 +130,12 @@ public class BasicMarriageTest {
 
 	@Test
 	public void foragingOutputIsDoubled() {
-		int foodStart = maleAgent1.getNumberInInventoryOf(Resource.FOOD);
+		int foodStart = maleAgent1.getNumberInInventoryOf(Resource.FOOD)  + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
+		new Marriage(maleAgent1, femaleAgent2);
 		BasicAction forage = BasicActions.FORAGE.getAction(maleAgent1);
 		run(forage);
-		int foodMid = maleAgent1.getNumberInInventoryOf(Resource.FOOD) + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
-		assertTrue(foodMid > foodStart);
-
-		new Marriage(maleAgent1, femaleAgent2);
-
-		forage = BasicActions.FORAGE.getAction(maleAgent1);
-		run(forage);
-		int foodEnd = maleAgent1.getNumberInInventoryOf(Resource.FOOD)  + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
-		assertEquals(foodEnd - foodMid, 2*(foodMid-foodStart));
+		int foodEnd = maleAgent1.getNumberInInventoryOf(Resource.FOOD) + femaleAgent2.getNumberInInventoryOf(Resource.FOOD);
+		assertEquals(foodEnd - foodStart, 2);
 	}
 
 	@Test
