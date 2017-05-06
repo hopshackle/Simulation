@@ -21,6 +21,8 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected boolean absoluteDifferenceNoise;
 	protected double maxChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMinChance", "0.0");
+	protected double maxTemp = getPropertyAsDouble("StartTemperature", "1.0");
+	protected double minTemp = getPropertyAsDouble("EndTemperature", "0.0");
 	protected double gamma = getPropertyAsDouble("Gamma", "0.95");
 	protected double alpha = getPropertyAsDouble("Alpha", "0.05");
 	protected double lambda = getPropertyAsDouble("Lambda", "0.001");
@@ -90,7 +92,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	@Override
 	public ActionEnum<A> makeDecision(A decidingAgent, List<ActionEnum<A>> options) {
 		double temp = SimProperties.getPropertyAsDouble("Temperature", "1.0");
-		double explorationChance = (maxChanceOfRandomChoice - minChanceOfRandomChoice) * temp + minChanceOfRandomChoice;
+		double explorationChance = (maxChanceOfRandomChoice - minChanceOfRandomChoice) * (temp - minTemp) / (maxTemp - minTemp) + minChanceOfRandomChoice;
 		return makeDecision(decidingAgent, explorationChance, options);
 	}
 

@@ -125,7 +125,7 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	@SuppressWarnings("unchecked")
 	@Override
 	public synchronized void processEvent(AgentEvent event) {
-		if (filter.ignore(event)) 
+		if (filter != null && filter.ignore(event))
 			return;
 	//			System.out.println("Through Filter: " + event.getAction() + " ; " + event.getEvent());
 		A a = (A) event.getAgent();

@@ -127,16 +127,16 @@ public class MultipleAgentRewardVector {
 						if (player == 0) expectation = 5.0;
 
 						expectation = expectation * gamma;
-						assertEquals(erList.get(record).getReward()[player], expectation, 0.001);
+						assertEquals(erList.get(record).getMonteCarloReward()[player], expectation, 0.001);
 					}
 				}
 				break;
 			case 1:	// player 2 is self only
 				assertEquals(erList.size(), 1);
-				assertEquals(erList.get(0).getReward()[0], 5.0, 0.001);
-				assertEquals(erList.get(0).getReward()[1], -5.0, 0.001);
-				assertEquals(erList.get(0).getReward()[2], -5.0, 0.001);
-				assertEquals(erList.get(0).getReward()[3], -5.0, 0.001);
+				assertEquals(erList.get(0).getMonteCarloReward()[0], 5.0, 0.001);
+				assertEquals(erList.get(0).getMonteCarloReward()[1], -5.0, 0.001);
+				assertEquals(erList.get(0).getMonteCarloReward()[2], -5.0, 0.001);
+				assertEquals(erList.get(0).getMonteCarloReward()[3], -5.0, 0.001);
 				break;
 			}
 		}
@@ -169,8 +169,8 @@ public class MultipleAgentRewardVector {
 				if (i==0) gamma = 0.95;		// only player 1 has two ER in stream
 
 				expectation = expectation * gamma;
-				assertEquals(erList.get(0).getReward()[j], expectation, 0.001);
-				if (i == 0) assertEquals(erList.get(1).getReward()[j], expectation/gamma, 0.001);
+				assertEquals(erList.get(0).getMonteCarloReward()[j], expectation, 0.001);
+				if (i == 0) assertEquals(erList.get(1).getMonteCarloReward()[j], expectation/gamma, 0.001);
 			}
 		}
 

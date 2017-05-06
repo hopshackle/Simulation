@@ -11,20 +11,22 @@ import org.encog.neural.networks.training.propagation.Propagation;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
 import org.encog.neural.networks.training.propagation.quick.QuickPropagation;
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
+
 public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	protected BasicNetwork brain;
 	protected Map<String, Integer> outputKey = new HashMap<String, Integer>();
 	protected int maxActionIndex = -1;
 	protected static double temperature;
+	protected boolean monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
 	protected double baseMomentum = getPropertyAsDouble("NeuralLearningMomentum", "0.0");
 	protected String propagationType = getProperty("NeuralPropagationType", "back");
 	protected boolean applyTemperatureToLearning = getProperty("NeuralAnnealLearning", "false").equals("true");
 	protected int learningIterations = Integer.valueOf(getProperty("NeuralLearningIterations", "1"));
-	private boolean learnWithValidation = getProperty("NeuralLearnUntilValidationError", "false").equals("true");
-	private boolean shuffleTrainingData = getProperty("NeuralShuffleData", "true").equals("true");
-	private boolean logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
-	private double overrideLearningCoefficient, overrideMomentum, scaleFactor; 
+	protected boolean learnWithValidation = getProperty("NeuralLearnUntilValidationError", "false").equals("true");
+	protected boolean shuffleTrainingData = getProperty("NeuralShuffleData", "true").equals("true");
+	protected boolean logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
+	protected double overrideLearningCoefficient, overrideMomentum, scaleFactor;
 	private boolean controlSignal = getProperty("NeuralControlSignal", "false").equals("true");
 	private int maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
 	private static boolean extraDebug = true;
@@ -37,6 +39,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 	@Override 
 	public void injectProperties(DeciderProperties dp) {
 		super.injectProperties(dp);
+		monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
 		baseMomentum = getPropertyAsDouble("NeuralLearningMomentum", "0.0");
 		propagationType = getProperty("NeuralPropagationType", "back");
 		applyTemperatureToLearning = getProperty("NeuralAnnealLearning", "false").equals("true");
@@ -55,7 +58,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		overrideMomentum = getPropertyAsDouble("NeuralLearningMomentum." + toString(), "-99.0");
 		if (overrideLearningCoefficient > -98) alpha = overrideLearningCoefficient;
 		if (overrideMomentum > -98) baseMomentum = overrideMomentum;
-	};
+	}
 
 	/*
 	 * allVar is a list of all possible genetic variables that could be used
@@ -199,9 +202,9 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
-		if (exp.getStartStateAsArray().length != brain.getInputCount()) {
+		if (exp.getStartStateAsArray(useLookahead).length != brain.getInputCount()) {
 			logger.severe("Input data in ExperienceRecord not the same as input neurons " 
-					+ exp.getStartStateAsArray().length + " : " + brain.getInputCount());
+					+ exp.getStartStateAsArray(useLookahead).length + " : " + brain.getInputCount());
 		}
 
 		if (alpha < 0.000001)
@@ -210,7 +213,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		double[][] outputValues = new double[1][brain.getOutputCount()];
 		double[][] inputValues = new double[1][brain.getInputCount()];
 
-		double[] startState = exp.getStartStateAsArray();
+		double[] startState = exp.getStartStateAsArray(useLookahead);
 		for (int n=0; n<startState.length; n++) {
 			inputValues[0][n] = startState[n];
 		}
@@ -230,23 +233,26 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		teach(trainingData);
 	}
 
-	private double[] getTarget(ExperienceRecord<A> exp) {
+	protected double[] getTarget(ExperienceRecord<A> exp) {
 		// our target is the reward observed, plus gamma times the predicted value of the end state
 		// which in turn is given by the best action value 
 		double[] retValue = new double[brain.getOutputCount()];
-		double bestQValue = valueOfBestAction(exp) / scaleFactor; 
-		double discountPeriod = exp.getDiscountPeriod();
-		double output = exp.getReward()[0]/scaleFactor + Math.pow(gamma, discountPeriod) * bestQValue;
+		int actingAgentNumber = exp.getAgentNumber();
+		double output = exp.getMonteCarloReward()[actingAgentNumber] / scaleFactor;
+		if (!monteCarlo) {
+			double bestQValue = valueOfBestAction(exp) / scaleFactor;
+			double discountPeriod = exp.getDiscountPeriod();
+			output = exp.getReward()[actingAgentNumber] / scaleFactor + Math.pow(gamma, discountPeriod) * bestQValue;
+		}
 		int actionIndex = outputKey.getOrDefault(exp.actionTaken.getType().toString(), -1);
 		if (actionIndex == -1) {	// we have not seen this action before, so allocate an output neuron for it
 			addNewAction(exp.actionTaken.getType());
 			actionIndex = outputKey.get(exp.getActionTaken().getType().toString());
 		}
-		if (output > 1.0) {
-			output = 1.0;
-		}
+		if (output > 1.0) output = 1.0;
 		if (output < -1.0) output = -1.0;
-		BasicNeuralData inputData = new BasicNeuralData(exp.getStartStateAsArray());
+		// for all outputs other than the target one, we use the prediction from the network (so that there is no weight update)
+		BasicNeuralData inputData = new BasicNeuralData(exp.getStartStateAsArray(useLookahead));
 		double[] prediction = brain.compute(inputData).getData();
 		for (int n=0; n < brain.getOutputCount(); n++) {
 			retValue[n] = prediction[n];
@@ -255,7 +261,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 		return retValue;
 	}
 
-	private BasicNeuralDataSet shuffle(BasicNeuralDataSet preshuffle) {
+	protected BasicNeuralDataSet shuffle(BasicNeuralDataSet preshuffle) {
 		int length = (int) preshuffle.getRecordCount();
 		int inputLength = preshuffle.getInputSize();
 		int outputLength = preshuffle.getIdealSize();
@@ -385,7 +391,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
 		int count = 0;
 		for (ExperienceRecord<A> exp : expArray) {
-			double[] startState = exp.getStartStateAsArray();
+			double[] startState = exp.getStartStateAsArray(useLookahead);
 			for (int n=0; n<startState.length; n++) {
 				batchInputData[count][n] = startState[n];
 			}

@@ -4,17 +4,20 @@ import java.util.List;
 
 public abstract class QDecider<A extends Agent> extends BaseDecider<A> {
 	
-	private boolean monteCarlo;
+	protected boolean monteCarlo;
+	protected boolean useLookahead;
 
 	public <S extends State<A>> QDecider(StateFactory<A> stateFactory) {
 		super(stateFactory);
 		monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
+		useLookahead = getProperty("LookaheadQLearning", "false").equals("true");
 	}
 	
 	@Override
 	public void injectProperties(DeciderProperties decProp) {
 		super.injectProperties(decProp);
 		monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
+		useLookahead = getProperty("LookaheadQLearning", "false").equals("true");
 	}
 	
 	@Override

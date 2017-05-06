@@ -82,14 +82,14 @@ public class ExperienceRecordTest {
 		er.updateNextActions(nextER);
 		nextER.updateWithResults(0.0);
 		w.setCurrentTime(5000l);
-		assertEquals(er.getReward()[0], 30.0, 0.001);
-		assertEquals(nextER.getReward()[0], 0.0, 0.001);
+		assertEquals(er.getMonteCarloReward()[0], 30.0, 0.001);
+		assertEquals(nextER.getMonteCarloReward()[0], 0.0, 0.001);
 		agent.addHealth(-2.0);
 		w.setCurrentTime(7500l);
 		nextER.updateWithFinalScores(new double[] {agent.getScore()});
-		assertEquals(nextER.getReward()[0], -2.0, 0.001);
+		assertEquals(nextER.getMonteCarloReward()[0], -2.0, 0.001);
 		assertEquals(nextER.getDiscountPeriod(), 7.0, 0.01);
-		assertEquals(er.getReward()[0], -2.0 * Math.pow(0.9, 7) + 30.0, 0.001);
+		assertEquals(er.getMonteCarloReward()[0], -2.0 * Math.pow(0.9, 7) + 30.0, 0.001);
 	}
 
 	@Test
@@ -107,14 +107,14 @@ public class ExperienceRecordTest {
 		ExperienceRecord<BasicAgent> nextER = new ExperienceRecord<BasicAgent>(agent, new LinearState<BasicAgent>(agent, varList), BasicActions.FARM.getAction(agent), possibleActions, localProp);
 		er.updateNextActions(nextER);
 		nextER.updateWithResults(0.0);
-		assertEquals(er.getReward()[0], 3.0, 0.001);
-		assertEquals(nextER.getReward()[0], 0.0, 0.001);
+		assertEquals(er.getMonteCarloReward()[0], 3.0, 0.001);
+		assertEquals(nextER.getMonteCarloReward()[0], 0.0, 0.001);
 		agent.addHealth(-2.0);
 		w.setCurrentTime(4000l);
 		nextER.updateWithFinalScores(new double[] {agent.getScore()});
-		assertEquals(nextER.getReward()[0], 18.0, 0.001);
+		assertEquals(nextER.getMonteCarloReward()[0], 18.0, 0.001);
 		assertEquals(nextER.getDiscountPeriod(), 3.0, 0.01);
-		assertEquals(er.getReward()[0], 18.0 * Math.pow(0.9, 3) + 3.0, 0.001);
+		assertEquals(er.getMonteCarloReward()[0], 18.0 * Math.pow(0.9, 3) + 3.0, 0.001);
 	}
 
 	@Test

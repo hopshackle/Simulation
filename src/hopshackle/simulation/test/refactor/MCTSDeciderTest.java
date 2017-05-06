@@ -66,7 +66,7 @@ public class MCTSDeciderTest {
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
 		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
-	//	System.out.println(tree.toString(true));
+		System.out.println(tree.toString(true));
 		assertEquals(tree.numberOfStates(), 7);
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);

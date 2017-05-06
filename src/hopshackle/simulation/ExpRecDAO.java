@@ -12,6 +12,7 @@ public class ExpRecDAO implements DAO<ExperienceRecord<?>> {
 		" endScore		FLOAT			NOT NULL,"		+
 		" reward		FLOAT		NOT NULL,"		+
 		" startState VARCHAR(200)		NOT NULL,"		+
+		" startStateLookahead VARCHAR(200)		NOT NULL,"		+
 		" endState VARCHAR(200)		NOT NULL,"		+
 		" featureTrace VARCHAR(200)		NOT NULL,"		+
 		" actionTaken	VARCHAR(20)			NOT NULL,"		+
@@ -23,7 +24,7 @@ public class ExpRecDAO implements DAO<ExperienceRecord<?>> {
 	@Override
 	public String getTableUpdateSQL(String tableSuffix) {
 		return "INSERT INTO ExperienceRecords_" + tableSuffix + 
-				" (agent, startScore, endScore, reward, startState, endState, featureTrace, actionTaken, " +
+				" (agent, startScore, endScore, reward, startState, startStateLookahead, endState, featureTrace, actionTaken, " +
 				"actionsFromStart, actionsFromEnd) VALUES";
 	}
 
@@ -35,7 +36,8 @@ public class ExpRecDAO implements DAO<ExperienceRecord<?>> {
 				er.getStartScore(),
 				er.getEndScore(),
 				er.getReward(),
-				HopshackleUtilities.formatArray(er.getStartStateAsArray(), ",", "%.2f"),
+				HopshackleUtilities.formatArray(er.getStartStateAsArray(false), ",", "%.2f"),
+				HopshackleUtilities.formatArray(er.getStartStateAsArray(true), ",", "%.2f"),
 				HopshackleUtilities.formatArray(er.getEndStateAsArray(), ",", "%.2f"),
 				HopshackleUtilities.formatArray(er.getFeatureTrace(), ",", "%.2f"),
 				er.getActionTaken().getType(),

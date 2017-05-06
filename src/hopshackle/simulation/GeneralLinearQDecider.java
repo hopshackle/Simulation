@@ -85,17 +85,24 @@ public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
 
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
-		double bestNextAction = valueOfBestAction(exp);
 		ActionEnum<A> nextAction = getBestActionFrom(exp.getPossibleActionsFromEndState(), exp.getEndState());
-		double[] startState = exp.getStartStateAsArray();
+		double[] startState = exp.getStartStateAsArray(useLookahead);
 		double[] endState = exp.getEndStateAsArray();
 		double[] featureTrace = exp.getFeatureTrace();
-		double predictedValue = valueOption(exp.getActionTaken().actionType, exp.getStartState());
+		double predictedValue = valueOption(exp.getActionTaken().actionType, exp.getStartState(useLookahead));
 		double discountPeriod = exp.getDiscountPeriod();
-		double delta = exp.getReward()[0] + Math.pow(gamma, discountPeriod) * bestNextAction - predictedValue;
+		int actingAgentNumber = exp.getAgentNumber();
+		double reward = exp.getMonteCarloReward()[actingAgentNumber];
+		double delta = Math.pow(gamma, discountPeriod) * reward - predictedValue;
+		double bestNextAction = -1.0;
+		if (!monteCarlo) {
+			bestNextAction = valueOfBestAction(exp);
+			reward = exp.getReward()[actingAgentNumber];
+			delta = reward + Math.pow(gamma, discountPeriod) * bestNextAction - predictedValue;
+		}
 		if (localDebug) {
 			String message = String.format("Learning:\t%-15sReward: %.2f, NextValue: %.2f, Predicted: %.2f, Delta: %.4f, NextAction: %s", 
-					exp.getActionTaken(), exp.getReward(), bestNextAction, predictedValue, delta, nextAction == null ? "NULL" : nextAction.toString());
+					exp.getActionTaken(), reward, bestNextAction, predictedValue, delta, nextAction == null ? "NULL" : nextAction.toString());
 			log(message);
 			exp.getAgent().log(message);
 			StringBuffer logMessage = new StringBuffer("StartState -> EndState (FeatureTrace) :" + newline);

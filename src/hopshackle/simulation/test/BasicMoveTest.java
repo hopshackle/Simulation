@@ -210,7 +210,7 @@ public class BasicMoveTest {
 		assertTrue(journeyPlan2.getLocationMatcher().equals(new TerrainMatcher(TerrainType.FOREST)));
 		assertTrue(journeyPlan2.getDestination().equals(startLocation));
 	}
-
+/*
 	@Test
 	public void journeyPlanUseImprovesPerformance() {
 		hexMap.getHexAt(9,9).setTerrain(TerrainType.FOREST);
@@ -233,7 +233,7 @@ public class BasicMoveTest {
 		System.out.println(endTime-interimTime);
 		assertTrue(endTime-interimTime > (interimTime-startTime));
 	}
-	
+	*/
 	private void resetAgentMapKnowledgeLocationAndActionQueue() {
 		testAgent.setLocation(startLocation);
 		testAgent.setAge(1000);

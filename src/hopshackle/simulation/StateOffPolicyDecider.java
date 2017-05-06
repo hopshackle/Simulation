@@ -32,13 +32,17 @@ public abstract class StateOffPolicyDecider<A extends Agent> extends StateDecide
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		// Differs from parent in NOT calling updateStateValue if we have acted off policy
-		ActionEnum<A> bestAction = GreedyDecider.getBestActionFrom(exp.getPossibleActionsFromStartState(), exp.getStartState());
+		ActionEnum<A> bestAction = GreedyDecider.getBestActionFrom(exp.getPossibleActionsFromStartState(), exp.getStartState(useLookahead));
 		if (bestAction.equals(exp.getActionTaken())) {
 			super.learnFrom(exp, maxResult);
 		} else {
-			HopshackleState startState = getState(exp.getStartState());
+			int actingAgentNumber = exp.getAgentNumber();
+			double reward = exp.getReward()[actingAgentNumber];
+			if (monteCarlo)
+				reward = exp.getMonteCarloReward()[actingAgentNumber];
+			HopshackleState startState = getState(exp.getStartState(useLookahead));
 			HopshackleState endState = getState(exp.getEndState());
-			startState.addExperience(exp.getActionTaken().actionType, endState, exp.getReward()[0]);
+			startState.addExperience(exp.getActionTaken().actionType, endState, reward);
 			// but we omit the updateStateValue section
 		}
 	}

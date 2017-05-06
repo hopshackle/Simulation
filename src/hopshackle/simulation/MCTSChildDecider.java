@@ -6,7 +6,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 
 	private Decider<P> rolloutDecider;
 	private MonteCarloTree<P> tree;
-private boolean RAVE;
+	private boolean RAVE, useLookahead;
 	
 	public MCTSChildDecider(StateFactory<P> stateFactory, MonteCarloTree<P> tree, Decider<P> rolloutDecider, DeciderProperties prop) {
 		super(stateFactory);
@@ -15,6 +15,7 @@ private boolean RAVE;
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
 		boolean monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
+		useLookahead = getProperty("LookaheadQLearning", "false").equals("true");
 		RAVE = !getProperty("MonteCarloRAVE", "false").equals("false");
 		if (!monteCarlo) {
 			throw new AssertionError("MCTS Deciders should only be used with MonteCarlo switched on! Update GeneticProperties.txt");
@@ -48,13 +49,13 @@ private boolean RAVE;
 	@Override
 	public void learnFrom(ExperienceRecord<P> exp, double maxResult) {
 		// 'Learning' in this context means updating the MonteCarloTree
-		if (tree.containsState(exp.getStartState())) {
+		if (tree.containsState(exp.getStartState(useLookahead))) {
 			if (!tree.containsState(exp.getEndState()) && tree.updatesLeft() > 0 && !exp.isFinalState) {
 				// this will insert the state, so that the update will use the base value...the s', a, s'' update
 				// will then update this state using the reward
 				tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
 			}
-			tree.updateState(exp.getStartState(), exp.getActionTaken().actionType, exp.getEndState(), exp.getReward());
+			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().actionType, exp.getEndState(), exp.getMonteCarloReward());
 		} else if (tree.updatesLeft() > 0) {
 			throw new AssertionError("Tree should contain previous state");
 		}
@@ -66,10 +67,10 @@ private boolean RAVE;
 
 	private void updateRAVE(ExperienceRecord<P> exp) {
 		ActionEnum<P> action = exp.getActionTaken().actionType;
-		double reward[] = exp.getReward();
+		double reward[] = exp.getMonteCarloReward();
 		ExperienceRecord<P> previousER = exp.getPreviousRecord();
 		while (previousER != null) {
-			tree.updateRAVE(previousER.getStartState(), action, reward);
+			tree.updateRAVE(previousER.getStartState(useLookahead), action, reward);
 			previousER = previousER.getPreviousRecord();
 		}
 	}
