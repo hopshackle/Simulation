@@ -6,7 +6,7 @@ import org.encog.neural.data.basic.BasicNeuralData;
 
 public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A> {
 
-    private NeuralDecider<A> internalNeuralDecider;
+    protected NeuralDecider<A> internalNeuralDecider;
     private boolean useLookahead;
 
     public NeuralLookaheadDecider(StateFactory<A> stateFactory, double scaleFactor) {

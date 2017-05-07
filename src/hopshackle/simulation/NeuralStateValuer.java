@@ -50,4 +50,5 @@ public class NeuralStateValuer<A extends Agent> extends NeuralDecider<A> {
         retValue[0] = target;
         return retValue;
     }
+
 }

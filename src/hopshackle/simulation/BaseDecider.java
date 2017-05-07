@@ -93,6 +93,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	public ActionEnum<A> makeDecision(A decidingAgent, List<ActionEnum<A>> options) {
 		double temp = SimProperties.getPropertyAsDouble("Temperature", "1.0");
 		double explorationChance = (maxChanceOfRandomChoice - minChanceOfRandomChoice) * (temp - minTemp) / (maxTemp - minTemp) + minChanceOfRandomChoice;
+//		decidingAgent.log(String.format("Temperature: %.2f, Exploration: %.2f", temp, explorationChance));
 		return makeDecision(decidingAgent, explorationChance, options);
 	}
 

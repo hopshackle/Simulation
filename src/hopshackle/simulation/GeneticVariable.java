@@ -1,6 +1,8 @@
 package hopshackle.simulation;
 
-public interface GeneticVariable<A extends Agent> {
+import java.io.Serializable;
+
+public interface GeneticVariable<A extends Agent> extends Serializable {
 
 	public double getValue(A agent);
 	

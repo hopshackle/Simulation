@@ -19,6 +19,7 @@ public class SimProperties {
 	
 	public static void setFileLocation(String newLocation) {
 		fileLocation = newLocation;
+		initialised = false;
 	}
 	
 	public static void initialiseProperties(Properties baseline) {
@@ -64,7 +65,9 @@ public class SimProperties {
 
 	public static Set<String> allDeciderNames() {
 		if (!initialised) initialiseProperties();
-		return deciderPropertiesMap.keySet();
+		Set<String> retValue = deciderPropertiesMap.keySet();
+		retValue.remove("Override");		// reserved
+		return retValue;
 	}
 	
 	public static DeciderProperties getDeciderProperties(String type) {
@@ -104,5 +107,10 @@ public class SimProperties {
 		}
 		String temp = getProperty(name, defaultValue);
 		return Integer.valueOf(temp);
+	}
+
+	public static Properties specificProperties(String prefix) {
+		if (!initialised) initialiseProperties();
+		return DeciderProperties.specificProperties(prefix, geneticProperties);
 	}
 }

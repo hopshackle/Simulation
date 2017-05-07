@@ -24,7 +24,7 @@ public class GeneralQDeciderTest {
 			return agent.getGold();
 		}
 		@Override
-		public String getDescriptor() {return null;}
+		public String getDescriptor() {return "TEST";}
 		@Override
 		public boolean unitaryRange() {return false;}
 	};
@@ -33,7 +33,7 @@ public class GeneralQDeciderTest {
 		@Override
 		public double getValue(Agent a1) {return 1.0;}
 		@Override
-		public String getDescriptor() {return null;}
+		public String getDescriptor() {return "TEST";}
 		@Override
 		public boolean unitaryRange() {return false;}
 	};
