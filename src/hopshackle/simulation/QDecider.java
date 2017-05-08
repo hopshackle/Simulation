@@ -50,11 +50,12 @@ public abstract class QDecider<A extends Agent> extends BaseDecider<A> {
 	protected <S extends State<A>> ActionEnum<A> getBestActionFrom(List<ActionEnum<A>> possActions, S state) {
 		double bestValue = -Double.MAX_VALUE;
 		ActionEnum<A> bestAction = null;
-		for (ActionEnum<A> option : possActions) {
-			double value = valueOption(option, state);
+		List<Double> valueOfOptions = valueOptions(possActions, state);
+		for (int i = 0; i < valueOfOptions.size(); i++) {
+			double value = valueOfOptions.get(i);
 			if (value > bestValue) {
 				bestValue = value;
-				bestAction = option;
+				bestAction = possActions.get(i);
 			}
 		}
 		return bestAction;

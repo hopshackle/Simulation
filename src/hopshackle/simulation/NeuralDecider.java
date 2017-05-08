@@ -145,15 +145,18 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
     }
 
     public void addNewAction(ActionEnum<A> action) {
-        if (maxActionIndex < maximumOutputOptions)
-            maxActionIndex++;
+        maxActionIndex++;
+        if (maxActionIndex >= maximumOutputOptions - 1) {
+            maxActionIndex = maximumOutputOptions - 1;
+     //       System.out.println(action + " exceeds limit of trackable options");
+        }
         addNewAction(action.toString(), maxActionIndex);
     }
 
 
     public void addNewAction(String action, int position) {
         if (position > maxActionIndex) maxActionIndex = position;
-        if (position <= maximumOutputOptions)
+        if (position < maximumOutputOptions)
             outputKey.put(action.toString(), position);
         else {
             logger.severe("Action " + action.toString() + " cannot be allocated to output neuron " + position);
@@ -226,7 +229,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
 
         // So only the action chosen has an updated target value - the others assume the prediction was correct.
         /*		if (localDebug) {
-			for (int i = 0; i < inputValues.length; i++) {
+            for (int i = 0; i < inputValues.length; i++) {
 				log(Arrays.toString(inputValues[i]));
 				log(Arrays.toString(outputValues[i]));
 				exp.getAgent().log(Arrays.toString(inputValues[i]));

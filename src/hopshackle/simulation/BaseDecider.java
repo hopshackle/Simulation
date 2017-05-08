@@ -108,6 +108,9 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		ActionEnum<A> winningChoice = null;
 		if (chooseableOptions.isEmpty()) return null;
 
+		if (chooseableOptions.size() == 1)
+			return chooseableOptions.get(0);	// only one option, so no decision to take
+
 		double chance = Math.random();
 		if (chance < explorationChance) {
 			winningChoice = selectOptionUsingBoltzmann(chooseableOptions, decidingAgent);

@@ -1,17 +1,21 @@
 package hopshackle.simulation;
 
+import org.apache.commons.math3.analysis.function.Exp;
+
 import java.util.*;
 
 public class OnInstructionTeacher<A extends Agent> extends Teacher<A> {
 
     protected List<List<ExperienceRecord<A>>> pastData = new ArrayList<List<ExperienceRecord<A>>>();
     protected int pastDataLimit;
+    protected boolean excludeSingleChoiceExperienceRecords;
 
     public OnInstructionTeacher() {
-        this(0);
+        this(0, false);
     }
 
-    public OnInstructionTeacher(int pastDataToKeep) {
+    public OnInstructionTeacher(int pastDataToKeep, boolean excludeSingleChoice) {
+        excludeSingleChoiceExperienceRecords = excludeSingleChoice;
         pastDataLimit = pastDataToKeep;
     }
 
@@ -22,7 +26,16 @@ public class OnInstructionTeacher<A extends Agent> extends Teacher<A> {
     }
 
     private boolean updateData() {
-        List<ExperienceRecord<A>> newER = experienceRecordCollector.getAllExperienceRecords();
+        List<ExperienceRecord<A>> temp = experienceRecordCollector.getAllExperienceRecords();
+        List<ExperienceRecord<A>> newER = new ArrayList<>(temp.size());
+        if (excludeSingleChoiceExperienceRecords) {
+            for (ExperienceRecord<A> er : temp) {
+                if (er.isInFinalState() || er.getPossibleActionsFromStartState().size() > 1)
+                    newER.add(er);
+            }
+        } else {
+            newER = temp;
+        }
         if (newER.isEmpty()) return false;
         pastData.add(newER);
         if (pastData.size() > pastDataLimit + 1) {
