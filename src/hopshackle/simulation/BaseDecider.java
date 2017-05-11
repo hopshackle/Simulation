@@ -211,7 +211,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		if (baseValue < 0.01)
 			baseValue = 0.01;
 
-		if (temperature < 0.0001) temperature = 0.0001;
+		if (temperature < 0.001) temperature = 0.001;
 		if (localDebug || decidingAgent.getDebugLocal()) {
 			String message = "Base Value is " + baseValue;
 			if (localDebug) log(message);
@@ -221,9 +221,10 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		double sumOfActionValues = 0.0;
 		double maxValue = decidingAgent.getMaxScore();
 		for (int i = 0; i < optionList.size(); i++) {
-			double val = baseValuesPerOption.get(i) / baseValue / temperature;
+			double val = baseValuesPerOption.get(i) / baseValue / maxValue / temperature;
 			if (absoluteDifferenceNoise) val = (baseValuesPerOption.get(i) - baseValue) / maxValue / temperature;
 			double boltzmannValue = Math.exp(val);
+			if (boltzmannValue > 1e+20)	boltzmannValue = 1e+20;
 			sumOfActionValues += boltzmannValue;
 			baseValuesPerOption.set(i, boltzmannValue);
 			if (localDebug || decidingAgent.getDebugLocal()) {
@@ -234,6 +235,9 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		}
 		for (int i = 0; i < optionList.size(); i++) {
 			double normalisedValue = baseValuesPerOption.get(i) / sumOfActionValues;
+			if (Double.isNaN(normalisedValue)) {
+				throw new AssertionError("normalisedValue is invalid " + baseValuesPerOption.get(i));
+			}
 			baseValuesPerOption.set(i, normalisedValue);
 			if (localDebug || decidingAgent.getDebugLocal()) {
 				String message = String.format("Option %-20s has normalised value %.3f", optionList.get(i).toString(), normalisedValue);
