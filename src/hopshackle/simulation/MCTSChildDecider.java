@@ -2,7 +2,7 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
+public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 
 	private Decider<P> rolloutDecider;
 	private MonteCarloTree<P> tree;
@@ -41,6 +41,12 @@ public class MCTSChildDecider<P extends Agent> extends BaseDecider<P> {
 
 	@Override
 	public double valueOption(ActionEnum<P> option, P decidingAgent) {
+		// we never actually value options
+		// we override the makeDecision() method to implement MCTS
+		return 0.0;
+	}
+	@Override
+	public double valueOption(ActionEnum<P> option, State<P> state) {
 		// we never actually value options
 		// we override the makeDecision() method to implement MCTS
 		return 0.0;

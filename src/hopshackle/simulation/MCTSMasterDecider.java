@@ -4,7 +4,7 @@ import hopshackle.simulation.AgentEvent.Type;
 
 import java.util.*;
 
-public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
+public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
 	protected Map<A, MonteCarloTree<A>> treeMap = new HashMap<A, MonteCarloTree<A>>();
 	protected Set<String> processedGames = new HashSet<String>();
@@ -186,6 +186,10 @@ public class MCTSMasterDecider<A extends Agent> extends BaseDecider<A> {
 
 	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent) {
+		return 0;
+	}
+	@Override
+	public double valueOption(ActionEnum<A> option, State<A> state) {
 		return 0;
 	}
 

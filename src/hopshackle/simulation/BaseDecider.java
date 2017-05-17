@@ -18,7 +18,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	protected String name = "DEFAULT";
 	protected boolean localDebug = false;
 	protected DeciderProperties decProp;
-	protected boolean absoluteDifferenceNoise;
+	protected boolean absoluteDifferenceNoise, monteCarlo, useLookahead;
 	protected double maxChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMaxChance", "0.0");
 	protected double minChanceOfRandomChoice = getPropertyAsDouble("RandomDeciderMinChance", "0.0");
 	protected double maxTemp = getPropertyAsDouble("StartTemperature", "1.0");
@@ -55,7 +55,6 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 	@Override
 	public void learnFromBatch(List<ExperienceRecord<A>> exp, double maxResult) {
-		@SuppressWarnings("unchecked")
 		ExperienceRecord<A>[] asArray = new ExperienceRecord[exp.size()];
 		for (int i = 0; i < exp.size(); i++)
 			asArray[i] = exp.get(i);
@@ -95,11 +94,6 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		double explorationChance = (maxChanceOfRandomChoice - minChanceOfRandomChoice) * (temp - minTemp) / (maxTemp - minTemp) + minChanceOfRandomChoice;
 //		decidingAgent.log(String.format("Temperature: %.2f, Exploration: %.2f", temp, explorationChance));
 		return makeDecision(decidingAgent, explorationChance, options);
-	}
-
-	@Override
-	public ActionEnum<A> getOptimalDecision(A decidingAgent, List<ActionEnum<A>> options) {
-		return makeDecision(decidingAgent, 0.0, options);
 	}
 
 	protected ActionEnum<A> makeDecision(A decidingAgent, double explorationChance, List<ActionEnum<A>> chooseableOptions) {
@@ -185,11 +179,11 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 
 	@Override
-	public List<Double> valueOptions(List<ActionEnum<A>> optionList, A decidingAgent){
-		List<Double> retValue = new ArrayList<Double>(optionList.size());
-		for (int i = 0; i < optionList.size(); i++) retValue.add(0.0); 
-		for (int i = 0; i < optionList.size(); i++) {
-			double optionValue = this.valueOption(optionList.get(i), decidingAgent);
+	public List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state) {
+		List<Double> retValue = new ArrayList<Double>(options.size());
+		for (int i = 0; i < options.size(); i++) retValue.add(0.0);
+		for (int i = 0; i < options.size(); i++) {
+			double optionValue = this.valueOption(options.get(i), state);
 			retValue.set(i, optionValue);
 		}
 		return retValue;
@@ -220,11 +214,13 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 
 		double sumOfActionValues = 0.0;
 		double maxValue = decidingAgent.getMaxScore();
+		if (maxValue < 1.0) maxValue = 1.0;
 		for (int i = 0; i < optionList.size(); i++) {
 			double val = baseValuesPerOption.get(i) / baseValue / maxValue / temperature;
 			if (absoluteDifferenceNoise) val = (baseValuesPerOption.get(i) - baseValue) / maxValue / temperature;
 			double boltzmannValue = Math.exp(val);
-			if (boltzmannValue > 1e+20)	boltzmannValue = 1e+20;
+			if (boltzmannValue > 1e+20 || Double.isNaN(boltzmannValue))	boltzmannValue = 1e+20;
+			if (boltzmannValue < 1e-20) boltzmannValue = 1e-20;
 			sumOfActionValues += boltzmannValue;
 			baseValuesPerOption.set(i, boltzmannValue);
 			if (localDebug || decidingAgent.getDebugLocal()) {
@@ -236,7 +232,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		for (int i = 0; i < optionList.size(); i++) {
 			double normalisedValue = baseValuesPerOption.get(i) / sumOfActionValues;
 			if (Double.isNaN(normalisedValue)) {
-				throw new AssertionError("normalisedValue is invalid " + baseValuesPerOption.get(i));
+				throw new AssertionError(String.format("normalisedValue is invalid (%.3g / %.3g)", baseValuesPerOption.get(i), sumOfActionValues));
 			}
 			baseValuesPerOption.set(i, normalisedValue);
 			if (localDebug || decidingAgent.getDebugLocal()) {
@@ -246,11 +242,6 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 			}
 		}
 		return baseValuesPerOption;
-	}
-
-	@Override
-	public ActionEnum<A> decideWithoutLearning(A decidingAgent, List<ActionEnum<A>> options) {
-		return makeDecision(decidingAgent, options);
 	}
 
 	@Override
@@ -303,6 +294,8 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 		gamma = getPropertyAsDouble("Gamma", "0.95");
 		alpha = getPropertyAsDouble("Alpha", "0.05");
 		lambda = getPropertyAsDouble("Lambda", "0.001");
+		monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
+		useLookahead = getProperty("LookaheadQLearning", "false").equals("true");
 	}
 	@Override
 	public DeciderProperties getProperties() {

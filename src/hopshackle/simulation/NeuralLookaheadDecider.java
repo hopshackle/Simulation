@@ -40,9 +40,9 @@ public class NeuralLookaheadDecider<A extends Agent> extends LookaheadDecider<A>
     private void logResult(ExperienceRecord<A> baseER) {
         double startValue = value(baseER.getStartState(useLookahead)); // projection
         double endValue = value(baseER.getEndState()); // projection
-        String message = String.format("Learning:\t%-20sScore: %.2f -> %.2f, State Valuation: %.2f -> %.2f, Target: %.2f, EndGame: %s",
-                baseER.getActionTaken(), baseER.getStartScore()[baseER.getAgentNumber()], baseER.getEndScore()[baseER.getAgentNumber()],
-                startValue, endValue, internalNeuralDecider.getTarget(baseER)[0], baseER.isInFinalState());
+        String message = String.format("Learning:\t%-20sScore: %.2f -> %.2f, Reward: %.2f, State Valuation: %.2f -> %.2f, Target: %.2f, EndGame: %s, Best Next: %-20s",
+                baseER.getActionTaken(), baseER.getStartScore()[baseER.getAgentNumber()], baseER.getEndScore()[baseER.getAgentNumber()], baseER.getReward()[baseER.getAgentNumber()],
+                startValue, endValue, internalNeuralDecider.getTarget(baseER)[0], baseER.isInFinalState(), internalNeuralDecider.getBestActionFrom(baseER.getPossibleActionsFromEndState(), baseER.endState));
         log(message);
         baseER.getAgent().log(message);
         double[] startArray = baseER.getStartStateAsArray(useLookahead);

@@ -2,7 +2,7 @@ package hopshackle.simulation;
 
 import java.util.List;
 
-public class RandomDecider<A extends Agent> extends BaseDecider<A> {
+public class RandomDecider<A extends Agent> extends BaseAgentDecider<A> {
 
 	public RandomDecider(StateFactory<A> stateFactory) {
 		super(stateFactory);
@@ -16,6 +16,10 @@ public class RandomDecider<A extends Agent> extends BaseDecider<A> {
 	
 	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent) {
+		return 0;
+	}
+	@Override
+	public double valueOption(ActionEnum<A> option, State<A> state) {
 		return 0;
 	}
 

@@ -2,7 +2,7 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class GeneralLinearQDecider<A extends Agent> extends QDecider<A> {
+public class GeneralLinearQDecider<A extends Agent> extends BaseStateDecider<A> {
 
 	/*
 	 * We need to have a Map to record what actions we have seen so far

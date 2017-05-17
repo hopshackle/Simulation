@@ -4,7 +4,7 @@ import java.util.*;
 
 import hopshackle.utilities.*;
 
-public class LogisticDecider<A extends Agent> extends QDecider<A> {
+public class LogisticDecider<A extends Agent> extends BaseStateDecider<A> {
 	
 	Map<ActionEnum<A>, LogisticRegression> regressors = new HashMap<ActionEnum<A>, LogisticRegression>();
 

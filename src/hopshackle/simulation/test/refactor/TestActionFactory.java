@@ -165,7 +165,7 @@ class TestAgent extends Agent {
 	}
 }
 
-class TestDecider extends BaseDecider<TestAgent> {
+class TestDecider extends BaseAgentDecider<TestAgent> {
 
 	public int learningEpisodes = 0;
 
@@ -182,6 +182,10 @@ class TestDecider extends BaseDecider<TestAgent> {
 
 	@Override
 	public double valueOption(ActionEnum<TestAgent> option, TestAgent decidingAgent) {
+		return 0;
+	}
+	@Override
+	public double valueOption(ActionEnum<TestAgent> option, State<TestAgent> state) {
 		return 0;
 	}
 	@Override

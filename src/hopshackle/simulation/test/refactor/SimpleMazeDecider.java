@@ -4,7 +4,7 @@ import java.util.*;
 
 import hopshackle.simulation.*;
 
-public class SimpleMazeDecider extends BaseDecider<TestAgent> {
+public class SimpleMazeDecider extends BaseAgentDecider<TestAgent> {
 	
 	static List<TestActionEnum> actionList = new ArrayList<TestActionEnum>(EnumSet.allOf(TestActionEnum.class));
 	static List<GeneticVariable<TestAgent>> genVar = new ArrayList<GeneticVariable<TestAgent>>(EnumSet.allOf(TestGenVar.class));
@@ -33,7 +33,10 @@ public class SimpleMazeDecider extends BaseDecider<TestAgent> {
 	public double valueOption(ActionEnum<TestAgent> option,	TestAgent decidingAgent) {
 		return 0;
 	}
-
+	@Override
+	public double valueOption(ActionEnum<TestAgent> option,	State<TestAgent> state) {
+		return 0;
+	}
 	@Override
 	public void learnFrom(ExperienceRecord<TestAgent> exp, double maxResult) {
 	}

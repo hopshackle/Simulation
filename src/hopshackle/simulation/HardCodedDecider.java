@@ -2,7 +2,7 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class HardCodedDecider<A extends Agent> extends BaseDecider<A> {
+public class HardCodedDecider<A extends Agent> extends BaseAgentDecider<A> {
 
 	private ActionEnum<A> hardCode;
 
@@ -18,6 +18,11 @@ public class HardCodedDecider<A extends Agent> extends BaseDecider<A> {
 
 	@Override
 	public double valueOption(ActionEnum<A> option, A decidingAgent) {
+		return 0;
+	}
+
+	@Override
+	public double valueOption(ActionEnum<A> option, State<A> state) {
 		return 0;
 	}
 

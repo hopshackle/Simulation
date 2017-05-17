@@ -12,7 +12,7 @@ import org.encog.neural.networks.training.propagation.back.Backpropagation;
 import org.encog.neural.networks.training.propagation.quick.QuickPropagation;
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
 
-public class NeuralDecider<A extends Agent> extends QDecider<A> {
+public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
 
     protected BasicNetwork brain;
     protected Map<String, Integer> outputKey = new HashMap<String, Integer>();
@@ -29,6 +29,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
     protected double overrideLearningCoefficient, overrideMomentum, scaleFactor;
     private boolean controlSignal = getProperty("NeuralControlSignal", "false").equals("true");
     private int maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
+    private boolean stateValuer;
     private static boolean extraDebug = true;
 
     public NeuralDecider(StateFactory<A> stateFactory, double scaleFactor) {
@@ -49,7 +50,10 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
         logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
         maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
         controlSignal = getProperty("NeuralControlSignal", "false").equals("true");
-        if (controlSignal) {
+        stateValuer = getProperty("NeuralStateValuer", "false").equals("true");
+        if (stateValuer) {
+            brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), 1, decProp);
+        } else if (controlSignal) {
             brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size() + maximumOutputOptions, 1, decProp);
         } else {
             brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), maximumOutputOptions, decProp);
@@ -253,6 +257,7 @@ public class NeuralDecider<A extends Agent> extends QDecider<A> {
             output = exp.getReward()[actingAgentNumber] / scaleFactor + Math.pow(gamma, discountPeriod) * bestQValue;
         }
         int actionIndex = outputKey.getOrDefault(exp.actionTaken.getType().toString(), -1);
+        if (stateValuer) actionIndex = 0;
         if (actionIndex == -1) {    // we have not seen this action before, so allocate an output neuron for it
             addNewAction(exp.actionTaken.getType());
             actionIndex = outputKey.get(exp.getActionTaken().getType().toString());

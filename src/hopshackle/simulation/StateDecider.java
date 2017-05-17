@@ -3,7 +3,7 @@ package hopshackle.simulation;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class StateDecider<A extends Agent> extends QDecider<A> {
+public abstract class StateDecider<A extends Agent> extends BaseStateDecider<A> {
 
 	private String stateType;
 	private int pigeonHoles;

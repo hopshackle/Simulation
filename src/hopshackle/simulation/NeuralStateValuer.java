@@ -33,15 +33,21 @@ public class NeuralStateValuer<A extends Agent> extends NeuralDecider<A> {
         So, the best target we can use is the actual end state itself.
 
         We value endStateAsArray, discount appropriately, and use this plus the reward as our target.
+
+        Wait - I think I disagree with my own logic. We have the end state, and a list of possible actions.
+        We can apply each possible action to the end state, to get a best action...
          */
         double discountPeriod = exp.getDiscountPeriod();
         double target = exp.getMonteCarloReward()[exp.getAgentNumber()] / scaleFactor;
         if (!monteCarlo) {
-            target = exp.getReward()[exp.getAgentNumber()] / scaleFactor;
+            target = exp.getReward()[exp.getAgentNumber()]  / scaleFactor;
             BasicNeuralData inputDataForEnd = new BasicNeuralData(exp.getEndStateAsArray());
-            double[] prediction = brain.compute(inputDataForEnd).getData();
-            double endStateValue = prediction[0];
-            target = target / scaleFactor + Math.pow(gamma, discountPeriod) * endStateValue;
+            double endStateValue = 0.0;
+            if (!exp.isInFinalState()) {
+                double[] prediction = brain.compute(inputDataForEnd).getData();
+                endStateValue = prediction[0];
+            }
+            target = target + Math.pow(gamma, discountPeriod) * endStateValue;
         }
         if (target > 1.0) target = 1.0;
         if (target < -1.0) target = -1.0;
