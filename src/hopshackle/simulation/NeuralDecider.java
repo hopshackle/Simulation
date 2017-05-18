@@ -27,10 +27,9 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
     protected boolean shuffleTrainingData = getProperty("NeuralShuffleData", "true").equals("true");
     protected boolean logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
     protected double overrideLearningCoefficient, overrideMomentum, scaleFactor;
-    private boolean controlSignal = getProperty("NeuralControlSignal", "false").equals("true");
+    private boolean controlSignal, offPolicyLearning;
     private int maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
-    private boolean stateValuer;
-    private static boolean extraDebug = true;
+    //   private boolean lookahead;
 
     public NeuralDecider(StateFactory<A> stateFactory, double scaleFactor) {
         super(stateFactory);
@@ -50,10 +49,8 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
         logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
         maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
         controlSignal = getProperty("NeuralControlSignal", "false").equals("true");
-        stateValuer = getProperty("NeuralStateValuer", "false").equals("true");
-        if (stateValuer) {
-            brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), 1, decProp);
-        } else if (controlSignal) {
+        offPolicyLearning = getProperty("NeuralOffPolicyLearning", "false").equals("true");
+        if (controlSignal) {
             brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size() + maximumOutputOptions, 1, decProp);
         } else {
             brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size(), maximumOutputOptions, decProp);
@@ -91,7 +88,8 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
 
     @Override
     public double valueOption(ActionEnum<A> option, State<A> state) {
-        int optionIndex = outputKey.getOrDefault(option.toString(), maxActionIndex);
+        if (option == null || state == null) return 0.0;
+        int optionIndex = getActionIndex(option);
         BasicNeuralData inputData = extractInput(state, option);
         double[] valuation = brain.compute(inputData).getData();
         if (controlSignal) optionIndex = 0;
@@ -107,8 +105,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
         double[] valuation = brain.compute(inputData).getData();
         for (int i = 0; i < options.size(); i++) {
             ActionEnum<A> option = options.get(i);
-            if (!outputKey.containsKey(option.toString())) addNewAction(option);
-            int optionIndex = outputKey.getOrDefault(option.toString(), maxActionIndex);
+            int optionIndex = getActionIndex(option);
             retValue.set(i, valuation[optionIndex] * scaleFactor);
         }
         return retValue;
@@ -122,9 +119,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
         int offset = inputData.size() - maximumOutputOptions;
         int oldIndex = -1;
         for (int i = 0; i < options.size(); i++) {
-            ActionEnum<A> option = options.get(i);
-            if (!outputKey.containsKey(option.toString())) addNewAction(option);
-            int optionIndex = outputKey.getOrDefault(option.toString(), maxActionIndex);
+            int optionIndex = getActionIndex(options.get(i));
             if (oldIndex > -1) inputData.setData(oldIndex + offset, 0.0);
             oldIndex = optionIndex;
             inputData.setData(optionIndex + offset, 1.0);
@@ -135,8 +130,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
     }
 
     private BasicNeuralData extractInput(State<A> state, ActionEnum<A> option) {
-        if (!outputKey.containsKey(option.toString())) addNewAction(option);
-        int optionIndex = outputKey.getOrDefault(option.toString(), maxActionIndex);
+        int optionIndex = getActionIndex(option);
         double[] rawInput = state.getAsArray();
         int actionOffset = rawInput.length;
         if (controlSignal) {
@@ -152,7 +146,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
         maxActionIndex++;
         if (maxActionIndex >= maximumOutputOptions - 1) {
             maxActionIndex = maximumOutputOptions - 1;
-     //       System.out.println(action + " exceeds limit of trackable options");
+            //       System.out.println(action + " exceeds limit of trackable options");
         }
         addNewAction(action.toString(), maxActionIndex);
     }
@@ -245,6 +239,30 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
         teach(trainingData);
     }
 
+    protected void logResult(ExperienceRecord<A> baseER) {
+        ActionEnum<A> bestAction = getBestActionFrom(baseER.getPossibleActionsFromEndState(), baseER.getEndState());
+        ActionEnum<A> actualAction = baseER.getActionTakenFromEndState();
+        int actionIndex = getActionIndex(baseER.actionTaken.getType());
+        double offPolicyValue = valueOfBestAction(baseER);
+        double onPolicyValue = valueOption(baseER.getActionTakenFromEndState(), baseER.getEndState());
+        String message = String.format("%s Learning:\t%-20sScore: %.2f -> %.2f, Reward: %.2f, Target: %.2f, EndGame: %s, Actual/Best Next: %s/%s, QV: %.2f/%.2f",
+                this.toString(), baseER.getActionTaken(), baseER.getStartScore()[baseER.getAgentNumber()], baseER.getEndScore()[baseER.getAgentNumber()], baseER.getReward()[baseER.getAgentNumber()],
+                getTarget(baseER)[actionIndex], baseER.isInFinalState(), actualAction, bestAction, onPolicyValue, offPolicyValue);
+        log(message);
+        baseER.getAgent().log(message);
+        double[] startArray = baseER.getStartStateAsArray(useLookahead);
+        double[] endArray = baseER.getEndStateAsArray();
+        double[] featureTrace = baseER.getFeatureTrace();
+        StringBuffer logMessage = new StringBuffer("StartState -> EndState (FeatureTrace) :" + newline);
+        for (int i = 0; i < startArray.length; i++) {
+            if (startArray[i] != 0.0 || endArray[i] != 0.0 || Math.abs(featureTrace[i]) >= 0.01)
+                logMessage.append(String.format("\t%.2f -> %.2f (%.2f) %s %s", startArray[i], endArray[i], featureTrace[i], stateFactory.getVariables().get(i).toString(), newline));
+        }
+        message = logMessage.toString();
+        log(message);
+        baseER.getAgent().log(message);
+    }
+
     protected double[] getTarget(ExperienceRecord<A> exp) {
         // our target is the reward observed, plus gamma times the predicted value of the end state
         // which in turn is given by the best action value
@@ -252,16 +270,18 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
         int actingAgentNumber = exp.getAgentNumber();
         double output = exp.getMonteCarloReward()[actingAgentNumber] / scaleFactor;
         if (!monteCarlo) {
-            double bestQValue = valueOfBestAction(exp) / scaleFactor;
+            double bestQValue = 0.0;
+            if (!exp.isInFinalState()) {
+                if (offPolicyLearning) {
+                    bestQValue = valueOfBestAction(exp) / scaleFactor;
+                } else {
+                    bestQValue = valueOption(exp.getActionTakenFromEndState(), exp.getEndState()) / scaleFactor;
+                }
+            }
             double discountPeriod = exp.getDiscountPeriod();
             output = exp.getReward()[actingAgentNumber] / scaleFactor + Math.pow(gamma, discountPeriod) * bestQValue;
         }
-        int actionIndex = outputKey.getOrDefault(exp.actionTaken.getType().toString(), -1);
-        if (stateValuer) actionIndex = 0;
-        if (actionIndex == -1) {    // we have not seen this action before, so allocate an output neuron for it
-            addNewAction(exp.actionTaken.getType());
-            actionIndex = outputKey.get(exp.getActionTaken().getType().toString());
-        }
+        int actionIndex = getActionIndex(exp.actionTaken.getType());
         if (output > 1.0) output = 1.0;
         if (output < -1.0) output = -1.0;
         // for all outputs other than the target one, we use the prediction from the network (so that there is no weight update)
@@ -409,13 +429,15 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
                 batchInputData[count][n] = startState[n];
             }
             batchOutputData[count] = getTarget(exp);
-            if (localDebug && extraDebug) {
-                String message = HopshackleUtilities.formatArray(batchInputData[count], " ", "%+.3f");
+            if (localDebug) {
+                logResult(exp);
+  /*              String message = HopshackleUtilities.formatArray(batchInputData[count], " ", "%+.3f");
                 log(message);
                 exp.getAgent().log(message);
                 message = HopshackleUtilities.formatArray(batchOutputData[count], " ", "%+.3f");
                 log(message);
                 exp.getAgent().log(message);
+                */
             }
             count++;
         }
@@ -427,7 +449,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
     }
 
     @SuppressWarnings("unchecked")
-    public static <A extends Agent> NeuralDecider<A> createFromFile(StateFactory<A> stateFactory, File saveFile, boolean stateValuer) {
+    public static <A extends Agent> NeuralDecider<A> createFromFile(StateFactory<A> stateFactory, File saveFile, boolean lookaheadDecider) {
         NeuralDecider<A> retValue = null;
         try {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(saveFile));
@@ -442,7 +464,11 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
 
             StateFactory<A> sf = stateFactory.cloneWithNewVariables(var);
             retValue = new NeuralDecider<A>(sf, scaleFactor);
-            if (stateValuer) retValue = new NeuralStateValuer<A>(sf, scaleFactor);
+            if (lookaheadDecider) {
+                if (actionNN.getOutputCount() != 1)
+                    throw new AssertionError("Cannot create LookaheadDecider with " + actionNN.getOutputCount() + " output neurons");
+                retValue = new NeuralLookaheadDecider<A>(sf, scaleFactor);
+            }
             retValue.injectProperties(decProp);
             retValue.setBrain(actionNN);
             for (String key : outputKey.keySet()) {
@@ -532,6 +558,11 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
 
             brain.addWeight(fromLayer, fromNeuron, toNeuron, Math.random() / 10.0);
         }
+    }
+
+    protected int getActionIndex(ActionEnum<A> action) {
+        if (!outputKey.containsKey(action.toString())) addNewAction(action);
+        return outputKey.getOrDefault(action.toString(), maxActionIndex);
     }
 
     public BasicNetwork getBrain() {

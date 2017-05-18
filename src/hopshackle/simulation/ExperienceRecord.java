@@ -15,7 +15,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
     private boolean incrementalScoreAffectsReward, dbStorage;
     private static DatabaseWriter<ExperienceRecord<?>> writer = new DatabaseWriter<ExperienceRecord<?>>(new ExpRecDAO());
     protected double lambda, gamma, traceCap, timePeriod;
-    protected State<A> startState, startStateWithLookahead, endState;
+    private State<A> startState, startStateWithLookahead, endState;
     protected double[] startStateAsArray, startStateWithLookaheadAsArray, endStateAsArray;
     protected double[] featureTrace;
     protected Action<A> actionTaken;
@@ -176,6 +176,11 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 
     public Action<A> getActionTaken() {
         return actionTaken;
+    }
+
+    public ActionEnum<A> getActionTakenFromEndState() {
+        if (nextRecord != null) return nextRecord.getActionTaken().getType();
+        return null;
     }
 
     public List<ActionEnum<A>> getPossibleActionsFromEndState() {

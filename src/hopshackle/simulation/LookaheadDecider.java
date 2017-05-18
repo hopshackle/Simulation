@@ -2,7 +2,7 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public abstract class LookaheadDecider<A extends Agent> extends BaseDecider<A> {
+public abstract class LookaheadDecider<A extends Agent> extends BaseStateDecider<A> {
 
 	public LookaheadDecider(StateFactory<A> stateFactory) {
 		super(stateFactory);
