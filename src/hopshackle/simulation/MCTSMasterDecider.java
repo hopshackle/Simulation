@@ -93,7 +93,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 		class FollowOnEventFilter implements EventFilter {
 			@Override
 			public boolean ignore(AgentEvent event) {
-				return (event.getAction() == null) ? false : event.getAction().isFollowOnAction();
+				return (event.getAction() == null) ? false : event.getAction().hasNoAssociatedDecision();
 			}
 		}
 		ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(decProp), new FollowOnEventFilter());

@@ -115,6 +115,9 @@ public class ActionPlan {
 		else
 			return null;
 	}
+	public List<Action<?>> getExecutedActions() {
+		return executedActions;
+	}
 	public int sizeOfQueue() {
 		return actionQueue.size();
 	}

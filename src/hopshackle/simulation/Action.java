@@ -404,9 +404,8 @@ public abstract class Action<A extends Agent> implements Delayed {
 		return nextActor;
 	}
 
-	public boolean isFollowOnAction() {
+	public boolean hasNoAssociatedDecision() {
 		return hasNoAssociatedDecision;
 	}
-
 
 }
