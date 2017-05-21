@@ -41,7 +41,7 @@ public class GeneralQLambdaTest {
 		decider = new TestLinearQDecider(actions, variables);
 		decider.injectProperties(localProp);
 		for (ActionEnum<Agent> a : actions)
-			decider.setWeights(a, new double[2]);
+			decider.setWeights(a.toString(), new double[2]);
 		// so we have two actions, right and left
 		// and two inputs, one is just equal to the Agents Gold, and the other is equal to a constant
 		w = new World();

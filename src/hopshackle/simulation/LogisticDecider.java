@@ -6,16 +6,17 @@ import hopshackle.utilities.*;
 
 public class LogisticDecider<A extends Agent> extends BaseStateDecider<A> {
 	
-	Map<ActionEnum<A>, LogisticRegression> regressors = new HashMap<ActionEnum<A>, LogisticRegression>();
+	Map<String, LogisticRegression> regressors = new HashMap<String, LogisticRegression>();
 
 	public LogisticDecider(StateFactory<A> stateFactory) {
 		super(stateFactory);
 	}
 
-	public void addRegressor(ActionEnum<A> key, LogisticRegression regressor) {
+	public void addRegressor(String key, LogisticRegression regressor) {
 		regressors.put(key, regressor);
 	}
-	public LogisticRegression getRegressor(ActionEnum<A> action) {
+
+	public LogisticRegression getRegressor(String action) {
 		return regressors.getOrDefault(action, null);
 	}
 
@@ -27,7 +28,7 @@ public class LogisticDecider<A extends Agent> extends BaseStateDecider<A> {
 	@Override
 	public double valueOption(ActionEnum<A> option, State<A> state) {
 		double[] stateArray = state.getAsArray();
-		LogisticRegression reg  = regressors.get(option);
+		LogisticRegression reg  = regressors.get(option.toString());
 		if (reg == null) return 0.0;
 		return reg.classify(stateArray);
 	}
@@ -38,7 +39,7 @@ public class LogisticDecider<A extends Agent> extends BaseStateDecider<A> {
 		double[] stateArray = state.getAsArray();
 		for (int i = 0; i < options.size(); i++) retValue.add(0.0); 
 		for (int i = 0; i < options.size(); i++) {
-			LogisticRegression reg  = regressors.get(options.get(i));
+			LogisticRegression reg  = regressors.get(options.get(i).toString());
 			if (reg == null) continue;
 			retValue.set(i, reg.classify(stateArray));
 		}

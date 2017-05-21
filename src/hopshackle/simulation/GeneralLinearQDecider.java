@@ -62,9 +62,9 @@ public class GeneralLinearQDecider<A extends Agent> extends BaseStateDecider<A> 
 		w[varIndex] += delta - w[varIndex] * lambda;
 	}
 
-	protected void setWeights(ActionEnum<A> option, double[] w) {
+	protected void setWeights(String option, double[] w) {
 		// for testing only
-		weights.put(option.toString(), w);
+		weights.put(option, w);
 	}
 
 	public double getWeightOf(int varIndex, ActionEnum<A> option) {

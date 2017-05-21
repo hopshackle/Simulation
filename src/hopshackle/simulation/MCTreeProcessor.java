@@ -15,7 +15,7 @@ public class MCTreeProcessor<A extends Agent> {
 	private DeciderProperties properties;
 	private LinkedList<double[]> inputData;
 	private LinkedList<double[]> outputData;
-	private List<ActionEnum<A>> actionsInOutputLayer = new ArrayList<ActionEnum<A>>();
+	private List<String> actionsInOutputLayer = new ArrayList<String>();
 	private int windowSize = 1000;
 	private String name;
 	//	private Map<ActionEnum<A>, Integer> actionCount = new HashMap<ActionEnum<A>, Integer>();
@@ -89,7 +89,7 @@ public class MCTreeProcessor<A extends Agent> {
 		double[] retValue = initialArray;
 		int index = actionsInOutputLayer.indexOf(action);
 		if (index == -1 && actionsInOutputLayer.size() < maxNeurons) {
-			actionsInOutputLayer.add(action);
+			actionsInOutputLayer.add(action.toString());
 			double[] oldArray = retValue;
 			retValue = new double[actionsInOutputLayer.size()];
 			for (int i = 0; i < oldArray.length; i++) retValue[i] = oldArray[i];
@@ -109,10 +109,10 @@ public class MCTreeProcessor<A extends Agent> {
 			int[] actionCounts = getValidActionCountsFromData();
 			int[] chosenCounts = getTopActionCountsFromData();
 			if (actionCounts.length != chosenCounts.length) throw new AssertionError("Should be same length");
-			int threshold = outputData.size() / 100;
+			int threshold = outputData.size() / 200;
 			for (int i = 0; i < actionsInOutputLayer.size(); i++) {
 				if (chosenCounts[i] >= threshold) {
-					message.append(String.format("%-20s %d of %d (%.0f%%)\n", actionsInOutputLayer.get(i).toString(), chosenCounts[i], actionCounts[i], (chosenCounts[i] * 100.0) / (double)actionCounts[i]));
+					message.append(String.format("%-20s %d of %d (%.0f%%)\n", actionsInOutputLayer.get(i), chosenCounts[i], actionCounts[i], (chosenCounts[i] * 100.0) / (double)actionCounts[i]));
 				}
 			}
 		}
@@ -122,7 +122,7 @@ public class MCTreeProcessor<A extends Agent> {
 			ld.injectProperties(properties);
 			int count = 0;
 			double totalError = 0.0;
-			for (ActionEnum<A> action : actionsInOutputLayer) {
+			for (String action : actionsInOutputLayer) {
 				LinearRegression regressor = LinearRegression.createFrom(trainingData, count);
 				ld.setWeights(action, regressor.getWeights());
 				count++;
@@ -135,7 +135,7 @@ public class MCTreeProcessor<A extends Agent> {
 			LogisticDecider<A> ld = new LogisticDecider<A>(stateFactory);
 			ld.injectProperties(properties);
 			int count = 0;
-			for (ActionEnum<A> action : actionsInOutputLayer) {
+			for (String action : actionsInOutputLayer) {
 				LogisticRegression regressor = new LogisticRegression();
 				regressor.train(trainingData, count);
 				ld.addRegressor(action, regressor);
@@ -162,7 +162,7 @@ public class MCTreeProcessor<A extends Agent> {
 		} else {
 			NeuralDecider<A> nd = new NeuralDecider<A>(stateFactory, scaleFactor);
 			nd.injectProperties(properties);
-			for (ActionEnum<A> action : actionsInOutputLayer) {
+			for (String action : actionsInOutputLayer) {
 				nd.addNewAction(action);
 				// we inject the actions in the same order as the training data (or else all hell will break loose)
 			}

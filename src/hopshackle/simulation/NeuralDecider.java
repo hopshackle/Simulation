@@ -143,14 +143,17 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
     }
 
     public void addNewAction(ActionEnum<A> action) {
+        addNewAction(action.toString());
+    }
+
+    public void addNewAction(String action) {
         maxActionIndex++;
         if (maxActionIndex >= maximumOutputOptions - 1) {
             maxActionIndex = maximumOutputOptions - 1;
             //       System.out.println(action + " exceeds limit of trackable options");
         }
-        addNewAction(action.toString(), maxActionIndex);
+        addNewAction(action, maxActionIndex);
     }
-
 
     public void addNewAction(String action, int position) {
         if (position > maxActionIndex) maxActionIndex = position;
