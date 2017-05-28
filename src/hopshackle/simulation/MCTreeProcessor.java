@@ -86,10 +86,11 @@ public class MCTreeProcessor<A extends Agent> {
 	}
 
 	private double[] setValueForAction(ActionEnum<A> action, double[] initialArray, double value) {
+		String actionAsString = action.toString();
 		double[] retValue = initialArray;
-		int index = actionsInOutputLayer.indexOf(action);
+		int index = actionsInOutputLayer.indexOf(actionAsString);
 		if (index == -1 && actionsInOutputLayer.size() < maxNeurons) {
-			actionsInOutputLayer.add(action.toString());
+			actionsInOutputLayer.add(actionAsString);
 			double[] oldArray = retValue;
 			retValue = new double[actionsInOutputLayer.size()];
 			for (int i = 0; i < oldArray.length; i++) retValue[i] = oldArray[i];

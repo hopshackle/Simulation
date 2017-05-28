@@ -15,7 +15,7 @@ import org.encog.neural.networks.training.propagation.resilient.ResilientPropaga
 public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
 
     protected BasicNetwork brain;
-    protected Map<String, Integer> outputKey = new HashMap<String, Integer>();
+    private Map<String, Integer> outputKey = new HashMap<String, Integer>();
     protected int maxActionIndex = -1;
     protected static double temperature;
     protected boolean monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
@@ -158,9 +158,9 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> {
     public void addNewAction(String action, int position) {
         if (position > maxActionIndex) maxActionIndex = position;
         if (position < maximumOutputOptions)
-            outputKey.put(action.toString(), position);
+            outputKey.put(action, position);
         else {
-            logger.severe("Action " + action.toString() + " cannot be allocated to output neuron " + position);
+            logger.severe("Action " + action + " cannot be allocated to output neuron " + position);
         }
     }
 
