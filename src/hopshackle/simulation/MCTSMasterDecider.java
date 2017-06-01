@@ -21,6 +21,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 	private String sweepMethodology = getProperty("MonteCarloSweep", "terminal");
 	private int sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
 	private boolean singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
+	private long millisecondsPerMove;
+	private boolean writeGameLog;
 	private boolean debug = false;
 	private double rolloutTemp, rolloutTempChange;
 	private MCTreeProcessor<A> treeProcessor;
@@ -49,6 +51,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
 	@Override
 	public ActionEnum<A> makeDecision(A agent, List<ActionEnum<A>> chooseableOptions) {
+		long startTime = System.currentTimeMillis();
 		Game<A, ActionEnum<A>> game = agent.getGame();
 		int currentPlayer = game.getPlayerNumber(agent);
 		State<A> currentState = stateFactory.getCurrentState(agent);
@@ -67,7 +70,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 						treeMap.remove(agent);
 						if (trainRolloutDeciderOverGames && !processedGames.contains(agent.getGame().getRef())) {
 							processedGames.add(agent.getGame().getRef());
-							rolloutDecider = treeProcessor.generateDecider(stateFactory, agent.getMaxScore(), rolloutTemp);
+							RawDecider<A> rawDecider = null;
+							if (rolloutDecider instanceof RawDecider) rawDecider = (RawDecider<A>) rolloutDecider;
+							rolloutDecider = treeProcessor.generateDecider(stateFactory, agent.getMaxScore(), rolloutTemp, rawDecider);
 							if (useRolloutForOpponent) opponentModel = rolloutDecider;
 							rolloutTemp *= rolloutTempChange;
 						}
@@ -111,7 +116,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 		}
 		tree.insertState(currentState, chooseableOptions);
 		int N = Math.min(maxRollouts, maxRolloutsPerOption * chooseableOptions.size());
-		
+
+		int actualI = 0;
 		for (int i = 0; i < N; i++) {
 			tree.setUpdatesLeft(1);
 			Game<A, ActionEnum<A>> clonedGame = game.clone(agent);
@@ -144,6 +150,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 			if (sweepMethodology.equals("iteration")) {
 				sweep(tree);
 			}
+			long now = System.currentTimeMillis();
+			actualI = i;
+			if (now >= startTime + millisecondsPerMove) break;
 		}
 
 		if (trainRolloutDeciderOverGames) {
@@ -175,6 +184,11 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 		}
 
 		treeMap.put(agent, tree);
+		if (writeGameLog) {
+			String message = agent.toString() + " " + best.toString() + " (after " + (actualI + 1) + " rollouts)";
+			System.out.println(message);
+			game.log(message);
+		}
 		return best;
 	}
 
@@ -212,6 +226,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 	@Override
 	public void injectProperties(DeciderProperties dp) {
 		super.injectProperties(dp);
+		millisecondsPerMove = getPropertyAsInteger("MonteCarloTimePerMove", "1000");
+		writeGameLog = getProperty("MonteCarloGameLog", "true").equals("true");
 		maxRollouts = getPropertyAsInteger("MonteCarloRolloutCount", "99");
 		maxRolloutsPerOption = getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
 		rolloutTemp = SimProperties.getPropertyAsDouble("MonteCarloRolloutStartTemperature", "1.0");

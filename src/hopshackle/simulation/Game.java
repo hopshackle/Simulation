@@ -6,6 +6,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 
 	protected Stack<Action<P>> actionStack = new Stack<Action<P>>(); 
 	protected double[] finalScores;
+	private EntityLog log;
 
 	public abstract Game<P, A> clone(P perspectivePlayer);
 
@@ -127,5 +128,12 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 		return retValue;
 	}
 
+    public void log(String message) {
+		if (log == null) {
+			log = new EntityLog(toString(), getCurrentPlayer().getWorld());
+		}
+		log.log(message);
+		log.close();
+	}
 }
 

@@ -2,7 +2,7 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class GeneralLinearQDecider<A extends Agent> extends BaseStateDecider<A> {
+public class GeneralLinearQDecider<A extends Agent> extends BaseStateDecider<A> implements RawDecider<A> {
 
 	/*
 	 * We need to have a Map to record what actions we have seen so far
@@ -21,10 +21,14 @@ public class GeneralLinearQDecider<A extends Agent> extends BaseStateDecider<A> 
 
 	protected double[] getWeightsFor(ActionEnum<A> action) {
 		String actionKey = action.toString();
-		if (weights.containsKey(actionKey)) return weights.get(actionKey);
+		return getWeightsFor(actionKey);
+	}
+
+	protected double[] getWeightsFor(String actionAsString) {
+		if (weights.containsKey(actionAsString)) return weights.get(actionAsString);
 		double[] w = new double[variableLength+1];
-		for (int j = 0; j < variableLength; j++) w[j] = 1.0;	
-		weights.put(actionKey, w);
+		for (int j = 0; j < variableLength; j++) w[j] = 1.0;
+		weights.put(actionAsString, w);
 		actionLength++;
 		return w;
 	}
@@ -53,6 +57,18 @@ public class GeneralLinearQDecider<A extends Agent> extends BaseStateDecider<A> 
 			ActionEnum<A> option = options.get(i);
 			double[] w = getWeightsFor(option);
 			retValue.set(i, dotProduct(w, stateArray));
+		}
+		return retValue;
+	}
+
+	@Override
+	public double[] valueOptions(double[] stateAsArray) {
+		double[] retValue = new double[weights.size()];
+		int count = 0;
+		for (String option : weights.keySet()) {
+			double[] w = getWeightsFor(option);
+			retValue[count] = dotProduct(w, stateAsArray);
+			count++;
 		}
 		return retValue;
 	}

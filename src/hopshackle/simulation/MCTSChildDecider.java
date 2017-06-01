@@ -69,6 +69,8 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 		// have updates left).
 		
 		if (RAVE) updateRAVE(exp);
+		// We do this here, as we need to traverse the chain or ER, and the ER itself is not passed
+		// to the MonteCarloTree update.
 	}
 
 	private void updateRAVE(ExperienceRecord<P> exp) {

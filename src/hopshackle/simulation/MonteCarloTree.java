@@ -20,10 +20,24 @@ public class MonteCarloTree<P extends Agent> {
 	protected boolean debug = false;
 	protected DeciderProperties properties;
 
+	/**
+	* Basic constructor. Note the mandatory injection of properties.
+	* The only property currently used locally (31-May-17) is UCTType to allow for MC, V or Q style value updates.
+	* (Experimental evidence suggests that only MC is significantly better than the others.)
+	* However it is also used for injection downstream into the MCstatistics and MCData objects that track action
+	* statistics. (The injection into MCStatistics is not explicit – any MCStatistics object requires a
+	* Monte Carlo Tree at instantiation
+ 	*/
 	public MonteCarloTree(DeciderProperties properties) {
 		this (properties, 1);
 	}
 
+	/**
+	Constructor that specifies additionally the number of agents in the game.
+	This determines the length of the reward vectors that are tracked.
+	The main purpose of this is to support a single tree to be used for all players, so that at each node a
+	decision can be made based on the prospective reward to the deciding agent.
+	 */
 	public MonteCarloTree(DeciderProperties properties, int numberOfAgents) {
 		maxActors = numberOfAgents;
 		tree = new HashMap<String, MCStatistics<P>>();
@@ -35,6 +49,9 @@ public class MonteCarloTree<P extends Agent> {
 		id = idFountain.getAndIncrement();
 	}
 
+	/**
+	 * This resets all statistics to null except for the action values and counts (if using the CADIA heuristic here).
+	 */
 	public void reset() {
 		tree.clear();
 		stateRefs.clear();
@@ -44,9 +61,14 @@ public class MonteCarloTree<P extends Agent> {
 		}
 		id = idFountain.getAndIncrement();
 		nextRef = 1;
-		// leave actionValues unchanged
 	}
 
+	/**
+	 * Does the tree contain the specified state (as a string).
+	 * All internal maps use the string representation of the state as the key; so these need to be unique.
+	 * @param stateAsString
+	 * @return true/false
+	 */
 	public boolean containsState(String stateAsString) {
 		return tree.containsKey(stateAsString);
 	}
@@ -55,12 +77,24 @@ public class MonteCarloTree<P extends Agent> {
 		return containsState(stateAsString);
 	}
 
+	/**
+	 * Sets the number of updates still to be made on the tree during a rollout.
+	 * The count is automatically decremented every time insertState() is called.
+	 */
 	public void setUpdatesLeft(int n) {
 		updatesLeft = n;
 	}
 	public int updatesLeft() {
 		return updatesLeft;
 	}
+
+	/**
+	 * Inserts the state into the tree, with the list of possible actions specified.
+	 * This does check that the state is not already present.
+	 * It does not check to see if the insertion is valid (based on the number of updates left).
+	 * @param state
+	 * @param actions
+	 */
 	public void insertState(State<P> state, List<ActionEnum<P>> actions) {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString))
@@ -71,6 +105,10 @@ public class MonteCarloTree<P extends Agent> {
 		updatesLeft--;
 	}
 
+	/**
+	 * Only relevant if the UCTType is Q or V. In this case we can add additional sweeps through all states
+	 * in the style of dynamic programming.
+	 */
 	public void sweep() {
 		// we run through each state, a random action from that state, and a random successor state for that action
 		// and then run an update (with no reward)
@@ -137,6 +175,14 @@ public class MonteCarloTree<P extends Agent> {
 		}
 	}
 
+	/**
+	 * This updates the RAVE statistics for the given action from the given state.
+	 * This is called once for each future action taken in a rollout, and is called from MCTSChildDecider
+	 * (when it processes the full chain of ExperienceRecords).
+	 * @param state
+	 * @param action
+	 * @param reward
+	 */
 	public void updateRAVE(State<P> state, ActionEnum<P> action, double[] reward) {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString)) {
