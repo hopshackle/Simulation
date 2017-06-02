@@ -141,7 +141,7 @@ public class ActionPlan {
 
 	public boolean contains(ActionEnum<?> forwardAction) {
 		for (Action<?> a : actionQueue) {
-			if (a.actionType == forwardAction)
+			if (a.getType() == forwardAction)
 				return true;
 		}
 		return false;

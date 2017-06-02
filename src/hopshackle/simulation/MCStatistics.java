@@ -67,6 +67,8 @@ public class MCStatistics<P extends Agent> {
 			addAction(action);
 		}
 		String key = action.toString();
+		if (key.trim().equals(""))
+			throw new AssertionError("invalid");
 		Map<String, Integer> currentStates = successorStatesByAction.get(key);
 		if (currentStates == null) {
 			currentStates = new HashMap<String, Integer>();

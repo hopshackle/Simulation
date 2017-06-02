@@ -75,7 +75,7 @@ public abstract class Action<A extends Agent> implements Delayed {
 	protected long plannedEndTime;
 	protected long plannedStartTime;
 	protected State currentState = State.PROPOSED;
-	protected ActionEnum<A> actionType;
+	private ActionEnum<A> actionType;
 	private long uniqueId = idFountain.getAndIncrement();
 	protected Action<A> followUpAction;
 	protected List<ActionEnum<A>> possibleOptions = new ArrayList<ActionEnum<A>>();

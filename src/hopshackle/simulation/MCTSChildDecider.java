@@ -61,7 +61,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 				// will then update this state using the reward
 				tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
 			}
-			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().actionType, exp.getEndState(), exp.getMonteCarloReward());
+			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().getType(), exp.getEndState(), exp.getMonteCarloReward());
 		} else if (tree.updatesLeft() > 0) {
 			throw new AssertionError("Tree should contain previous state");
 		}
@@ -74,7 +74,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 	}
 
 	private void updateRAVE(ExperienceRecord<P> exp) {
-		ActionEnum<P> action = exp.getActionTaken().actionType;
+		ActionEnum<P> action = exp.getActionTaken().getType();
 		double reward[] = exp.getMonteCarloReward();
 		ExperienceRecord<P> previousER = exp.getPreviousRecord();
 		while (previousER != null) {

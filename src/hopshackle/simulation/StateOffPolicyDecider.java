@@ -42,7 +42,7 @@ public abstract class StateOffPolicyDecider<A extends Agent> extends StateDecide
 				reward = exp.getMonteCarloReward()[actingAgentNumber];
 			HopshackleState startState = getState(exp.getStartState(useLookahead));
 			HopshackleState endState = getState(exp.getEndState());
-			startState.addExperience(exp.getActionTaken().actionType, endState, reward);
+			startState.addExperience(exp.getActionTaken().getType(), endState, reward);
 			// but we omit the updateStateValue section
 		}
 	}

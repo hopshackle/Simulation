@@ -104,7 +104,7 @@ public class GeneralLinearQDecider<A extends Agent> extends BaseStateDecider<A> 
 		double[] startState = exp.getStartStateAsArray(useLookahead);
 		double[] endState = exp.getEndStateAsArray();
 		double[] featureTrace = exp.getFeatureTrace();
-		double predictedValue = valueOption(exp.getActionTaken().actionType, exp.getStartState(useLookahead));
+		double predictedValue = valueOption(exp.getActionTaken().getType(), exp.getStartState(useLookahead));
 		double discountPeriod = exp.getDiscountPeriod();
 		int actingAgentNumber = exp.getAgentNumber();
 		double reward = exp.getMonteCarloReward()[actingAgentNumber];
@@ -137,11 +137,11 @@ public class GeneralLinearQDecider<A extends Agent> extends BaseStateDecider<A> 
 			if (localDebug) {
 				GeneticVariable<A> input = stateFactory.getVariables().get(i);
 				String message = String.format("\t\t%-15s Value: %.2f, WeightChange: %.4f, Current Weight: %.2f", input.toString(), value, weightChange, 
-						getWeightOf(i, exp.getActionTaken().actionType));
+						getWeightOf(i, exp.getActionTaken().getType()));
 				log(message);
 				exp.getAgent().log(message);
 			}
-			updateWeight(i, exp.getActionTaken().actionType, weightChange);
+			updateWeight(i, exp.getActionTaken().getType(), weightChange);
 		}
 	}
 }

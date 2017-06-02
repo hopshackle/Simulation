@@ -103,7 +103,7 @@ public abstract class StateDecider<A extends Agent> extends BaseStateDecider<A> 
 
 	@Override
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
-		ActionEnum<A> actionTaken = exp.getActionTaken().actionType;
+		ActionEnum<A> actionTaken = exp.getActionTaken().getType();
 		int actingAgentNumber = exp.getAgentNumber();
 		double observedResult = exp.getReward()[actingAgentNumber];
 		if (monteCarlo)

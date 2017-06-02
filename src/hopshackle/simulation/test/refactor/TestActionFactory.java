@@ -32,7 +32,7 @@ class TestAction extends Action<TestAgent> {
 		}
 		if (incrementTime)
 			actor.getWorld().setCurrentTime(actor.getWorld().getCurrentTime()+1000);
-		switch ((TestActionEnum)actionType) {
+		switch ((TestActionEnum)getType()) {
 		case LEFT:
 			actor.position++;
 			break;
@@ -61,7 +61,7 @@ class TestAction extends Action<TestAgent> {
 	}
 	@Override
 	public String toString() {
-		return actionType + " (" + getStartTime() + "-" + getEndTime() + ")";
+		return getType() + " (" + getStartTime() + "-" + getEndTime() + ")";
 	}
 }
 
