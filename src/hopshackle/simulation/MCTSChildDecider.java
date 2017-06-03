@@ -63,6 +63,9 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 			}
 			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().getType(), exp.getEndState(), exp.getMonteCarloReward());
 		} else if (tree.updatesLeft() > 0) {
+			System.out.println("Action Taken: " + exp.actionTaken);
+			for (ActionEnum<P> poss : exp.getPossibleActionsFromStartState())
+				System.out.println("\tPossible Action: " + poss);
 			throw new AssertionError("Tree should contain previous state");
 		}
 		// This relies on us going forward through the ER (if backwards, then we will error as state is not found, and we
