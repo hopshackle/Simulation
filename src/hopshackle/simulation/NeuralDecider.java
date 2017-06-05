@@ -378,7 +378,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         } else {
             double trainingError = 0.0;
             double valError = Double.MAX_VALUE;
-            int iteration = 0;
+            int iteration = 1;
             boolean terminateLearning = false;
             BasicNetwork brainCopy = (BasicNetwork) brain.clone();
             do {
@@ -387,7 +387,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
                 double newValError = brain.calculateError(validationData);
                 trainingError = brain.calculateError(trainingData);
                 if (logTrainingErrors) {
-                    log(String.format("Iteration %d on %s has validation error of %.5f and training error of %.5f", iteration, this.toString(), newValError, trainingError));
+                    System.out.println(String.format("Iteration %d on %s has validation error of %.5f and training error of %.5f", iteration, this.toString(), newValError, trainingError));
                 }
                 if (newValError >= valError || iteration > learningIterations) {
                     terminateLearning = true;
