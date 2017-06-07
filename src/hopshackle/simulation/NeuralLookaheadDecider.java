@@ -20,13 +20,13 @@ public class NeuralLookaheadDecider<A extends Agent> extends NeuralDecider<A> {
     }
 
     @Override
-    protected void logResult(ExperienceRecord<A> exp) {
+    protected void logResult(ExperienceRecord<A> exp, double[] target) {
         double startValue = value(exp.getStartState(useLookahead)); // projection
         double endValue = value(exp.getEndState()); // projection
         String message = String.format("State Value: %.2f -> %.2f", startValue, endValue);
         log(message);
         exp.getAgent().log(message);
-        super.logResult(exp);
+        super.logResult(exp, target);
     }
 
     public double value(State<A> state) {

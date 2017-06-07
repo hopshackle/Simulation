@@ -27,7 +27,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
     protected boolean shuffleTrainingData = getProperty("NeuralShuffleData", "true").equals("true");
     protected boolean logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
     protected double overrideLearningCoefficient, overrideMomentum, scaleFactor;
-    private boolean controlSignal, offPolicyLearning;
+    private boolean controlSignal, offPolicyLearning, resetBrain;
     private int maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
     //   private boolean lookahead;
 
@@ -50,6 +50,11 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
         controlSignal = getProperty("NeuralControlSignal", "false").equals("true");
         offPolicyLearning = getProperty("NeuralOffPolicyLearning", "false").equals("true");
+        resetBrain = getProperty("NeuralResetBrainEachEpoch", "false").equals("true");
+        initialiseBrain();
+    }
+
+    private void initialiseBrain() {
         if (controlSignal) {
             brain = BrainFactory.initialiseBrain(stateFactory.getVariables().size() + maximumOutputOptions, 1, decProp);
         } else {
@@ -249,7 +254,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         teach(trainingData);
     }
 
-    protected void logResult(ExperienceRecord<A> baseER) {
+    protected void logResult(ExperienceRecord<A> baseER, double[] target) {
         ActionEnum<A> bestAction = getBestActionFrom(baseER.getPossibleActionsFromEndState(), baseER.getEndState());
         ActionEnum<A> actualAction = baseER.getActionTakenFromEndState();
         int actionIndex = getActionIndex(baseER.actionTaken.getType());
@@ -267,6 +272,23 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         for (int i = 0; i < startArray.length; i++) {
             if (startArray[i] != 0.0 || endArray[i] != 0.0 || Math.abs(featureTrace[i]) >= 0.01)
                 logMessage.append(String.format("\t%.2f -> %.2f (%.2f) %s %s", startArray[i], endArray[i], featureTrace[i], stateFactory.getVariables().get(i).toString(), newline));
+        }
+        logMessage.append("Start Action targets\n");
+        if (controlSignal) {
+            logMessage.append(String.format("\t%-25s%.2f\n", baseER.getActionTaken().getType(), target[0]));
+        } else {
+            Set<Integer> startActions = new HashSet<>();
+            for (ActionEnum<A> action : baseER.getPossibleActionsFromStartState()) {
+                int index = getActionIndex(action);
+                startActions.add(index);
+                logMessage.append(String.format("\t%-25s%.2f\n", action.toString(), target[index]));
+            }
+            logMessage.append("------ Other output neuron targets ---------\n");
+            for (String a : outputKey.keySet()) {
+                int i = outputKey.get(a);
+                if (!startActions.contains(i))
+                    logMessage.append(String.format("\t%-25s%.2f\n", a, target[i]));
+            }
         }
         message = logMessage.toString();
         log(message);
@@ -445,12 +467,13 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
             }
             batchOutputData[count] = getTarget(exp);
             if (localDebug) {
-                logResult(exp);
+                logResult(exp, batchOutputData[count]);
             }
             count++;
         }
 
         BasicNeuralDataSet trainingData = new BasicNeuralDataSet(batchInputData, batchOutputData);
+        if (resetBrain) initialiseBrain();
         double error = teach(trainingData);
         if (logTrainingErrors)
             System.out.println(String.format("%s has training error of %.4f", this.toString(), error));
