@@ -28,6 +28,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
     protected boolean logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
     protected double overrideLearningCoefficient, overrideMomentum, scaleFactor;
     private boolean controlSignal, offPolicyLearning, resetBrain;
+    private int batchSize = 0;
     private int maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
     //   private boolean lookahead;
 
@@ -51,6 +52,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         controlSignal = getProperty("NeuralControlSignal", "false").equals("true");
         offPolicyLearning = getProperty("NeuralOffPolicyLearning", "false").equals("true");
         resetBrain = getProperty("NeuralResetBrainEachEpoch", "false").equals("true");
+        batchSize = getPropertyAsInteger("NeuralBatchSize", "0");
         initialiseBrain();
     }
 
@@ -394,6 +396,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
             default:
                 throw new AssertionError(propagationType + " is not a known type. Must be back/quick/resilient.");
         }
+        trainer.setBatchSize(batchSize);
 
         if (validationData.size() == 0) {
             trainer.iteration(learningIterations);
