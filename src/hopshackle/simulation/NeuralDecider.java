@@ -15,6 +15,7 @@ import org.encog.neural.networks.training.propagation.resilient.ResilientPropaga
 public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implements RawDecider<A> {
 
     protected BasicNetwork brain;
+    protected NeuralDecider<A> laggedDecider;
     private Map<String, Integer> outputKey = new HashMap<String, Integer>();
     protected int maxActionIndex = -1;
     protected static double temperature;
@@ -26,9 +27,9 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
     protected boolean learnWithValidation = getProperty("NeuralLearnUntilValidationError", "false").equals("true");
     protected boolean shuffleTrainingData = getProperty("NeuralShuffleData", "true").equals("true");
     protected boolean logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
-    protected double overrideLearningCoefficient, overrideMomentum, scaleFactor;
+    protected double scaleFactor;
     private boolean controlSignal, offPolicyLearning, resetBrain;
-    private int batchSize = 0;
+    private int batchSize = 0, freezeQEveryN = 0, dataSinceFreeze = 0;
     private int maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
     //   private boolean lookahead;
 
@@ -53,6 +54,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         offPolicyLearning = getProperty("NeuralOffPolicyLearning", "false").equals("true");
         resetBrain = getProperty("NeuralResetBrainEachEpoch", "false").equals("true");
         batchSize = getPropertyAsInteger("NeuralBatchSize", "0");
+        freezeQEveryN = getPropertyAsInteger("NeuralLagForTargetQ", "0");
         initialiseBrain();
     }
 
@@ -95,10 +97,16 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
 
     @Override
     public double valueOption(ActionEnum<A> option, State<A> state) {
+        return valueOption(option, state, brain);
+    }
+
+    private double valueOption(ActionEnum<A> option, State<A> state, BasicNetwork brainToUse) {
         if (option == null || state == null) return 0.0;
+        if (brainToUse == null)
+            throw new AssertionError("BasicNetwork required in valueOption");
         int optionIndex = getActionIndex(option);
         BasicNeuralData inputData = extractInput(state, option);
-        double[] valuation = brain.compute(inputData).getData();
+        double[] valuation = brainToUse.compute(inputData).getData();
         if (controlSignal) optionIndex = 0;
         return valuation[optionIndex] * scaleFactor;
     }
@@ -307,9 +315,15 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
             double bestQValue = 0.0;
             if (!exp.isInFinalState()) {
                 if (offPolicyLearning) {
-                    bestQValue = valueOfBestAction(exp) / scaleFactor;
+                    if (laggedDecider != null)
+                        bestQValue = laggedDecider.valueOfBestAction(exp) / scaleFactor;
+                    else
+                        bestQValue = valueOfBestAction(exp) / scaleFactor;
                 } else {
-                    bestQValue = valueOption(exp.getActionTakenFromEndState(), exp.getEndState()) / scaleFactor;
+                    if (laggedDecider != null)
+                        bestQValue = laggedDecider.valueOption(exp.getActionTakenFromEndState(), exp.getEndState()) / scaleFactor;
+                    else
+                        bestQValue = valueOption(exp.getActionTakenFromEndState(), exp.getEndState()) / scaleFactor;
                 }
             }
             double discountPeriod = exp.getDiscountPeriod();
@@ -429,6 +443,11 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         trainer.finishTraining();
         if (lambda > 0.00)
             applyLambda();
+        if (freezeQEveryN > 0 && dataSinceFreeze >= freezeQEveryN) {
+            dataSinceFreeze += trainingData.size();
+            this.freezeLaggedDecider();
+            dataSinceFreeze = 0;
+        }
         return trainer.getError();
     }
 
@@ -603,5 +622,12 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
 
     public BasicNetwork getBrain() {
         return brain;
+    }
+
+    public void freezeLaggedDecider() {
+        laggedDecider = new NeuralDecider<>(stateFactory, scaleFactor);
+        laggedDecider.injectProperties(decProp);
+        laggedDecider.outputKey.putAll(outputKey);
+        laggedDecider.setBrain((BasicNetwork) this.brain.clone());
     }
 }

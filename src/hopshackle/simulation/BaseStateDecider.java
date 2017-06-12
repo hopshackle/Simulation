@@ -21,7 +21,6 @@ public abstract class BaseStateDecider<A extends Agent> extends BaseDecider<A> {
         return valueOption(option, getCurrentState(decidingAgent));
     }
 
-
     protected <S extends State<A>> double valueOfBestAction(ExperienceRecord<A> exp) {
         if (exp.isInFinalState() || monteCarlo)
             return 0.0;
