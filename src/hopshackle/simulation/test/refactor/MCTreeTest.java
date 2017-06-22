@@ -2,9 +2,7 @@ package hopshackle.simulation.test.refactor;
 
 import static org.junit.Assert.*;
 import hopshackle.simulation.*;
-
 import java.util.*;
-
 import org.junit.*;
 
 public class MCTreeTest {
