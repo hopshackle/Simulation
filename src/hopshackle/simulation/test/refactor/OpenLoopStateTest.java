@@ -51,17 +51,23 @@ public class OpenLoopStateTest {
         Action<?> action1 = decider.decide(agent1, testOnly);
         assertTrue(action1.getType() == TestActionEnum.TEST);
         State<TestAgent> middle = olsf.getCurrentState(agent1);
-        assertFalse(start.equals(middle));
+        assertTrue(start.equals(middle));       // nothing has yet changed
 
         action1.start();
         action1.run();
-        assertTrue(olsf.getCurrentState(agent1).equals(middle));
+        middle = olsf.getCurrentState(agent1);
+        assertFalse(start.equals(middle));      // now it has
 
         Action<?> action2 = decider.decide(agent1, testOnly);
         assertTrue(action2.getType() == TestActionEnum.TEST);
         State<TestAgent> end = olsf.getCurrentState(agent1);
-        assertFalse(middle.equals(end));
-        assertFalse(start.equals(end));
+        assertTrue(middle.equals(end));  // nothing has yet changed
+
+        action2.start();
+        action2.run();
+        end = olsf.getCurrentState(agent1);
+        assertFalse(end.equals(middle));      // now it has
+        assertFalse(end.equals(start));
     }
 
     @Test
@@ -69,12 +75,16 @@ public class OpenLoopStateTest {
         State<TestAgent> start1 = olsf.getCurrentState(agent1);
         Action<?> action1 = decider.decide(agent1, testOnly);
         assertTrue(action1.getType() == TestActionEnum.TEST);
+        action1.start();
+        action1.run();
         State<TestAgent> end1 = olsf.getCurrentState(agent1);
         assertFalse(start1.equals(end1));
 
         State<TestAgent> start2 = olsf.getCurrentState(agent2);
         Action<?> action2 = decider.decide(agent2, testOnly);
         assertTrue(action2.getType() == TestActionEnum.TEST);
+        action2.start();
+        action2.run();
         State<TestAgent> end2 = olsf.getCurrentState(agent2);
         assertFalse(start2.equals(end2));
 
@@ -90,15 +100,16 @@ public class OpenLoopStateTest {
         SimpleMazeGame game = new SimpleMazeGame(2, players);
         State<TestAgent> s1 = olsf.getCurrentState(agent1);
         State<TestAgent> s2 = olsf.getCurrentState(agent2);
-        State<TestAgent> s3 = olsf.getCurrentState(agent3);
         SimpleMazeGame newGame = (SimpleMazeGame) game.clone(agent1);
         olsf.cloneGame(game, newGame);
         assertTrue(olsf.getCurrentState(agent1).equals(olsf.getCurrentState(newGame.getPlayer(1))));
         assertTrue(olsf.getCurrentState(agent2).equals(olsf.getCurrentState(newGame.getPlayer(2))));
-        assertTrue(olsf.getCurrentState(agent3).equals(olsf.getCurrentState(newGame.getPlayer(3))));
+        // and since p3 was not tracked, the two should not be present, and have different states created
+        assertFalse(olsf.getCurrentState(agent3) == null);
+        assertFalse(olsf.getCurrentState(newGame.getPlayer(3)) == null);
+        assertFalse(olsf.getCurrentState(agent3).equals(olsf.getCurrentState(newGame.getPlayer(3))));
         assertTrue(olsf.getCurrentState(agent1).equals(s1));
         assertTrue(olsf.getCurrentState(agent2).equals(s2));
-        assertTrue(olsf.getCurrentState(agent3).equals(s3));
     }
 
     @Test
@@ -115,11 +126,15 @@ public class OpenLoopStateTest {
 
         Action<?> action1 = decider.decide(agent1, testOnly);
         assertTrue(action1.getType() == TestActionEnum.TEST);
+        action1.start();
+        action1.run();
         State<TestAgent> end1 = olsf.getCurrentState(agent1);
         assertFalse(s1.equals(end1));
 
         Action<?> action2 = decider.decide(newGame.getPlayer(1), testOnly);
         assertTrue(action2.getType() == TestActionEnum.TEST);
+        action2.start();
+        action2.run();
         State<TestAgent> end2 = olsf.getCurrentState(newGame.getPlayer(1));
         assertFalse(s2.equals(end2));
 
@@ -131,6 +146,8 @@ public class OpenLoopStateTest {
         State<TestAgent> start1 = olsf.getCurrentState(agent1);
         Action<?> action1 = decider.decide(agent1, testOnly);
         assertTrue(action1.getType() == TestActionEnum.TEST);
+        action1.start();
+        action1.run();
         State<TestAgent> end1 = olsf.getCurrentState(agent1);
         assertFalse(start1.equals(end1));
 
@@ -166,6 +183,8 @@ public class OpenLoopStateTest {
     public void applyOnStateGivesNextStateIfItExists() {
         State<TestAgent> start1 = olsf.getCurrentState(agent1);
         Action<?> action1 = decider.decide(agent1, leftRightOnly);
+        action1.start();
+        action1.run();
         State<TestAgent> end1 = olsf.getCurrentState(agent1);
         if (action1.getType() == TestActionEnum.LEFT) {
             assertTrue(start1.apply(TestActionEnum.LEFT).equals(end1));

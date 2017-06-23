@@ -13,8 +13,11 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
     @Override
     public State<A> getCurrentState(A agent) {
         if (!agentToState.keySet().contains(agent)) {
+            if (agent.isDead())
+                throw new AssertionError("Should be alove");
             agent.addListener(this);
             OpenLoopState<A> retValue = new OpenLoopState<A>(agent, this);
+            if (!agentToState.containsKey(agent)) System.out.println("Added GCS " + agent);
             agentToState.put(agent, retValue);
             tree.put(retValue, new HashMap<>());
         }
@@ -30,10 +33,15 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
     }
 
     public void processEvent(AgentEvent event) {
-        if (event.getEvent() == AgentEvent.Type.DECISION_TAKEN) {
+        if (event.getEvent() == AgentEvent.Type.ACTION_EXECUTED) {
             A agent = (A) event.getAgent();
+            if (agent.isDead()) {
+                throw new AssertionError("Should be alive");
+            }
             ActionEnum<A> actionTaken = event.getAction().getType();
             OpenLoopState<A> currentState = (OpenLoopState<A>) getCurrentState(agent);
+            if (currentState == null)
+                throw new AssertionError("Current state should never be null");
             Map<ActionEnum<A>, OpenLoopState<A>> successors = tree.getOrDefault(currentState, new HashMap<>());
             if (successors.isEmpty())
                 tree.put(currentState, successors);
@@ -43,9 +51,12 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
                 successorState = new OpenLoopState<A>(agent, this);
                 addLink(currentState, actionTaken, successorState);
             }
+            if (!agentToState.containsKey(agent)) System.out.println("Added " + event.getAgent());
             agentToState.put(agent, successorState);
+
         } else if (event.getEvent() == AgentEvent.Type.DEATH) {
             agentToState.remove(event.getAgent());
+            System.out.println("Removed " + event.getAgent());
         }
     }
 
@@ -68,8 +79,13 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
     public void cloneGame(Game<A, ActionEnum<A>> oldGame, Game<A, ActionEnum<A>> newGame) {
         // we update all players in newGame to be at the same state as their counterparts in oldGame
         for (A player : oldGame.getAllPlayers()) {
+            if (!agentToState.containsKey(player))
+                continue;   // ignore any players who weren't being tracked
             int oldPlayerNumber = oldGame.getPlayerNumber(player);
             A newPlayer = newGame.getPlayer(oldPlayerNumber);
+            if (newPlayer.isDead())
+                throw new AssertionError("Should be alive");
+            if (!agentToState.containsKey(newPlayer)) System.out.println("Added " + newPlayer);
             agentToState.put(newPlayer, agentToState.get(player));
             newPlayer.addListener(this);
         }

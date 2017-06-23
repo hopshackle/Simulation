@@ -60,6 +60,11 @@ public class OpenLoopState<A extends Agent> implements State<A> {
         return score;
     }
 
+    @Override
+    public String toString() {
+        return getAsString();
+    }
+
     public String getAsString() {
         return String.valueOf(id);
     }

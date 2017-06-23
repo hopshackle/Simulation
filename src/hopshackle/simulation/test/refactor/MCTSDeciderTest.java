@@ -40,6 +40,7 @@ public class MCTSDeciderTest {
 		localProp.setProperty("MonteCarloActionValueOpponentModel", "false");
 		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
 		localProp.setProperty("MonteCarloRetainTreeBetweenActions", "false");
+		localProp.setProperty("MonteCarloOpenLoop", "false");
 		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
 		masterDecider.injectProperties(localProp);
 		agent.setDecider(masterDecider);
