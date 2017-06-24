@@ -21,10 +21,12 @@ public class OpenLoopStateTest {
     DeciderProperties localProp;
     OpenLoopStateFactory<TestAgent> olsf = new OpenLoopStateFactory<TestAgent>();
     Decider<TestAgent> decider;
+    OpenLoopState<TestAgent> initialState;
 
     @Before
     public void setup() {
         localProp = SimProperties.getDeciderProperties("GLOBAL");
+        localProp.setProperty("OpenLoopUpdateLimit", "2");
         leftRightOnly.remove(TestActionEnum.TEST);
         testOnly.remove((TestActionEnum.LEFT));
         testOnly.remove((TestActionEnum.RIGHT));
@@ -68,6 +70,57 @@ public class OpenLoopStateTest {
         end = olsf.getCurrentState(agent1);
         assertFalse(end.equals(middle));      // now it has
         assertFalse(end.equals(start));
+    }
+
+    @Test
+    public void updateLimitIsFollowed() {
+        OpenLoopState<TestAgent> state = (OpenLoopState<TestAgent>) olsf.getCurrentState(agent1);
+        initialState = state;
+        assertTrue(olsf.containsState(state));
+        Action<?> action1 = decider.decide(agent1, testOnly);
+        action1.start();
+        action1.run();   //#1
+        OpenLoopState<TestAgent> oldState = state;
+        state = (OpenLoopState<TestAgent>) olsf.getCurrentState(agent1);
+        assertTrue(olsf.containsState(state));
+        assertFalse(oldState.equals(state));
+
+        action1 = decider.decide(agent1, testOnly);
+        action1.start();
+        action1.run();   //#2
+        oldState = state;
+        state = (OpenLoopState<TestAgent>) olsf.getCurrentState(agent1);
+        assertTrue(olsf.containsState(state));
+        assertFalse(oldState.equals(state));
+        action1 = decider.decide(agent1, testOnly);
+
+        action1.start();
+        action1.run();   //#3 and we have now run out of updates
+        oldState = state;
+        state = (OpenLoopState<TestAgent>) olsf.getCurrentState(agent1);
+        assertTrue(olsf.containsState(state));
+        assertTrue(oldState.equals(state));
+    }
+
+    @Test
+    public void updateLimitsWorksWithExistingStatesInTree() {
+        updateLimitIsFollowed();
+        olsf.setState(agent1, initialState);
+
+        OpenLoopState<TestAgent> state = (OpenLoopState<TestAgent>) olsf.getCurrentState(agent1);
+        assertTrue(olsf.containsState(state));
+        for (int i = 0; i < 6; i++) {
+            Action<?> action1 = decider.decide(agent1, testOnly);
+            action1.start();
+            action1.run();   //#1
+            OpenLoopState<TestAgent> oldState = state;
+            state = (OpenLoopState<TestAgent>) olsf.getCurrentState(agent1);
+            assertTrue(olsf.containsState(state));
+            if (i < 4)
+                assertFalse(oldState.equals(state));
+            else
+                assertTrue(oldState.equals(state));
+        }
     }
 
     @Test
@@ -152,7 +205,9 @@ public class OpenLoopStateTest {
         assertFalse(start1.equals(end1));
 
         assertTrue(olsf.getCurrentState(agent1).equals(end1));
-        olsf.processEvent(new AgentEvent(agent1, AgentEvent.Type.DEATH));
+        assertFalse(olsf.getCurrentState(agent1) == null);
+        agent1.die("oops");
+        assertFalse(olsf.getCurrentState(agent1) == null);
         assertFalse(olsf.getCurrentState(agent1).equals(end1));
     }
 
