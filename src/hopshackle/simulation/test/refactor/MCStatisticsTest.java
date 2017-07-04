@@ -27,12 +27,12 @@ public class MCStatisticsTest {
 		localProp.setProperty("MonteCarloUCTC", "1");
 		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
 		localProp.setProperty("MonteCarloRL", "false");
-		
+		localProp.setProperty("MonteCarloHeuristicOnExpansion", "false");
 	}
 
 	@Test
 	public void createEmpty() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 1);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 1, A);
 		assertEquals(stats.getVisits(TestActionEnum.LEFT), 0);
 		assertEquals(stats.getVisits(TestActionEnum.RIGHT), 0);
 		assertEquals(stats.getVisits(TestActionEnum.TEST), 0);
@@ -43,7 +43,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void updateWithNewVisit() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 0, A);
 		stats.update(TestActionEnum.LEFT, toArray(2.0));
 		stats.update(TestActionEnum.LEFT, toArray(3.5));
 		stats.update(TestActionEnum.LEFT, toArray(-1.0));
@@ -62,7 +62,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void cycleThroughActionsIfNotAllTried() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly,localProp, 1, 0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly,localProp, 1, 0, A);
 		assertTrue(stats.hasUntriedAction(leftRightOnly));
 		TestActionEnum newAction = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly);
 		stats.update(newAction, toArray(1.0));
@@ -75,7 +75,7 @@ public class MCStatisticsTest {
 
 	@Test
 	public void uctActionReturnsBestBound() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 0, A);
 		stats.update(TestActionEnum.LEFT, toArray(2.0));
 		stats.update(TestActionEnum.RIGHT, toArray(1.0));
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
@@ -124,10 +124,25 @@ public class MCStatisticsTest {
 		assertEquals(stats.getPossibleActions().size(),3);
 		assertTrue(stats.getRandomUntriedAction(allActions) == TestActionEnum.TEST);
 	}
-	
+
+	@Test
+	public void expansionInHeuristicOrder() {
+		localProp.setProperty("MonteCarloHeuristicOnExpansion", "true");
+		createEmpty();
+		Map<ActionEnum<TestAgent>, Double> map = new HashMap<>();
+		map.put(TestActionEnum.LEFT, 1.0);
+		map.put(TestActionEnum.RIGHT, -1.0);
+		SimpleHeuristic<TestAgent> simpleHeuristic = new SimpleHeuristic<>(map);
+		assertTrue(stats.getRandomUntriedAction(allActions, simpleHeuristic) == TestActionEnum.LEFT);
+		stats.update(TestActionEnum.LEFT, new double[1]);
+		assertTrue(stats.getRandomUntriedAction(allActions, simpleHeuristic) == TestActionEnum.TEST);
+		stats.update(TestActionEnum.TEST, new double[1]);
+		assertTrue(stats.getRandomUntriedAction(allActions, simpleHeuristic) == TestActionEnum.RIGHT);
+	}
+
 	@Test
 	public void updateWithPreviouslyUnknownActionShouldError() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 1, 0, A);
 		try {
 			stats.update(TestActionEnum.LEFT, toArray(5.0));
 			fail("Error should be thrown if unseen action used.");
@@ -318,11 +333,40 @@ public class MCStatisticsTest {
 		assertEquals(tree.getStatisticsFor(A).getV()[0], 0.5, 0.01);
 		assertEquals(tree.getStatisticsFor(A).getQ()[0], 0.5, 0.01);
 	}
-	
+
+
 	private double[] toArray(double single) {
 		double[] retValue = new double[1];
 		retValue[0] = single;
 		return retValue;
 	}
+}
+
+
+class SimpleHeuristic<P extends Agent> extends BaseStateDecider<P> {
+
+	private Map<ActionEnum<P>, Double> values;
+
+	public SimpleHeuristic(Map<ActionEnum<P>, Double> map) {
+		super(null);
+		values = map;
+	}
+
+	@Override
+	public double valueOption(ActionEnum<P> option, State<P> state) {
+		return values.getOrDefault(option, 0.0);
+	}
+
+	@Override
+	public List<Double> valueOptions(List<ActionEnum<P>> options, State<P> state) {
+		List<Double> retValue = new ArrayList<Double>(options.size());
+		for (int i = 0; i < options.size(); i++)
+			retValue.add(values.getOrDefault(options.get(i), 0.0));
+		return retValue;
+	}
+
+	@Override
+	public void learnFrom(ExperienceRecord<P> exp, double maxResult) {}
+
 }
 

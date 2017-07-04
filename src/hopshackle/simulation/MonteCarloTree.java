@@ -19,6 +19,7 @@ public class MonteCarloTree<P extends Agent> {
 	private EntityLog entityLogger;
 	protected boolean debug = false;
 	protected DeciderProperties properties;
+	private Decider<P> offlineHeuristic = new noHeuristic<>();
 
 	/**
 	* Basic constructor. Note the mandatory injection of properties.
@@ -99,7 +100,7 @@ public class MonteCarloTree<P extends Agent> {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString))
 			return;
-		tree.put(stateAsString, new MCStatistics<P>(actions, this, maxActors, state.getActorRef()));
+		tree.put(stateAsString, new MCStatistics<P>(actions, this, maxActors, state.getActorRef(), state));
 		stateRefs.put(stateAsString, nextRef);
 		nextRef++;
 		updatesLeft--;
@@ -316,7 +317,15 @@ public class MonteCarloTree<P extends Agent> {
 		}
 		return retValue;
 	}
-	
+
+	public void setOfflineHeuristic(Decider<P> decider) {
+		offlineHeuristic = decider;
+		if (decider == null) offlineHeuristic = new noHeuristic<P>();
+	}
+	public Decider<P> getOfflineHeuristic() {
+		return offlineHeuristic;
+	}
+
 	@Override
 	public String toString() {
 		return toString(false);
@@ -384,4 +393,28 @@ public class MonteCarloTree<P extends Agent> {
 		} finally {
 		}
 	}
+}
+
+class noHeuristic<P extends Agent> extends BaseStateDecider<P> {
+
+	public noHeuristic() {
+		super(null);
+	}
+
+	@Override
+	public double valueOption(ActionEnum<P> option, State<P> state) {
+		return 0;
+	}
+
+	@Override
+	public List<Double> valueOptions(List<ActionEnum<P>> options, State<P> state) {
+		List<Double> retValue = new ArrayList<Double>(options.size());
+		for (int i = 0; i < options.size(); i++)
+			retValue.add(0.0);
+		return retValue;
+	}
+
+	@Override
+	public void learnFrom(ExperienceRecord<P> exp, double maxResult) {}
+
 }

@@ -35,16 +35,20 @@ public class MCStatisticsWithPriorWeightTest {
 		localProp = SimProperties.getDeciderProperties("GLOBAL");
 		leftRightOnly.remove(TestActionEnum.TEST);
 		localProp.setProperty("MonteCarloUCTC", "1");
-		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "5");
+		localProp.setProperty("MonteCarloHeuristicOnSelection", "true");
+		localProp.setProperty("MonteCarloMAST", "true");
+		localProp.setProperty("MonteCarloHeuristicWeighting", "5");
+		localProp.setProperty("MonteCarloChoice", "default");
 		
 		startingTree = new MonteCarloTree<TestAgent>(localProp, 1);
+		startingTree.setOfflineHeuristic(new MASTHeuristic<TestAgent>(startingTree));
 		startingTree.insertState(dummyState, leftRightOnly);
 		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, toArray(2.0));
 	}
 
 	@Test
 	public void priorWeightWillShiftDecisionOnUCT() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 0, dummyState);
 		stats.update(TestActionEnum.LEFT, toArray(2.0));
 		stats.update(TestActionEnum.LEFT, toArray(3.5));
 		stats.update(TestActionEnum.LEFT, toArray(-1.0));
@@ -63,7 +67,7 @@ public class MCStatisticsWithPriorWeightTest {
 
 	@Test
 	public void cycleThroughActionsIfNotAllTried() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 0, dummyState);
 		assertTrue(stats.hasUntriedAction(leftRightOnly));
 		TestActionEnum newAction = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly);
 		stats.update(newAction, toArray(1.0));
@@ -76,7 +80,7 @@ public class MCStatisticsWithPriorWeightTest {
 
 	@Test
 	public void uctActionReturnsBestBound() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 0, dummyState);
 		stats.update(TestActionEnum.LEFT, toArray(2.0));
 		stats.update(TestActionEnum.RIGHT, toArray(1.0));
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
@@ -118,11 +122,9 @@ public class MCStatisticsWithPriorWeightTest {
 	
 	@Test
 	public void uctReturnsBestActionWithActionValueWeighting() {
-		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "5");
-		startingTree = new MonteCarloTree<TestAgent>(localProp, 1);
 		startingTree.insertState(dummyState, leftRightOnly);
 		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, toArray(2.0));
-		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 0, dummyState);
 		stats.update(TestActionEnum.LEFT, toArray(2.0));
 		stats.update(TestActionEnum.RIGHT, toArray(1.0));
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
@@ -180,7 +182,7 @@ public class MCStatisticsWithPriorWeightTest {
 	
 	@Test
 	public void updateWithPreviouslyUnknownActionShouldError() {
-		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 0);
+		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, 0, dummyState);
 		try {
 			stats.update(TestActionEnum.LEFT, toArray(5.0));
 			fail("Error should be thrown if unseen action used.");

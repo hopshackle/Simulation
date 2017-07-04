@@ -61,7 +61,7 @@ public class MCTreeProcessorTest {
 	
 	@Test
 	public void outputValues() {
-		MCStatistics<TestAgent> stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 2, 1);
+		MCStatistics<TestAgent> stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 2, 1, null);
 		double[] asArray = processor.getOutputValuesAsArray(stats, 1);
 		assertEquals(asArray.length, 0);
 		asArray = processor.getOutputValuesAsArray(stats, 2);
@@ -81,7 +81,7 @@ public class MCTreeProcessorTest {
 	
 	@Test
 	public void outputValuesWithAdditionalAction() {
-		MCStatistics<TestAgent> stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 2, 1);
+		MCStatistics<TestAgent> stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 2, 1, null);
 		double[] asArray = processor.getOutputValuesAsArray(stats, 1);
 		double[] rewardLeft = {1.0, 0.2};
 		double[] rewardTest = {-0.5, 0.5};
@@ -104,7 +104,7 @@ public class MCTreeProcessorTest {
 	public void outputValuesWithOneHotEncoding() {
 		localProp.setProperty("MonteCarloRolloutTarget", "oneHot");
 		processor = new TestMCTreeProcessor(localProp);
-		MCStatistics<TestAgent> stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 2, 0);
+		MCStatistics<TestAgent> stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 2, 0, null);
 		
 		double[] rewardLeft = {1.0, 0.2};
 		double[] rewardTest = {-0.5, 0.5};
@@ -163,8 +163,8 @@ public class MCTreeProcessorTest {
 	@Test
 	public void changingOrderOfActionsInMCStatisticsReflectedInOutput() {
 		processor.processTree(generateTree(), 1);	// this will put actions in order TEST, LEFT, RIGHT
-		MCStatistics<TestAgent> stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 2, 1);
-		MCStatistics<TestAgent> fullStats = new MCStatistics<TestAgent>(allActions, localProp, 2, 1);
+		MCStatistics<TestAgent> stats = new MCStatistics<TestAgent>(leftRightOnly, localProp, 2, 1, null);
+		MCStatistics<TestAgent> fullStats = new MCStatistics<TestAgent>(allActions, localProp, 2, 1, null);
 		double[] rewardLeft = {1.0, 0.2};
 		double[] rewardRight = {-0.5, 0.5};
 		double[] rewardTest = {0.6, 0.6};

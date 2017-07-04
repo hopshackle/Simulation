@@ -35,12 +35,14 @@ public class MCTSDeciderTest {
 		localProp.setProperty("TimePeriodForGamma", "1000");
 		localProp.setProperty("IncrementalScoreReward", "false");
 		localProp.setProperty("MonteCarloRolloutCount", "99");
-		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
 		localProp.setProperty("MonteCarloActionValueRollout", "false");
 		localProp.setProperty("MonteCarloActionValueOpponentModel", "false");
 		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
 		localProp.setProperty("MonteCarloRetainTreeBetweenActions", "false");
 		localProp.setProperty("MonteCarloOpenLoop", "false");
+		localProp.setProperty("MonteCarloChoice", "default");
+		localProp.setProperty("MonteCarloHeuristicOnSelection", "false");
+		localProp.setProperty("MonteCarloMAST", "false");
 		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
 		masterDecider.injectProperties(localProp);
 		agent.setDecider(masterDecider);

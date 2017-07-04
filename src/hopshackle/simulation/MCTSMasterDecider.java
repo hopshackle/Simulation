@@ -23,6 +23,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private boolean singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
     private boolean openLoop = getProperty("MonteCarloOpenLoop", "false").equals("true");
     private long millisecondsPerMove;
+    private boolean MAST, deciderAsHeuristic;
     private boolean writeGameLog;
     private boolean debug = false;
     private double rolloutTemp, rolloutTempChange;
@@ -89,6 +90,12 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         MonteCarloTree<A> tree = treeMap.get(agent);
         if (tree == null) {    // i.e. agent has no tree in map, so must be their first turn in a new game
             tree = new MonteCarloTree<A>(decProp, game.getAllPlayers().size());
+            // Now we add in the heuristic to use, if any
+            if (MAST) {
+                tree.setOfflineHeuristic(new MASTHeuristic<>(tree));
+            } else if (deciderAsHeuristic) {
+                tree.setOfflineHeuristic(rolloutDecider);
+            }
         }
         if (reuseOldTree) {
             int before = tree.numberOfStates();
@@ -258,6 +265,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
         trainRolloutDeciderUsingAllPlayerExperiences = getProperty("MonteCarloTrainRolloutDeciderFromAllPlayers", "false").equals("true");
         openLoop = getProperty("MonteCarloOpenLoop", "false").equals("true");
+        MAST = getProperty("MonteCarloMAST", "false").equals("true");
+        deciderAsHeuristic = getProperty("MonteCarloRolloutAsHeuristic", "false").equals("true");
         if (treeProcessor == null) treeProcessor = new MCTreeProcessor<A>(dp, this.name);
     }
 
