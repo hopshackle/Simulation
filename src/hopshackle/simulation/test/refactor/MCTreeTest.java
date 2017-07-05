@@ -210,6 +210,7 @@ public class MCTreeTest {
 		localProp.setProperty("Temperature", "0.00");
 		localProp.setProperty("RandomDeciderMaxChance", "0.0");
 		localProp.setProperty("RandomDeciderMinChance", "0.0");
+		localProp.setProperty("MonteCarloMAST", "true");
 		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
@@ -228,6 +229,7 @@ public class MCTreeTest {
 		localProp.setProperty("Temperature", "0.1");
 		localProp.setProperty("RandomDeciderMaxChance", "1.0");
 		localProp.setProperty("RandomDeciderMinChance", "1.0");
+		localProp.setProperty("MonteCarloMAST", "true");
 		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
@@ -294,8 +296,9 @@ public class MCTreeTest {
 		localProp.setProperty("MonteCarloHeuristicInterpolationMethod", "RAVE");
 		localProp.setProperty("MonteCarloHeuristicWeighting", "2.0");
 		localProp.setProperty("MonteCarloInterpolateExploration", "true");
+		localProp.setProperty("MonteCarloRAVEExploreConstant", "1.0");
 		tree = new MonteCarloTree<TestAgent>(localProp);
-		tree.setOfflineHeuristic(new RAVEHeuristic<>(tree, 1.0));
+	//	tree.setOfflineHeuristic(new RAVEHeuristic<>(tree, 1.0));
 		tree.insertState(test, allActions);
 		tree.updateState(test, TestActionEnum.LEFT, other, 2.0);
 		MCStatistics<TestAgent> stats = tree.getStatisticsFor(test);

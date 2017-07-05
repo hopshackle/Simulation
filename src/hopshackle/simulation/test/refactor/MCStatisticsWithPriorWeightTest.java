@@ -41,7 +41,7 @@ public class MCStatisticsWithPriorWeightTest {
 		localProp.setProperty("MonteCarloChoice", "default");
 		
 		startingTree = new MonteCarloTree<TestAgent>(localProp, 1);
-		startingTree.setOfflineHeuristic(new MASTHeuristic<TestAgent>(startingTree));
+	//	startingTree.setOfflineHeuristic(new MASTHeuristic<TestAgent>(startingTree));
 		startingTree.insertState(dummyState, leftRightOnly);
 		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, toArray(2.0));
 	}

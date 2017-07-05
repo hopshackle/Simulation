@@ -40,7 +40,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             this.opponentModel = new RandomDecider<A>(stateFactory);
     }
 
-
     protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
         MCTSChildDecider<A> retValue = null;
         if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
@@ -87,13 +86,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         MonteCarloTree<A> tree = treeMap.get(agent);
         if (tree == null) {    // i.e. agent has no tree in map, so must be their first turn in a new game
             tree = new MonteCarloTree<A>(decProp, game.getAllPlayers().size());
-            // Now we add in the heuristic to use, if any
-            if (MAST) {
-                tree.setOfflineHeuristic(new MASTHeuristic<>(tree));
-            } else if (deciderAsHeuristic) {
+            if (deciderAsHeuristic) {
                 tree.setOfflineHeuristic(rolloutDecider);
-            } else if (RAVE) {
-                tree.setOfflineHeuristic(new RAVEHeuristic<>(tree, RAVE_C));
             }
         }
         if (reuseOldTree) {
@@ -268,9 +262,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             // we override the provided state factory TODO: or, possibly keep both
             this.stateFactory = new OpenLoopStateFactory<A>();
         }
-        MAST = getProperty("MonteCarloMAST", "false").equals("true");
-        RAVE = getProperty("MonteCarloRAVE", "false").equals("true");
-        RAVE_C = getPropertyAsDouble("MonteCarloRAVEExploreConstant", "0.0");
         deciderAsHeuristic = getProperty("MonteCarloRolloutAsHeuristic", "false").equals("true");
         if (treeProcessor == null) treeProcessor = new MCTreeProcessor<A>(dp, this.name);
     }

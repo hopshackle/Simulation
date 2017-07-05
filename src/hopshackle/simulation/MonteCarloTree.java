@@ -20,6 +20,8 @@ public class MonteCarloTree<P extends Agent> {
 	protected boolean debug = false;
 	protected DeciderProperties properties;
 	private Decider<P> offlineHeuristic = new noHeuristic<>();
+	private boolean MAST, RAVE;
+	private double RAVE_C;
 
 	/**
 	* Basic constructor. Note the mandatory injection of properties.
@@ -47,6 +49,17 @@ public class MonteCarloTree<P extends Agent> {
 			actionValues.add(i, new HashMap<String, MCData>());
 		this.properties = properties;
 		UCTType = properties.getProperty("MonteCarloUCTType", "MC");
+		MAST = properties.getProperty("MonteCarloMAST", "false").equals("true");
+		RAVE = properties.getProperty("MonteCarloRAVE", "false").equals("true");
+		RAVE_C = properties.getPropertyAsDouble("MonteCarloRAVEExploreConstant", "0.0");
+		// Now we add in the heuristic to use, if any
+		if (MAST) {
+			offlineHeuristic = new MASTHeuristic<>(this);
+		} else if (RAVE) {
+			offlineHeuristic = new RAVEHeuristic<>(this, RAVE_C);
+		} else {
+			offlineHeuristic = new noHeuristic<P>();
+		}
 		id = idFountain.getAndIncrement();
 	}
 
@@ -164,10 +177,16 @@ public class MonteCarloTree<P extends Agent> {
 		} else {
 			if (debug) log("State not yet in tree");
 		}
+		if (MAST) {
+			int actingPlayer = state.getActorRef();
+			updateActionValues(action, actingPlayer, reward[actingPlayer]);
+		}
+	}
+
+	private void updateActionValues(ActionEnum<P> action, int actingPlayer, double reward){
 		String actionAsString = action.toString();
-		int actingPlayer = state.getActorRef();
 		double[] actionReward = new double[1];
-		actionReward[0] = reward[actingPlayer];
+		actionReward[0] = reward;
 		Map<String, MCData> av = actionValues.get(actingPlayer);
 		if (av.containsKey(actionAsString)) {
 			av.put(actionAsString, new MCData(av.get(actionAsString), actionReward));
@@ -318,9 +337,8 @@ public class MonteCarloTree<P extends Agent> {
 		return retValue;
 	}
 
-	public void setOfflineHeuristic(Decider<P> decider) {
-		offlineHeuristic = decider;
-		if (decider == null) offlineHeuristic = new noHeuristic<P>();
+	public void setOfflineHeuristic(Decider<P> newHeuristic) {
+		offlineHeuristic = newHeuristic;
 	}
 	public Decider<P> getOfflineHeuristic() {
 		return offlineHeuristic;
