@@ -21,9 +21,10 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private String sweepMethodology = getProperty("MonteCarloSweep", "terminal");
     private int sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
     private boolean singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
-    private boolean openLoop = getProperty("MonteCarloOpenLoop", "false").equals("true");
+    private boolean openLoop;
     private long millisecondsPerMove;
-    private boolean MAST, deciderAsHeuristic;
+    private boolean MAST, deciderAsHeuristic, RAVE;
+    private double RAVE_C;
     private boolean writeGameLog;
     private boolean debug = false;
     private double rolloutTemp, rolloutTempChange;
@@ -31,10 +32,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
     public MCTSMasterDecider(StateFactory<A> stateFactory, Decider<A> rolloutDecider, Decider<A> opponentModel) {
         super(stateFactory);
-        if (openLoop) {
-            // we override the provided state factory TODO: or, possibly keep both
-            this.stateFactory = new OpenLoopStateFactory<A>();
-        }
         this.rolloutDecider = rolloutDecider;
         if (rolloutDecider == null)
             this.rolloutDecider = new RandomDecider<A>(stateFactory);
@@ -95,6 +92,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
                 tree.setOfflineHeuristic(new MASTHeuristic<>(tree));
             } else if (deciderAsHeuristic) {
                 tree.setOfflineHeuristic(rolloutDecider);
+            } else if (RAVE) {
+                tree.setOfflineHeuristic(new RAVEHeuristic<>(tree, RAVE_C));
             }
         }
         if (reuseOldTree) {
@@ -265,7 +264,13 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
         trainRolloutDeciderUsingAllPlayerExperiences = getProperty("MonteCarloTrainRolloutDeciderFromAllPlayers", "false").equals("true");
         openLoop = getProperty("MonteCarloOpenLoop", "false").equals("true");
+        if (openLoop) {
+            // we override the provided state factory TODO: or, possibly keep both
+            this.stateFactory = new OpenLoopStateFactory<A>();
+        }
         MAST = getProperty("MonteCarloMAST", "false").equals("true");
+        RAVE = getProperty("MonteCarloRAVE", "false").equals("true");
+        RAVE_C = getPropertyAsDouble("MonteCarloRAVEExploreConstant", "0.0");
         deciderAsHeuristic = getProperty("MonteCarloRolloutAsHeuristic", "false").equals("true");
         if (treeProcessor == null) treeProcessor = new MCTreeProcessor<A>(dp, this.name);
     }

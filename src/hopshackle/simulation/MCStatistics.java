@@ -12,9 +12,10 @@ public class MCStatistics<P extends Agent> {
     private int totalVisits = 0;
     private int RAVEVisits = 0;
     private int actingAgent = -1;
-    private boolean useBaseValue, gellySilverRAVE, sironiWinandsRAVE, offlineHeuristicOnExpansion, offlineHeuristicOnSelection;
-    private boolean robustMC, simpleMC;
-    private double C, heuristicWeight, RAVEWeight;
+    private boolean useBaseValue, offlineHeuristicOnExpansion, offlineHeuristicOnSelection;
+    private boolean robustMC, simpleMC, interpolateExploration;
+    private String interpolationMethod;
+    private double C, heuristicWeight;
     private double[] baseValue;
     private String UCTType;
     private int minVisitsForQ, minVisitsForV;
@@ -41,11 +42,10 @@ public class MCStatistics<P extends Agent> {
         C = tree.properties.getPropertyAsDouble("MonteCarloUCTC", "1.0");
         UCTType = tree.properties.getProperty("MonteCarloUCTType", "MC");
         heuristicWeight = tree.properties.getPropertyAsDouble("MonteCarloHeuristicWeighting", "0");
+        interpolationMethod = tree.properties.getProperty("MonteCarloHeuristicInterpolationMethod", "default");
+        interpolateExploration = tree.properties.getProperty("MonteCarloInterpolateExploration", "false").equals("true");
         minVisitsForQ = tree.properties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForQType", "0");
         minVisitsForV = tree.properties.getPropertyAsInteger("MonteCarloMinVisitsOnActionForVType", "0");
-        RAVEWeight = tree.properties.getPropertyAsDouble("MonteCarloRAVEWeight", "0.0");
-        gellySilverRAVE = tree.properties.getProperty("MonteCarloRAVE", "false").equals("GellySilver");
-        sironiWinandsRAVE = tree.properties.getProperty("MonteCarloRAVE", "false").equals("SironiWinands");
         offlineHeuristicOnExpansion = tree.properties.getProperty("MonteCarloHeuristicOnExpansion", "false").equals("true");
         offlineHeuristicOnSelection = tree.properties.getProperty("MonteCarloHeuristicOnSelection", "false").equals("true");
         double base = tree.properties.getPropertyAsDouble("MonteCarloRLBaseValue", "0.0");
@@ -126,25 +126,15 @@ public class MCStatistics<P extends Agent> {
         RAVEVisits++;
     }
 
-    public double getRAVEValue(ActionEnum<P> action) {
-        return getRAVEValue(action.toString());
+    public double getRAVEValue(ActionEnum<P> action, double exploreC) {
+        return getRAVEValue(action.toString(), exploreC);
     }
 
-    public double getRAVEPlus(ActionEnum<P> action) {
-        return getRAVEPlus(action.toString());
-    }
-
-    public double getRAVEValue(String actionAsString) {
-        MCData data = RAVE.get(actionAsString);
-        if (data == null) return 0.0;
-        return data.mean[actingAgent];
-    }
-
-    public double getRAVEPlus(String actionAsString) {
+    public double getRAVEValue(String actionAsString, double exploreC) {
         MCData data = RAVE.get(actionAsString);
         if (data == null) return 0.0;
         double retValue = data.mean[actingAgent];
-        retValue += C * Math.sqrt(Math.log(RAVEVisits) / data.visits);
+        retValue += exploreC * Math.sqrt(Math.log(RAVEVisits) / data.visits);
         return retValue;
     }
 
@@ -287,22 +277,26 @@ public class MCStatistics<P extends Agent> {
         double best = Double.NEGATIVE_INFINITY;
         ActionEnum<P> retValue = null;
         List<Double> heuristicValues = heuristic.valueOptions(availableActions, state);
+        boolean sqrtInterpolation = interpolationMethod.equals("RAVE");
         for (ActionEnum<P> action : availableActions) {
             String key = action.toString();
             MCData data = map.get(key);
             if (data == null) continue;
-            double actionScore = score(data, key);
+            double actionScore = score(data);
             double visits = (double) data.visits;
+            double coreExplorationTerm = exploreC * Math.sqrt(Math.log(totalVisits) / visits);
+            double score = actionScore + coreExplorationTerm; // the vanilla result without heuristics
             if (offlineHeuristicOnSelection) {
                 int i = availableActions.indexOf(action);
                 // we weight the heuristic value as a number of equivalent visits
-                actionScore = (actionScore * visits + heuristicValues.get(i) * heuristicWeight) / (heuristicWeight + visits);
-            }
-            double score = actionScore + exploreC * Math.sqrt(Math.log(totalVisits) / visits);
-            if ((gellySilverRAVE || sironiWinandsRAVE) && RAVEWeight > 0.0 && RAVE.containsKey(key)) {
-                double beta = Math.sqrt(RAVEWeight / (3 * totalVisits + RAVEWeight));
-                if (gellySilverRAVE) score = beta * getRAVEPlus(action) + (1.0 - beta) * score;
-                if (sironiWinandsRAVE) score += -beta * actionScore + beta * getRAVEValue(action);
+                double beta = heuristicWeight / (heuristicWeight + visits);
+                if (sqrtInterpolation)
+                    beta = Math.sqrt(heuristicWeight / (3 * totalVisits + heuristicWeight));
+
+                if (interpolateExploration)
+                    score = beta * heuristicValues.get(i) + (1.0 - beta) * score;
+                else
+                    score = beta * heuristicValues.get(i) + (1.0 - beta) * actionScore + coreExplorationTerm;
             }
             if (score > best) {
                 best = score;
@@ -318,6 +312,11 @@ public class MCStatistics<P extends Agent> {
     }
 
     public String toString(boolean verbose) {
+        Map<String, ActionEnum<P>> keyToAction = new HashMap<>();
+        for (ActionEnum<P> action : allActions) {
+            String key = action.toString();
+            keyToAction.put(key, action);
+        }
         double[] V = getV();
         double[] Q = getQ();
         StringBuffer retValue = new StringBuffer(String.format("MC Statistics\tVisits: %d\tV|Q", totalVisits));
@@ -327,9 +326,9 @@ public class MCStatistics<P extends Agent> {
         for (String k : keysInVisitOrder()) {
             String output = "";
             if (heuristicWeight > 0.0) {
-                output = String.format("\t%s\t%s\t(AV:%.2f | %d)\n", k, map.get(k).toString(), tree.getActionValue(k, actingAgent+1), tree.getActionCount(k, actingAgent+1));
-            } else if (gellySilverRAVE || sironiWinandsRAVE) {
-                output = String.format("\t%-30s\t(RAVE:%.2f|%.2f|%d)\t%s\n", k, getRAVEValue(k), getRAVEPlus(k), getRAVEVisits(k), map.get(k).toString());
+                ActionEnum<P> action = keyToAction.get(k);
+                output = String.format("\t%s\t%s\t(H:%.2f)\n", k, map.get(k).toString(), tree.getOfflineHeuristic().valueOption(action, state));
+                //        output = String.format("\t%s\t%s\t(AV:%.2f | %d)\n", k, map.get(k).toString(), tree.getActionValue(k, actingAgent+1), tree.getActionCount(k, actingAgent+1));
             } else {
                 output = String.format("\t%-35s\t%s\n", k, map.get(k).toString());
             }
@@ -366,7 +365,7 @@ public class MCStatistics<P extends Agent> {
         return retValue;
     }
 
-    private double score(MCData data, String actionKey) {
+    private double score(MCData data) {
         double baseValue = data.mean[actingAgent];
         if (UCTType.equals("Q")) baseValue = data.Q[actingAgent];
         if (UCTType.equals("V")) baseValue = data.V[actingAgent];
@@ -381,7 +380,7 @@ public class MCStatistics<P extends Agent> {
                 String key = action.toString();
                 if (map.containsKey(key)) {
                     MCData data = map.get(key);
-                    double actionScore = robustMC ? data.visits : score(data, key);
+                    double actionScore = robustMC ? data.visits : score(data);
                     // Robust MC uses the number of visits, simple MC uses just the final score
                     // with no heuristics at all
                     if (actionScore > score) {

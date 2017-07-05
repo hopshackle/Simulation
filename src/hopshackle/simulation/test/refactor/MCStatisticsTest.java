@@ -25,7 +25,7 @@ public class MCStatisticsTest {
 		leftRightOnly.remove(TestActionEnum.TEST);
 		localProp = SimProperties.getDeciderProperties("GLOBAL").clone();
 		localProp.setProperty("MonteCarloUCTC", "1");
-		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
+		localProp.setProperty("MonteCarloHeuristicWeighting", "0.0");
 		localProp.setProperty("MonteCarloRL", "false");
 		localProp.setProperty("MonteCarloHeuristicOnExpansion", "false");
 	}
