@@ -23,8 +23,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private boolean singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
     private boolean openLoop;
     private long millisecondsPerMove;
-    private boolean MAST, deciderAsHeuristic, RAVE;
-    private double RAVE_C;
+    private boolean deciderAsHeuristic;
+    private int rolloutLimit;
     private boolean writeGameLog;
     private boolean debug = false;
     private double rolloutTemp, rolloutTempChange;
@@ -154,7 +154,10 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             } else {
                 erc.registerAgent(clonedAgent);
             }
-            clonedGame.playGame();
+            clonedGame.playGame(rolloutLimit);
+            if (!clonedGame.gameOver())
+                clonedGame.forceGameEnd(new SimpleGameScoreCalculator());
+
             teacher.teach();
 
             if (sweepMethodology.equals("iteration")) {
@@ -187,11 +190,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         int[] atDepth = tree.getDepthsFrom(currentState.getAsString());
         agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
         agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
-
-        int expectedFirstLevelNodes = chooseableOptions.size();
-        if (openLoop && atDepth[0] > expectedFirstLevelNodes) {
-            throw new AssertionError("Unexpected number of first level nodes: "+ atDepth[0]+"instead of " + expectedFirstLevelNodes);
-        }
 
         ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions);
         if (best == null) {
@@ -264,6 +262,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         }
         deciderAsHeuristic = getProperty("MonteCarloRolloutAsHeuristic", "false").equals("true");
         if (treeProcessor == null) treeProcessor = new MCTreeProcessor<A>(dp, this.name);
+        rolloutLimit = getPropertyAsInteger("MonteCarloRolloutLimit", "0");
     }
 
 }

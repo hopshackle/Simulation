@@ -43,6 +43,8 @@ public class MCTSDeciderTest {
 		localProp.setProperty("MonteCarloChoice", "default");
 		localProp.setProperty("MonteCarloHeuristicOnSelection", "false");
 		localProp.setProperty("MonteCarloMAST", "false");
+		localProp.setProperty("MaxTurnsPerGame", "10000");
+		localProp.setProperty("GameOrdinalRewards", "0");
 		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
 		masterDecider.injectProperties(localProp);
 		agent.setDecider(masterDecider);

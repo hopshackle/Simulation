@@ -4,136 +4,160 @@ import java.util.*;
 
 public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements WorldLogic<P> {
 
-	protected Stack<Action<P>> actionStack = new Stack<Action<P>>(); 
-	protected double[] finalScores;
-	private EntityLog log;
+    protected Stack<Action<P>> actionStack = new Stack<Action<P>>();
+    protected double[] finalScores;
+    private EntityLog log;
+    private static SimpleGameScoreCalculator simpleGameScoreCalculator = new SimpleGameScoreCalculator();
+    public static final int MAX_TURNS = SimProperties.getPropertyAsInteger("MaxTurnsPerGame", "50");
 
-	public abstract Game<P, A> clone(P perspectivePlayer);
+    public abstract Game<P, A> clone(P perspectivePlayer);
 
-	public abstract String getRef();
-	
-	public abstract P getCurrentPlayer();
+    public abstract String getRef();
 
-	public abstract List<P> getAllPlayers();
+    public abstract P getCurrentPlayer();
 
-	public abstract int getPlayerNumber(P player);
+    public abstract List<P> getAllPlayers();
 
-	public abstract P getPlayer(int n);
+    public abstract int getPlayerNumber(P player);
 
-	public abstract int getCurrentPlayerNumber();
+    public abstract P getPlayer(int n);
 
-	public abstract List<ActionEnum<P>> getPossibleActions(P player);
+    public abstract int getCurrentPlayerNumber();
 
-	public abstract boolean gameOver();
+    public abstract List<ActionEnum<P>> getPossibleActions(P player);
 
-	/*
-	 * Called after each move processed, and the stack is empty.
-	 * Implement game specific housekeeping to move game status forward (such as incrementing turn number, changing the active player)
-	 */
-	public abstract void updateGameStatus();
+    public abstract boolean gameOver();
 
-	public final double[] playGame() {
+    /*
+     * Called after each move processed, and the stack is empty.
+     * Implement game specific housekeeping to move game status forward (such as incrementing turn number, changing the active player)
+     */
+    public abstract void updateGameStatus();
 
-		while (!gameOver()) {
-			oneAction();
-		}
-		endOfGameHouseKeeping();
-		
-		finalScores = new double[getAllPlayers().size()];
-		for (int i = 1; i <= finalScores.length; i++) {
-			finalScores[i-1] = getPlayer(i).getScore();
-		}
-		
-		for (int i = 1; i <= finalScores.length; i++) 
-			getPlayer(i).die("Game Over");
-		
-		return finalScores;
-	}
-	
-	public double[] getFinalScores() {
-		if (gameOver()) {
-			return finalScores;
-		}
-		throw new AssertionError("Game is not yet over");
-	}
+    public final double[] playGame() {
+        return playGame(0);
+    }
 
-	protected void endOfGameHouseKeeping(){
-		// may be overridden
-	}
-	
-	public final void oneAction() {
-		oneAction(false, false);
-	}
+    public final double[] playGame(int maxMoves) {
 
-	public final void oneAction(boolean noUpdate, boolean singleAction) {
-		P currentPlayer = null;
-		List<ActionEnum<P>> options = null;
-		Decider<P> decider = null;
-		Action<P> action = null;
+        if (maxMoves == 0) maxMoves = Integer.MAX_VALUE;
+        int moves = 0;
+        while (!gameOver() && moves < maxMoves) {
+            oneAction();
+            moves++;
+        }
 
-		do {
-			if (action != null) {
-				// this occurs if we popped an action off the stack on the last iteration
-				// so we already have the action we wish to execute
-			} else {
-				// we have completed the last one, so pick a new action
-				if (!actionStack.isEmpty()) { // actionStack first, to complete interrupts and consequences
-					options = actionStack.peek().getNextOptions();
-					if (options.isEmpty()) {
-						// then we take the followOnAction instead
-						action = nextFollowOnActionFromStack();
-					} else {
-						currentPlayer = actionStack.peek().getNextActor();
-						decider = currentPlayer.getDecider();
-						action = decider.decide(currentPlayer, options);
-					}
-				}
-				if (action == null) {	// otherwise we get a new action
-					currentPlayer = getCurrentPlayer();
-					options = getPossibleActions(currentPlayer);
-					decider = currentPlayer.getDecider();
-					action = decider.decide(currentPlayer, options);
-				}
-			}
+        if (gameOver()) {
+            forceGameEnd(simpleGameScoreCalculator);
+        }
 
-			action.addToAllPlans(); // this is for compatibility with Action statuses in a real-time simulation
-			action.start();
-			action.run();
-			options = action.getNextOptions();
-			if (options.isEmpty()) {
-				if (actionStack.isEmpty()) {
-					action = null;
-				} else {
-					action = nextFollowOnActionFromStack();
-				}
-			} else {
-				actionStack.push(action);
-				action = null;
-			}
+        return finalScores;
+    }
 
-			if (action == null && actionStack.isEmpty() && !noUpdate)
-				updateGameStatus(); // finished the last cycle, so move game state forward
-			// otherwise, we still have interrupts/consequences to deal with
+    public double[] getFinalScores() {
+        if (finalScores == null)
+            throw new AssertionError("Game is not yet over");
+        return finalScores;
+    }
 
-			if (singleAction && action == null) break;
+    public int getOrdinalPosition(int p) {
+        // we count how many scores are less than or equal to the players score
+        int numberOfPlayers = getAllPlayers().size();
+        int retValue = numberOfPlayers + 1;
+        double[] score = new double[numberOfPlayers];
+        for (int i = 0; i < numberOfPlayers; i++) {
+            score[i] = getPlayer(i + 1).getScore();
+        }
+        for (double s : score) {
+            if (s <= score[p - 1]) retValue--;
+        }
+        return retValue;
+    }
 
-		} while (action != null || !actionStack.isEmpty());
-	}
+    public void forceGameEnd(GameScoreCalculator calc) {
+        endOfGameHouseKeeping();
+        finalScores = calc.finalScores(this);
+        for (int i = 1; i <= finalScores.length; i++)
+            getPlayer(i).die("Game Over");
+    }
 
-	private Action<P> nextFollowOnActionFromStack() {
-		Action<P> retValue = null;
-		do {
-			retValue = actionStack.pop().getFollowOnAction();
-		} while (retValue == null && !actionStack.isEmpty());
-		return retValue;
-	}
+    protected void endOfGameHouseKeeping() {
+        // may be overridden
+    }
+
+    public final void oneAction() {
+        oneAction(false, false);
+    }
+
+    public final void oneAction(boolean noUpdate, boolean singleAction) {
+        P currentPlayer = null;
+        List<ActionEnum<P>> options = null;
+        Decider<P> decider = null;
+        Action<P> action = null;
+
+        do {
+            if (action != null) {
+                // this occurs if we popped an action off the stack on the last iteration
+                // so we already have the action we wish to execute
+            } else {
+                // we have completed the last one, so pick a new action
+                if (!actionStack.isEmpty()) { // actionStack first, to complete interrupts and consequences
+                    options = actionStack.peek().getNextOptions();
+                    if (options.isEmpty()) {
+                        // then we take the followOnAction instead
+                        action = nextFollowOnActionFromStack();
+                    } else {
+                        currentPlayer = actionStack.peek().getNextActor();
+                        decider = currentPlayer.getDecider();
+                        action = decider.decide(currentPlayer, options);
+                    }
+                }
+                if (action == null) {    // otherwise we get a new action
+                    currentPlayer = getCurrentPlayer();
+                    options = getPossibleActions(currentPlayer);
+                    decider = currentPlayer.getDecider();
+                    action = decider.decide(currentPlayer, options);
+                }
+            }
+
+            action.addToAllPlans(); // this is for compatibility with Action statuses in a real-time simulation
+            action.start();
+            action.run();
+            options = action.getNextOptions();
+            if (options.isEmpty()) {
+                if (actionStack.isEmpty()) {
+                    action = null;
+                } else {
+                    action = nextFollowOnActionFromStack();
+                }
+            } else {
+                actionStack.push(action);
+                action = null;
+            }
+
+            if (action == null && actionStack.isEmpty() && !noUpdate)
+                updateGameStatus(); // finished the last cycle, so move game state forward
+            // otherwise, we still have interrupts/consequences to deal with
+
+            if (singleAction && action == null) break;
+
+        } while (action != null || !actionStack.isEmpty());
+    }
+
+    private Action<P> nextFollowOnActionFromStack() {
+        Action<P> retValue = null;
+        do {
+            retValue = actionStack.pop().getFollowOnAction();
+        } while (retValue == null && !actionStack.isEmpty());
+        return retValue;
+    }
 
     public void log(String message) {
-		if (log == null) {
-			log = new EntityLog(toString(), getCurrentPlayer().getWorld());
-		}
-		log.log(message);
-		log.close();
-	}
+        if (log == null) {
+            log = new EntityLog(toString(), getCurrentPlayer().getWorld());
+        }
+        log.log(message);
+        log.close();
+    }
 }
 

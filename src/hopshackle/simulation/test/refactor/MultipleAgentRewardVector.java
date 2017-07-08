@@ -48,6 +48,8 @@ public class MultipleAgentRewardVector {
 		localProp.setProperty("MonteCarloActionValueOpponentModel", "false");
 		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
 		localProp.setProperty("MonteCarloRetainTreeBetweenActions", "false");
+		localProp.setProperty("MaxTurnsPerGame", "10000");
+		localProp.setProperty("GameOrdinalRewards", "0");
 		tree = new MonteCarloTree<TestAgent>(localProp, 1);
 		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
 		masterDecider.injectProperties(localProp);
