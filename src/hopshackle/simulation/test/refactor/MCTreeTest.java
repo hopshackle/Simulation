@@ -302,33 +302,33 @@ public class MCTreeTest {
 		tree.insertState(test, allActions);
 		tree.updateState(test, TestActionEnum.LEFT, other, 2.0);
 		MCStatistics<TestAgent> stats = tree.getStatisticsFor(test);
-		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0), 0.0, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 0.0), 0.0, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0, test.getActorRef()), 0.0, 0.001);
 		tree.updateState(test, TestActionEnum.RIGHT, other, 0.0);
 		tree.updateState(test, TestActionEnum.TEST, other, 0.0);
 		stats = tree.getStatisticsFor(test);
-		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0), 0.0, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 0.0), 0.0, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0, test.getActorRef()), 0.0, 0.001);
 		
 		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {0.5});
 		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {2.5});
 		tree.updateRAVE(test, TestActionEnum.TEST, new double[] {0.0});
 		stats = tree.getStatisticsFor(test);
-		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0), 0.0, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.TEST, 0.0), 0.0, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 0.0), 1.5, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0), 1.5 + Math.sqrt(Math.log(3.0) / 2.0), 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.TEST, 1.0), 0.0 + Math.sqrt(Math.log(3.0) / 1.0), 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 1.0), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.TEST, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 0.0, test.getActorRef()), 1.5, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0, test.getActorRef()), 1.5 + Math.sqrt(Math.log(3.0) / 2.0), 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.TEST, 1.0, test.getActorRef()), 0.0 + Math.sqrt(Math.log(3.0) / 1.0), 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 1.0, test.getActorRef()), 0.0, 0.001);
 		
-		assertTrue(stats.getUCTAction(allActions).equals(TestActionEnum.LEFT));
+		assertTrue(stats.getUCTAction(allActions, test.getActorRef()).equals(TestActionEnum.LEFT));
 		tree.updateRAVE(test, TestActionEnum.TEST, new double[] {-1.0});
 		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {8.0});
 		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {9.0});
-		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0), 20.0/4.0 + Math.sqrt(Math.log(6.0) / 4.0), 0.001);
-		assertTrue(stats.getUCTAction(allActions).equals(TestActionEnum.RIGHT));
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0, test.getActorRef()), 20.0/4.0 + Math.sqrt(Math.log(6.0) / 4.0), 0.001);
+		assertTrue(stats.getUCTAction(allActions, test.getActorRef()).equals(TestActionEnum.RIGHT));
 	}
 
 }

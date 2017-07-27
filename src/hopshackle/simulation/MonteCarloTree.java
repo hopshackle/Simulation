@@ -113,7 +113,7 @@ public class MonteCarloTree<P extends Agent> {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString))
 			return;
-		tree.put(stateAsString, new MCStatistics<P>(actions, this, maxActors, state.getActorRef(), state));
+		tree.put(stateAsString, new MCStatistics<P>(actions, this, maxActors, state));
 		stateRefs.put(stateAsString, nextRef);
 		nextRef++;
 		updatesLeft--;
@@ -231,7 +231,7 @@ public class MonteCarloTree<P extends Agent> {
 			if (stats.hasUntriedAction(possibleActions)) {
 				return stats.getRandomUntriedAction(possibleActions);
 			} else {
-				return stats.getUCTAction(possibleActions);
+				return stats.getUCTAction(possibleActions, state.getActorRef());
 			}
 		} else {
 			throw new AssertionError(stateAsString + " not found in MonteCarloTree to choose action");
@@ -244,7 +244,7 @@ public class MonteCarloTree<P extends Agent> {
 		return tree.get(state);
 	}
 	public ActionEnum<P> getBestAction(State<P> state, List<ActionEnum<P>> possibleActions) {
-		return tree.get(state.getAsString()).getBestAction(possibleActions);
+		return tree.get(state.getAsString()).getBestAction(possibleActions, state.getActorRef());
 	}
 	public int numberOfStates() {
 		return tree.size();

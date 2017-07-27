@@ -14,12 +14,8 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 		localDebug = false;
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
-		boolean monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
 		useLookahead = getProperty("LookaheadQLearning", "false").equals("true");
 		RAVE = !getProperty("MonteCarloRAVE", "false").equals("false");
-		if (!monteCarlo) {
-			throw new AssertionError("MCTS Deciders should only be used with MonteCarlo switched on! Update GeneticProperties.txt");
-		}
 	}
 
 	@Override
@@ -84,10 +80,6 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 			tree.updateRAVE(previousER.getStartState(useLookahead), action, reward);
 			previousER = previousER.getPreviousRecord();
 		}
-	}
-
-	public Decider<P> getRolloutDecider() {
-		return rolloutDecider;
 	}
 	
 	@Override

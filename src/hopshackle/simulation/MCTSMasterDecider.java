@@ -40,7 +40,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             this.opponentModel = new RandomDecider<A>(stateFactory);
     }
 
-    protected MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
+    public MCTSChildDecider<A> createChildDecider(MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
         MCTSChildDecider<A> retValue = null;
         if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
             retValue = new MCTSChildDecider<A>(stateFactory, tree, new MCActionValueDecider<A>(tree, stateFactory, currentPlayer), decProp);
@@ -53,12 +53,20 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
     @Override
     public ActionEnum<A> makeDecision(A agent, List<ActionEnum<A>> chooseableOptions) {
+
+        if (chooseableOptions.size() == 1) {
+            agent.log("Only one action possible...skipping MCTS");
+            return chooseableOptions.get(0);
+            // TODO: If we have a time budget, then in the future it may make sense to
+            // construct a Tree anyway, as parts may be of relevance in later turns
+        }
+
         long startTime = System.currentTimeMillis();
         Game<A, ActionEnum<A>> game = agent.getGame();
         int currentPlayer = game.getPlayerNumber(agent);
         State<A> currentState = stateFactory.getCurrentState(agent);
         // We initialise a new tree, and then rollout N times
-        // We also listen to the ER stream for the cloned agent, and then
+        // We listen to the ER stream for the cloned agent, and
         // once the game is finished, we use this to update the MonteCarloTree
         // using an OnInstructionTeacher.
         // This is not using any Lookahead; just the record of state to state transitions
@@ -78,7 +86,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
                             if (useRolloutForOpponent) opponentModel = rolloutDecider;
                             rolloutTemp *= rolloutTempChange;
                         }
-                        //			agent.log("Removing Tree from MCTS decider, leaving " + treeMap.size());
                     }
                 }
             });
@@ -113,12 +120,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         teacher.registerDecider(childDecider);
         teacher.registerToERStream(erc);
 
-        if (chooseableOptions.size() == 1) {
-            agent.log("Only one action possible...skipping MCTS");
-            return chooseableOptions.get(0);
-            // TODO: If we have a time budget, then in the future it may make sense to
-            // construct a Tree anyway, as parts may be of relevance in later turns
-        }
         tree.insertState(currentState, chooseableOptions);
         int N = Math.min(maxRollouts, maxRolloutsPerOption * chooseableOptions.size());
 
@@ -140,8 +141,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
                     player.setDecider(childDecider);
                 }
                 // For each other player in the game, we have to model their behaviour in some way
-                // For this player (from whose perspective the MonteCarloTree is being constructed)
-                // we use MCTSChildDecider
             }
             if (openLoop) {
                 // set open loop references for the cloned game
@@ -169,13 +168,13 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         }
 
         if (trainRolloutDeciderOverGames) {
-            treeProcessor.processTree(tree, currentPlayer);
+            treeProcessor.processTree(tree);
             if (trainRolloutDeciderUsingAllPlayerExperiences) {
                 for (A p : game.getAllPlayers()) {
                     Decider<A> decider = p.getDecider();
                     if (decider != this && decider instanceof MCTSMasterDecider<?>) {
                         MCTSMasterDecider<A> otherD = (MCTSMasterDecider<A>) decider;
-                        otherD.treeProcessor.processTree(tree, currentPlayer);
+                        otherD.treeProcessor.processTree(tree);
                     }
                 }
             }
@@ -234,10 +233,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         return treeMap.get(agent);
     }
 
-    public Decider<A> getRolloutDecider() {
-        return rolloutDecider;
-    }
-
     @Override
     public void injectProperties(DeciderProperties dp) {
         super.injectProperties(dp);
@@ -256,9 +251,13 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
         trainRolloutDeciderUsingAllPlayerExperiences = getProperty("MonteCarloTrainRolloutDeciderFromAllPlayers", "false").equals("true");
         openLoop = getProperty("MonteCarloOpenLoop", "false").equals("true");
-        if (openLoop) {
+        if (openLoop && !(stateFactory instanceof OpenLoopStateFactory)) {
             // we override the provided state factory TODO: or, possibly keep both
-            this.stateFactory = new OpenLoopStateFactory<A>();
+            if (singleTree) {
+                this.stateFactory = OpenLoopStateFactory.newInstanceGameLevelStates();
+            } else {
+                this.stateFactory = OpenLoopStateFactory.newInstance();
+            }
         }
         deciderAsHeuristic = getProperty("MonteCarloRolloutAsHeuristic", "false").equals("true");
         if (treeProcessor == null) treeProcessor = new MCTreeProcessor<A>(dp, this.name);

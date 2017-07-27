@@ -20,7 +20,7 @@ public class RAVEHeuristic<A extends Agent> extends BaseStateDecider<A> {
     @Override
     public double valueOption(ActionEnum<A> option, State<A> state) {
         MCStatistics<A> stats = tree.getStatisticsFor(state);
-        return stats.getRAVEValue(option, C);
+        return stats.getRAVEValue(option, C, state.getActorRef());
     }
 
     @Override
@@ -28,7 +28,7 @@ public class RAVEHeuristic<A extends Agent> extends BaseStateDecider<A> {
         MCStatistics<A> stats = tree.getStatisticsFor(state);
         List<Double> retValue = new ArrayList<Double>(options.size());
         for (ActionEnum<A> option : options)
-            retValue.add(stats.getRAVEValue(option, C));
+            retValue.add(stats.getRAVEValue(option, C, state.getActorRef()));
         return retValue;
     }
 

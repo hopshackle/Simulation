@@ -19,7 +19,7 @@ public class OpenLoopStateTest {
     World world;
     TestAgent agent1, agent2, agent3;
     DeciderProperties localProp;
-    OpenLoopStateFactory<TestAgent> olsf = new OpenLoopStateFactory<TestAgent>();
+    OpenLoopStateFactory<TestAgent> olsf = OpenLoopStateFactory.newInstance();
     Decider<TestAgent> decider;
     OpenLoopState<TestAgent> initialState;
 

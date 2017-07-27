@@ -11,7 +11,6 @@ public class MCStatistics<P extends Agent> {
     private Map<String, Map<String, Integer>> successorStatesByAction = new HashMap<String, Map<String, Integer>>();
     private int totalVisits = 0;
     private int RAVEVisits = 0;
-    private int actingAgent = -1;
     private boolean useBaseValue, offlineHeuristicOnExpansion, offlineHeuristicOnSelection;
     private boolean robustMC, simpleMC, interpolateExploration;
     private String interpolationMethod;
@@ -22,11 +21,11 @@ public class MCStatistics<P extends Agent> {
     private int maxActors;
     private State<P> state;
 
-    public MCStatistics(List<ActionEnum<P>> possibleActions, DeciderProperties properties, int players, int actor, State<P> state) {
-        this(possibleActions, new MonteCarloTree<P>(properties, players), players, actor, state);
+    public MCStatistics(List<ActionEnum<P>> possibleActions, DeciderProperties properties, int players, State<P> state) {
+        this(possibleActions, new MonteCarloTree<P>(properties, players), players, state);
     }
 
-    public MCStatistics(List<ActionEnum<P>> possibleActions, MonteCarloTree<P> tree, int players, int actor, State<P> state) {
+    public MCStatistics(List<ActionEnum<P>> possibleActions, MonteCarloTree<P> tree, int players, State<P> state) {
         allActions = HopshackleUtilities.cloneList(possibleActions);
         this.state = state;
         for (ActionEnum<P> a : possibleActions) {
@@ -34,7 +33,6 @@ public class MCStatistics<P extends Agent> {
         }
         this.tree = tree;
         maxActors = players;
-        actingAgent = actor;
         refresh();
     }
 
@@ -126,22 +124,16 @@ public class MCStatistics<P extends Agent> {
         RAVEVisits++;
     }
 
-    public double getRAVEValue(ActionEnum<P> action, double exploreC) {
-        return getRAVEValue(action.toString(), exploreC);
+    public double getRAVEValue(ActionEnum<P> action, double exploreC, int player) {
+        return getRAVEValue(action.toString(), exploreC, player);
     }
 
-    public double getRAVEValue(String actionAsString, double exploreC) {
+    public double getRAVEValue(String actionAsString, double exploreC, int player) {
         MCData data = RAVE.get(actionAsString);
         if (data == null) return 0.0;
-        double retValue = data.mean[actingAgent];
+        double retValue = data.mean[player];
         retValue += exploreC * Math.sqrt(Math.log(RAVEVisits) / data.visits);
         return retValue;
-    }
-
-    public int getRAVEVisits(String actionAsString) {
-        MCData data = RAVE.get(actionAsString);
-        if (data == null) return 0;
-        return data.visits;
     }
 
     private void addAction(ActionEnum<P> newAction) {
@@ -213,8 +205,10 @@ public class MCStatistics<P extends Agent> {
         double Q[] = new double[maxActors];
         for (String actionKey : map.keySet()) {
             MCData data = map.get(actionKey);
-            if (data.Q[actingAgent] > Q[actingAgent]) Q = data.Q;
             if (data.visits < minVisits) minVisits = data.visits;
+            for (int player = 0; player < maxActors; player++) {
+                if (data.Q[player] > Q[player]) Q[player] = data.Q[player];
+            }
         }
         if (minVisits < minVisitsForQ) Q = new double[0];
         return Q;
@@ -263,17 +257,17 @@ public class MCStatistics<P extends Agent> {
         return untried.get(diceRoll - 1);
     }
 
-    public ActionEnum<P> getUCTAction(List<ActionEnum<P>> availableActions) {
-        return getUCTAction(availableActions, tree != null ? tree.getOfflineHeuristic() : new noHeuristic<P>());
+    public ActionEnum<P> getUCTAction(List<ActionEnum<P>> availableActions, int player) {
+        return getUCTAction(availableActions, tree != null ? tree.getOfflineHeuristic() : new noHeuristic<P>(), player);
     }
 
-    public ActionEnum<P> getUCTAction(List<ActionEnum<P>> availableActions, Decider<P> heuristic) {
+    public ActionEnum<P> getUCTAction(List<ActionEnum<P>> availableActions, Decider<P> heuristic, int player) {
         if (hasUntriedAction(availableActions))
             throw new AssertionError("Should not be looking for UCT action while there are still untried actions");
-        return getAction(availableActions, heuristic, C);
+        return getAction(availableActions, heuristic, C, player);
     }
 
-    private ActionEnum<P> getAction(List<ActionEnum<P>> availableActions, Decider<P> heuristic, double exploreC) {
+    private ActionEnum<P> getAction(List<ActionEnum<P>> availableActions, Decider<P> heuristic, double exploreC, int player) {
         double best = Double.NEGATIVE_INFINITY;
         ActionEnum<P> retValue = null;
         List<Double> heuristicValues = heuristic.valueOptions(availableActions, state);
@@ -282,7 +276,7 @@ public class MCStatistics<P extends Agent> {
             String key = action.toString();
             MCData data = map.get(key);
             if (data == null) continue;
-            double actionScore = score(data);
+            double actionScore = score(data, player);
             double visits = (double) data.visits;
             double coreExplorationTerm = exploreC * Math.sqrt(Math.log(totalVisits) / visits);
             double score = actionScore + coreExplorationTerm; // the vanilla result without heuristics
@@ -365,14 +359,18 @@ public class MCStatistics<P extends Agent> {
         return retValue;
     }
 
-    private double score(MCData data) {
-        double baseValue = data.mean[actingAgent];
-        if (UCTType.equals("Q")) baseValue = data.Q[actingAgent];
-        if (UCTType.equals("V")) baseValue = data.V[actingAgent];
+    private double score(MCData data, int forAgent) {
+        double baseValue = data.mean[forAgent];
+        if (UCTType.equals("Q")) baseValue = data.Q[forAgent];
+        if (UCTType.equals("V")) baseValue = data.V[forAgent];
         return baseValue;
     }
 
-    public ActionEnum<P> getBestAction(List<ActionEnum<P>> availableActions) {
+    public int getActorRef() {
+        if (state == null) return 0;
+        return state.getActorRef();
+    }
+    public ActionEnum<P> getBestAction(List<ActionEnum<P>> availableActions, int player) {
         if (robustMC || simpleMC) {
             ActionEnum<P> retValue = null;
             double score = Double.NEGATIVE_INFINITY;
@@ -380,7 +378,7 @@ public class MCStatistics<P extends Agent> {
                 String key = action.toString();
                 if (map.containsKey(key)) {
                     MCData data = map.get(key);
-                    double actionScore = robustMC ? data.visits : score(data);
+                    double actionScore = robustMC ? data.visits : score(data, player);
                     // Robust MC uses the number of visits, simple MC uses just the final score
                     // with no heuristics at all
                     if (actionScore > score) {
@@ -392,7 +390,7 @@ public class MCStatistics<P extends Agent> {
             return retValue;
         } else {
             // otherwise, we use all the standard heuristics, but without any C
-            return getAction(availableActions, tree.getOfflineHeuristic(), 0.0);
+            return getAction(availableActions, tree.getOfflineHeuristic(), 0.0, player);
         }
     }
 }

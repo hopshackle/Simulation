@@ -10,28 +10,31 @@ public class OpenLoopState<A extends Agent> implements State<A> {
 
     private static AtomicLong idFountain = new AtomicLong(1);
     private long id;
-    private int actingAgentNumber;
     private double[] score;
     private OpenLoopStateFactory<A> factory;
 
-    public OpenLoopState(A agent, OpenLoopStateFactory<A> olsf) {
+    /*
+    perspectiveAgent is the agent from whose perspective the state has been created
+    actingAgent is the agent that is acting
+    These are different when we have a single set of game level states.
+     */
+    public OpenLoopState(A perspectiveAgent, OpenLoopStateFactory<A> olsf) {
         factory = olsf;
-        if (agent == null) {
+        if (perspectiveAgent == null) {
             score = new double[1];
             id = 0;
             return;
         }
-        if (agent.getGame() != null) {
-            actingAgentNumber = agent.getGame().getPlayerNumber(agent)-1;
-            List<Agent> players = agent.getGame().getAllPlayers();
+        if (perspectiveAgent.getGame() != null) {
+            Game<A, ?> game = perspectiveAgent.getGame();
+            List<A> players = game.getAllPlayers();
             score = new double[players.size()];
             for (int i = 0; i < players.size(); i++){
-                score[i] = agent.getScore();
+                score[i] = game.getPlayer(i+1).getScore();
             }
         } else {
-            actingAgentNumber = 0;
             score = new double[1];
-            score[0] = agent.getScore();
+            score[0] = perspectiveAgent.getScore();
         }
         id = idFountain.getAndAdd(1);
     }
@@ -50,7 +53,7 @@ public class OpenLoopState<A extends Agent> implements State<A> {
      * Returns the index of the perspective/acting agent. Used primarily to access the associated score
      */
     public int getActorRef(){
-        return actingAgentNumber;
+        return -1;
     }
 
     /*

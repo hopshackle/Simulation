@@ -194,9 +194,9 @@ public class MCTSDeciderTest {
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
 		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT, 0.0), 6.77, 0.01);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT, 0.0), 0.91, 0.01);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST, 0.0), 4.29, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT, 0.0, 0), 6.77, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT, 0.0, 0), 0.91, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST, 0.0, 0), 4.29, 0.01);
 	}
 }
 

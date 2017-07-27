@@ -35,13 +35,13 @@ public class MCTreeProcessor<A extends Agent> {
         name = nameForDeciders + "_MTP";
     }
 
-    public void processTree(MonteCarloTree<A> tree, int refAgent) {
+    public void processTree(MonteCarloTree<A> tree) {
         for (String key : tree.getAllStatesWithMinVisits(minVisits)) {
             MCStatistics<A> stats = tree.getStatisticsFor(key);
             if (stats.getPossibleActions().size() < 2) continue;
             double[] input = convertStateAsStringToArray(key);
             inputData.add(input);
-            double[] targetOutput = getOutputValuesAsArray(stats, refAgent);
+            double[] targetOutput = getOutputValuesAsArray(stats);
             outputData.add(targetOutput);
         }
         int currentSize = inputData.size();
@@ -65,16 +65,16 @@ public class MCTreeProcessor<A extends Agent> {
         return retValue;
     }
 
-    protected double[] getOutputValuesAsArray(MCStatistics<A> stats, int refAgent) {
+    protected double[] getOutputValuesAsArray(MCStatistics<A> stats) {
         List<ActionEnum<A>> actionsInStats = stats.getPossibleActions();
-        ActionEnum<A> bestAction = stats.getBestAction(actionsInStats);    // this assumes refAgent is the same as stats.actingAgent
-        //		actionCount.put(bestAction, actionCount.getOrDefault(bestAction, 0));
+        int actingAgent = stats.getActorRef();
+        ActionEnum<A> bestAction = stats.getBestAction(actionsInStats, actingAgent);
         double[] retValue = new double[actionsInOutputLayer.size()];
         for (int i = 0; i < retValue.length; i++) retValue[i] = Double.NaN;
         for (ActionEnum<A> action : actionsInStats) {
             double visits = stats.getVisits(action);
             if (visits == 0) continue;
-            double value = stats.getMean(action)[refAgent - 1];
+            double value = stats.getMean(action)[actingAgent];
             if (oneHot && action.equals(bestAction)) value = 1.0;
             if (oneHot && !action.equals(bestAction)) value = 0.0;
             retValue = setValueForAction(action, retValue, value);
@@ -197,7 +197,7 @@ public class MCTreeProcessor<A extends Agent> {
             if (baselineDecider != null) {
                 baseline = baselineDecider.valueOptions(currentIn);
             }
-            double[] currentOut = outputData.get(i);
+            double[] currentOut = outputData.get(i).clone();
             for (int k = 0; k < currentOut.length; k++)
                 if (Double.isNaN(currentOut[k]))
                     currentOut[k] = baseline[k];
