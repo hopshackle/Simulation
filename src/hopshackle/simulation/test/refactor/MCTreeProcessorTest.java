@@ -370,14 +370,12 @@ public class MCTreeProcessorTest {
 		State<TestAgent> agentState2 = stateFactory.getCurrentState(agent2);
 		retValue.insertState(agentState2, new ArrayList<ActionEnum<TestAgent>>());
 		double[] rewardRight = {-0.5, 0.5};
-		retValue.updateState(agentState2, TestActionEnum.RIGHT, agentState2, rewardRight);
+		retValue.updateState(agentState2, TestActionEnum.RIGHT, agentState2, rewardRight, 1);
 		
 		processor = new TestMCTreeProcessor(localProp);
 		assertEquals(processor.finalTrainingData(null).getRecordCount(), 0);
 		processor.processTree(retValue);
 		assertEquals(processor.finalTrainingData(null).getRecordCount(), 0);
-
-		
 	}
 	
 	private MonteCarloTree<TestAgent> generateTree() {
@@ -389,12 +387,12 @@ public class MCTreeProcessorTest {
 		double[] rewardLeft = {1.0, -1.0};
 		double[] rewardRight = {-0.5, 0.5};
 		double[] rewardTest = {0.0, 0.1};
-		retValue.updateState(agentState1, TestActionEnum.RIGHT, agentState1, rewardRight);
-		retValue.updateState(agentState1, TestActionEnum.TEST, agentState1, rewardTest);
-		retValue.updateState(agentState1, TestActionEnum.LEFT, agentState1, rewardLeft);
-		retValue.updateState(agentState1, TestActionEnum.LEFT, agentState1, rewardLeft);
-		retValue.updateState(agentState2, TestActionEnum.RIGHT, agentState2, rewardRight);
-		retValue.updateState(agentState2, TestActionEnum.TEST, agentState2, rewardTest);
+		retValue.updateState(agentState1, TestActionEnum.RIGHT, agentState1, rewardRight, 0);
+		retValue.updateState(agentState1, TestActionEnum.TEST, agentState1, rewardTest, 0);
+		retValue.updateState(agentState1, TestActionEnum.LEFT, agentState1, rewardLeft, 0);
+		retValue.updateState(agentState1, TestActionEnum.LEFT, agentState1, rewardLeft, 0);
+		retValue.updateState(agentState2, TestActionEnum.RIGHT, agentState2, rewardRight, 2);
+		retValue.updateState(agentState2, TestActionEnum.TEST, agentState2, rewardTest, 2);
 		return retValue;
 	}
 }

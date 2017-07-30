@@ -43,7 +43,7 @@ public class MCStatisticsWithPriorWeightTest {
 		startingTree = new MonteCarloTree<TestAgent>(localProp, 1);
 	//	startingTree.setOfflineHeuristic(new MASTHeuristic<TestAgent>(startingTree));
 		startingTree.insertState(dummyState, leftRightOnly);
-		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, toArray(2.0));
+		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, toArray(2.0), 0);
 	}
 
 	@Test
@@ -69,10 +69,10 @@ public class MCStatisticsWithPriorWeightTest {
 	public void cycleThroughActionsIfNotAllTried() {
 		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, dummyState);
 		assertTrue(stats.hasUntriedAction(leftRightOnly));
-		TestActionEnum newAction = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly);
+		TestActionEnum newAction = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly, 0);
 		stats.update(newAction, toArray(1.0));
 		assertTrue(stats.hasUntriedAction(leftRightOnly));
-		TestActionEnum newAction2 = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly);
+		TestActionEnum newAction2 = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly, 0);
 		assertTrue(newAction != newAction2);
 		stats.update(newAction2, toArray(1.0));
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
@@ -123,7 +123,7 @@ public class MCStatisticsWithPriorWeightTest {
 	@Test
 	public void uctReturnsBestActionWithActionValueWeighting() {
 		startingTree.insertState(dummyState, leftRightOnly);
-		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, toArray(2.0));
+		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, toArray(2.0), 0);
 		stats = new MCStatistics<TestAgent>(leftRightOnly, startingTree, 1, dummyState);
 		stats.update(TestActionEnum.LEFT, toArray(2.0));
 		stats.update(TestActionEnum.RIGHT, toArray(1.0));
@@ -170,14 +170,14 @@ public class MCStatisticsWithPriorWeightTest {
 		assertFalse(stats.hasUntriedAction(leftRightOnly));
 		assertEquals(stats.getPossibleActions().size(),2);
 		try {
-			stats.getRandomUntriedAction(leftRightOnly);
+			stats.getRandomUntriedAction(leftRightOnly, 0);
 			fail("Random action returned when there should not be any.");
 		} catch (AssertionError e) {
 			// as expected
 		}
 		assertTrue(stats.hasUntriedAction(allActions));
 		assertEquals(stats.getPossibleActions().size(),3);
-		assertTrue(stats.getRandomUntriedAction(allActions) == TestActionEnum.TEST);
+		assertTrue(stats.getRandomUntriedAction(allActions, 0) == TestActionEnum.TEST);
 	}
 	
 	@Test

@@ -172,8 +172,8 @@ public class MCTreeTest {
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
-		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly);
-		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions);
+		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly, 0);
+		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions, 0);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
 		assertTrue(allA == TestActionEnum.RIGHT);
 	}
@@ -186,8 +186,8 @@ public class MCTreeTest {
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
 		tree.updateState(test, TestActionEnum.TEST, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
-		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly);
-		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions);
+		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly, 0);
+		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions, 0);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
 		assertTrue(allA == TestActionEnum.TEST);
 	}

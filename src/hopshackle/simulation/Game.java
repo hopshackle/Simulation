@@ -9,6 +9,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
     private EntityLog log;
     private static SimpleGameScoreCalculator simpleGameScoreCalculator = new SimpleGameScoreCalculator();
     public static final int MAX_TURNS = SimProperties.getPropertyAsInteger("MaxTurnsPerGame", "50");
+    public boolean debug = false;
 
     public abstract Game<P, A> clone(P perspectivePlayer);
 
@@ -77,6 +78,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
     public void forceGameEnd(GameScoreCalculator calc) {
         endOfGameHouseKeeping();
         finalScores = calc.finalScores(this);
+        if (debug) log("Final Scores: " + HopshackleUtilities.formatArray(finalScores, ", ", "%.2f"));
         for (int i = 1; i <= finalScores.length; i++)
             getPlayer(i).die("Game Over");
     }
@@ -123,6 +125,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
             action.addToAllPlans(); // this is for compatibility with Action statuses in a real-time simulation
             action.start();
             action.run();
+            if (debug) log(currentPlayer.toString() + "  : " + action.toString());
             options = action.getNextOptions();
             if (options.isEmpty()) {
                 if (actionStack.isEmpty()) {

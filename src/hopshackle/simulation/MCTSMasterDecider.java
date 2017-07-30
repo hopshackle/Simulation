@@ -8,7 +8,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
     protected Map<A, MonteCarloTree<A>> treeMap = new HashMap<A, MonteCarloTree<A>>();
     protected Set<String> processedGames = new HashSet<String>();
-    protected Decider<A> rolloutDecider;
+    protected BaseStateDecider<A> rolloutDecider;
     private Decider<A> opponentModel;
     private MCTSChildDecider<A> childDecider;
     private int maxRollouts = getPropertyAsInteger("MonteCarloRolloutCount", "99");
@@ -30,7 +30,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private double rolloutTemp, rolloutTempChange;
     private MCTreeProcessor<A> treeProcessor;
 
-    public MCTSMasterDecider(StateFactory<A> stateFactory, Decider<A> rolloutDecider, Decider<A> opponentModel) {
+    public MCTSMasterDecider(StateFactory<A> stateFactory, BaseStateDecider<A> rolloutDecider, Decider<A> opponentModel) {
         super(stateFactory);
         this.rolloutDecider = rolloutDecider;
         if (rolloutDecider == null)
@@ -190,7 +190,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
         agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
 
-        ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions);
+        ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions, currentPlayer-1);
         if (best == null) {
             throw new AssertionError("No action chosen");
         }

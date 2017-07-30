@@ -232,12 +232,12 @@ public class MCStatistics<P extends Agent> {
         return false;
     }
 
-    public ActionEnum<P> getRandomUntriedAction(List<ActionEnum<P>> availableActions) {
-        return getRandomUntriedAction(availableActions,
-                tree == null ? new noHeuristic<P>() : tree.getOfflineHeuristic());
+    public ActionEnum<P> getRandomUntriedAction(List<ActionEnum<P>> availableActions, int decidingAgent) {
+        BaseStateDecider<P> heuristic = tree == null ? new noHeuristic<P>() : tree.getOfflineHeuristic();
+        return getRandomUntriedAction(availableActions, heuristic, decidingAgent);
     }
 
-    public ActionEnum<P> getRandomUntriedAction(List<ActionEnum<P>> availableActions, Decider<P> heuristic) {
+    public ActionEnum<P> getRandomUntriedAction(List<ActionEnum<P>> availableActions, BaseStateDecider<P> heuristic, int decidingAgent) {
         List<ActionEnum<P>> untried = new ArrayList<ActionEnum<P>>();
         for (ActionEnum<P> action : availableActions) {
             if (!hasActionBeenTried(action)) untried.add(action);
@@ -245,7 +245,7 @@ public class MCStatistics<P extends Agent> {
         if (untried.isEmpty())//////
             throw new AssertionError("Cannot call getRandomUntriedAction if there aren't any");
         if (offlineHeuristicOnExpansion) {
-            List<Double> values = heuristic.valueOptions(untried, state);
+            List<Double> values = heuristic.valueOptions(untried, state, decidingAgent);
             double maxValue = Collections.max(values);
             List<ActionEnum<P>> copy = untried;
             untried = new ArrayList<>();
@@ -261,16 +261,16 @@ public class MCStatistics<P extends Agent> {
         return getUCTAction(availableActions, tree != null ? tree.getOfflineHeuristic() : new noHeuristic<P>(), player);
     }
 
-    public ActionEnum<P> getUCTAction(List<ActionEnum<P>> availableActions, Decider<P> heuristic, int player) {
+    public ActionEnum<P> getUCTAction(List<ActionEnum<P>> availableActions, BaseStateDecider<P> heuristic, int player) {
         if (hasUntriedAction(availableActions))
             throw new AssertionError("Should not be looking for UCT action while there are still untried actions");
         return getAction(availableActions, heuristic, C, player);
     }
 
-    private ActionEnum<P> getAction(List<ActionEnum<P>> availableActions, Decider<P> heuristic, double exploreC, int player) {
+    private ActionEnum<P> getAction(List<ActionEnum<P>> availableActions, BaseStateDecider<P> heuristic, double exploreC, int player) {
         double best = Double.NEGATIVE_INFINITY;
         ActionEnum<P> retValue = null;
-        List<Double> heuristicValues = heuristic.valueOptions(availableActions, state);
+        List<Double> heuristicValues = heuristic.valueOptions(availableActions, state, player);
         boolean sqrtInterpolation = interpolationMethod.equals("RAVE");
         for (ActionEnum<P> action : availableActions) {
             String key = action.toString();
@@ -321,7 +321,12 @@ public class MCStatistics<P extends Agent> {
             String output = "";
             if (heuristicWeight > 0.0) {
                 ActionEnum<P> action = keyToAction.get(k);
-                output = String.format("\t%s\t%s\t(H:%.2f)\n", k, map.get(k).toString(), tree.getOfflineHeuristic().valueOption(action, state));
+                double[] heuristicValues = new double[maxActors];
+                for (int i = 0; i < maxActors; i++) {
+                    heuristicValues[i] = tree.getOfflineHeuristic().valueOption(action, state, i+1);
+                }
+                String heuristicString = HopshackleUtilities.formatArray(heuristicValues, "|", "%.2f");
+                output = String.format("\t%s\t%s\t(H:%s)\n", k, map.get(k).toString(), heuristicString);
                 //        output = String.format("\t%s\t%s\t(AV:%.2f | %d)\n", k, map.get(k).toString(), tree.getActionValue(k, actingAgent+1), tree.getActionCount(k, actingAgent+1));
             } else {
                 output = String.format("\t%-35s\t%s\n", k, map.get(k).toString());

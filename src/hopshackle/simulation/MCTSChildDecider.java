@@ -28,7 +28,8 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 		}
 
 		if (tree.containsState(state)) {
-			return tree.getNextAction(state, chooseableOptions);
+			int decidingAgentRef = decidingAgent.getGame().getPlayerNumber(decidingAgent) - 1;
+			return tree.getNextAction(state, chooseableOptions, decidingAgentRef);
 		} else {
 			return rolloutDecider.makeDecision(decidingAgent, chooseableOptions);
 		}
@@ -57,7 +58,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 				// will then update this state using the reward
 				tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
 			}
-			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().getType(), exp.getEndState(), exp.getMonteCarloReward());
+			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().getType(), exp.getEndState(), exp.getMonteCarloReward(), exp.getAgentNumber());
 		} else if (tree.updatesLeft() > 0) {
 			System.out.println("Action Taken: " + exp.actionTaken);
 			for (ActionEnum<P> poss : exp.getPossibleActionsFromStartState())
@@ -88,4 +89,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 		RAVE = getProperty("MonteCarloRAVE", "false").equals("true");
 	}
 
+	public void setRolloutDecider(Decider<P> rollout) {
+		rolloutDecider = rollout;
+	}
 }

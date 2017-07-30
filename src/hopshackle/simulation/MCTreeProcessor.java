@@ -104,9 +104,9 @@ public class MCTreeProcessor<A extends Agent> {
         return retValue;
     }
 
-    public Decider<A> generateDecider(StateFactory<A> stateFactory, double scaleFactor, double temp, RawDecider<A> baselineDecider) {
+    public BaseStateDecider<A> generateDecider(StateFactory<A> stateFactory, double scaleFactor, double temp, RawDecider<A> baselineDecider) {
         properties.setProperty("Temperature", String.valueOf(temp));
-        Decider<A> retValue;
+        BaseStateDecider<A> retValue;
         StringBuffer message = new StringBuffer();
         if (debug) {
             message.append(String.format("%d total states, T = %.3f\n", outputData.size(), properties.getPropertyAsDouble("Temperature", "0.0")));

@@ -15,16 +15,20 @@ public class MASTHeuristic<A extends Agent> extends BaseStateDecider<A> {
     }
 
     @Override
-    public double valueOption(ActionEnum<A> option, State<A> state) {
-        return tree.getActionValue(option.toString(), state.getActorRef()+1);
+    public double valueOption(ActionEnum<A> option, State<A> state, int decidingAgent) {
+        return tree.getActionValue(option.toString(), decidingAgent);
     }
 
     @Override
-    public List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state) {
-        int actorRef = state.getActorRef();
+    public double valueOption(ActionEnum<A> option, State<A> state) {
+        return valueOption(option, state, state.getActorRef());
+    }
+
+    @Override
+    public List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state, int decidingAgent) {
         List<Double> retValue = new ArrayList<Double>(options.size());
         for (ActionEnum<A> option : options)
-            retValue.add(tree.getActionValue(option.toString(), actorRef+1));
+            retValue.add(tree.getActionValue(option.toString(), decidingAgent +1));
         return retValue;
     }
 

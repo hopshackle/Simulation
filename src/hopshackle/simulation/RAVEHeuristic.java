@@ -18,17 +18,29 @@ public class RAVEHeuristic<A extends Agent> extends BaseStateDecider<A> {
     }
 
     @Override
-    public double valueOption(ActionEnum<A> option, State<A> state) {
+    public double valueOption(ActionEnum<A> option, State<A> state, int decidingAgent) {
         MCStatistics<A> stats = tree.getStatisticsFor(state);
-        return stats.getRAVEValue(option, C, state.getActorRef());
+        return stats.getRAVEValue(option, C, decidingAgent);
+    }
+
+
+    @Override
+    public double valueOption(ActionEnum<A> option, State<A> state) {
+        return valueOption(option, state, state.getActorRef());
     }
 
     @Override
     public List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state) {
+        return valueOptions(options, state, state.getActorRef());
+    }
+
+
+    @Override
+    public List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state, int decidingAgent) {
         MCStatistics<A> stats = tree.getStatisticsFor(state);
         List<Double> retValue = new ArrayList<Double>(options.size());
         for (ActionEnum<A> option : options)
-            retValue.add(stats.getRAVEValue(option, C, state.getActorRef()));
+            retValue.add(stats.getRAVEValue(option, C, decidingAgent));
         return retValue;
     }
 
