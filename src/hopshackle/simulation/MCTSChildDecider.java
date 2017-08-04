@@ -14,12 +14,8 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 		localDebug = false;
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
-		boolean monteCarlo = getProperty("MonteCarloReward", "false").equals("true");
 		useLookahead = getProperty("LookaheadQLearning", "false").equals("true");
 		RAVE = !getProperty("MonteCarloRAVE", "false").equals("false");
-		if (!monteCarlo) {
-			throw new AssertionError("MCTS Deciders should only be used with MonteCarlo switched on! Update GeneticProperties.txt");
-		}
 	}
 
 	@Override
@@ -32,7 +28,8 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 		}
 
 		if (tree.containsState(state)) {
-			return tree.getNextAction(state, chooseableOptions);
+			int decidingAgentRef = decidingAgent.getGame().getPlayerNumber(decidingAgent) - 1;
+			return tree.getNextAction(state, chooseableOptions, decidingAgentRef);
 		} else {
 			return rolloutDecider.makeDecision(decidingAgent, chooseableOptions);
 		}
@@ -61,7 +58,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 				// will then update this state using the reward
 				tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
 			}
-			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().getType(), exp.getEndState(), exp.getMonteCarloReward());
+			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().getType(), exp.getEndState(), exp.getMonteCarloReward(), exp.getAgentNumber());
 		} else if (tree.updatesLeft() > 0) {
 			System.out.println("Action Taken: " + exp.actionTaken);
 			for (ActionEnum<P> poss : exp.getPossibleActionsFromStartState())
@@ -85,10 +82,6 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 			previousER = previousER.getPreviousRecord();
 		}
 	}
-
-	public Decider<P> getRolloutDecider() {
-		return rolloutDecider;
-	}
 	
 	@Override
 	public void injectProperties(DeciderProperties prop) {
@@ -96,4 +89,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 		RAVE = getProperty("MonteCarloRAVE", "false").equals("true");
 	}
 
+	public void setRolloutDecider(Decider<P> rollout) {
+		rolloutDecider = rollout;
+	}
 }

@@ -12,7 +12,7 @@ public class MCTSDeciderTest {
 	List<GeneticVariable<TestAgent>> genVar = new ArrayList<GeneticVariable<TestAgent>>(EnumSet.allOf(TestGenVar.class));
 	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	StateFactory<TestAgent> factory = new LinearStateFactory<TestAgent>(genVar);
-	Decider<TestAgent> rolloutDecider = new SimpleMazeDecider();
+	BaseStateDecider<TestAgent> rolloutDecider = new SimpleMazeDecider();
 	MonteCarloTree<TestAgent> tree;
 	// This is a single agent test, so no opponent model is needed, and the last parameter is safely null
 	MCTSMasterDecider<TestAgent> masterDecider;
@@ -35,11 +35,16 @@ public class MCTSDeciderTest {
 		localProp.setProperty("TimePeriodForGamma", "1000");
 		localProp.setProperty("IncrementalScoreReward", "false");
 		localProp.setProperty("MonteCarloRolloutCount", "99");
-		localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
 		localProp.setProperty("MonteCarloActionValueRollout", "false");
 		localProp.setProperty("MonteCarloActionValueOpponentModel", "false");
 		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
 		localProp.setProperty("MonteCarloRetainTreeBetweenActions", "false");
+		localProp.setProperty("MonteCarloOpenLoop", "false");
+		localProp.setProperty("MonteCarloChoice", "default");
+		localProp.setProperty("MonteCarloHeuristicOnSelection", "false");
+		localProp.setProperty("MonteCarloMAST", "false");
+		localProp.setProperty("MaxTurnsPerGame", "10000");
+		localProp.setProperty("GameOrdinalRewards", "0");
 		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
 		masterDecider.injectProperties(localProp);
 		agent.setDecider(masterDecider);
@@ -116,11 +121,11 @@ public class MCTSDeciderTest {
 		assertEquals(tree.numberOfStates(), 4);
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 5.472, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.5125, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.14, 0.01);
-		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
-		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 5.450, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -6.3175, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -6.859, 0.01);
+		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 95);
+		assertEquals(startStats.getVisits(TestActionEnum.TEST), 3);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
 		
 		assertEquals(mazeGame.playerToMove, 1);
@@ -159,9 +164,9 @@ public class MCTSDeciderTest {
 		assertEquals(tree.numberOfStates(), 7);	// more states visited as we use state of other players
 		startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 4.8533, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -4.643, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -5.587, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 4.812, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -6.964, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -9.078, 0.01);
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 97);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 1);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
@@ -189,9 +194,9 @@ public class MCTSDeciderTest {
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
 		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT), 6.77, 0.01);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT), 0.91, 0.01);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST), 4.29, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT, 0.0, 0), 6.77, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT, 0.0, 0), 0.91, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST, 0.0, 0), 4.29, 0.01);
 	}
 }
 

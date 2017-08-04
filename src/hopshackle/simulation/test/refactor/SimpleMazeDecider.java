@@ -4,9 +4,8 @@ import java.util.*;
 
 import hopshackle.simulation.*;
 
-public class SimpleMazeDecider extends BaseAgentDecider<TestAgent> {
+public class SimpleMazeDecider extends BaseStateDecider<TestAgent> {
 	
-	static List<TestActionEnum> actionList = new ArrayList<TestActionEnum>(EnumSet.allOf(TestActionEnum.class));
 	static List<GeneticVariable<TestAgent>> genVar = new ArrayList<GeneticVariable<TestAgent>>(EnumSet.allOf(TestGenVar.class));
 	List<TestActionEnum> lastMoves = new ArrayList<TestActionEnum>();
 

@@ -19,6 +19,9 @@ public class MonteCarloTree<P extends Agent> {
 	private EntityLog entityLogger;
 	protected boolean debug = false;
 	protected DeciderProperties properties;
+	private BaseStateDecider<P> offlineHeuristic = new noHeuristic<>();
+	private boolean MAST, RAVE;
+	private double RAVE_C;
 
 	/**
 	* Basic constructor. Note the mandatory injection of properties.
@@ -46,6 +49,17 @@ public class MonteCarloTree<P extends Agent> {
 			actionValues.add(i, new HashMap<String, MCData>());
 		this.properties = properties;
 		UCTType = properties.getProperty("MonteCarloUCTType", "MC");
+		MAST = properties.getProperty("MonteCarloMAST", "false").equals("true");
+		RAVE = properties.getProperty("MonteCarloRAVE", "false").equals("true");
+		RAVE_C = properties.getPropertyAsDouble("MonteCarloRAVEExploreConstant", "0.0");
+		// Now we add in the heuristic to use, if any
+		if (MAST) {
+			offlineHeuristic = new MASTHeuristic<>(this);
+		} else if (RAVE) {
+			offlineHeuristic = new RAVEHeuristic<>(this, RAVE_C);
+		} else {
+			offlineHeuristic = new noHeuristic<P>();
+		}
 		id = idFountain.getAndIncrement();
 	}
 
@@ -99,7 +113,7 @@ public class MonteCarloTree<P extends Agent> {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString))
 			return;
-		tree.put(stateAsString, new MCStatistics<P>(actions, this, maxActors, state.getActorRef()));
+		tree.put(stateAsString, new MCStatistics<P>(actions, this, maxActors, state));
 		stateRefs.put(stateAsString, nextRef);
 		nextRef++;
 		updatesLeft--;
@@ -140,10 +154,10 @@ public class MonteCarloTree<P extends Agent> {
 	}
 
 	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double reward) {
-		this.updateState(state, action, nextState, toArray(reward));
+		this.updateState(state, action, nextState, toArray(reward), 0);
 	}
 
-	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double[] reward) {
+	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double[] reward, int actingPlayer) {
 		String stateAsString = state.getAsString();
 		if (debug) {
 			String rewardString = "";
@@ -163,10 +177,15 @@ public class MonteCarloTree<P extends Agent> {
 		} else {
 			if (debug) log("State not yet in tree");
 		}
+		if (MAST) {
+			updateActionValues(action, actingPlayer, reward[actingPlayer]);
+		}
+	}
+
+	private void updateActionValues(ActionEnum<P> action, int actingPlayer, double reward){
 		String actionAsString = action.toString();
-		int actingPlayer = state.getActorRef();
 		double[] actionReward = new double[1];
-		actionReward[0] = reward[actingPlayer];
+		actionReward[0] = reward;
 		Map<String, MCData> av = actionValues.get(actingPlayer);
 		if (av.containsKey(actionAsString)) {
 			av.put(actionAsString, new MCData(av.get(actionAsString), actionReward));
@@ -205,26 +224,32 @@ public class MonteCarloTree<P extends Agent> {
 	}
 
 	public ActionEnum<P> getNextAction(State<P> state, List<ActionEnum<P>> possibleActions) {
+		return getNextAction(state, possibleActions, state.getActorRef());
+	}
+
+	public ActionEnum<P> getNextAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent) {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString)) {
 			MCStatistics<P> stats = tree.get(stateAsString);
 			if (stats.hasUntriedAction(possibleActions)) {
-				return stats.getRandomUntriedAction(possibleActions);
+				return stats.getRandomUntriedAction(possibleActions, decidingAgent);
 			} else {
-				return stats.getUCTAction(possibleActions);
+				return stats.getUCTAction(possibleActions, decidingAgent);
 			}
 		} else {
 			throw new AssertionError(stateAsString + " not found in MonteCarloTree to choose action");
 		}
 	}
+
+
 	public MCStatistics<P> getStatisticsFor(State<P> state) {
 		return tree.get(state.getAsString());
 	}
 	public MCStatistics<P> getStatisticsFor(String state) {
 		return tree.get(state);
 	}
-	public ActionEnum<P> getBestAction(State<P> state, List<ActionEnum<P>> possibleActions) {
-		return tree.get(state.getAsString()).getBestAction(possibleActions);
+	public ActionEnum<P> getBestAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent) {
+		return tree.get(state.getAsString()).getBestAction(possibleActions, decidingAgent);
 	}
 	public int numberOfStates() {
 		return tree.size();
@@ -247,7 +272,7 @@ public class MonteCarloTree<P extends Agent> {
 	public int getActionCount(String k, int playerRef) {
 		if (actionValues.get(playerRef-1).containsKey(k)) {
 			return actionValues.get(playerRef-1).get(k).visits;
-		} 
+		}
 		return 0;
 	}
 
@@ -316,7 +341,14 @@ public class MonteCarloTree<P extends Agent> {
 		}
 		return retValue;
 	}
-	
+
+	public void setOfflineHeuristic(BaseStateDecider<P> newHeuristic) {
+		offlineHeuristic = newHeuristic;
+	}
+	public BaseStateDecider<P> getOfflineHeuristic() {
+		return offlineHeuristic;
+	}
+
 	@Override
 	public String toString() {
 		return toString(false);
@@ -384,4 +416,28 @@ public class MonteCarloTree<P extends Agent> {
 		} finally {
 		}
 	}
+}
+
+class noHeuristic<P extends Agent> extends BaseStateDecider<P> {
+
+	public noHeuristic() {
+		super(null);
+	}
+
+	@Override
+	public double valueOption(ActionEnum<P> option, State<P> state) {
+		return 0;
+	}
+
+	@Override
+	public List<Double> valueOptions(List<ActionEnum<P>> options, State<P> state) {
+		List<Double> retValue = new ArrayList<Double>(options.size());
+		for (int i = 0; i < options.size(); i++)
+			retValue.add(0.0);
+		return retValue;
+	}
+
+	@Override
+	public void learnFrom(ExperienceRecord<P> exp, double maxResult) {}
+
 }

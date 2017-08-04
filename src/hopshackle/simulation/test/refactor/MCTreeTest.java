@@ -2,9 +2,7 @@ package hopshackle.simulation.test.refactor;
 
 import static org.junit.Assert.*;
 import hopshackle.simulation.*;
-
 import java.util.*;
-
 import org.junit.*;
 
 public class MCTreeTest {
@@ -23,6 +21,9 @@ public class MCTreeTest {
 		localProp.setProperty("MonteCarloRL", "false");
 		localProp.setProperty("MonteCarloUCTType", "MC");
 		localProp.setProperty("MonteCarloUCTC", "1");
+		localProp.setProperty("MonteCarloHeuristicWeighting", "0.0");
+		localProp.setProperty("MonteCarloHeuristicOnSelection", "true");
+		localProp.setProperty("MonteCarloHeuristicOnExpansion", "false");
 		leftRightOnly.remove(TestActionEnum.TEST);
 		test = new State<TestAgent>() {
 			@Override
@@ -171,8 +172,8 @@ public class MCTreeTest {
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
-		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly);
-		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions);
+		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly, 0);
+		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions, 0);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
 		assertTrue(allA == TestActionEnum.RIGHT);
 	}
@@ -185,8 +186,8 @@ public class MCTreeTest {
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
 		tree.updateState(test, TestActionEnum.TEST, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
-		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly);
-		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions);
+		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly, 0);
+		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions, 0);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
 		assertTrue(allA == TestActionEnum.TEST);
 	}
@@ -209,6 +210,7 @@ public class MCTreeTest {
 		localProp.setProperty("Temperature", "0.00");
 		localProp.setProperty("RandomDeciderMaxChance", "0.0");
 		localProp.setProperty("RandomDeciderMinChance", "0.0");
+		localProp.setProperty("MonteCarloMAST", "true");
 		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
@@ -227,6 +229,7 @@ public class MCTreeTest {
 		localProp.setProperty("Temperature", "0.1");
 		localProp.setProperty("RandomDeciderMaxChance", "1.0");
 		localProp.setProperty("RandomDeciderMinChance", "1.0");
+		localProp.setProperty("MonteCarloMAST", "true");
 		tree = new MonteCarloTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
@@ -289,39 +292,43 @@ public class MCTreeTest {
 	
 	@Test
 	public void RAVEvalues() {
-		localProp.setProperty("MonteCarloRAVE", "GellySilver");
-		localProp.setProperty("MonteCarloRAVEWeight", "2");
+		localProp.setProperty("MonteCarloRAVE", "true");
+		localProp.setProperty("MonteCarloHeuristicInterpolationMethod", "RAVE");
+		localProp.setProperty("MonteCarloHeuristicWeighting", "2.0");
+		localProp.setProperty("MonteCarloInterpolateExploration", "true");
+		localProp.setProperty("MonteCarloRAVEExploreConstant", "1.0");
 		tree = new MonteCarloTree<TestAgent>(localProp);
+	//	tree.setOfflineHeuristic(new RAVEHeuristic<>(tree, 1.0));
 		tree.insertState(test, allActions);
 		tree.updateState(test, TestActionEnum.LEFT, other, 2.0);
 		MCStatistics<TestAgent> stats = tree.getStatisticsFor(test);
-		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT), 0.0, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT), 0.0, 0.001);
-		assertEquals(stats.getRAVEPlus(TestActionEnum.RIGHT), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0, test.getActorRef()), 0.0, 0.001);
 		tree.updateState(test, TestActionEnum.RIGHT, other, 0.0);
 		tree.updateState(test, TestActionEnum.TEST, other, 0.0);
 		stats = tree.getStatisticsFor(test);
-		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT), 0.0, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT), 0.0, 0.001);
-		assertEquals(stats.getRAVEPlus(TestActionEnum.RIGHT), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0, test.getActorRef()), 0.0, 0.001);
 		
-		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {3.0});
-		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {5.0});
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {0.5});
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {2.5});
 		tree.updateRAVE(test, TestActionEnum.TEST, new double[] {0.0});
 		stats = tree.getStatisticsFor(test);
-		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT), 0.0, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.TEST), 0.0, 0.001);
-		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT), 4.0, 0.001);
-		assertEquals(stats.getRAVEPlus(TestActionEnum.RIGHT), 4.0 + Math.sqrt(Math.log(3.0) / 2.0), 0.001);
-		assertEquals(stats.getRAVEPlus(TestActionEnum.TEST), 0.0 + Math.sqrt(Math.log(3.0) / 1.0), 0.001);
-		assertEquals(stats.getRAVEPlus(TestActionEnum.LEFT), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.TEST, 0.0, test.getActorRef()), 0.0, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 0.0, test.getActorRef()), 1.5, 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0, test.getActorRef()), 1.5 + Math.sqrt(Math.log(3.0) / 2.0), 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.TEST, 1.0, test.getActorRef()), 0.0 + Math.sqrt(Math.log(3.0) / 1.0), 0.001);
+		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 1.0, test.getActorRef()), 0.0, 0.001);
 		
-		assertTrue(stats.getUCTAction(allActions).equals(TestActionEnum.LEFT));
+		assertTrue(stats.getUCTAction(allActions, test.getActorRef()).equals(TestActionEnum.LEFT));
 		tree.updateRAVE(test, TestActionEnum.TEST, new double[] {-1.0});
 		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {8.0});
 		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {9.0});
-		assertEquals(stats.getRAVEPlus(TestActionEnum.RIGHT), 25.0/4.0 + Math.sqrt(Math.log(6.0) / 4.0), 0.001);
-		assertTrue(stats.getUCTAction(allActions).equals(TestActionEnum.RIGHT));
+		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0, test.getActorRef()), 20.0/4.0 + Math.sqrt(Math.log(6.0) / 4.0), 0.001);
+		assertTrue(stats.getUCTAction(allActions, test.getActorRef()).equals(TestActionEnum.RIGHT));
 	}
 
 }

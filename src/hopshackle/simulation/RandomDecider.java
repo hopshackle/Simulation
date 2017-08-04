@@ -2,7 +2,7 @@ package hopshackle.simulation;
 
 import java.util.List;
 
-public class RandomDecider<A extends Agent> extends BaseAgentDecider<A> {
+public class RandomDecider<A extends Agent> extends BaseStateDecider<A> {
 
 	public RandomDecider(StateFactory<A> stateFactory) {
 		super(stateFactory);

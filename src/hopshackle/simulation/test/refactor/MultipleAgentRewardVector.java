@@ -20,7 +20,7 @@ public class MultipleAgentRewardVector {
 	DeciderProperties localProp;
 	List<GeneticVariable<TestAgent>> genVar = new ArrayList<GeneticVariable<TestAgent>>(EnumSet.allOf(TestGenVar.class));
 	StateFactory<TestAgent> factory = new LinearStateFactory<TestAgent>(genVar);
-	Decider<TestAgent> rolloutDecider = new SimpleMazeDecider();
+	BaseStateDecider<TestAgent> rolloutDecider = new SimpleMazeDecider();
 	MonteCarloTree<TestAgent> tree;
 	// This is a single agent test, so no opponent model is needed, and the last parameter is safely null
 	MCTSMasterDecider<TestAgent> masterDecider;
@@ -48,6 +48,9 @@ public class MultipleAgentRewardVector {
 		localProp.setProperty("MonteCarloActionValueOpponentModel", "false");
 		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
 		localProp.setProperty("MonteCarloRetainTreeBetweenActions", "false");
+		localProp.setProperty("MaxTurnsPerGame", "10000");
+		localProp.setProperty("GameOrdinalRewards", "0");
+		localProp.setProperty("MonteCarloOpenLoop", "false");
 		tree = new MonteCarloTree<TestAgent>(localProp, 1);
 		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
 		masterDecider.injectProperties(localProp);
@@ -91,9 +94,9 @@ public class MultipleAgentRewardVector {
 		// score is 10.0 for reaching target, -1.0 per second elapsed. Each agent moves consecutively
 		// and takes 1 second. So we have five moves in total to the end.
 		assertEquals(max, 5, 0.001);
-		assertEquals(result[1], -5.0, 0.001);
-		assertEquals(result[2], -5.0, 0.001);
-		assertEquals(result[3], -5.0, 0.001);
+		assertEquals(result[1], -6.0, 0.001);
+		assertEquals(result[2], -6.0, 0.001);
+		assertEquals(result[3], -6.0, 0.001);
 	}
 
 	@Test
@@ -105,9 +108,9 @@ public class MultipleAgentRewardVector {
 
 		double[] result = game.playGame();
 		assertEquals(result[0], 5.0, 0.001);
-		assertEquals(result[1], -5.0, 0.001);
-		assertEquals(result[2], -5.0, 0.001);
-		assertEquals(result[3], -5.0, 0.001);
+		assertEquals(result[1], -6.0, 0.001);
+		assertEquals(result[2], -6.0, 0.001);
+		assertEquals(result[3], -6.0, 0.001);
 
 		assertEquals(erc.getAllExperienceRecords().size(), 5);
 		for (int i = 0; i < 4; i++) {
@@ -122,7 +125,7 @@ public class MultipleAgentRewardVector {
 				for (int record = 0; record < 4; record++) {
 					for (int player = 0; player < 4; player++) {
 	//					System.out.println("Player " + (player+1) + " : " + (record+1));
-						double expectation = -5.0;
+						double expectation = -6.0;
 						double gamma = Math.pow(0.95, (3 - record));
 						if (player == 0) expectation = 5.0;
 
@@ -134,9 +137,9 @@ public class MultipleAgentRewardVector {
 			case 1:	// player 2 is self only
 				assertEquals(erList.size(), 1);
 				assertEquals(erList.get(0).getMonteCarloReward()[0], 5.0, 0.001);
-				assertEquals(erList.get(0).getMonteCarloReward()[1], -5.0, 0.001);
-				assertEquals(erList.get(0).getMonteCarloReward()[2], -5.0, 0.001);
-				assertEquals(erList.get(0).getMonteCarloReward()[3], -5.0, 0.001);
+				assertEquals(erList.get(0).getMonteCarloReward()[1], -6.0, 0.001);
+				assertEquals(erList.get(0).getMonteCarloReward()[2], -6.0, 0.001);
+				assertEquals(erList.get(0).getMonteCarloReward()[3], -6.0, 0.001);
 				break;
 			}
 		}
@@ -150,20 +153,20 @@ public class MultipleAgentRewardVector {
 
 		double[] result = game.playGame();
 		assertEquals(result[0], 5.0, 0.001);
-		assertEquals(result[1], -5.0, 0.001);
-		assertEquals(result[2], -5.0, 0.001);
-		assertEquals(result[3], -5.0, 0.001);
+		assertEquals(result[1], -6.0, 0.001);
+		assertEquals(result[2], -6.0, 0.001);
+		assertEquals(result[3], -6.0, 0.001);
 		result = game.getFinalScores();
 		assertEquals(result[0], 5.0, 0.001);
-		assertEquals(result[1], -5.0, 0.001);
-		assertEquals(result[2], -5.0, 0.001);
-		assertEquals(result[3], -5.0, 0.001);
+		assertEquals(result[1], -6.0, 0.001);
+		assertEquals(result[2], -6.0, 0.001);
+		assertEquals(result[3], -6.0, 0.001);
 		assertEquals(erc.getAllExperienceRecords().size(), 5);
 		for (int i = 0; i < 4; i++) {
 			List<ExperienceRecord<TestAgent>> erList = erc.getExperienceRecords(players[i]);
 			for (int j = 0; j < 4; j++) {
 				// System.out.println(i + " " + j);
-				double expectation = -5.0;
+				double expectation = -6.0;
 				double gamma = 1.0;
 				if (j==0) expectation = 5.0;
 				if (i==0) gamma = 0.95;		// only player 1 has two ER in stream
