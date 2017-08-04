@@ -42,6 +42,7 @@ public class RunMetrics {
 		File defaultDir = new File(baseDir + "\\Metrics");
 		if (args.length > 0 && args[0] != null) {
 			dir = new File(args[0]);
+			System.out.println("Using " + dir + " to define datasets");
 		}
 
 		if (dir == null) dir = defaultDir;
@@ -55,6 +56,7 @@ public class RunMetrics {
 			dir = defaultDir;
 		}
 
+		System.out.println("Using " + dir + " for .sql files");
 		File[] allFiles = dir.listFiles();
 		for (int n=0; n<allFiles.length; n++) 
 			if (allFiles[n].getName().endsWith(".sql"))
@@ -117,12 +119,13 @@ public class RunMetrics {
 			dsValues.add(metricValue);
 		}
 
+		System.out.println("Extracted " + dsValues.size() + " names of dataset groups");
 		/*
 		 * Have now obtained all the values for the current DataSetGroup
 		 *  We pass on to a Persistence object to write them away
 		 */
 		try {
-			new MySQLResultSet(null, getArrayFromListDSG(dsgArray), 
+			new MySQLResultSet(null, getArrayFromListDSG(dsgArray),
 					getArrayFromListString(dsNames), metricName, 
 					getArrayFromListDouble(dsValues));
 		} catch (SQLException e) {
