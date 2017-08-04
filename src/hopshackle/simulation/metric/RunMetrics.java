@@ -62,28 +62,8 @@ public class RunMetrics {
 
 		for (File sqlFile : sqlFiles) {
 			String metricName = sqlFile.getName().substring(0, sqlFile.getName().length()-4);
-			StringBuffer sqlQuery = new StringBuffer();
-
-			try {
-				FileReader fr = new FileReader(sqlFile);
-				BufferedReader br = new BufferedReader(fr);
-
-				String t = null;
-				do {
-					t = br.readLine();
-					if (t != null) 
-						sqlQuery.append(t + " ");
-				} while (t != null);
-
-				br.close();
-				fr.close();
-
-			} catch (IOException e) {
-				e.printStackTrace();
-				break;
-			}
-
-			metricArray.add(new MySQLMetric(metricName, sqlQuery.toString()));
+			String sqlQuery = extractSQLFromFile(sqlFile);
+			metricArray.add(new MySQLMetric(metricName, sqlQuery));
 		}
 
 		/* 
@@ -128,9 +108,28 @@ public class RunMetrics {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
 
+	public static String extractSQLFromFile(File file) {
+		StringBuffer sqlQuery = new StringBuffer();
+		try {
+			FileReader fr = new FileReader(file);
+			BufferedReader br = new BufferedReader(fr);
 
+			String t = null;
+			do {
+				t = br.readLine();
+				if (t != null)
+					sqlQuery.append(t + " ");
+			} while (t != null);
 
+			br.close();
+			fr.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return sqlQuery.toString();
 	}
 
 	private DataSet[] getArrayFromListDS(ArrayList<DataSet> al) {

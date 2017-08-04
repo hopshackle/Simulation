@@ -66,7 +66,8 @@ public class SimProperties {
 	public static Set<String> allDeciderNames() {
 		if (!initialised) initialiseProperties();
 		Set<String> retValue = deciderPropertiesMap.keySet();
-		retValue.remove("Override");		// reserved
+		retValue.remove("Override");		// reserved for use in Rollout deciders
+		retValue.remove("ParameterSearch"); // reserved for ParameterSearch use
 		return retValue;
 	}
 	
