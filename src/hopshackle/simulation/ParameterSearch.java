@@ -293,8 +293,8 @@ public class ParameterSearch {
         if (negNoise > 0) System.out.println(negNoise + " samples had negative latent noise");
 
         if (useExpectedImprovement) {
-            System.out.println(String.format("EI/T expected mean is %.3g (sigma = %.2g) in predicted T of %.2g with params %s",
-                    bestEIScore + Ymean, (bestExpectedImprovement * bestPredictedTime - bestEIScore) / kappa, bestPredictedTime - 30, HopshackleUtilities.formatArray(nextSettingWithEI, "|", "%.3g")));
+            System.out.println(String.format("EI/T expected mean is %.3g (sigma = %.2g) in predicted T of %.0f with params %s",
+                    bestEIScore + Ymean, (bestExpectedImprovement * bestPredictedTime - bestEIScore) / kappa, bestPredictedTime - 30, HopshackleUtilities.formatArray(nextSettingWithEI, "|", "%.2g")));
             return nextSettingWithEI;
         }
         return nextSetting;
