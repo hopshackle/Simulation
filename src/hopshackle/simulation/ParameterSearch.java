@@ -1,5 +1,6 @@
 package hopshackle.simulation;
 
+import java.net.SocketException;
 import java.sql.*;
 import java.util.*;
 import java.io.*;
@@ -23,6 +24,7 @@ public class ParameterSearch {
     private GaussianProcess gp;
     private double[] Xmean;
     private double Ymean;
+    private Connection con;
 
     public ParameterSearch(String name) {
         this.name = name;
@@ -45,6 +47,7 @@ public class ParameterSearch {
                 throw new AssertionError("Invalid format for parameter search: " + key + ", " + value);
             }
         }
+        con = ConnectionFactory.getConnection("SimAnalysis", "root", "Metternich", "", false);
     }
 
     public void setParameterSearchValues() {
@@ -114,22 +117,20 @@ public class ParameterSearch {
 
     private int getNumberOfPreviousRuns() {
         int retValue = 0;
+
         try {
-            Connection con = ConnectionFactory.getConnection("SimAnalysis", "root", "Metternich", "", false);
-
             String sqlQuery = "SELECT COUNT(*) FROM PS_" + name + ";";
-
             Statement st = con.createStatement();
             ResultSet rs = st.executeQuery(sqlQuery);
             rs.next();
             retValue = rs.getInt(1);
-
+            //        System.out.println(sqlQuery + " give " + retValue);
             st.close();
-            con.close();
         } catch (SQLException e) {
             e.printStackTrace();
             retValue = 0;
         }
+
         return retValue;
     }
 
@@ -138,8 +139,6 @@ public class ParameterSearch {
         List<List<Double>> protoX = new ArrayList<>();
         List<Double> protoY = new ArrayList<>();
         try {
-            Connection con = ConnectionFactory.getConnection("SimAnalysis", "root", "Metternich", "", false);
-
             String sqlQuery = "SELECT * FROM PS_" + name + ";";
 
             Statement st = con.createStatement();
@@ -160,7 +159,7 @@ public class ParameterSearch {
                 protoY.add(score);
             } while (!rs.isLast());
             st.close();
-            con.close();
+
         } catch (SQLException e) {
             e.printStackTrace();
             throw new AssertionError("Invalid SQL");
@@ -168,7 +167,6 @@ public class ParameterSearch {
         // protoX and protoY now populated with raw data
         Xmean = new double[protoX.get(0).size()];
         Ymean = 0.0;
-        count = protoY.size(); // as we may be reusing data from a previous execution
         double[][] X = new double[protoX.size()][protoX.get(0).size()];
         double[][] Y = new double[protoY.size()][1];
         for (int i = 0; i < Y.length; i++) {
@@ -267,8 +265,6 @@ public class ParameterSearch {
         double score = runningTotal / tableNames.size();
         // now to write to table with the parameter value used
 
-        Connection con = ConnectionFactory.getConnection("SimAnalysis", "root", "Metternich", "", false);
-
         String columnNameCreation = "";
         String columnNameInsertion = "";
         String parameterValues = "";
@@ -303,8 +299,8 @@ public class ParameterSearch {
             st = con.createStatement();
             st.executeUpdate(sqlQuery);
 
-            st.close();
-            con.close();
+
+
         } catch (SQLException e) {
             e.printStackTrace();
             throw new AssertionError("Invalid SQL");
@@ -314,6 +310,7 @@ public class ParameterSearch {
     public boolean complete() {
         return false;
     }
+
 }
 
 class ParameterDetail {
