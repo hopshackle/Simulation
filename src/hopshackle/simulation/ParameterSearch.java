@@ -246,6 +246,15 @@ public class ParameterSearch {
         double[] optimalSetting = new double[parameterConstraints.size()];
         int negNoise = 0;
         for (int i = 0; i < N; i++) {
+            // first we find the incumbent point and value (from the N random ones)
+            double value = predictions[0].get(i, 0);
+            if (value > bestMean) {
+                bestMean = value;
+                bestUCB = predictions[1].get(i, 0) - baseNoise;;
+                optimalSetting = xstar[i];
+            }
+        }
+        for (int i = 0; i < N; i++) {
             double value = predictions[0].get(i, 0);
             double latentNoise = predictions[1].get(i, 0) - baseNoise;
             if (latentNoise < 0.00) {
@@ -261,7 +270,8 @@ public class ParameterSearch {
                 if (predictedTime < 0.00) predictedTime = 0.00;
                 predictedTime += 30.0;      // overhead for GP calculations
             }
-            double expectedImprovement = score / predictedTime;
+            double expectedImprovement = (score - bestMean) / predictedTime;
+            // we measure expected improvement against the base incumbent value
             if (score > bestScore) {
                 bestScore = score;
                 bestLatent = latentNoise;
@@ -273,11 +283,6 @@ public class ParameterSearch {
                 bestEIScore = value;
                 bestPredictedTime = predictedTime;
                 nextSettingWithEI = xstar[i];
-            }
-            if (value > bestMean) {
-                bestMean = value;
-                bestUCB = latentNoise;
-                optimalSetting = xstar[i];
             }
         }
         for (int i = 0; i < nextSetting.length; i++) {
@@ -294,7 +299,7 @@ public class ParameterSearch {
 
         if (useExpectedImprovement) {
             System.out.println(String.format("EI/T expected mean is %.3g (sigma = %.2g) in predicted T of %.0f with params %s",
-                    bestEIScore + Ymean, (bestExpectedImprovement * bestPredictedTime - bestEIScore) / kappa, bestPredictedTime - 30, HopshackleUtilities.formatArray(nextSettingWithEI, "|", "%.2g")));
+                    bestEIScore + Ymean, (bestExpectedImprovement * bestPredictedTime + bestMean - bestEIScore) / kappa, bestPredictedTime - 30, HopshackleUtilities.formatArray(nextSettingWithEI, "|", "%.2g")));
             return nextSettingWithEI;
         }
         return nextSetting;
