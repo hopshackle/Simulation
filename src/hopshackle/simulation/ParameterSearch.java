@@ -1,6 +1,5 @@
 package hopshackle.simulation;
 
-import java.net.SocketException;
 import java.sql.*;
 import java.util.*;
 import java.io.*;
@@ -9,7 +8,6 @@ import hopshackle.simulation.metric.*;
 import jgpml.GaussianProcess;
 import jgpml.covariancefunctions.*;
 import Jama.*;
-import org.apache.commons.math3.analysis.function.Gaussian;
 
 /**
  * Created by james on 31/07/2017.
@@ -21,10 +19,12 @@ public class ParameterSearch {
     private Properties propertiesToSearch;
     private List<ParameterDetail> parameterConstraints = new ArrayList<>();
     private long startTime;
-    private GaussianProcess gp;
+    private GaussianProcess mainGP, timeGP;
     private double[] Xmean;
-    private double Ymean;
+    private double Ymean, Tmean;
     private Connection con;
+    private boolean useExpectedImprovement = SimProperties.getProperty("ExpectedImprovementPerUnitTimeInParameterSearch", "true").equals("true");
+    private double kappa = SimProperties.getPropertyAsDouble("ParameterSearchKappaForGP-UCB", "2.0");
 
     public ParameterSearch(String name) {
         this.name = name;
@@ -138,6 +138,7 @@ public class ParameterSearch {
         // Form X and Y from database table
         List<List<Double>> protoX = new ArrayList<>();
         List<Double> protoY = new ArrayList<>();
+        List<Double> protoT = new ArrayList<>();
         try {
             String sqlQuery = "SELECT * FROM PS_" + name + ";";
 
@@ -157,6 +158,8 @@ public class ParameterSearch {
 
                 double score = rs.getDouble("score");
                 protoY.add(score);
+                double timeTaken = rs.getDouble("timeTaken");
+                protoT.add(timeTaken);
             } while (!rs.isLast());
             st.close();
 
@@ -169,9 +172,12 @@ public class ParameterSearch {
         Ymean = 0.0;
         double[][] X = new double[protoX.size()][protoX.get(0).size()];
         double[][] Y = new double[protoY.size()][1];
+        double[][] T = new double[protoT.size()][1];
         for (int i = 0; i < Y.length; i++) {
             Y[i][0] = protoY.get(i);
+            T[i][0] = protoT.get(i);
             Ymean += Y[i][0];
+            Tmean += T[i][0];
             List<Double> temp = protoX.get(i);
             for (int j = 0; j < parameterConstraints.size(); j++) {
                 X[i][j] = temp.get(j);
@@ -179,12 +185,14 @@ public class ParameterSearch {
             }
         }
         Ymean /= protoY.size();
+        Tmean /= protoT.size();
         for (int i = 0; i < Xmean.length; i++)
             Xmean[i] /= protoY.size();
 
         // zero mean all the data
         for (int i = 0; i < Y.length; i++) {
             Y[i][0] -= Ymean;
+            T[i][0] -= Tmean;
             for (int j = 0; j < parameterConstraints.size(); j++) {
                 X[i][j] -= Xmean[j];
             }
@@ -202,11 +210,13 @@ public class ParameterSearch {
             System.out.println("Using squared exponential kernel");
         }
         int kernelParameters = kernel.numParameters();  // last is always noise level
-        gp = new GaussianProcess(kernel);
+        mainGP = new GaussianProcess(kernel);
+        timeGP = new GaussianProcess(kernel);
 
         double[][] theta = new double[kernelParameters][1];
         // train GP
-        gp.train(new Matrix(X), new Matrix(Y), new Matrix(theta), 20);
+        mainGP.train(new Matrix(X), new Matrix(Y), new Matrix(theta), 20);
+        if (useExpectedImprovement) timeGP.train(new Matrix(X), new Matrix(T), new Matrix(theta), 20);
     }
 
     private double[] getNextPointToTry() {
@@ -220,13 +230,20 @@ public class ParameterSearch {
             xstar[i] = sample;
         }
         // noise parameter is always the last one given kernel construction
-        double baseNoise = Math.pow(Math.exp(gp.logtheta.get(gp.logtheta.getRowDimension() - 1, 0)), 2);
+        double baseNoise = Math.pow(Math.exp(mainGP.logtheta.get(mainGP.logtheta.getRowDimension() - 1, 0)), 2);
         System.out.println(String.format("Base noise is %.3g (sd: %.3g)", baseNoise, Math.sqrt(baseNoise)));
-        System.out.println("All params: " + HopshackleUtilities.formatArray(gp.logtheta.transpose().getArray()[0], ", ", "%.2g"));
-        Matrix[] predictions = gp.predict(new Matrix(xstar));
-        double bestScore = Double.NEGATIVE_INFINITY;
-        double bestEstimate = 0.0;
+        System.out.println("All params: " + HopshackleUtilities.formatArray(mainGP.logtheta.transpose().getArray()[0], ", ", "%.2g"));
+        Matrix[] predictions = mainGP.predict(new Matrix(xstar));
+        Matrix[] timePredictions = new Matrix[2];
+        if (useExpectedImprovement) {
+            timePredictions = timeGP.predict(new Matrix(xstar));
+        }
+        double bestScore = Double.NEGATIVE_INFINITY, bestMean = Double.NEGATIVE_INFINITY;
+        double bestEstimate = 0.0, bestPredictedTime = 0.0, bestEIScore = 0.0, bestUCB = 0.0, bestLatent = 0.0;
+        double bestExpectedImprovement = Double.NEGATIVE_INFINITY;
         double[] nextSetting = new double[parameterConstraints.size()];
+        double[] nextSettingWithEI = new double[parameterConstraints.size()];
+        double[] optimalSetting = new double[parameterConstraints.size()];
         int negNoise = 0;
         for (int i = 0; i < N; i++) {
             double value = predictions[0].get(i, 0);
@@ -237,17 +254,49 @@ public class ParameterSearch {
             } else {
                 latentNoise = Math.sqrt(latentNoise); // convert from variance to sd
             }
-            double score = value + 2.0 * latentNoise;
+            double score = value + kappa * latentNoise;
+            double predictedTime = 1.0;
+            if (useExpectedImprovement) {
+                predictedTime = timePredictions[0].get(i, 0) + Tmean;
+                if (predictedTime < 0.00) predictedTime = 0.00;
+                predictedTime += 30.0;      // overhead for GP calculations
+            }
+            double expectedImprovement = score / predictedTime;
             if (score > bestScore) {
                 bestScore = score;
+                bestLatent = latentNoise;
                 bestEstimate = value;
                 nextSetting = xstar[i];
             }
+            if (expectedImprovement > bestExpectedImprovement) {
+                bestExpectedImprovement = expectedImprovement;
+                bestEIScore = value;
+                bestPredictedTime = predictedTime;
+                nextSettingWithEI = xstar[i];
+            }
+            if (value > bestMean) {
+                bestMean = value;
+                bestUCB = latentNoise;
+                optimalSetting = xstar[i];
+            }
         }
-        System.out.println(String.format("Best estimated mean is %.3f above objective mean of %.3f (%.3f with latent noise)", bestEstimate, Ymean, bestScore));
-        if (negNoise > 0) System.out.println(negNoise + " samples had negative latent noise");
-        for (int i = 0; i < nextSetting.length; i++)
+        for (int i = 0; i < nextSetting.length; i++) {
             nextSetting[i] += Xmean[i];
+            nextSettingWithEI[i] += Xmean[i];
+            optimalSetting[i] += Xmean[i];
+        }
+        System.out.println(String.format("Optimal mean is %4.3g (sigma = %.2g) with params %s",
+                bestMean + Ymean, bestUCB, HopshackleUtilities.formatArray(optimalSetting, "|", "%.2g")));
+        System.out.println(String.format("Acquisition expected mean is %.3g (sigma = %.2g) with params %s",
+                bestEstimate + Ymean, bestLatent, HopshackleUtilities.formatArray(nextSetting, "|", "%.2g")));
+
+        if (negNoise > 0) System.out.println(negNoise + " samples had negative latent noise");
+
+        if (useExpectedImprovement) {
+            System.out.println(String.format("EI/T expected mean is %.3g (sigma = %.2g) in predicted T of %.2g with params %s",
+                    bestEIScore + Ymean, (bestExpectedImprovement * bestPredictedTime - bestEIScore) / kappa, bestPredictedTime - 30, HopshackleUtilities.formatArray(nextSettingWithEI, "|", "%.3g")));
+            return nextSettingWithEI;
+        }
         return nextSetting;
     }
 
@@ -300,7 +349,6 @@ public class ParameterSearch {
 
             st = con.createStatement();
             st.executeUpdate(sqlQuery);
-
 
 
         } catch (SQLException e) {
