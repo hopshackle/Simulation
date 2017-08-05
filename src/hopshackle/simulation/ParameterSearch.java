@@ -236,6 +236,8 @@ public class ParameterSearch {
             if (latentNoise < 0.00) {
                 latentNoise = 0.00;
                 negNoise++;
+            } else {
+                latentNoise = Math.sqrt(latentNoise); // convert from variance to sd
             }
             double score = value + 2.0 * latentNoise;
             if (score > bestScore) {
