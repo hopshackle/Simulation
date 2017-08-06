@@ -89,6 +89,8 @@ public class ParameterSearch {
             ParameterDetail pd = parameterConstraints.get(i);
             if (pd.continuous) {
                 retValue[i] = Math.random() * (pd.toValue - pd.fromValue) + pd.fromValue;
+                if (pd.logScale)
+                    retValue[i] = Math.exp(retValue[i]);
             } else {
                 retValue[i] = Dice.roll(1, pd.categoricalValues.size()) - 1;
             }
@@ -97,7 +99,6 @@ public class ParameterSearch {
     }
 
     private String parameterValueToString(double value, ParameterDetail pd) {
-        if (pd.logScale) value = Math.exp(value);
         if (pd.integer) {
             int intValue = (int) (value + 0.5);
             return String.valueOf(intValue);
@@ -250,7 +251,7 @@ public class ParameterSearch {
             double value = predictions[0].get(i, 0);
             if (value > bestMean) {
                 bestMean = value;
-                bestUCB = predictions[1].get(i, 0) - baseNoise;;
+                bestUCB = Math.sqrt(predictions[1].get(i, 0) - baseNoise);
                 optimalSetting = xstar[i];
             }
         }
@@ -290,7 +291,7 @@ public class ParameterSearch {
             nextSettingWithEI[i] += Xmean[i];
             optimalSetting[i] += Xmean[i];
         }
-        System.out.println(String.format("Optimal mean is %4.3g (sigma = %.2g) with params %s",
+        System.out.println(String.format("Optimal mean is %.3g (sigma = %.2g) with params %s",
                 bestMean + Ymean, bestUCB, HopshackleUtilities.formatArray(optimalSetting, "|", "%.2g")));
         System.out.println(String.format("Acquisition expected mean is %.3g (sigma = %.2g) with params %s",
                 bestEstimate + Ymean, bestLatent, HopshackleUtilities.formatArray(nextSetting, "|", "%.2g")));
@@ -382,7 +383,7 @@ class ParameterDetail {
         continuous = true;
         if (from - (int) from < 0.0001 && (to - (int) to) < 0.0001)
             integer = true;
-        if (to / from > 10e2 || from / to > 10e2) {
+        if (to / from > 1e2 || from / to > 1e2) {
             if (to < 0.0) throw new AssertionError("Negative values on logScale not yet supported");
             logScale = true;
             fromValue = Math.log(from);
@@ -392,6 +393,7 @@ class ParameterDetail {
             fromValue = from;
             toValue = to;
         }
+        System.out.println(String.format("%s, range of %.2g to %.2g, logScale=%s", name, from, to, logScale));
     }
 
     public ParameterDetail(String parameter, List<String> values) {
