@@ -229,7 +229,7 @@ public class ParameterSearch {
             double[] sample = randomParameterValues();
             for (int j = 0; j < sample.length; j++)
                 xstar[i][j] = sample[j] - Xmean[j];
-    }
+        }
         // noise parameter is always the last one given kernel construction
         double baseNoise = Math.pow(Math.exp(mainGP.logtheta.get(mainGP.logtheta.getRowDimension() - 1, 0)), 2);
         System.out.println(String.format("Base noise is %.3g (sd: %.3g)", baseNoise, Math.sqrt(baseNoise)));
@@ -252,7 +252,8 @@ public class ParameterSearch {
             if (value > bestMean) {
                 bestMean = value;
                 bestUCB = Math.sqrt(predictions[1].get(i, 0) - baseNoise);
-                optimalSetting = xstar[i];
+                for (int j = 0; j < optimalSetting.length; j++)
+                    optimalSetting[j] = xstar[i][j] + Xmean[j];
             }
         }
         for (int i = 0; i < N; i++) {
@@ -277,19 +278,16 @@ public class ParameterSearch {
                 bestScore = score;
                 bestLatent = latentNoise;
                 bestEstimate = value;
-                nextSetting = xstar[i];
+                for (int j = 0; j < nextSetting.length; j++)
+                    nextSetting[j] = xstar[i][j] + Xmean[j];
             }
             if (expectedImprovement > bestExpectedImprovement) {
                 bestExpectedImprovement = expectedImprovement;
                 bestEIScore = value;
                 bestPredictedTime = predictedTime;
-                nextSettingWithEI = xstar[i];
+                for (int j = 0; j < nextSettingWithEI.length; j++)
+                    nextSettingWithEI[j] = xstar[i][j] + Xmean[j];
             }
-        }
-        for (int i = 0; i < nextSetting.length; i++) {
-            nextSetting[i] += Xmean[i];
-            nextSettingWithEI[i] += Xmean[i];
-            optimalSetting[i] += Xmean[i];
         }
         System.out.println(String.format("Optimal mean is %.3g (sigma = %.2g) with params %s",
                 bestMean + Ymean, bestUCB, HopshackleUtilities.formatArray(optimalSetting, "|", "%.2g")));
