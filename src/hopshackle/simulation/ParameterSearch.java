@@ -25,6 +25,7 @@ public class ParameterSearch {
     private Connection con;
     private boolean useExpectedImprovement = SimProperties.getProperty("ExpectedImprovementPerUnitTimeInParameterSearch", "true").equals("true");
     private double kappa = SimProperties.getPropertyAsDouble("ParameterSearchKappaForGP-UCB", "2.0");
+    private int startSeeds = SimProperties.getPropertyAsInteger("ParameterSearchInitialRandomSeeds", "20");
 
     public ParameterSearch(String name) {
         this.name = name;
@@ -54,7 +55,7 @@ public class ParameterSearch {
         // TODO: Currently just apply GP to continuous variables. Categorical ones to be added later.
         startTime = System.currentTimeMillis();
         count = getNumberOfPreviousRuns();
-        if (count <= 20)
+        if (count <= startSeeds)
             generateParametersRandomly();
         else
             generateParametersFromGP();
@@ -125,7 +126,6 @@ public class ParameterSearch {
             ResultSet rs = st.executeQuery(sqlQuery);
             rs.next();
             retValue = rs.getInt(1);
-            //        System.out.println(sqlQuery + " give " + retValue);
             st.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -200,17 +200,8 @@ public class ParameterSearch {
             }
         }
 
-        CovSum kernel = null;
-        if (count > 50) {
-            kernel = new CovSum(parameterConstraints.size(), new CovSEard(parameterConstraints.size()), new CovLINard(parameterConstraints.size()), new CovNoise());
-            System.out.println("Using full kernel");
-        } else if (count % 2 == 0) {
-            kernel = new CovSum(parameterConstraints.size(), new CovLINard(parameterConstraints.size()), new CovNoise());
-            System.out.println("Using linear kernel");
-        } else {
-            kernel = new CovSum(parameterConstraints.size(), new CovSEard(parameterConstraints.size()), new CovNoise());
-            System.out.println("Using squared exponential kernel");
-        }
+        CovSum kernel = new CovSum(parameterConstraints.size(), new CovSEard(parameterConstraints.size()), new CovLINard(parameterConstraints.size()), new CovNoise());
+
         int kernelParameters = kernel.numParameters();  // last is always noise level
         mainGP = new GaussianProcess(kernel);
         timeGP = new GaussianProcess(kernel);
@@ -224,6 +215,7 @@ public class ParameterSearch {
     private double[] getNextPointToTry() {
         // we generate a load of random points in the space, and then evaluate them all
         int N = (int) Math.pow(50, parameterConstraints.size());
+        N = Math.min(N, 250000);
         double[][] xstar = new double[N][parameterConstraints.size()];
         for (int i = 0; i < N; i++) {
             double[] sample = randomParameterValues();
