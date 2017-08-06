@@ -171,6 +171,7 @@ public class ParameterSearch {
         // protoX and protoY now populated with raw data
         Xmean = new double[protoX.get(0).size()];
         Ymean = 0.0;
+        Tmean = 0.0;
         double[][] X = new double[protoX.size()][protoX.get(0).size()];
         double[][] Y = new double[protoY.size()][1];
         double[][] T = new double[protoT.size()][1];
@@ -227,9 +228,8 @@ public class ParameterSearch {
         for (int i = 0; i < N; i++) {
             double[] sample = randomParameterValues();
             for (int j = 0; j < sample.length; j++)
-                sample[j] -= Xmean[j];
-            xstar[i] = sample;
-        }
+                xstar[i][j] = sample[j] - Xmean[j];
+    }
         // noise parameter is always the last one given kernel construction
         double baseNoise = Math.pow(Math.exp(mainGP.logtheta.get(mainGP.logtheta.getRowDimension() - 1, 0)), 2);
         System.out.println(String.format("Base noise is %.3g (sd: %.3g)", baseNoise, Math.sqrt(baseNoise)));
