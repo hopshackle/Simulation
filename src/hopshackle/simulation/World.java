@@ -256,6 +256,7 @@ public class World extends Location {
 		this.databaseUtility = databaseUtility;
 		actionRecorder = new RecordActions(this);
 	}
+	public DatabaseAccessUtility getDBU() {return databaseUtility;}
 	public void updateDatabase(String sql) {
 		if (databaseUtility != null) {
 			databaseUtility.addUpdate(sql);

@@ -26,6 +26,7 @@ public class ParameterSearch {
     private boolean useExpectedImprovement = SimProperties.getProperty("ExpectedImprovementPerUnitTimeInParameterSearch", "true").equals("true");
     private double kappa = SimProperties.getPropertyAsDouble("ParameterSearchKappaForGP-UCB", "2.0");
     private int startSeeds = SimProperties.getPropertyAsInteger("ParameterSearchInitialRandomSeeds", "20");
+    private String kernelToUse = SimProperties.getProperty("ParameterSearchKernel", "SE:LIN");
 
     public ParameterSearch(String name) {
         this.name = name;
@@ -128,7 +129,7 @@ public class ParameterSearch {
             retValue = rs.getInt(1);
             st.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Error accessing PS table. Assuming none yet created: " + e.toString());
             retValue = 0;
         }
 
@@ -200,7 +201,28 @@ public class ParameterSearch {
             }
         }
 
-        CovSum kernel = new CovSum(parameterConstraints.size(), new CovSEard(parameterConstraints.size()), new CovLINard(parameterConstraints.size()), new CovNoise());
+        String [] kernelTypes = kernelToUse.split(":");
+        CovarianceFunction[] allKernels = new CovarianceFunction[kernelTypes.length+1];
+        for (int i = 0; i < kernelTypes.length; i++) {
+            String type = kernelTypes[i];
+            CovarianceFunction nextKernel = null;
+            switch (type) {
+                case "SE":
+                    nextKernel = new CovSEard(parameterConstraints.size());
+                    break;
+                case "LIN":
+                    nextKernel = new CovLINard(parameterConstraints.size());
+                    break;
+                case "NN":
+                    nextKernel = new CovNNone();
+                    break;
+                default:
+                    throw new AssertionError("Unknown kernel type " + type + ". Valid values are SE, LIN, NN.");
+            }
+            allKernels[i] = nextKernel;
+        }
+        allKernels[kernelTypes.length] = new CovNoise(); // put noise term last
+        CovSum kernel = new CovSum(parameterConstraints.size(), allKernels);
 
         int kernelParameters = kernel.numParameters();  // last is always noise level
         mainGP = new GaussianProcess(kernel);
@@ -356,7 +378,7 @@ public class ParameterSearch {
     public boolean complete() {
         return false;
     }
-
+    public int getIteration() {return count;}
 }
 
 class ParameterDetail {

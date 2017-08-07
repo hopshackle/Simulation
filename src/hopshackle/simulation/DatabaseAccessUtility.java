@@ -3,6 +3,7 @@ package hopshackle.simulation;
 import java.sql.*;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
+import java.util.*;
 
 public class DatabaseAccessUtility implements Runnable{
 
@@ -12,6 +13,7 @@ public class DatabaseAccessUtility implements Runnable{
 	private long timeout = (long) SimProperties.getPropertyAsDouble("DatabaseUtilityTimeout", "10");
 	private volatile boolean done = false;
 	private long startTime = System.currentTimeMillis();
+	private List<DatabaseWriter> writers = new ArrayList<>();
 
 	public DatabaseAccessUtility() {
 		mainConnection = ConnectionFactory.getConnection();
@@ -33,6 +35,16 @@ public class DatabaseAccessUtility implements Runnable{
 			queue.offer(update);
 		else
 			logger.severe("DBU getting new data after shut-down: " + update);
+	}
+
+	public void registerDatabaseWriter(DatabaseWriter<?> writer) {
+		writers.add(writer);
+	}
+	public void flushWriters() {
+		for (DatabaseWriter writer : writers) {
+			writer.writeBuffer(this);
+//			System.out.println("Flushing buffer for " + writer.toString());
+		}
 	}
 
 	public boolean isAlive() {
