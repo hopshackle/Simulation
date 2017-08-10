@@ -107,13 +107,12 @@ public class MonteCarloTree<P extends Agent> {
 	 * This does check that the state is not already present.
 	 * It does not check to see if the insertion is valid (based on the number of updates left).
 	 * @param state
-	 * @param actions
 	 */
-	public void insertState(State<P> state, List<ActionEnum<P>> actions) {
+	public void insertState(State<P> state) {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString))
 			return;
-		tree.put(stateAsString, new MCStatistics<P>(actions, this, maxActors, state));
+		tree.put(stateAsString, new MCStatistics<P>(this, maxActors, state));
 		stateRefs.put(stateAsString, nextRef);
 		nextRef++;
 		updatesLeft--;
@@ -139,11 +138,11 @@ public class MonteCarloTree<P extends Agent> {
 					MCStatistics<P> successorStats = tree.get(successorStateString);
 					if (successorStats == null) continue;
 					if (UCTType.equals("Q")) {
-						double[] Q = successorStats.getQ();
+						double[] Q = successorStats.getQ(successorStats.getMostCommonActor());
 						for (int j =0; j < maxActors; j++) target[j] += stateVisits * Q[j];
 					}
 					if (UCTType.equals("V")) {
-						double[] V = successorStats.getV();
+						double[] V = successorStats.getV(successorStats.getMostCommonActor());
 						for (int j =0; j < maxActors; j++) target[j] += stateVisits * V[j];
 					}
 					for (int j =0; j < maxActors; j++) target[j] = target[j] / (double) successorStats.getVisits();
@@ -154,7 +153,7 @@ public class MonteCarloTree<P extends Agent> {
 	}
 
 	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double reward) {
-		this.updateState(state, action, nextState, toArray(reward), 0);
+		this.updateState(state, action, nextState, toArray(reward), 1);
 	}
 
 	public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double[] reward, int actingPlayer) {
@@ -167,10 +166,11 @@ public class MonteCarloTree<P extends Agent> {
 		if (tree.containsKey(stateAsString)) {
 			MCStatistics<P> stats = tree.get(stateAsString);
 			//			if (debug) log(String.format("Before update: MC:%.2f\tV:%.2f\tQ:%.2f", stats.getMean(action), stats.getV(), stats.getQ()));
-			stats.update(action, nextState, reward);
+			stats.update(action, nextState, reward, actingPlayer);
 			if (debug) {
 				String rewardString = "";
-				for (int i = 0; i < reward.length; i++) rewardString = String.format("%s|%.2f", rewardString, stats.getMean(action)[i]);
+				for (int i = 0; i < reward.length; i++)
+					rewardString = String.format("%s|%.2f", rewardString, stats.getMean(action, actingPlayer)[i]);
 				log("After update: " + rewardString);
 				log("");
 			}
@@ -178,7 +178,7 @@ public class MonteCarloTree<P extends Agent> {
 			if (debug) log("State not yet in tree");
 		}
 		if (MAST) {
-			updateActionValues(action, actingPlayer, reward[actingPlayer]);
+			updateActionValues(action, actingPlayer, reward[actingPlayer-1]);
 		}
 	}
 
@@ -186,7 +186,7 @@ public class MonteCarloTree<P extends Agent> {
 		String actionAsString = action.toString();
 		double[] actionReward = new double[1];
 		actionReward[0] = reward;
-		Map<String, MCData> av = actionValues.get(actingPlayer);
+		Map<String, MCData> av = actionValues.get(actingPlayer-1);
 		if (av.containsKey(actionAsString)) {
 			av.put(actionAsString, new MCData(av.get(actionAsString), actionReward));
 		} else {
@@ -202,7 +202,7 @@ public class MonteCarloTree<P extends Agent> {
 	 * @param action
 	 * @param reward
 	 */
-	public void updateRAVE(State<P> state, ActionEnum<P> action, double[] reward) {
+	public void updateRAVE(State<P> state, ActionEnum<P> action, double[] reward, int agentRef) {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString)) {
 			if (debug) {
@@ -211,11 +211,11 @@ public class MonteCarloTree<P extends Agent> {
 				log(String.format("Updating RAVE State %s for Action %s and reward %.2f", stateRef(stateAsString), action.toString(), reward));
 			}
 			MCStatistics<P> stats = tree.get(stateAsString);
-			stats.updateRAVE(action, reward);
+			stats.updateRAVE(action, reward, agentRef);
 			if (debug) {
 				String rewardString = "";
 				for (int i = 0; i < reward.length; i++) rewardString = String.format("%s|%.2f", rewardString, reward[i]);
-				log(String.format("After update: MC:%.2f\tV:%.2f\tQ:%.2f", stats.getMean(action), stats.getV(), stats.getQ()));
+				log(String.format("After update: MC:%.2f\tV:%.2f\tQ:%.2f", stats.getMean(action, agentRef), stats.getV(agentRef), stats.getQ(agentRef)));
 				log("");
 			}
 		} else {
@@ -223,6 +223,7 @@ public class MonteCarloTree<P extends Agent> {
 		}
 	}
 
+	// for test only
 	public ActionEnum<P> getNextAction(State<P> state, List<ActionEnum<P>> possibleActions) {
 		return getNextAction(state, possibleActions, state.getActorRef());
 	}
@@ -231,7 +232,7 @@ public class MonteCarloTree<P extends Agent> {
 		String stateAsString = state.getAsString();
 		if (tree.containsKey(stateAsString)) {
 			MCStatistics<P> stats = tree.get(stateAsString);
-			if (stats.hasUntriedAction(possibleActions)) {
+			if (stats.hasUntriedAction(possibleActions, decidingAgent)) {
 				return stats.getRandomUntriedAction(possibleActions, decidingAgent);
 			} else {
 				return stats.getUCTAction(possibleActions, decidingAgent);

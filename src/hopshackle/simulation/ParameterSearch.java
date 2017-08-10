@@ -68,7 +68,7 @@ public class ParameterSearch {
     }
 
     private void generateParametersRandomly() {
-        double[] baseValues = randomParameterValues();
+        double[] baseValues = randomParameterValues(false);
         for (int i = 0; i < baseValues.length; i++) {
             ParameterDetail pd = parameterConstraints.get(i);
             String stringRepresentation = "";
@@ -85,13 +85,13 @@ public class ParameterSearch {
     categorical variables are an index from 0 to N-1
     continuous ones are on a logScale where appropriate
      */
-    private double[] randomParameterValues() {
+    private double[] randomParameterValues(boolean onLogScale) {
         double[] retValue = new double[parameterConstraints.size()];
         for (int i = 0; i < parameterConstraints.size(); i++) {
             ParameterDetail pd = parameterConstraints.get(i);
             if (pd.continuous) {
                 retValue[i] = Math.random() * (pd.toValue - pd.fromValue) + pd.fromValue;
-                if (pd.logScale)
+                if (pd.logScale && onLogScale)
                     retValue[i] = Math.exp(retValue[i]);
             } else {
                 retValue[i] = Dice.roll(1, pd.categoricalValues.size()) - 1;
@@ -154,6 +154,7 @@ public class ParameterSearch {
                     if (!pd.continuous)
                         throw new AssertionError("GP not yet working for categorical parameters");
                     double value = pd.integer ? rs.getInt(pd.name) : rs.getDouble(pd.name);
+                    if (pd.logScale) value = Math.log(value);
                     rowData.add(value);
                 }
                 protoX.add(rowData);
@@ -240,7 +241,7 @@ public class ParameterSearch {
         N = Math.min(N, 250000);
         double[][] xstar = new double[N][parameterConstraints.size()];
         for (int i = 0; i < N; i++) {
-            double[] sample = randomParameterValues();
+            double[] sample = randomParameterValues(true);
             for (int j = 0; j < sample.length; j++)
                 xstar[i][j] = sample[j] - Xmean[j];
         }
@@ -376,7 +377,7 @@ public class ParameterSearch {
     }
 
     public boolean complete() {
-        return false;
+        return parameterConstraints.size() == 0;
     }
     public int getIteration() {return count;}
 }

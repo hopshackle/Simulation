@@ -98,11 +98,9 @@ public class OpenLoopSingleTreeTest {
     @Test
     public void monteCarloTreeUpdatesOncePerMoveWithSingleTree() {
         // This test emulates a few rollouts of a game within MCTSMasterDecider
-        // If we do 6 rollouts, then we expect to get 2 states added to tree for each player
-        // however we no longer record the player who took the action to get to a state
-        // instead we provide the next actor as an argument when deciding on the next action.
+        // If we do 6 rollouts
         State<TestAgent> initial = factory.getCurrentState(players[0]);
-        tree.insertState(initial, possibleActions);
+        tree.insertState(initial);
         Set<String> addedStates = new HashSet<>();
         addedStates.add(initial.toString());
         String newState = "";
@@ -155,9 +153,20 @@ public class OpenLoopSingleTreeTest {
                 assertFalse(tree.getStatisticsFor(initial.toString()).getSuccessorStates().contains(newState.toString()));
             }
 
-            double[] newScoreTest = newStats.getMean(TestActionEnum.TEST);
-            double[] newScoreLeft = newStats.getMean(TestActionEnum.LEFT);
-            double[] newScoreRight = newStats.getMean(TestActionEnum.RIGHT);
+            double[] newScoreTest = newStats.getMean(TestActionEnum.TEST, 1);
+            double[] newScoreLeft = newStats.getMean(TestActionEnum.LEFT,1 );
+            double[] newScoreRight = newStats.getMean(TestActionEnum.RIGHT, 1);
+            for (int p = 2; p <= 3; p++) {
+                double[] newTest = newStats.getMean(TestActionEnum.TEST, p);
+                if (newTest[0] != 0.00 || newTest[1] != 0.00 || newTest[2] != 0.00)
+                    newScoreTest = newTest;
+                double[] newLeft = newStats.getMean(TestActionEnum.LEFT, p);
+                if (newLeft[0] != 0.00 || newLeft[1] != 0.00 || newLeft[2] != 0.00)
+                    newScoreLeft = newLeft;
+                double[] newRight = newStats.getMean(TestActionEnum.RIGHT, p);
+                if (newRight[0] != 0.00 || newRight[1] != 0.00 || newRight[2] != 0.00)
+                    newScoreRight = newRight;
+            }
             // one, and only one of these should be non-zero
             double[] nonZeroScore;
             if (newScoreTest[2] != 0.0) {
@@ -185,73 +194,15 @@ public class OpenLoopSingleTreeTest {
 
         MCStatistics<TestAgent> rootStats = tree.getStatisticsFor(initial.toString());
         System.out.println(rootStats);
-        // from the root state player 1 will want to go left ... but the other two players also prefer this
-        // as they will use up less time before the game ends, and go less wrong
-        assertTrue(rootStats.getBestAction(possibleActions, 0) == TestActionEnum.LEFT);
+        // from the root state player 1 will want to go left ... but the other two players have never
+        // acted from this state, so will default to expansion policy (which uses MAST)
         assertTrue(rootStats.getBestAction(possibleActions, 1) == TestActionEnum.LEFT);
         assertTrue(rootStats.getBestAction(possibleActions, 2) == TestActionEnum.LEFT);
+        assertTrue(rootStats.getBestAction(possibleActions, 3) == TestActionEnum.TEST);
+
+        assertNotEquals(rootStats.getV(1)[0], 0.0, 0.001);
+        assertEquals(rootStats.getV(2).length, 0.0, 0.001);
+        assertEquals(rootStats.getV(3).length, 0.0, 0.001);
     }
 
-    @Test
-    public void correctDefaultActionReturnedBasedOnPerspective() {
-        // In this test, we leave the default rollout deciders in place for all players.
-        // This means that even after 6 rollouts, players 2 and 3 will prefer player 1 to go RIGHT
-        localProp.setProperty("MonteCarloUCTC", "50.0");
-        State<TestAgent> initial = factory.getCurrentState(players[0]);
-        tree.insertState(initial, possibleActions);
-        MCTSChildDecider<TestAgent> childDecider = masterDecider.createChildDecider(tree, 1, false);
-        teacher.registerDecider(childDecider);
-
-        for (int loop = 0; loop < 1000; loop++) {
-            tree.setUpdatesLeft(1);
-            SimpleMazeGame clonedGame = (SimpleMazeGame) game.clone(players[0]);
-            factory.cloneGame(game, clonedGame);
-            List<TestAgent> clonedPlayers = clonedGame.getAllPlayers();
-            clonedPlayers.get(0).setDecider(childDecider);
-            childDecider.setRolloutDecider(new SimpleMazeDecider());
-            for (int i = 1; i < 3; i++) {
-                MCTSChildDecider d = masterDecider.createChildDecider(tree, i + 1, true);
-                d.setRolloutDecider(new SimpleMazeDecider());
-                // otherwise they share the same state, which shifts every third move...and with three players
-                // we get horrid cyclic effects!
-                clonedPlayers.get(i).setDecider(d);
-            }
-            for (TestAgent player : clonedPlayers)
-                erc.registerAgentWithReference(player, clonedPlayers.get(0));
-
-      //      clonedGame.debug = true;
-            clonedGame.playGame();
-            teacher.teach();
-
-      //      if (loop % 50 == 0) System.out.println(tree.getStatisticsFor(initial));
-        }
-
-        MCStatistics<TestAgent> rootStats = tree.getStatisticsFor(initial.toString());
-        System.out.println(rootStats);
-
-        assertTrue(rootStats.getBestAction(possibleActions, 0) == TestActionEnum.LEFT);
-        assertFalse(rootStats.getBestAction(possibleActions, 1) == TestActionEnum.LEFT);
-        assertFalse(rootStats.getBestAction(possibleActions, 2) == TestActionEnum.LEFT);
-
-        String leftState = (String) rootStats.getSuccessorStatesFrom(TestActionEnum.LEFT).keySet().toArray()[0];
-        MCStatistics<TestAgent> leftStats = tree.getStatisticsFor(leftState);
-        System.out.println(leftStats);
-//        assertFalse(leftStats.getBestAction(possibleActions, 0) == TestActionEnum.LEFT);
-        assertTrue(leftStats.getBestAction(possibleActions, 1) == TestActionEnum.LEFT);
-        assertFalse(leftStats.getBestAction(possibleActions, 2) == TestActionEnum.LEFT);
-
-        String testState = (String) rootStats.getSuccessorStatesFrom(TestActionEnum.TEST).keySet().toArray()[0];
-        MCStatistics<TestAgent> testStats = tree.getStatisticsFor(testState);
-        System.out.println(testStats);
- //       assertFalse(testStats.getBestAction(possibleActions, 0) == TestActionEnum.LEFT);
-        assertTrue(testStats.getBestAction(possibleActions, 1) == TestActionEnum.LEFT);
-        assertFalse(testStats.getBestAction(possibleActions, 2) == TestActionEnum.LEFT);
-
-        String rightState = (String) rootStats.getSuccessorStatesFrom(TestActionEnum.RIGHT).keySet().toArray()[0];
-        MCStatistics<TestAgent> rightStats = tree.getStatisticsFor(rightState);
-        System.out.println(rightStats);
- //       assertFalse(rightStats.getBestAction(possibleActions, 0) == TestActionEnum.LEFT);
-        assertTrue(rightStats.getBestAction(possibleActions, 1) == TestActionEnum.LEFT);
-        assertFalse(rightStats.getBestAction(possibleActions, 2) == TestActionEnum.LEFT);
-    }
 }

@@ -532,4 +532,8 @@ public abstract class Agent extends Observable {
 	public <A extends Agent> Game<A, ActionEnum<A>> getGame() {
 		return null;
 	}
+	public int getActorRef() {
+		if (getGame() == null) return (int) getUniqueID();
+		return getGame().getPlayerNumber(this);
+	}
 }

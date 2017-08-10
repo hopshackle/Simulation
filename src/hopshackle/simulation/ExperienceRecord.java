@@ -54,7 +54,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
         monteCarloReward = null;
         actingAgent = a;
         if (a.getGame() != null)
-            actingAgentNumber = a.getGame().getPlayerNumber(a) - 1;
+            actingAgentNumber = a.getActorRef();
         timeOfDecision = a.getWorld().getCurrentTime();
         timeOfResolution = -1;
     }

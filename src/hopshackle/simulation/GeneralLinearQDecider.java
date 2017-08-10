@@ -107,12 +107,12 @@ public class GeneralLinearQDecider<A extends Agent> extends BaseStateDecider<A> 
 		double predictedValue = valueOption(exp.getActionTaken().getType(), exp.getStartState(useLookahead));
 		double discountPeriod = exp.getDiscountPeriod();
 		int actingAgentNumber = exp.getAgentNumber();
-		double reward = exp.getMonteCarloReward()[actingAgentNumber];
+		double reward = exp.getMonteCarloReward()[actingAgentNumber-1];
 		double delta = Math.pow(gamma, discountPeriod) * reward - predictedValue;
 		double bestNextAction = -1.0;
 		if (!monteCarlo) {
 			bestNextAction = valueOfBestAction(exp);
-			reward = exp.getReward()[actingAgentNumber];
+			reward = exp.getReward()[actingAgentNumber-1];
 			delta = reward + Math.pow(gamma, discountPeriod) * bestNextAction - predictedValue;
 		}
 		if (localDebug) {

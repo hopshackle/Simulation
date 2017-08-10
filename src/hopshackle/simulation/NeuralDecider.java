@@ -271,7 +271,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         double offPolicyValue = valueOfBestAction(baseER);
         double onPolicyValue = valueOption(baseER.getActionTakenFromEndState(), baseER.getEndState());
         String message = String.format("%s Learning:\t%-20sScore: %.2f -> %.2f, Reward: %.2f, Target: %.2f, EndGame: %s, Actual/Best Next: %s/%s, QV: %.2f/%.2f",
-                this.toString(), baseER.getActionTaken(), baseER.getStartScore()[baseER.getAgentNumber()], baseER.getEndScore()[baseER.getAgentNumber()], baseER.getReward()[baseER.getAgentNumber()],
+                this.toString(), baseER.getActionTaken(), baseER.getStartScore()[baseER.getAgentNumber()-1], baseER.getEndScore()[baseER.getAgentNumber()-1], baseER.getReward()[baseER.getAgentNumber()-1],
                 getTarget(baseER)[actionIndex], baseER.isInFinalState(), actualAction, bestAction, onPolicyValue, offPolicyValue);
         log(message);
         baseER.getAgent().log(message);
@@ -310,7 +310,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         // which in turn is given by the best action value
         double[] retValue = new double[brain.getOutputCount()];
         int actingAgentNumber = exp.getAgentNumber();
-        double output = exp.getMonteCarloReward()[actingAgentNumber] / scaleFactor;
+        double output = exp.getMonteCarloReward()[actingAgentNumber - 1] / scaleFactor;
         if (!monteCarlo) {
             double bestQValue = 0.0;
             if (!exp.isInFinalState()) {
@@ -327,7 +327,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
                 }
             }
             double discountPeriod = exp.getDiscountPeriod();
-            output = exp.getReward()[actingAgentNumber] / scaleFactor + Math.pow(gamma, discountPeriod) * bestQValue;
+            output = exp.getReward()[actingAgentNumber - 1] / scaleFactor + Math.pow(gamma, discountPeriod) * bestQValue;
         }
         int actionIndex = controlSignal ? 0 : getActionIndex(exp.actionTaken.getType());
         if (output > 1.0) output = 1.0;

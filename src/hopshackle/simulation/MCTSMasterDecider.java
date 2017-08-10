@@ -120,7 +120,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         teacher.registerDecider(childDecider);
         teacher.registerToERStream(erc);
 
-        tree.insertState(currentState, chooseableOptions);
+        tree.insertState(currentState);
         int N = Math.min(maxRollouts, maxRolloutsPerOption * chooseableOptions.size());
 
         if (openLoop) ((OpenLoopStateFactory<A>) stateFactory).prune();
@@ -190,7 +190,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
         agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
 
-        ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions, currentPlayer-1);
+        ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions, currentPlayer);
         if (best == null) {
             throw new AssertionError("No action chosen");
         }

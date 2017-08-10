@@ -8,7 +8,7 @@ import java.util.*;
 public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, AgentListener {
 
     private Map<A, OpenLoopState<A>> agentToState = new HashMap<>();
-    private Map<OpenLoopState<A>, Map<ActionEnum<A>, OpenLoopState<A>>> tree = new HashMap<>();
+    private Map<OpenLoopState<A>, Map<ActionWithRef, OpenLoopState<A>>> tree = new HashMap<>();
     private Map<A, Integer> updatesLeft = new HashMap<>();
     private int updatesPerAgent = SimProperties.getPropertyAsInteger("OpenLoopUpdateLimit", "0");
     private boolean gameLevel = false;
@@ -57,11 +57,15 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
     public void processEvent(AgentEvent event) {
         if (event.getEvent() == AgentEvent.Type.ACTION_EXECUTED) {
             if (event.getAction().hasNoAssociatedDecision()) return;
-            A perspectiveAgent = (A) event.getAgent();
-            if (perspectiveAgent.isDead()) {
+            A actingAgent = (A) event.getAgent();
+            if (actingAgent.isDead()) {
                 throw new AssertionError("Should be alive");
             }
-            if (gameLevel) perspectiveAgent = (A) perspectiveAgent.getGame().getPlayer(1);
+            // if we are in singleTree mode, then we use a single perspective agent for all
+            // states - we track the current state at game level
+            // actingAgent is only used to indicate the agent that takes an action as part
+            // of the key to determine the next state
+            A perspectiveAgent = gameLevel ? (A) actingAgent.getGame().getPlayer(1) : actingAgent;
             if (updatesPerAgent > 0 && updatesLeft.getOrDefault(perspectiveAgent, updatesPerAgent) <= 0) {
                 return;
             }
@@ -69,14 +73,15 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
             OpenLoopState<A> currentState = (OpenLoopState<A>) getCurrentState(perspectiveAgent);
             if (currentState == null)
                 throw new AssertionError("Current state should never be null");
-            Map<ActionEnum<A>, OpenLoopState<A>> successors = tree.getOrDefault(currentState, new HashMap<>());
+            Map<ActionWithRef, OpenLoopState<A>> successors = tree.getOrDefault(currentState, new HashMap<>());
             if (successors.isEmpty())
                 tree.put(currentState, successors);
-            OpenLoopState<A> successorState = successors.getOrDefault(actionTaken, null);
+            int actingAgentRef = actingAgent.getActorRef();
+            OpenLoopState<A> successorState = successors.getOrDefault(new ActionWithRef(actionTaken, actingAgentRef), null);
             if (successorState == null) {
                 // need to create a new state
                 successorState = new OpenLoopState<A>(perspectiveAgent, this);
-                addLink(currentState, actionTaken, successorState);
+                addLink(currentState, actionTaken, actingAgentRef, successorState);
                 if (updatesPerAgent > 0) {
                     updatesLeft.put(perspectiveAgent, updatesLeft.getOrDefault(perspectiveAgent, updatesPerAgent) - 1);
                 }
@@ -90,16 +95,18 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
 
     }
 
-    public OpenLoopState<A> getNextState(OpenLoopState<A> startState, ActionEnum<A> actionTaken) {
-        Map<ActionEnum<A>, OpenLoopState<A>> fromMap = tree.getOrDefault(startState, new HashMap<>());
-        if (fromMap.containsKey(actionTaken))
-            return fromMap.get(actionTaken);
+    public OpenLoopState<A> getNextState(OpenLoopState<A> startState, ActionEnum<A> actionTaken, A agent) {
+        int agentRef = agent.getActorRef();
+        Map<ActionWithRef, OpenLoopState<A>> fromMap = tree.getOrDefault(startState, new HashMap<>());
+        ActionWithRef<A> key = new ActionWithRef<>(actionTaken, agentRef);
+        if (fromMap.containsKey(key))
+            return fromMap.get(key);
         return startState;
     }
 
-    private void addLink(OpenLoopState<A> from, ActionEnum<A> action, OpenLoopState<A> to) {
-        Map<ActionEnum<A>, OpenLoopState<A>> fromMap = tree.get(from);
-        fromMap.put(action, to);
+    private void addLink(OpenLoopState<A> from, ActionEnum<A> action, int agentRef, OpenLoopState<A> to) {
+        Map<ActionWithRef, OpenLoopState<A>> fromMap = tree.get(from);
+        fromMap.put(new ActionWithRef(action, agentRef), to);
         if (!tree.containsKey(to))
             tree.put(to, new HashMap<>());
     }
@@ -120,12 +127,12 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
     public void prune() {
         // the assumption here is that the only agents we need to track are those in agentToState
         // We start a new tree, and add states to it by descending the tree for each active agent
-        Map<OpenLoopState<A>, Map<ActionEnum<A>, OpenLoopState<A>>> newTree = new HashMap<>();
+        Map<OpenLoopState<A>, Map<ActionWithRef, OpenLoopState<A>>> newTree = new HashMap<>();
         Deque<OpenLoopState<A>> currentStates = new LinkedList<>();
         currentStates.addAll(agentToState.values());
         while (!currentStates.isEmpty()) {
             OpenLoopState<A> from = currentStates.poll();
-            Map<ActionEnum<A>, OpenLoopState<A>> currentMap = tree.getOrDefault(from, new HashMap<>());
+            Map<ActionWithRef, OpenLoopState<A>> currentMap = tree.getOrDefault(from, new HashMap<>());
             newTree.put(from, currentMap);
             currentStates.addAll(currentMap.values());
         }
@@ -158,5 +165,32 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
         if (updatesPerAgent > 0)
             updatesLeft.put(agent, updatesPerAgent);
         agentToState.put(agent, state);
+    }
+}
+
+class ActionWithRef<A extends Agent> {
+    public ActionEnum<A> actionTaken;
+    public int agentRef;
+
+    public ActionWithRef(ActionEnum<A> action, int ref) {
+        actionTaken = action;
+        agentRef = ref;
+    }
+
+    public boolean equals(Object o) {
+        if (o instanceof ActionWithRef) {
+            ActionWithRef comparator = (ActionWithRef) o;
+            if (comparator.actionTaken.equals(actionTaken) && comparator.agentRef == agentRef)
+                return true;
+        }
+        return false;
+    }
+
+    public int hashCode() {
+        return 2 + agentRef * 43 + actionTaken.hashCode();
+    }
+
+    public String toString() {
+        return actionTaken.toString() + "|" + agentRef;
     }
 }

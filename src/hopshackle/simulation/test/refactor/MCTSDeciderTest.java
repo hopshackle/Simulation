@@ -75,9 +75,9 @@ public class MCTSDeciderTest {
 		assertEquals(tree.numberOfStates(), 7);
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 7.499, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], 1.737, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], 0.0, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT, 1)[0], 7.499, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST, 1)[0], 1.737, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT, 1)[0], 0.0, 0.01);
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 96);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 2);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
@@ -89,9 +89,9 @@ public class MCTSDeciderTest {
 		startStats = tree.getStatisticsFor(startState);
 		assertEquals(tree.numberOfStates(), 3);
 		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 8.00, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], 4.29, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], 1.47, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT, 1)[0], 8.00, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST, 1)[0], 4.29, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT, 1)[0], 1.47, 0.01);
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 97);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 1);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
@@ -121,9 +121,9 @@ public class MCTSDeciderTest {
 		assertEquals(tree.numberOfStates(), 4);
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 5.450, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -6.3175, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -6.859, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT, 1)[0], 5.450, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST, 1)[0], -6.3175, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT, 1)[0], -6.859, 0.01);
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 95);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 3);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
@@ -164,9 +164,9 @@ public class MCTSDeciderTest {
 		assertEquals(tree.numberOfStates(), 7);	// more states visited as we use state of other players
 		startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT)[0], 4.812, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST)[0], -6.964, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT)[0], -9.078, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT, 1)[0], 4.812, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.TEST, 1)[0], -6.964, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.RIGHT, 1)[0], -9.078, 0.01);
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 97);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 1);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
@@ -194,9 +194,9 @@ public class MCTSDeciderTest {
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
 		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT, 0.0, 0), 6.77, 0.01);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT, 0.0, 0), 0.91, 0.01);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST, 0.0, 0), 4.29, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT, 0.0, 1), 6.77, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT, 0.0, 1), 0.91, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST, 0.0, 1), 4.29, 0.01);
 	}
 }
 

@@ -233,26 +233,4 @@ public class OpenLoopStateTest {
         assertFalse(olsf.containsState(s2));
         assertTrue(olsf.containsState(e1));
     }
-
-    @Test
-    public void applyOnStateGivesNextStateIfItExists() {
-        State<TestAgent> start1 = olsf.getCurrentState(agent1);
-        Action<?> action1 = decider.decide(agent1, leftRightOnly);
-        action1.start();
-        action1.run();
-        State<TestAgent> end1 = olsf.getCurrentState(agent1);
-        if (action1.getType() == TestActionEnum.LEFT) {
-            assertTrue(start1.apply(TestActionEnum.LEFT).equals(end1));
-            OpenLoopState<TestAgent> projection = (OpenLoopState<TestAgent>) start1.apply(TestActionEnum.RIGHT);
-            assertFalse(projection.equals(end1));
-            assertTrue(olsf.containsState(projection));
-        } else {
-            assertTrue(action1.getType() == TestActionEnum.RIGHT);
-            assertTrue(start1.apply(TestActionEnum.RIGHT).equals(end1));
-            OpenLoopState<TestAgent> projection = (OpenLoopState<TestAgent>) start1.apply(TestActionEnum.LEFT);
-            assertFalse(projection.equals(end1));
-            assertTrue(olsf.containsState(projection));
-        }
-    }
-
 }

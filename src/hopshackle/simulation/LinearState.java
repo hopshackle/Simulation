@@ -11,7 +11,7 @@ public class LinearState<A extends Agent> implements State<A> {
 
 	public LinearState(A agent, List<GeneticVariable<A>> var) {
 		if (agent.getGame() != null) {
-			actingAgentNumber = agent.getGame().getPlayerNumber(agent)-1;
+			actingAgentNumber = agent.getActorRef();
 			List<Agent> players = agent.getGame().getAllPlayers();
 			score = new double[players.size()];
 			for (int i = 0; i < players.size(); i++){

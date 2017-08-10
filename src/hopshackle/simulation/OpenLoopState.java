@@ -90,9 +90,6 @@ public class OpenLoopState<A extends Agent> implements State<A> {
     }
 
     public State<A> apply(ActionEnum<A> proposedAction) {
-        if (factory != null) {
-            return factory.getNextState(this, proposedAction);
-        }
         return this;
     }
 

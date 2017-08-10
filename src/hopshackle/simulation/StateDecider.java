@@ -105,9 +105,9 @@ public abstract class StateDecider<A extends Agent> extends BaseStateDecider<A> 
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 		ActionEnum<A> actionTaken = exp.getActionTaken().getType();
 		int actingAgentNumber = exp.getAgentNumber();
-		double observedResult = exp.getReward()[actingAgentNumber];
+		double observedResult = exp.getReward()[actingAgentNumber-1];
 		if (monteCarlo)
-			observedResult = exp.getMonteCarloReward()[actingAgentNumber];
+			observedResult = exp.getMonteCarloReward()[actingAgentNumber-1];
 		HopshackleState startState = getState(exp.getStartState(useLookahead));
 		HopshackleState endState = getState(exp.getEndState());
 		if (exp.isInFinalState())

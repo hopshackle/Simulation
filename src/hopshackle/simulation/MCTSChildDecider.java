@@ -28,7 +28,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 		}
 
 		if (tree.containsState(state)) {
-			int decidingAgentRef = decidingAgent.getGame().getPlayerNumber(decidingAgent) - 1;
+			int decidingAgentRef = decidingAgent.getActorRef();
 			return tree.getNextAction(state, chooseableOptions, decidingAgentRef);
 		} else {
 			return rolloutDecider.makeDecision(decidingAgent, chooseableOptions);
@@ -56,7 +56,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 			if (!tree.containsState(exp.getEndState()) && tree.updatesLeft() > 0 && !exp.isFinalState) {
 				// this will insert the state, so that the update will use the base value...the s', a, s'' update
 				// will then update this state using the reward
-				tree.insertState(exp.getEndState(), exp.getPossibleActionsFromEndState());
+				tree.insertState(exp.getEndState());
 			}
 			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().getType(), exp.getEndState(), exp.getMonteCarloReward(), exp.getAgentNumber());
 		} else if (tree.updatesLeft() > 0) {
@@ -78,7 +78,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 		double reward[] = exp.getMonteCarloReward();
 		ExperienceRecord<P> previousER = exp.getPreviousRecord();
 		while (previousER != null) {
-			tree.updateRAVE(previousER.getStartState(useLookahead), action, reward);
+			tree.updateRAVE(previousER.getStartState(useLookahead), action, reward, exp.getAgentNumber());
 			previousER = previousER.getPreviousRecord();
 		}
 	}

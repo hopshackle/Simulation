@@ -24,6 +24,7 @@ public class MCTreeTest {
 		localProp.setProperty("MonteCarloHeuristicWeighting", "0.0");
 		localProp.setProperty("MonteCarloHeuristicOnSelection", "true");
 		localProp.setProperty("MonteCarloHeuristicOnExpansion", "false");
+		localProp.setProperty("MonteCarloMAST", "false");
 		leftRightOnly.remove(TestActionEnum.TEST);
 		test = new State<TestAgent>() {
 			@Override
@@ -37,7 +38,7 @@ public class MCTreeTest {
 			}
 			@Override public State<TestAgent> clone() { return this;}
 			@Override public State<TestAgent> apply(ActionEnum<TestAgent> action) { return this;}
-			@Override public int getActorRef() {return 0;}
+			@Override public int getActorRef() {return 1;}
 			@Override public double[] getScore() {return new double[1];}
 		};
 		other = new State<TestAgent>() {
@@ -92,7 +93,7 @@ public class MCTreeTest {
 	public void addANode() {
 		tree = new MonteCarloTree<TestAgent>(localProp, 1);
 		tree.setUpdatesLeft(1);
-		tree.insertState(test, leftRightOnly);
+		tree.insertState(test);
 		assertTrue(tree.containsState(test));
 		assertFalse(tree.containsState(other));
 		assertEquals(tree.updatesLeft(), 0);
@@ -103,7 +104,7 @@ public class MCTreeTest {
 		// This uses the same numeric test case as in MCStatisticsTest (but one level higher in 
 		// the object hierarchy)
 		tree = new MonteCarloTree<TestAgent>(localProp);
-		tree.insertState(test, leftRightOnly);
+		tree.insertState(test);
 		TestActionEnum next = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		boolean firstLeft = false;
 		if (next == TestActionEnum.LEFT) 
@@ -141,7 +142,7 @@ public class MCTreeTest {
 	@Test
 	public void getNextActionWithAPreviouslyUnseenActionShouldReturnIt() {
 		tree = new MonteCarloTree<TestAgent>(localProp);
-		tree.insertState(test, leftRightOnly);
+		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
@@ -154,7 +155,7 @@ public class MCTreeTest {
 	@Test
 	public void getNextActionWithRestrictedListShouldObeyRestrictions() {
 		tree = new MonteCarloTree<TestAgent>(localProp);
-		tree.insertState(test, allActions);
+		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
@@ -168,12 +169,12 @@ public class MCTreeTest {
 	@Test
 	public void getBestActionWithAPreviouslyUnseenActionShouldNotReturnIt() {
 		tree = new MonteCarloTree<TestAgent>(localProp);
-		tree.insertState(test, leftRightOnly);
+		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
-		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly, 0);
-		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions, 0);
+		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly, 1);
+		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions, 1);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
 		assertTrue(allA == TestActionEnum.RIGHT);
 	}
@@ -181,13 +182,13 @@ public class MCTreeTest {
 	@Test
 	public void getBestActionWithRestrictedListShouldObeyRestrictions() {
 		tree = new MonteCarloTree<TestAgent>(localProp);
-		tree.insertState(test, allActions);
+		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
 		tree.updateState(test, TestActionEnum.TEST, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
-		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly, 0);
-		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions, 0);
+		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly, 1);
+		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions, 1);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
 		assertTrue(allA == TestActionEnum.TEST);
 	}
@@ -196,7 +197,7 @@ public class MCTreeTest {
 	@Test
 	public void updateStateWithAPreviouslyUnseenActionShouldError() {
 		tree = new MonteCarloTree<TestAgent>(localProp);
-		tree.insertState(test, leftRightOnly);
+		tree.insertState(test);
 		try {
 			tree.updateState(test, TestActionEnum.TEST, test, 1.0);
 			fail("TEST action is unknown - this should throw error");
@@ -261,7 +262,7 @@ public class MCTreeTest {
 	@Test
 	public void successorStatesInTree() {
 		tree = new MonteCarloTree<TestAgent>(localProp);
-		tree.insertState(test, allActions);
+		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, other, 0.0);
 		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 0);
 
@@ -271,8 +272,8 @@ public class MCTreeTest {
 		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 0);
 		assertEquals(tree.numberOfStates(), 1);
 		
-		tree.insertState(other, allActions);
-		tree.insertState(yetAnother, allActions);
+		tree.insertState(other);
+		tree.insertState(yetAnother);
 		tree.updateState(test, TestActionEnum.RIGHT, yetAnother, 0.0);
 		tree.updateState(test, TestActionEnum.RIGHT, other, 0.0);
 		tree.updateState(other, TestActionEnum.RIGHT, yetAnother, 0.0);
@@ -299,7 +300,7 @@ public class MCTreeTest {
 		localProp.setProperty("MonteCarloRAVEExploreConstant", "1.0");
 		tree = new MonteCarloTree<TestAgent>(localProp);
 	//	tree.setOfflineHeuristic(new RAVEHeuristic<>(tree, 1.0));
-		tree.insertState(test, allActions);
+		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, other, 2.0);
 		MCStatistics<TestAgent> stats = tree.getStatisticsFor(test);
 		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0, test.getActorRef()), 0.0, 0.001);
@@ -312,9 +313,9 @@ public class MCTreeTest {
 		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 0.0, test.getActorRef()), 0.0, 0.001);
 		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0, test.getActorRef()), 0.0, 0.001);
 		
-		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {0.5});
-		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {2.5});
-		tree.updateRAVE(test, TestActionEnum.TEST, new double[] {0.0});
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {0.5}, 1);
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {2.5}, 1);
+		tree.updateRAVE(test, TestActionEnum.TEST, new double[] {0.0}, 1);
 		stats = tree.getStatisticsFor(test);
 		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 0.0, test.getActorRef()), 0.0, 0.001);
 		assertEquals(stats.getRAVEValue(TestActionEnum.TEST, 0.0, test.getActorRef()), 0.0, 0.001);
@@ -324,9 +325,9 @@ public class MCTreeTest {
 		assertEquals(stats.getRAVEValue(TestActionEnum.LEFT, 1.0, test.getActorRef()), 0.0, 0.001);
 		
 		assertTrue(stats.getUCTAction(allActions, test.getActorRef()).equals(TestActionEnum.LEFT));
-		tree.updateRAVE(test, TestActionEnum.TEST, new double[] {-1.0});
-		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {8.0});
-		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {9.0});
+		tree.updateRAVE(test, TestActionEnum.TEST, new double[] {-1.0}, 1);
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {8.0}, 1);
+		tree.updateRAVE(test, TestActionEnum.RIGHT, new double[] {9.0}, 1);
 		assertEquals(stats.getRAVEValue(TestActionEnum.RIGHT, 1.0, test.getActorRef()), 20.0/4.0 + Math.sqrt(Math.log(6.0) / 4.0), 0.001);
 		assertTrue(stats.getUCTAction(allActions, test.getActorRef()).equals(TestActionEnum.RIGHT));
 	}

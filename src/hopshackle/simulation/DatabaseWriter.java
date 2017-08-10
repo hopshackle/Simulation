@@ -35,7 +35,7 @@ public class DatabaseWriter<T extends Persistent> {
 
     private void updateWorldListeners(World world) {
         DatabaseAccessUtility dbu = world.getDBU();
-        if (!dbus.contains(dbu)) {
+        if (dbu != null && !dbus.contains(dbu)) {
             dbus.add(dbu);
             dbu.registerDatabaseWriter(this);
         }
@@ -53,7 +53,7 @@ public class DatabaseWriter<T extends Persistent> {
 
     public void writeBuffer(DatabaseAccessUtility dbu) {
         // write if not null
-        if (numberInBuffer > 0) {
+        if (dbu != null && numberInBuffer > 0) {
             dbu.addUpdate(buffer.toString());
         }
 

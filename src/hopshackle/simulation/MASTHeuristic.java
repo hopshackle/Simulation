@@ -28,7 +28,7 @@ public class MASTHeuristic<A extends Agent> extends BaseStateDecider<A> {
     public List<Double> valueOptions(List<ActionEnum<A>> options, State<A> state, int decidingAgent) {
         List<Double> retValue = new ArrayList<Double>(options.size());
         for (ActionEnum<A> option : options)
-            retValue.add(tree.getActionValue(option.toString(), decidingAgent +1));
+            retValue.add(tree.getActionValue(option.toString(), decidingAgent));
         return retValue;
     }
 

@@ -67,6 +67,7 @@ public class MCTreeProcessor<A extends Agent> {
 
     protected double[] getOutputValuesAsArray(MCStatistics<A> stats) {
         List<ActionEnum<A>> actionsInStats = stats.getPossibleActions();
+        if (actionsInStats.size() == 0) return new double[0];
         int actingAgent = stats.getActorRef();
         ActionEnum<A> bestAction = stats.getBestAction(actionsInStats, actingAgent);
         double[] retValue = new double[actionsInOutputLayer.size()];
@@ -74,7 +75,7 @@ public class MCTreeProcessor<A extends Agent> {
         for (ActionEnum<A> action : actionsInStats) {
             double visits = stats.getVisits(action);
             if (visits == 0) continue;
-            double value = stats.getMean(action)[actingAgent];
+            double value = stats.getMean(action, actingAgent)[actingAgent-1];
             if (oneHot && action.equals(bestAction)) value = 1.0;
             if (oneHot && !action.equals(bestAction)) value = 0.0;
             retValue = setValueForAction(action, retValue, value);
