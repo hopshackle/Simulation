@@ -91,7 +91,7 @@ public class ParameterSearch {
             ParameterDetail pd = parameterConstraints.get(i);
             if (pd.continuous) {
                 retValue[i] = Math.random() * (pd.toValue - pd.fromValue) + pd.fromValue;
-                if (pd.logScale && onLogScale)
+                if (pd.logScale && !onLogScale)
                     retValue[i] = Math.exp(retValue[i]);
             } else {
                 retValue[i] = Dice.roll(1, pd.categoricalValues.size()) - 1;
@@ -202,8 +202,8 @@ public class ParameterSearch {
             }
         }
 
-        String [] kernelTypes = kernelToUse.split(":");
-        CovarianceFunction[] allKernels = new CovarianceFunction[kernelTypes.length+1];
+        String[] kernelTypes = kernelToUse.split(":");
+        CovarianceFunction[] allKernels = new CovarianceFunction[kernelTypes.length + 1];
         for (int i = 0; i < kernelTypes.length; i++) {
             String type = kernelTypes[i];
             CovarianceFunction nextKernel = null;
@@ -267,8 +267,12 @@ public class ParameterSearch {
             if (value > bestMean) {
                 bestMean = value;
                 bestUCB = Math.sqrt(predictions[1].get(i, 0) - baseNoise);
-                for (int j = 0; j < optimalSetting.length; j++)
+                for (int j = 0; j < optimalSetting.length; j++) {
                     optimalSetting[j] = xstar[i][j] + Xmean[j];
+                    if (parameterConstraints.get(j).logScale)
+                        optimalSetting[j] = Math.exp(optimalSetting[j]);
+
+                }
             }
         }
         for (int i = 0; i < N; i++) {
@@ -293,15 +297,21 @@ public class ParameterSearch {
                 bestScore = score;
                 bestLatent = latentNoise;
                 bestEstimate = value;
-                for (int j = 0; j < nextSetting.length; j++)
+                for (int j = 0; j < nextSetting.length; j++) {
                     nextSetting[j] = xstar[i][j] + Xmean[j];
+                    if (parameterConstraints.get(j).logScale)
+                        nextSetting[j] = Math.exp(nextSetting[j]);
+                }
             }
             if (expectedImprovement > bestExpectedImprovement) {
                 bestExpectedImprovement = expectedImprovement;
                 bestEIScore = value;
                 bestPredictedTime = predictedTime;
-                for (int j = 0; j < nextSettingWithEI.length; j++)
+                for (int j = 0; j < nextSettingWithEI.length; j++) {
                     nextSettingWithEI[j] = xstar[i][j] + Xmean[j];
+                    if (parameterConstraints.get(j).logScale)
+                        nextSettingWithEI[j] = Math.exp(nextSettingWithEI[j]);
+                }
             }
         }
         System.out.println(String.format("Optimal mean is %.3g (sigma = %.2g) with params %s",
@@ -379,7 +389,10 @@ public class ParameterSearch {
     public boolean complete() {
         return parameterConstraints.size() == 0;
     }
-    public int getIteration() {return count;}
+
+    public int getIteration() {
+        return count;
+    }
 }
 
 class ParameterDetail {
