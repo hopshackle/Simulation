@@ -93,6 +93,8 @@ public class ParameterSearch {
                 retValue[i] = Math.random() * (pd.toValue - pd.fromValue) + pd.fromValue;
                 if (pd.logScale && !onLogScale)
                     retValue[i] = Math.exp(retValue[i]);
+                if (pd.integer && !(pd.logScale && onLogScale))
+                    retValue[i] = (int) (retValue[i] + 0.5);
             } else {
                 retValue[i] = Dice.roll(1, pd.categoricalValues.size()) - 1;
             }
@@ -335,7 +337,6 @@ public class ParameterSearch {
         String sqlFile = SimProperties.getProperty("ParameterSearchObjectiveFunction", "");
         if (sqlFile.equals("")) throw new AssertionError("Need to specify ParameterSearchObjectiveFunction");
         String sql = RunMetrics.extractSQLFromFile(new File(sqlFile));
-        System.out.println(sql);
         for (String t : tableNames) {
             MySQLMetric sqlMetric = new MySQLMetric("PS_" + t, sql);
             double value = sqlMetric.getResult(new MySQLDataSet(t));
