@@ -28,6 +28,8 @@ public interface Decider<A extends Agent> {
 
     public ActionEnum<A> makeDecision(A decidingAgent, List<ActionEnum<A>> possibleActions);
 
+    public Decider<A> mutate(double intensity);
+
     public Decider<A> crossWith(Decider<A> decider);
 
     public void setName(String name);

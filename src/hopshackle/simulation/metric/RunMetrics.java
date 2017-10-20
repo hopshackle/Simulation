@@ -51,11 +51,13 @@ public class RunMetrics {
 
 		dsgArray = DataSetGroup.getDataSets(dir);
 		metricArray = new ArrayList<Metric>();
-		
+
+		if (args.length > 1 && args[1] != null) {
+			dir = new File(args[1]);
+		}
 		if (!dir.isDirectory()) {
 			dir = defaultDir;
 		}
-
 		System.out.println("Using " + dir + " for .sql files");
 		File[] allFiles = dir.listFiles();
 		for (int n=0; n<allFiles.length; n++) 

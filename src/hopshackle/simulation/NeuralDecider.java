@@ -29,6 +29,8 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
     protected boolean logTrainingErrors = getProperty("NeuralLogTrainingErrors", "false").equals("true");
     protected double scaleFactor;
     private boolean controlSignal, offPolicyLearning, resetBrain;
+    protected boolean zeroMutationOperator;
+    protected double mutationMagnitude, baseProportionMutated, baseProportionToZero;
     private int batchSize = 0, freezeQEveryN = 0, dataSinceFreeze = 0;
     private int maximumOutputOptions = getPropertyAsInteger("NeuralMaxOutput", "100");
     //   private boolean lookahead;
@@ -55,6 +57,10 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         resetBrain = getProperty("NeuralResetBrainEachEpoch", "false").equals("true");
         batchSize = getPropertyAsInteger("NeuralBatchSize", "0");
         freezeQEveryN = getPropertyAsInteger("NeuralLagForTargetQ", "0");
+        zeroMutationOperator = getProperty("NeuralEAZeroMutationOperator", "false").equals("true");
+        mutationMagnitude = getPropertyAsDouble("NeuralEAMutationMagnitude", "1.0");
+        baseProportionMutated = getPropertyAsDouble("NeuralEAMutationProp", "0.05");
+        baseProportionToZero = getPropertyAsDouble("NeuralEAZeroProp", "0.01");
         initialiseBrain();
     }
 
@@ -212,6 +218,8 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
     public void setBrain(BasicNetwork newBrain) {
         if (isBrainCompatible(newBrain)) {
             brain = newBrain;
+        } else {
+            throw new AssertionError("Injected brain is not compatible");
         }
     }
 
@@ -271,7 +279,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         double offPolicyValue = valueOfBestAction(baseER);
         double onPolicyValue = valueOption(baseER.getActionTakenFromEndState(), baseER.getEndState());
         String message = String.format("%s Learning:\t%-20sScore: %.2f -> %.2f, Reward: %.2f, Target: %.2f, EndGame: %s, Actual/Best Next: %s/%s, QV: %.2f/%.2f",
-                this.toString(), baseER.getActionTaken(), baseER.getStartScore()[baseER.getAgentNumber()-1], baseER.getEndScore()[baseER.getAgentNumber()-1], baseER.getReward()[baseER.getAgentNumber()-1],
+                this.toString(), baseER.getActionTaken(), baseER.getStartScore()[baseER.getAgentNumber() - 1], baseER.getEndScore()[baseER.getAgentNumber() - 1], baseER.getReward()[baseER.getAgentNumber() - 1],
                 getTarget(baseER)[actionIndex], baseER.isInFinalState(), actualAction, bestAction, onPolicyValue, offPolicyValue);
         log(message);
         baseER.getAgent().log(message);
@@ -586,32 +594,49 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
         return retValue;
     }
 
-    public void mutateWeights(int mutations) {
-        NeuralStructure structure = brain.getStructure();
-        if (brain.getLayerCount() != 3)
-            throw new AssertionError("Hard-coded assumption that NN has just one hidden layer.");
-        int totalWeights = structure.calculateSize();
-        int inputNeurons = brain.getLayerNeuronCount(1);
-        int hiddenNeurons = brain.getLayerTotalNeuronCount(2);
-        int outputNeurons = brain.getLayerTotalNeuronCount(3);
-        totalWeights = inputNeurons * (hiddenNeurons - 1) + hiddenNeurons * outputNeurons;
-        // -1 in the above is for the bias neuron in the hidden layer, which has no connections from input layer
+    @Override
+    public NeuralDecider<A> mutate(double intensity) {
+        BasicNetwork clonedBrain = (BasicNetwork) brain.clone();
 
-        for (int i = 0; i < mutations; i++) {
-            int weightToChange = Dice.roll(1, totalWeights);
-            int fromLayer = 1;
-            int toNeuronCount = hiddenNeurons - 1;
-            if (weightToChange > inputNeurons * (hiddenNeurons - 1)) {
-                fromLayer = 2;
-                weightToChange -= inputNeurons * (hiddenNeurons - 1);
-                toNeuronCount = outputNeurons;
+        for (int layer = 0; layer < clonedBrain.getLayerCount() - 1; layer++) {
+            for (int neuron = 0; neuron < clonedBrain.getLayerTotalNeuronCount(layer); neuron++) {
+                for (int nextNeuron = 0; nextNeuron < clonedBrain.getLayerTotalNeuronCount(layer + 1) - 1; nextNeuron++) {
+                    // the -1 above is to ignore any links to the last neuron in the next layer (which is the bias neuron)
+                    if (Math.random() < intensity * baseProportionMutated) {
+                        clonedBrain.addWeight(layer, neuron, nextNeuron, (Math.random() - 0.5) * intensity * mutationMagnitude);
+                    }
+                    if (zeroMutationOperator && Math.random() < intensity * baseProportionToZero) {
+                        clonedBrain.setWeight(layer, neuron, nextNeuron, 0.0);
+                    }
+                }
             }
-            int fromNeuron = weightToChange / toNeuronCount + 1;
-            int toNeuron = weightToChange % toNeuronCount + 1;
-
-            brain.addWeight(fromLayer, fromNeuron, toNeuron, Math.random() / 10.0);
         }
+
+        NeuralDecider<A> retValue = this.shallowCopy();
+        retValue.injectProperties(decProp);
+        retValue.setBrain(clonedBrain);
+
+        return retValue;
     }
+
+    public NeuralDecider<A> shallowCopy() {
+        return new NeuralDecider<>(stateFactory, scaleFactor);
+    }
+
+    public double[] getWeights() {
+        double[] allWeights = brain.getFlat().getWeights();
+        double total = 0.0;
+        double square = 0.0;
+        for (int i = 0; i < allWeights.length; i++) {
+            total += allWeights[i];
+            square += allWeights[i] * allWeights[i];
+        }
+        double[] retValue = new double[2];
+        retValue[0] = total / allWeights.length;
+        retValue[1] = (square / allWeights.length) - retValue[0] * retValue[0];
+        return retValue;
+    }
+
 
     protected int getActionIndex(ActionEnum<A> action) {
         if (!outputKey.containsKey(action.toString())) {

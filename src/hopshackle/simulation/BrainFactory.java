@@ -5,6 +5,7 @@ import org.encog.neural.data.basic.BasicNeuralDataSet;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
 import org.encog.neural.networks.training.propagation.back.Backpropagation;
+import java.util.Random;
 
 public class BrainFactory {
 
@@ -19,6 +20,7 @@ public class BrainFactory {
 	public static BasicNetwork newFFNetwork(int[] layers, DeciderProperties properties) {
 
 		boolean initialOptimismTraining = properties.getProperty("NeuralDeciderInitialOptimismTraining", "true").equals("true");
+		boolean zeroGaussianRandomiser = properties.getProperty("NeuralDeciderZeroGaussianWeights", "false").equals("true");
 
 		BasicNetwork network = new BasicNetwork();
 		int maxLoop = layers.length;
@@ -45,6 +47,15 @@ public class BrainFactory {
 
 		network.getStructure().finalizeStructure();
 		network.reset();
+		if (zeroGaussianRandomiser) {
+			// we cannot inject one into network.reset(), which always uses Nguyen-Widrow
+			Random GR = new Random();
+			double[] weights = network.getFlat().getWeights();
+			for (int i = 0; i < weights.length; i++) {
+				weights[i] = GR.nextGaussian() / 3.0;
+			}
+			network.getFlat().setWeights(weights);
+		}
 		if (initialOptimismTraining)
 			initialOptimismTraining(network, 1.0);
 

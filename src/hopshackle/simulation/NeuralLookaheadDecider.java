@@ -3,6 +3,7 @@ package hopshackle.simulation;
 import java.util.*;
 
 import org.encog.neural.data.basic.BasicNeuralData;
+import org.encog.neural.networks.BasicNetwork;
 
 public class NeuralLookaheadDecider<A extends Agent> extends NeuralDecider<A> {
 
@@ -104,6 +105,11 @@ public class NeuralLookaheadDecider<A extends Agent> extends NeuralDecider<A> {
             return 0.0;
         if (simpleEndStateValuation) return value(exp.getEndState());
         return super.valueOfBestAction(exp);
+    }
+
+    @Override
+    public NeuralLookaheadDecider<A> shallowCopy() {
+        return new NeuralLookaheadDecider<>(stateFactory, scaleFactor);
     }
 
 }

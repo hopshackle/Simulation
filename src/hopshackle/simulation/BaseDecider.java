@@ -259,6 +259,12 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
 	}
 
 	@Override
+	public Decider<A> mutate(double intensity) {
+		return this;
+	}
+
+
+	@Override
 	public void setName(String newName) {
 		name = newName;
 		if (entityLogger != null)

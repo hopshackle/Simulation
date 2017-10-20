@@ -332,6 +332,7 @@ public class ParameterSearch {
     }
 
     public void calculateAndWriteScore(List<String> tableNames) {
+        if (parameterConstraints.isEmpty()) return;
         double runningTotal = 0.0;
         double timeTaken = (System.currentTimeMillis() - startTime) / 1000.0;
         String sqlFile = SimProperties.getProperty("ParameterSearchObjectiveFunction", "");

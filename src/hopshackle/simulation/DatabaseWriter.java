@@ -1,10 +1,10 @@
 package hopshackle.simulation;
 
-import java.awt.event.*;
-import java.util.ArrayList;
+import java.util.*;
 
 public class DatabaseWriter<T extends Persistent> {
 
+    private List<String> knownSuffixes = new ArrayList<>();
     private String lastSuffix;
     private StringBuffer buffer;
     private int numberInBuffer;
@@ -21,13 +21,22 @@ public class DatabaseWriter<T extends Persistent> {
     public void write(T thing, String tableSuffix) {
         if (lastSuffix == null || !lastSuffix.equals(tableSuffix)) {
             lastSuffix = tableSuffix;
-            updateWorldListeners(thing.getWorld());
-            writeBuffer(thing.getWorld().getDBU());
 
-            String sqlDelete = DAO.getTableDeletionSQL(tableSuffix);
-            thing.getWorld().updateDatabase(sqlDelete);
-            String sqlQuery = DAO.getTableCreationSQL(tableSuffix);
-            thing.getWorld().updateDatabase(sqlQuery);
+            if (knownSuffixes.contains(tableSuffix)) {
+                writeBuffer(thing.getWorld().getDBU());
+                // do not recreate tables if we have already processed data for this suffix
+                // we just want to incrementally add
+            } else {
+                updateWorldListeners(thing.getWorld());
+                writeBuffer(thing.getWorld().getDBU());
+
+                String sqlDelete = DAO.getTableDeletionSQL(tableSuffix);
+                thing.getWorld().updateDatabase(sqlDelete);
+                String sqlQuery = DAO.getTableCreationSQL(tableSuffix);
+                thing.getWorld().updateDatabase(sqlQuery);
+
+                knownSuffixes.add(tableSuffix);
+            }
         }
 
         addToBuffer(thing);
