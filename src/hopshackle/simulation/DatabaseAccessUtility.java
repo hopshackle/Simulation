@@ -59,7 +59,7 @@ public class DatabaseAccessUtility implements Runnable{
 	//			System.out.println("Executing " + nextUpdate);
 				if (nextUpdate == null || nextUpdate.equals("EXIT")) {
 					done = true;
-					System.out.println("DBU exiting at " + (System.currentTimeMillis()-startTime));
+	//				System.out.println("DBU exiting at " + (System.currentTimeMillis()-startTime));
 				} else {
 					try {
 						long start = System.currentTimeMillis();
