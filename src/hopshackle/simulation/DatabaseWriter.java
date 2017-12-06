@@ -63,7 +63,10 @@ public class DatabaseWriter<T extends Persistent> {
     public void writeBuffer(DatabaseAccessUtility dbu) {
         // write if not null
         if (dbu != null && numberInBuffer > 0) {
-            dbu.addUpdate(buffer.toString());
+            if (DAO instanceof DAODuplicateUpdate)
+                dbu.addUpdate(buffer.toString() + ((DAODuplicateUpdate) DAO).getOnDuplicateKey());
+            else
+                dbu.addUpdate(buffer.toString());
         }
 
         // initialise new buffer

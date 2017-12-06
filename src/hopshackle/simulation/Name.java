@@ -13,7 +13,7 @@ public class Name {
 	
 	public String getName() {
 		int choice = (int) (Math.random()*nameArray.size());
-		return nameArray.get(choice);
+		return nameArray.get(choice).trim();
 	}
 
 }

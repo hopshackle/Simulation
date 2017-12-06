@@ -71,6 +71,7 @@ public class DatabaseAccessUtility implements Runnable{
 						nextUpdate = null;
 					} catch (SQLException e) {
 						logger.severe("DBU: Invalid SQL: " + nextUpdate);
+						System.out.println(nextUpdate);
 						logger.severe("DBU: SQL Error: " + e.toString());
 						e.printStackTrace();
 					}

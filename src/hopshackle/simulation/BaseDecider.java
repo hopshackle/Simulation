@@ -4,7 +4,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-import org.omg.CORBA.portable.RemarshalException;
 
 /*
  * The two methods not implemented are:

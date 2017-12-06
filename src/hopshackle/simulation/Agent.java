@@ -24,7 +24,7 @@ public abstract class Agent extends Observable {
 
 	protected Location location;
 	protected World world;
-	protected Decider decider, doNothingDecider;
+	protected Decider decider;
 	protected WorldLogic whatCanIDo;
 	protected ActionPlan actionPlan;
 	protected int generation;
@@ -507,12 +507,6 @@ public abstract class Agent extends Observable {
 	}
 	public void setPolicy(Policy<?> newPolicy) {
 		policies.put(newPolicy.type, newPolicy);
-	}
-	public void setWorldLogic(WorldLogic<?> wl) {
-		whatCanIDo = wl;
-	}
-	public WorldLogic<?> getWorldLogic() {
-		return whatCanIDo;
 	}
 	public ActionPlan getActionPlan() {
 		return actionPlan;
