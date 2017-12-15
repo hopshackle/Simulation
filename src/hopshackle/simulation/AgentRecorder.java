@@ -54,7 +54,7 @@ public class AgentRecorder implements Runnable {
 
 	//			logger.info("Starting Agent Recorder: " + dataExtractor.toString());
 				dataExtractor.initialiseLoopVariables();
-				List<Agent> agentArray = world.getAgents();
+				List<Agent> agentArray = world.getAgentsIncludingChildLocations();
 				for (Agent a : agentArray) 
 					dataExtractor.extractDataFrom(a);
 

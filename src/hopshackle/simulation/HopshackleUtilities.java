@@ -28,7 +28,7 @@ public class HopshackleUtilities {
 	
 	public static <T> List<T> listFromInstance(T instance) {
 		List<T> retList = new ArrayList<T>();
-		retList.add(instance);
+		if (instance != null) retList.add(instance);
 		return retList;
 	}
 
@@ -73,12 +73,28 @@ public class HopshackleUtilities {
 	public static List<Integer> convertToIntegers(List<String> integersAsStrings) {
 		List<Integer> retValue = new ArrayList<Integer>();
 		for (String s : integersAsStrings) {
+			if (s.equals("")) continue;
 			Integer i = Integer.valueOf(s);
 			retValue.add(i);
 		}
 		return retValue;
 	}
 
+	public static <T> List<T> convertArrayToList(T[] array) {
+		List<T> retValue = new ArrayList<>();
+		for (T item : array) {
+			retValue.add(item);
+		}
+		return retValue;
+	}
+
+	public static <T> List<T> convertSetToList(Set<T> set) {
+		List<T> retValue = new ArrayList<>();
+		for (T item : set) {
+			retValue.add(item);
+		}
+		return retValue;
+	}
 
 	@SuppressWarnings("unchecked")
 	public static List<Object> loadEnums(List<String> classFullNameList) {

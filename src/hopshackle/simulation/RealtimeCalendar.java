@@ -40,4 +40,8 @@ public class RealtimeCalendar implements WorldCalendar {
 		return String.valueOf(getTime());
 	}
 
+	@Override
+	public String getDate(long time) {
+		return String.valueOf(time);
+	}
 }

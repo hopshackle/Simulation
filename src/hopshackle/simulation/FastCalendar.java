@@ -82,27 +82,31 @@ public class FastCalendar implements WorldCalendar {
 		}
 	}
 
-
 	@Override
-	public String getDate() {
-		long time = getTime();
+	public String getDate(long time) {
 		int year = (int) (time / 52.0);
 		int s = (int) ((time - 52 * year) / 13.0);
 		String season = null;
 		switch (s) {
-		case 0:
-			season = "Winter";
-			break;
-		case 1:
-			season = "Spring";
-			break;
-		case 2:
-			season = "Summer";
-			break;
-		case 3:
-			season = "Autumn";
-			break;
+			case 0:
+				season = "Winter";
+				break;
+			case 1:
+				season = "Spring";
+				break;
+			case 2:
+				season = "Summer";
+				break;
+			case 3:
+				season = "Autumn";
+				break;
 		}
 		return season + " " + String.valueOf(year);
+	}
+
+	@Override
+	public String getDate() {
+		long time = getTime();
+		return getDate(time);
 	}
 }

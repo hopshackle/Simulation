@@ -95,22 +95,35 @@ public class Location implements Persistent {
 		return agentsInLocation.contains(a);
 	}
 	public synchronized boolean addAgent(Agent a) {
-		if (containsAgent(a)) return false;
+		if (containsAgent(a)) {
+			if (a.locationDebug) a.log("Already in " + this);
+			return false;
+		}
 		agentsInLocation.add(a);
-		if (parentLocation != null) 
-			parentLocation.addAgent(a);
+		if (a.locationDebug) a.log("Added to " + this);
 		return true;
 	}
 	public synchronized boolean removeAgent(Agent a) {
-		if (!containsAgent(a)) return false;
+		if (!containsAgent(a)) {
+			if (a.locationDebug) a.log("Not in " + this);
+			return false;
+		}
 		agentsInLocation.remove(a);
-		if (parentLocation != null) 
-			parentLocation.removeAgent(a);
+		if (a.locationDebug) a.log("Removed from " + this);
 		return true;
 	}
 
 	public synchronized List<Agent> getAgents() {
 		return HopshackleUtilities.cloneList(agentsInLocation);
+	}
+
+	public synchronized List<Agent> getAgentsIncludingChildLocations() {
+		List<Agent> retValue = new ArrayList<>();
+		retValue.addAll(getAgents());
+		for (Location childLoc : childLocations) {
+			retValue.addAll(childLoc.getAgentsIncludingChildLocations());
+		}
+		return retValue;
 	}
 
 	public void maintenance() {

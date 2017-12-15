@@ -62,7 +62,7 @@ public class BasicPopulationSpawner implements Runnable{
 				}
 	//			logger.info("Population Spawner started");
 
-				tempArr = world.getAgents();
+				tempArr = world.getAgentsIncludingChildLocations();
 				for (Agent a : tempArr) {
 					if (a instanceof BasicAgent) {
 						BasicAgent c = (BasicAgent) a;

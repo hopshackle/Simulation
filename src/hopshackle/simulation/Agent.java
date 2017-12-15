@@ -32,9 +32,10 @@ public abstract class Agent extends Observable {
 	protected Location birthLocation, deathLocation;
 	protected List<Long> parents;
 	protected List<Long> children;
-	private Lock agentLock = new ReentrantLock();
+    protected Map<Agent, Relationship> relationships = new HashMap<>();
+    private Lock agentLock = new ReentrantLock();
 	private Map<String, Policy<?>> policies = new HashMap<String, Policy<?>>(); 
-	protected boolean debug_this = false;
+	protected boolean debug_this, debug_decide, locationDebug = false;
 
 	protected long birth = 0;
 	protected long death = -1;
@@ -129,6 +130,12 @@ public abstract class Agent extends Observable {
 		AgentEvent deathEvent = new AgentEvent(this, Type.DEATH);
 		eventDispatch(deathEvent);
 
+
+		for (Agent m : getRelationships().keySet()) {
+			if (!m.isDead()) m.setRelationship(this, Relationship.NONE);
+			// reset relationships of all friends / enemies
+		}
+
 		// then tidy-up
 		listeners.clear();
 		purgeActions(true);
@@ -158,13 +165,14 @@ public abstract class Agent extends Observable {
 	public void setLocation(Location l) {
 		if (birthLocation == null)
 			birthLocation = l;
+		if (location == l) return;
 		if (location!=null){
 			location.removeAgent(this);
 		}
 		location = l;
 		if (location!=null) {
-			log("Moves to " + l.toString() + "; " + l.additionalDescriptiveText());
-			location.addAgent(this);
+			boolean success = location.addAgent(this);
+			if (locationDebug) log("Moves to " + l.toString() + "; " + l.additionalDescriptiveText());
 			knowledgeOfLocations.addLocation(l);
 			for (Location adjacentLocation : l.accessibleLocations) {
 				knowledgeOfLocations.addLocation(adjacentLocation);
@@ -212,9 +220,9 @@ public abstract class Agent extends Observable {
 	public void setDebugLocal(boolean debug) {
 		debug_this = debug;
 	}
-	public boolean getDebugLocal() {
-		return debug_this || debug;
-	}
+	public boolean getDebugLocal() {return debug_this || debug;	}
+	public void setDebugDecide(boolean debug) {debug_decide = debug;}
+	public boolean getDebugDecide() {return debug_decide || debug;	}
 
 	public boolean isDead() {
 		if (death < 0){
@@ -529,5 +537,33 @@ public abstract class Agent extends Observable {
 	public int getActorRef() {
 		if (getGame() == null) return (int) getUniqueID();
 		return getGame().getPlayerNumber(this);
+	}
+
+	public Relationship getRelationshipWith(Agent m) {
+		if (relationships.containsKey(m))
+			return relationships.get(m);
+		return Relationship.NONE;
+	}
+
+	public void setRelationship(Agent m, Relationship r) {
+		if (r == Relationship.NONE) {
+			log ("Ceases to be " + getRelationshipWith(m) + " of " + m.toString());
+			relationships.remove(m);
+		} else {
+			log("Becomes " + r.name() + " of " + m.toString());
+			relationships.put(m, r);
+		}
+	}
+
+	public Map<Agent, Relationship> getRelationships() {
+		return relationships;
+	}
+	public List<Agent> getRelationships(Relationship type) {
+		List<Agent> retValue = new ArrayList<>();
+		for (Agent a : relationships.keySet()) {
+			if (relationships.get(a) == type)
+				retValue.add(a);
+		}
+		return retValue;
 	}
 }

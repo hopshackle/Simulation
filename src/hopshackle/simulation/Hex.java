@@ -58,7 +58,7 @@ public class Hex extends Location {
 	}
 	protected void drawContent(Graphics g) {
 		g.setFont(agentFont);
-		String text = Integer.toString(getAgents().size());
+		String text = Integer.toString(getAgentsIncludingChildLocations().size());
 		char[] cA = text.toCharArray();
 		g.drawChars(cA, 0, cA.length, (int)(getCentralX()-cellSize/4.0), (int)getCentralY());
 	}

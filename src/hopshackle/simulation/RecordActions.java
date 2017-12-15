@@ -40,8 +40,8 @@ public class RecordActions {
 			createTable();
 			tableCreated = true;
 		}
-		String actionName = a.toString();
-		String s = actionName + ":" + a.getActor().getType();
+		String actionName = a.getType().toString();
+		String s = actionName + ":" + ((a.getActor() == null) ? "null" : a.getActor().getType());
 		if (actionName==null) return;
 		Integer i = 0;
 		if (actionRecord.containsKey(s)) 

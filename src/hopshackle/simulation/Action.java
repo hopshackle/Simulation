@@ -96,6 +96,7 @@ public abstract class Action<A extends Agent> implements Delayed {
         this.actionType = type;
         mandatoryActors = HopshackleUtilities.cloneList(mandatory);
         optionalActors = HopshackleUtilities.cloneList(optional);
+        optionalActors.removeAll(mandatoryActors);
         if (!mandatory.isEmpty()) {
             actor = mandatory.get(0);
             world = actor.getWorld();
@@ -151,6 +152,7 @@ public abstract class Action<A extends Agent> implements Delayed {
                 }
             case PROPOSED:
             case PLANNED:
+                //          a.log("Declines to participate in " + this.toString());
                 updateAgreement(a, false);
                 AgentEvent learningEvent = new AgentEvent(a, AgentEvent.Type.ACTION_REJECTED, this);
                 eventDispatch(learningEvent);
@@ -240,7 +242,8 @@ public abstract class Action<A extends Agent> implements Delayed {
     }
 
     protected void doCleanUp() {
-        if (getState() == State.CANCELLED) eventDispatchToAllAgents(AgentEvent.Type.ACTION_CANCELLED, getAllConfirmedParticipants());
+        if (getState() == State.CANCELLED)
+            eventDispatchToAllAgents(AgentEvent.Type.ACTION_CANCELLED, getAllConfirmedParticipants());
         for (A a : mandatoryActors) {
             a.actionPlan.actionCompleted(this);
             a.maintenance();
@@ -268,7 +271,7 @@ public abstract class Action<A extends Agent> implements Delayed {
     public long getDelay(TimeUnit tu) {
         switch (getState()) {
             case EXECUTING:
-                return tu.convert(getEndTime() - world.getCurrentTime() - 1, TimeUnit.MILLISECONDS);
+                return tu.convert(getEndTime() - world.getCurrentTime(), TimeUnit.MILLISECONDS);
             default:
                 return tu.convert(getStartTime() - world.getCurrentTime(), TimeUnit.MILLISECONDS);
         }
@@ -307,11 +310,11 @@ public abstract class Action<A extends Agent> implements Delayed {
     }
 
     public boolean isDeleted() {
-        return (currentState == State.CANCELLED);
+        return (currentState == State.CANCELLED || currentState == State.FINISHED);
     }
 
     public void cancel() {
-        if (currentState != State.FINISHED) {
+        if (!isDeleted()) {
             changeState(State.CANCELLED);
             endTime = world.getCurrentTime();
         }

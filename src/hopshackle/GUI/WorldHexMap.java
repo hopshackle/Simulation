@@ -53,7 +53,7 @@ public class WorldHexMap extends SimpleAnimationPanel {
 		g.setColor(Color.white);
 		g.fillRect(getWidth() - 150, 0, getWidth(), 25);
 		g.setColor(Color.black);
-		g.drawString(String.format("Time: %.1f, Pop: %d", ((float)world.getCurrentTime())/1000f/60f, world.getAgents().size()), getWidth()-145, 20);
+		g.drawString(String.format("Time: %.1f, Pop: %d", ((float)world.getCurrentTime())/1000f/60f, world.getAgentsIncludingChildLocations().size()), getWidth()-145, 20);
 	}
 
 	@Override
