@@ -238,9 +238,7 @@ public class ActionProcessor {
 			if (world != null) {
 				if (world.getCurrentTime() < timeAtCompletion) {
 					world.setCurrentTime(timeAtCompletion);
-					System.out.println("Setting time to " +  timeAtCompletion);
-					// if (debug) logger.info("Setting world time to " +
-					// timeAtCompletion);
+					System.out.println(String.format("Setting time from %d to %d", world.getCurrentTime(), timeAtCompletion));
 				}
 			}
 		}

@@ -30,20 +30,22 @@ public class FastCalendar implements WorldCalendar {
 
 	public void setTime(long newTime) {
 		long oldTime = time.get();
-		if (time.compareAndSet(oldTime, newTime) && newTime > oldTime) {
-			// so we have set the time, and it has moved on
+		if (newTime > oldTime) {
 			checkForTasks(newTime);
 		}
 	}
 
 	private synchronized void checkForTasks(long currentTime) {
 		Collections.sort(scheduledJobs);
-
 		ArrayList<CalendarTask> toRemove = new ArrayList<CalendarTask>();
 		for (CalendarTask t : scheduledJobs) {
+			long oldTime = time.get();
 			if (t.nextRun <= currentTime) {
+				if (t.nextRun > oldTime) {
+					time.compareAndSet(oldTime, t.nextRun);
+				}
 				t.task.run();
-				t.lastRun = currentTime;
+				t.lastRun = time.get();
 				if (t.period == -1) {
 					toRemove.add(t);
 				} else {
@@ -55,6 +57,7 @@ public class FastCalendar implements WorldCalendar {
 		}
 		for (CalendarTask t : toRemove)
 			scheduledJobs.remove(t);
+		time.compareAndSet(time.get(), currentTime);
 	}
 
 	class CalendarTask implements Comparable<CalendarTask>{
