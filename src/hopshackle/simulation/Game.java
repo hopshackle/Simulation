@@ -2,14 +2,23 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements WorldLogic<P> {
+public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements WorldLogic<P>, Persistent {
 
     protected Stack<Action<P>> actionStack = new Stack<Action<P>>();
     protected double[] finalScores;
     private EntityLog log;
     private static SimpleGameScoreCalculator simpleGameScoreCalculator = new SimpleGameScoreCalculator();
     public static final int MAX_TURNS = SimProperties.getPropertyAsInteger("MaxTurnsPerGame", "50");
-    public boolean debug = false;
+    public boolean debug = true;
+    protected GameScoreCalculator scoreCalculator;
+    private World world = new World();
+    private FastCalendar calendar;
+
+    {
+        calendar = new FastCalendar(1l);
+        world.setCalendar(calendar);
+        world.registerWorldLogic(this, "AGENT");
+    }
 
     public abstract Game<P, A> clone(P perspectivePlayer);
 
@@ -49,7 +58,11 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
         }
 
         if (gameOver()) {
-            forceGameEnd(simpleGameScoreCalculator);
+            if (scoreCalculator != null) {
+                forceGameEnd(scoreCalculator);
+            } else {
+                forceGameEnd(simpleGameScoreCalculator);
+            }
         }
 
         return finalScores;
@@ -81,10 +94,12 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
         if (debug) log("Final Scores: " + HopshackleUtilities.formatArray(finalScores, ", ", "%.2f"));
         for (int i = 1; i <= finalScores.length; i++)
             getPlayer(i).die("Game Over");
+        if (log != null) log.close();
     }
 
     protected void endOfGameHouseKeeping() {
         // may be overridden
+        if (log != null) log.close();
     }
 
     public final void oneAction() {
@@ -160,7 +175,28 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
             log = new EntityLog(toString(), getCurrentPlayer().getWorld());
         }
         log.log(message);
-        log.close();
+        log.flush();
+    }
+
+    @Override
+    public World getWorld() {
+        return world;
+    }
+
+    public void setWorld(World w) {
+        world = w;
+    }
+
+    public long getTime() {
+        return calendar.getTime();
+    }
+
+    public void setTime(long t) {
+        calendar.setTime(t);
+    }
+
+    public void setDatabaseAccessUtility(DatabaseAccessUtility databaseUtility) {
+        world.setDatabaseAccessUtility(databaseUtility);
     }
 }
 
