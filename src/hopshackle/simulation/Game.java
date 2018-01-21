@@ -9,7 +9,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
     private EntityLog log;
     private static SimpleGameScoreCalculator simpleGameScoreCalculator = new SimpleGameScoreCalculator();
     public static final int MAX_TURNS = SimProperties.getPropertyAsInteger("MaxTurnsPerGame", "50");
-    public boolean debug = true;
+    public boolean debug = false;
     protected GameScoreCalculator scoreCalculator;
     private World world = new World();
     private FastCalendar calendar;
@@ -172,7 +172,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 
     public void log(String message) {
         if (log == null) {
-            log = new EntityLog(toString(), getCurrentPlayer().getWorld());
+            log = new EntityLog(toString(), world);
         }
         log.log(message);
         log.flush();
