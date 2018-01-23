@@ -26,7 +26,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private boolean deciderAsHeuristic;
     private int rolloutLimit;
     private boolean writeGameLog;
-    private boolean debug = false;
+    private boolean debug = true;
     private double rolloutTemp, rolloutTempChange;
     private MCTreeProcessor<A> treeProcessor;
 
@@ -123,6 +123,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         tree.insertState(currentState);
         int N = Math.min(maxRollouts, maxRolloutsPerOption * chooseableOptions.size());
 
+        // Prune OpenLoop maintained tree to start from currentState of all tracked agents
         if (openLoop) ((OpenLoopStateFactory<A>) stateFactory).prune();
         int actualI = 0;
         for (int i = 0; i < N; i++) {
@@ -130,6 +131,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             Game<A, ActionEnum<A>> clonedGame = game.clone(agent);
             A clonedAgent = clonedGame.getPlayer(currentPlayer);
             for (A player : clonedGame.getAllPlayers()) {
+                // For each other player in the game, we have to model their behaviour in some way
                 if (player != clonedAgent) {
                     if (singleTree)
                         player.setDecider(createChildDecider(tree, game.getPlayerNumber(player), true));
@@ -140,10 +142,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
                 } else {
                     player.setDecider(childDecider);
                 }
-                // For each other player in the game, we have to model their behaviour in some way
             }
             if (openLoop) {
-                // set open loop references for the cloned game
+                // set open loop references for the cloned game to inherit the same starting states
                 ((OpenLoopStateFactory<A>) stateFactory).cloneGame(game, clonedGame);
             }
 
@@ -154,8 +155,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
                 erc.registerAgent(clonedAgent);
             }
             clonedGame.playGame(rolloutLimit);
-            if (!clonedGame.gameOver())
-                clonedGame.forceGameEnd(new SimpleGameScoreCalculator());
 
             teacher.teach();
 
@@ -199,6 +198,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         if (writeGameLog) {
             String message = agent.toString() + " " + best.toString() + " (after " + (actualI + 1) + " rollouts)";
             System.out.println(message);
+            game.log(tree.getStatisticsFor(currentState).toString(debug));
+            game.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
+            game.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
             game.log(message);
         }
         return best;

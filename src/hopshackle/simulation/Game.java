@@ -57,12 +57,12 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
             moves++;
         }
 
-        if (gameOver()) {
-            if (scoreCalculator != null) {
-                forceGameEnd(scoreCalculator);
-            } else {
-                forceGameEnd(simpleGameScoreCalculator);
-            }
+        forceGameEnd();
+
+        if (debug) {
+            log(String.format("Finished Game after %d moves, GameOver: %s, and scores %s", moves, gameOver(),
+                    HopshackleUtilities.formatArray(finalScores, ", ", "%.2f")));
+            log.flush();
         }
 
         return finalScores;
@@ -86,6 +86,14 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
             if (s <= score[p - 1]) retValue--;
         }
         return retValue;
+    }
+
+    public void forceGameEnd() {
+        if (scoreCalculator != null) {
+            forceGameEnd(scoreCalculator);
+        } else {
+            forceGameEnd(simpleGameScoreCalculator);
+        }
     }
 
     public void forceGameEnd(GameScoreCalculator calc) {

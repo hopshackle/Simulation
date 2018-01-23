@@ -380,7 +380,13 @@ public class MCStatistics<P extends Agent> {
     }
 
     public int getActorRef() {
-        if (state == null) return 1;
+        if (state == null || state.getActorRef() == -1) {
+            Integer[] actors = actorsFrom().toArray(new Integer[1]);
+            if (actors.length > 1) {
+                throw new AssertionError("Only expect one possible actor from each node");
+            }
+            return actors[0];
+        }
         return state.getActorRef();
     }
 

@@ -115,6 +115,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
     }
 
     public void updateWithFinalScores(double[] finalScores) {
+        if (finalScores.length > reward.length) expandRewardTo(finalScores.length);
         timeOfResolution = getAgent().getWorld().getCurrentTime();
         Decider<A> d = actingAgent.getDecider();
         endState = d.getCurrentState(actingAgent);
@@ -137,11 +138,15 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
     private void updatePreviousMonteCarloReward(double[] score) {
         if (previousRecord != null) {
             double[] prevReward = previousRecord.getReward();
-            double[] newScore = new double[score.length];
+            double[] newScore = new double[Math.max(score.length, prevReward.length)];
             double discountFactor = gamma;
             // we discount over the elapsed time of this ER (i.e. from end, back to start..which is the end of the previous record)
             if (gamma < 1.0) discountFactor = Math.pow(gamma, getDiscountPeriod());
-            for (int i = 0; i < score.length; i++) newScore[i] = score[i] * discountFactor + prevReward[i];
+            for (int i = 0; i < newScore.length; i++) {
+                double oldScore = i >= score.length ? 0.0 : score[i];
+                double prevR = i >= prevReward.length ? 0.0 : prevReward[i];
+                newScore[i] = oldScore * discountFactor + prevR;
+            }
             previousRecord.monteCarloReward = newScore;
             //           previousRecord.startScore = new double[score.length];
             previousRecord.updatePreviousMonteCarloReward(newScore);
@@ -257,5 +262,13 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 
     public ExperienceRecord<A> getPreviousRecord() {
         return previousRecord;
+    }
+
+    private void expandRewardTo(int newLength) {
+        double[] oldR = reward;
+        reward = new double[newLength];
+        for (int i = 0; i < oldR.length; i++) {
+            reward[i] = oldR[i];
+        }
     }
 }
