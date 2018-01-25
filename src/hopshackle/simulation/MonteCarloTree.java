@@ -251,7 +251,10 @@ public class MonteCarloTree<P extends Agent> {
 		return tree.get(state);
 	}
 	public ActionEnum<P> getBestAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent) {
-		return tree.get(state.getAsString()).getBestAction(possibleActions, decidingAgent);
+		return getBestAction(state.getAsString(), possibleActions, decidingAgent);
+	}
+	public ActionEnum<P> getBestAction(String stateAsString, List<ActionEnum<P>> possibleActions, int decidingAgent) {
+		return tree.get(stateAsString).getBestAction(possibleActions, decidingAgent);
 	}
 	public int numberOfStates() {
 		return tree.size();

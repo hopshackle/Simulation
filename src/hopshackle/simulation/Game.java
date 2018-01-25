@@ -51,11 +51,6 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
         return actorNumber + 1;
     }
 
-    public int getMasterNumberForActor(P agent) {
-        P master = getMasterOf(agent);
-        return getMasterNumber(master);
-    }
-
     public List<P> getAllPlayersWithMaster(P master) {
         List<P> retValue = new ArrayList();
         for (P p : players) {
