@@ -8,7 +8,7 @@ public class MCStatistics<P extends Agent> {
     private MonteCarloTree<P> tree;
     private Map<ActionWithRef<P>, MCData> map = new HashMap<>();
     private Map<ActionWithRef<P>, MCData> RAVE = new HashMap<>();
-    private Map<ActionWithRef<P>, Map<String, Integer>> successorStatesByAction = new HashMap<>();
+    private Map<ActionWithRef<P>, Map<String, Integer>> successorStatesByAction = new HashMap();
     private int totalVisits = 0;
     private int RAVEVisits = 0;
     private boolean useBaseValue, offlineHeuristicOnExpansion, offlineHeuristicOnSelection;

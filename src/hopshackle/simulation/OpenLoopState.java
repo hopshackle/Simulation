@@ -27,10 +27,10 @@ public class OpenLoopState<A extends Agent> implements State<A> {
         }
         if (perspectiveAgent.getGame() != null) {
             Game<A, ?> game = perspectiveAgent.getGame();
-            List<A> players = game.getAllPlayers();
+            List<A> players = game.getMasters();    // we only have a score for each master player
             score = new double[players.size()];
-            for (int i = 0; i < players.size(); i++){
-                score[i] = game.getPlayer(i+1).getScore();
+            for (int i = 0; i < players.size(); i++) {
+                score[i] = players.get(i).getScore();
             }
         } else {
             score = new double[1];

@@ -64,6 +64,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         long startTime = System.currentTimeMillis();
         Game<A, ActionEnum<A>> game = agent.getGame();
         int currentPlayer = game.getPlayerNumber(agent);
+        int masterPlayer = game.getMasterNumber(game.getMasterOf(agent));
         State<A> currentState = stateFactory.getCurrentState(agent);
         // We initialise a new tree, and then rollout N times
         // We listen to the ER stream for the cloned agent, and
@@ -92,7 +93,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         }
         MonteCarloTree<A> tree = treeMap.get(agent);
         if (tree == null) {    // i.e. agent has no tree in map, so must be their first turn in a new game
-            tree = new MonteCarloTree<A>(decProp, game.getAllPlayers().size());
+            tree = new MonteCarloTree<A>(decProp, game.masters.size());
             if (deciderAsHeuristic) {
                 tree.setOfflineHeuristic(rolloutDecider);
             }
@@ -149,11 +150,20 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             }
 
             if (singleTree) {
-                for (A player : clonedGame.getAllPlayers())
+                for (A master : clonedGame.masters) {
+                    erc.registerAgentWithReference(master, clonedAgent);
+                }
+                for (A player : clonedGame.players)
                     erc.registerAgentWithReference(player, clonedAgent);
             } else {
-                erc.registerAgent(clonedAgent);
+                A master = clonedGame.getMasterOf(clonedAgent);
+                for (A player : clonedGame.getAllPlayersWithMaster(master)) {
+                    erc.registerAgentWithReference(player, clonedAgent);
+                }
             }
+            // and set a policy so that any agents created during the game that are children of the
+            // agents being listened to, are also listened to
+            erc.setAllocationPolicy(new ERCAllocationPolicyByMaster(erc));
             clonedGame.playGame(rolloutLimit);
 
             teacher.teach();
@@ -189,7 +199,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
         agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
 
-        ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions, currentPlayer);
+        ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions, masterPlayer);
         if (best == null) {
             throw new AssertionError("No action chosen");
         }
@@ -231,7 +241,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         if (treeMap.containsKey(agent)) {
             return treeMap.get(agent);
         }
-        treeMap.put(agent, new MonteCarloTree<A>(decProp, agent.getGame().getAllPlayers().size()));
+        treeMap.put(agent, new MonteCarloTree<A>(decProp, agent.getGame().masters.size()));
         return treeMap.get(agent);
     }
 

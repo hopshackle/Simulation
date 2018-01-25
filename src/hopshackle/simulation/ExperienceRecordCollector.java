@@ -270,6 +270,8 @@ public class ExperienceRecordCollector<A extends Agent> implements AgentListener
 	public void setAllocationPolicy(ERCAllocationPolicy<A> newPolicy) {
 		birthPolicy = newPolicy;
 	}
-
+	public A getReferenceFor(A agent) {
+		return referenceAgents.getOrDefault(agent, agent);
+	}
 }
 

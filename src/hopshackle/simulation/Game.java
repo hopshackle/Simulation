@@ -13,6 +13,9 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
     protected GameScoreCalculator scoreCalculator;
     private World world = new World();
     private FastCalendar calendar;
+    protected List<P> players = new ArrayList();
+    protected List<P> masters = new ArrayList();
+    protected Map<P, P> masterAgents = new HashMap();
 
     {
         calendar = new FastCalendar(1l);
@@ -26,11 +29,45 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 
     public abstract P getCurrentPlayer();
 
-    public abstract List<P> getAllPlayers();
+    public List<P> getAllPlayers() {
+        return HopshackleUtilities.cloneList(players);
+    }
 
-    public abstract int getPlayerNumber(P player);
+    public int getPlayerNumber(P player) {
+        int actorNumber = players.indexOf(player);
+        return actorNumber + 1;
+    }
 
-    public abstract P getPlayer(int n);
+    public P getPlayer(int n) {
+        return players.get(n - 1);
+    }
+
+    public P getMasterOf(P agent) {
+        return masterAgents.getOrDefault(agent, agent);
+    }
+
+    public int getMasterNumber(P master) {
+        int actorNumber = masters.indexOf(master);
+        return actorNumber + 1;
+    }
+
+    public int getMasterNumberForActor(P agent) {
+        P master = getMasterOf(agent);
+        return getMasterNumber(master);
+    }
+
+    public List<P> getAllPlayersWithMaster(P master) {
+        List<P> retValue = new ArrayList();
+        for (P p : players) {
+            if (getMasterOf(p).equals(master))
+                retValue.add(p);
+        }
+        return retValue;
+    }
+
+    public List<P> getMasters() {
+        return HopshackleUtilities.cloneList(masters);
+    }
 
     public abstract int getCurrentPlayerNumber();
 
@@ -76,11 +113,11 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 
     public int getOrdinalPosition(int p) {
         // we count how many scores are less than or equal to the players score
-        int numberOfPlayers = getAllPlayers().size();
+        int numberOfPlayers = masters.size();
         int retValue = numberOfPlayers + 1;
         double[] score = new double[numberOfPlayers];
         for (int i = 0; i < numberOfPlayers; i++) {
-            score[i] = getPlayer(i + 1).getScore();
+            score[i] = masters.get(i).getScore();
         }
         for (double s : score) {
             if (s <= score[p - 1]) retValue--;
@@ -100,8 +137,11 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
         endOfGameHouseKeeping();
         finalScores = calc.finalScores(this);
         if (debug) log("Final Scores: " + HopshackleUtilities.formatArray(finalScores, ", ", "%.2f"));
-        for (int i = 1; i <= finalScores.length; i++)
-            getPlayer(i).die("Game Over");
+        for (P actor : players)
+            actor.die("Game Over");
+        for (P master : masters) {
+            master.die("Game Over");
+        }
         if (log != null) log.close();
     }
 
@@ -205,6 +245,15 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 
     public void setDatabaseAccessUtility(DatabaseAccessUtility databaseUtility) {
         world.setDatabaseAccessUtility(databaseUtility);
+    }
+
+    public double[] currentScore() {
+          // we only have a score for each master player
+        double[] retValue = new double[masters.size()];
+        for (int i = 0; i < masters.size(); i++) {
+            retValue[i] = masters.get(i).getScore();
+        }
+        return retValue;
     }
 }
 

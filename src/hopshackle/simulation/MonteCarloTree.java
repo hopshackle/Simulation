@@ -20,6 +20,7 @@ public class MonteCarloTree<P extends Agent> {
 	protected boolean debug = false;
 	protected DeciderProperties properties;
 	private BaseStateDecider<P> offlineHeuristic = new noHeuristic<>();
+	private Map<Integer, Integer> actorRefToRewardRef = new HashMap();
 	private boolean MAST, RAVE;
 	private double RAVE_C;
 

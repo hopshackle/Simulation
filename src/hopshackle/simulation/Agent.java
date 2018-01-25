@@ -427,9 +427,11 @@ public abstract class Agent extends Observable {
 		listeners.remove(el);
 	}
 	protected void eventDispatch(AgentEvent ae) {
-		for (AgentListener el : listeners) {
+		List<AgentListener> tempCopy = HopshackleUtilities.cloneList(listeners);
+		for (AgentListener el : tempCopy) {
 			el.processEvent(ae);
 		}
+		// to cater for the possibility that processing an event adds something to the listeners
 	}
 
 	public static void clearAndResetCacheBuffer(int i) {

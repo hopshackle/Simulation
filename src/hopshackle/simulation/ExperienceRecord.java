@@ -23,8 +23,8 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
     protected double[] startScore, reward, monteCarloReward;
     protected boolean isFinalState;
     protected ERState expRecState = ERState.UNSEEN;
-    private A actingAgent;
-    private int actingAgentNumber;
+    private A actingAgent, masterAgent;
+    private int actingAgentNumber, masterAgentNumber;
     private ExperienceRecord<A> previousRecord, nextRecord;
     protected long timeOfDecision, timeOfResolution;
 
@@ -53,8 +53,11 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
         reward = new double[startScore.length];
         monteCarloReward = null;
         actingAgent = a;
-        if (a.getGame() != null)
+        if (a.getGame() != null) {
             actingAgentNumber = a.getActorRef();
+            masterAgent = (A) a.getGame().getMasterOf(a);
+            masterAgentNumber = a.getGame().getMasterNumber(masterAgent);
+        }
         timeOfDecision = a.getWorld().getCurrentTime();
         timeOfResolution = -1;
     }
@@ -234,6 +237,10 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 
     public int getAgentNumber() {
         return actingAgentNumber;
+    }
+
+    public int getMasterNumber() {
+        return masterAgentNumber;
     }
 
     public World getWorld() {
