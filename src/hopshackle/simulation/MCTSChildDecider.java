@@ -62,7 +62,8 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 				// will then update this state using the reward
 				tree.insertState(exp.getEndState());
 			}
-			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().getType(), exp.getEndState(), exp.getMonteCarloReward(), exp.getMasterNumber());
+			tree.updateState(exp.getStartState(useLookahead), exp.getActionTaken().getType(), exp.getEndState(),
+					exp.getMonteCarloReward(), exp.getMasterNumber());
 		} else if (tree.updatesLeft() > 0) {
 			System.out.println("Action Taken: " + exp.actionTaken);
 			for (ActionEnum<P> poss : exp.getPossibleActionsFromStartState())

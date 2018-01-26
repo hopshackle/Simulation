@@ -20,8 +20,7 @@ public class MonteCarloTree<P extends Agent> {
 	protected boolean debug = false;
 	protected DeciderProperties properties;
 	private BaseStateDecider<P> offlineHeuristic = new noHeuristic<>();
-	private Map<Integer, Integer> actorRefToRewardRef = new HashMap();
-	private boolean MAST, RAVE;
+	private boolean MAST, RAVE, openLoop;
 	private double RAVE_C;
 
 	/**
@@ -53,6 +52,7 @@ public class MonteCarloTree<P extends Agent> {
 		MAST = properties.getProperty("MonteCarloMAST", "false").equals("true");
 		RAVE = properties.getProperty("MonteCarloRAVE", "false").equals("true");
 		RAVE_C = properties.getPropertyAsDouble("MonteCarloRAVEExploreConstant", "0.0");
+		openLoop = properties.getProperty("MonteCarloOpenLoop", "false").equals("true");
 		// Now we add in the heuristic to use, if any
 		if (MAST) {
 			offlineHeuristic = new MASTHeuristic<>(this);
@@ -354,6 +354,9 @@ public class MonteCarloTree<P extends Agent> {
 		return offlineHeuristic;
 	}
 
+	public boolean isOpenLoop() {
+		return openLoop;
+	}
 	@Override
 	public String toString() {
 		return toString(false);
@@ -444,5 +447,4 @@ class noHeuristic<P extends Agent> extends BaseStateDecider<P> {
 
 	@Override
 	public void learnFrom(ExperienceRecord<P> exp, double maxResult) {}
-
 }

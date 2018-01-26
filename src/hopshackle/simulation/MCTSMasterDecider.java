@@ -21,6 +21,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private String sweepMethodology = getProperty("MonteCarloSweep", "terminal");
     private int sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
     private boolean singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
+    private boolean alwaysUseTimeBudget;
     private boolean openLoop;
     private long millisecondsPerMove;
     private boolean deciderAsHeuristic;
@@ -54,11 +55,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     @Override
     public ActionEnum<A> makeDecision(A agent, List<ActionEnum<A>> chooseableOptions) {
 
-        if (chooseableOptions.size() == 1) {
+        if (chooseableOptions.size() == 1 && !alwaysUseTimeBudget) {
             agent.log("Only one action possible...skipping MCTS");
             return chooseableOptions.get(0);
-            // TODO: If we have a time budget, then in the future it may make sense to
-            // construct a Tree anyway, as parts may be of relevance in later turns
         }
 
         long startTime = System.currentTimeMillis();
@@ -260,6 +259,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         sweepMethodology = getProperty("MonteCarloSweep", "terminal");
         sweepIterations = getPropertyAsInteger("MonteCarloSweepIterations", "0");
         singleTree = getProperty("MonteCarloSingleTree", "false").equals("true");
+        alwaysUseTimeBudget = getProperty("MonteCarloAlwaysUseTimeBudget", "false").equals("true");
         trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
         trainRolloutDeciderUsingAllPlayerExperiences = getProperty("MonteCarloTrainRolloutDeciderFromAllPlayers", "false").equals("true");
         openLoop = getProperty("MonteCarloOpenLoop", "false").equals("true");

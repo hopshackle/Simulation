@@ -7,11 +7,15 @@ import java.util.*;
  */
 public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, AgentListener {
 
-    private Map<A, OpenLoopState<A>> agentToState = new HashMap<>();
-    private Map<OpenLoopState<A>, Map<ActionWithRef, OpenLoopState<A>>> tree = new HashMap<>();
-    private Map<A, Integer> updatesLeft = new HashMap<>();
+    private Map<A, OpenLoopState<A>> agentToState;
+    private Map<OpenLoopState<A>, Map<ActionWithRef, OpenLoopState<A>>> tree;
+    private Map<A, Integer> updatesLeft;
     private int updatesPerAgent = SimProperties.getPropertyAsInteger("OpenLoopUpdateLimit", "0");
     private boolean gameLevel = false;
+
+    {
+        reset();
+    }
 
     private OpenLoopStateFactory() {
         // private to stop this being called outside a factory method
@@ -25,6 +29,12 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
         OpenLoopStateFactory<B> retValue = new OpenLoopStateFactory<B>();
         retValue.gameLevel = true;
         return retValue;
+    }
+
+    public void reset() {
+        agentToState = new HashMap<>();
+        tree = new HashMap<>();
+        updatesLeft = new HashMap<>();
     }
 
     @Override

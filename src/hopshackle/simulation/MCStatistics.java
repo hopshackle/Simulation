@@ -9,6 +9,7 @@ public class MCStatistics<P extends Agent> {
     private Map<ActionWithRef<P>, MCData> map = new HashMap<>();
     private Map<ActionWithRef<P>, MCData> RAVE = new HashMap<>();
     private Map<ActionWithRef<P>, Map<String, Integer>> successorStatesByAction = new HashMap();
+    private Map<ActionWithRef<P>, String> openLoopSuccessorStates = new HashMap();
     private int totalVisits = 0;
     private int RAVEVisits = 0;
     private boolean useBaseValue, offlineHeuristicOnExpansion, offlineHeuristicOnSelection;
@@ -71,26 +72,34 @@ public class MCStatistics<P extends Agent> {
             addAction(action, agentRef);
         }
         ActionWithRef key = new ActionWithRef(action, agentRef);
-        Map<String, Integer> currentStates = successorStatesByAction.get(key);
-        if (currentStates == null) {
-            currentStates = new HashMap<String, Integer>();
-            successorStatesByAction.put(key, currentStates);
-        }
-        if (sweep && currentStates.isEmpty())
-            return;
-        // this is a leaf node, so we cannot update its value
-        if (nextState != null && tree.containsState(nextState)) {
-            String nextStateAsString = nextState.getAsString();
-            if (!currentStates.containsKey(nextStateAsString)) {
-                currentStates.put(nextStateAsString, 1);
+        if (tree.isOpenLoop()) {
+            if (!openLoopSuccessorStates.containsKey(key) && nextState != null) {
+                openLoopSuccessorStates.put(key, nextState.getAsString());
             } else {
-                currentStates.put(nextStateAsString, currentStates.get(nextStateAsString) + 1);
+                // we always use the first state encountered
             }
-            MCStatistics<P> nextStateStats = tree.getStatisticsFor(nextState);
-            V = nextStateStats.getV(agentRef);
-            Q = nextStateStats.getQ(agentRef);
-            if (V.length == 0) V = reward;
-            if (Q.length == 0) Q = reward;
+        } else {
+            Map<String, Integer> currentStates = successorStatesByAction.get(key);
+            if (currentStates == null) {
+                currentStates = new HashMap<String, Integer>();
+                successorStatesByAction.put(key, currentStates);
+            }
+            if (sweep && currentStates.isEmpty())
+                return;
+            // this is a leaf node, so we cannot update its value
+            if (nextState != null && tree.containsState(nextState)) {
+                String nextStateAsString = nextState.getAsString();
+                if (!currentStates.containsKey(nextStateAsString)) {
+                    currentStates.put(nextStateAsString, 1);
+                } else {
+                    currentStates.put(nextStateAsString, currentStates.get(nextStateAsString) + 1);
+                }
+                MCStatistics<P> nextStateStats = tree.getStatisticsFor(nextState);
+                V = nextStateStats.getV(agentRef);
+                Q = nextStateStats.getQ(agentRef);
+                if (V.length == 0) V = reward;
+                if (Q.length == 0) Q = reward;
+            }
         }
         if (map.containsKey(key)) {
             MCData old = map.get(key);
@@ -150,7 +159,11 @@ public class MCStatistics<P extends Agent> {
         Map<String, Integer> retValue = new HashMap<>();
         for (int actingAgent : actorsFrom()) {
             ActionWithRef key = new ActionWithRef(action, actingAgent);
-            retValue.putAll(successorStatesByAction.getOrDefault(key, new HashMap<String, Integer>()));
+            if (tree.isOpenLoop()) {
+                retValue.put(openLoopSuccessorStates.get(key), 1);
+            } else {
+                retValue.putAll(successorStatesByAction.getOrDefault(key, new HashMap<String, Integer>()));
+            }
         }
         return retValue;
     }
@@ -160,6 +173,7 @@ public class MCStatistics<P extends Agent> {
         for (Map<String, Integer> states : successorStatesByAction.values()) {
             successors.addAll(states.keySet());
         }
+        successors.addAll(openLoopSuccessorStates.values());
         return successors;
     }
 
@@ -344,7 +358,7 @@ public class MCStatistics<P extends Agent> {
                 output = String.format("\t%-35s\t%s\n", k.toString(), map.get(k).toString());
             }
             retValue.append(output);
-            if (verbose) {
+            if (verbose && !tree.isOpenLoop()) {
                 Map<String, Integer> successors = successorStatesByAction.getOrDefault(k, new HashMap<String, Integer>());
                 for (String succKey : successors.keySet()) {
                     if (tree.stateRef(succKey) != "0") {
@@ -402,14 +416,14 @@ public class MCStatistics<P extends Agent> {
         int[] count = new int[maxActors];
         for (ActionWithRef key : map.keySet()) {
             MCData data = map.get(key);
-            count[key.agentRef-1] += data.visits;
+            count[key.agentRef - 1] += data.visits;
         }
         int maxVisit = 0;
         int maxVisitor = 0;
         for (int i = 0; i < maxActors; i++) {
             if (count[i] > maxVisit) {
                 maxVisit = count[i];
-                maxVisitor = i +1;
+                maxVisitor = i + 1;
             }
         }
         return maxVisitor;

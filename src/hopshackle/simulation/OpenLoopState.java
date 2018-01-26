@@ -39,12 +39,6 @@ public class OpenLoopState<A extends Agent> implements State<A> {
         id = idFountain.getAndAdd(1);
     }
 
-    public OpenLoopState(OpenLoopState<A> from) {
-        factory = from.factory;
-        score = from.score.clone();
-        id = idFountain.getAndAdd(1);
-    }
-
     public double[] getAsArray() {
         return new double[1];
     }
