@@ -325,9 +325,12 @@ public class MonteCarloTree<P extends Agent> {
 				for (String successor : toCopy.getSuccessorStates())
 					if (!depths.containsKey(successor)) {
 						depths.put(successor, currentDepth+1);
-						int visits = tree.get(successor).getVisits();
+						MCStatistics stats = tree.get(successor);
+						if (stats == null) {
+							throw new AssertionError("Should not happen");
+						}
 						if (currentDepth < 10) {
-							visitDepth[currentDepth] += visits;
+							visitDepth[currentDepth] += stats.getVisits();
 							atDepth[currentDepth]++;
 						}
 						if (currentDepth+1 > atDepth[10]) atDepth[10] = currentDepth+1;

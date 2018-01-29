@@ -73,7 +73,7 @@ public class MCStatistics<P extends Agent> {
         }
         ActionWithRef key = new ActionWithRef(action, agentRef);
         if (tree.isOpenLoop()) {
-            if (!openLoopSuccessorStates.containsKey(key) && nextState != null) {
+            if (!openLoopSuccessorStates.containsKey(key) && nextState != null && tree.containsState(nextState)) {
                 openLoopSuccessorStates.put(key, nextState.getAsString());
             } else {
                 // we always use the first state encountered
