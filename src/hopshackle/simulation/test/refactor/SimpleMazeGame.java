@@ -94,11 +94,6 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 	}
 
 	@Override
-	public int getCurrentPlayerNumber() {
-		return playerToMove+1;
-	}
-
-	@Override
 	public List<TestAgent> getAllPlayers() {
 		List<TestAgent> retValue = new ArrayList<TestAgent>();
 		for (int i = 0; i < numberOfPlayers; i++) 
@@ -120,7 +115,7 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
 	}
 
 	@Override
-	public List<ActionEnum<TestAgent>> getPossibleActions(TestAgent a) {
+	public List<ActionEnum<TestAgent>> getPossibleActions() {
 		return allActions;
 	}
 

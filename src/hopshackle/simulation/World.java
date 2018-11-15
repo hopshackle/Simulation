@@ -273,6 +273,10 @@ public class World extends Location {
         }
     }
 
+    public WorldCalendar getCalendar() {
+        return calendar;
+    }
+
     public String getCurrentDate() {
         if (calendar == null)
             return "Unknown";

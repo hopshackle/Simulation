@@ -190,7 +190,7 @@ public abstract class Agent extends Observable {
 	public void log(String s) {
 		if(!getDebugLocal()) return;
 		if (logger == null) {
-			logger = new EntityLog(toString(), world);
+			logger = new EntityLog(toString(), world.getCalendar());
 			logger.setEntityBirth(birth);
 		}
 		logger.log(s);

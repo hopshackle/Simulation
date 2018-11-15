@@ -2,23 +2,15 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements WorldLogic<P>, Persistent {
+public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 
-    protected Stack<Action<P>> actionStack = new Stack<Action<P>>();
     protected double[] finalScores;
     private EntityLog log;
     private static SimpleGameScoreCalculator simpleGameScoreCalculator = new SimpleGameScoreCalculator();
-    public static final int MAX_TURNS = SimProperties.getPropertyAsInteger("MaxTurnsPerGame", "50");
+    public static final int MAX_TURNS = SimProperties.getPropertyAsInteger("MaxTurnsPerGame", "50000");
     public boolean debug = false;
     protected GameScoreCalculator scoreCalculator;
-    private World world = new World();
-    private FastCalendar calendar;
-
-    {
-        calendar = new FastCalendar(1l);
-        world.setCalendar(calendar);
-        world.registerWorldLogic(this, "AGENT");
-    }
+    protected WorldCalendar calendar;
 
     public abstract Game<P, A> clone(P perspectivePlayer);
 
@@ -32,14 +24,12 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
 
     public abstract P getPlayer(int n);
 
-    public abstract int getCurrentPlayerNumber();
-
-    public abstract List<ActionEnum<P>> getPossibleActions(P player);
+    public abstract List<ActionEnum<P>> getPossibleActions();
 
     public abstract boolean gameOver();
 
     /*
-     * Called after each move processed, and the stack is empty.
+     * Called after each move processed
      * Implement game specific housekeeping to move game status forward (such as incrementing turn number, changing the active player)
      */
     public abstract void updateGameStatus();
@@ -51,16 +41,16 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
     public final double[] playGame(int maxMoves) {
 
         if (maxMoves == 0) maxMoves = Integer.MAX_VALUE;
-        int moves = 0;
-        while (!gameOver() && moves < maxMoves) {
+        int actions = 0;
+        while (!gameOver() && actions < maxMoves) {
             oneAction();
-            moves++;
+            actions++;
         }
 
         forceGameEnd();
 
         if (debug) {
-            log(String.format("Finished Game after %d moves, GameOver: %s, and scores %s", moves, gameOver(),
+            log(String.format("Finished Game after %d actions, GameOver: %s, and scores %s", actions, gameOver(),
                     HopshackleUtilities.formatArray(finalScores, ", ", "%.2f")));
             log.flush();
         }
@@ -110,101 +100,44 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> implements 
         if (log != null) log.close();
     }
 
-    public final void oneAction() {
-        oneAction(false, false);
+    public void oneAction() {
+        P currentPlayer = getCurrentPlayer();
+        List<ActionEnum<P>> options = getPossibleActions();
+        Decider<P> decider = currentPlayer.getDecider();
+        Action<P> action = decider.decide(currentPlayer, options);
+        if (debug) log(String.format("Player %s takes action %s:", currentPlayer, action));
+        applyAction(action);
     }
 
-    public final void oneAction(boolean noUpdate, boolean singleAction) {
-        P currentPlayer = null;
-        List<ActionEnum<P>> options = null;
-        Decider<P> decider = null;
-        Action<P> action = null;
+    /* Note that the action is assumed to have a link to the Game
+    and does not stand separate...it is responsible for updatign the game state
+     */
+    public void applyAction(Action action) {
+        if (action == null) return;
 
-        do {
-            if (action != null) {
-                // this occurs if we popped an action off the stack on the last iteration
-                // so we already have the action we wish to execute
-            } else {
-                // we have completed the last one, so pick a new action
-                if (!actionStack.isEmpty()) { // actionStack first, to complete interrupts and consequences
-                    options = actionStack.peek().getNextOptions();
-                    if (options.isEmpty()) {
-                        // then we take the followOnAction instead
-                        action = nextFollowOnActionFromStack();
-                    } else {
-                        currentPlayer = actionStack.peek().getNextActor();
-                        decider = currentPlayer.getDecider();
-                        action = decider.decide(currentPlayer, options);
-                    }
-                }
-                if (action == null) {    // otherwise we get a new action
-                    currentPlayer = getCurrentPlayer();
-                    options = getPossibleActions(currentPlayer);
-                    decider = currentPlayer.getDecider();
-                    action = decider.decide(currentPlayer, options);
-                }
-            }
+        action.addToAllPlans(); // this is for compatibility with Action statuses in a real-time simulation
+        // it also means that each agent tracks the actions they execute over a game
+        action.start();
+        action.run();
 
-            action.addToAllPlans(); // this is for compatibility with Action statuses in a real-time simulation
-            action.start();
-            action.run();
-            if (debug) log(currentPlayer.toString() + "  : " + action.toString());
-            options = action.getNextOptions();
-            if (options.isEmpty()) {
-                if (actionStack.isEmpty()) {
-                    action = null;
-                } else {
-                    action = nextFollowOnActionFromStack();
-                }
-            } else {
-                actionStack.push(action);
-                action = null;
-            }
+        if (debug)
+            log(getCurrentPlayer().toString() + "  : " + action.toString());
 
-            if (action == null && actionStack.isEmpty() && !noUpdate)
-                updateGameStatus(); // finished the last cycle, so move game state forward
-            // otherwise, we still have interrupts/consequences to deal with
-
-            if (singleAction && action == null) break;
-
-        } while (action != null || !actionStack.isEmpty());
-    }
-
-    private Action<P> nextFollowOnActionFromStack() {
-        Action<P> retValue = null;
-        do {
-            retValue = actionStack.pop().getFollowOnAction();
-        } while (retValue == null && !actionStack.isEmpty());
-        return retValue;
+        updateGameStatus();
     }
 
     public void log(String message) {
+        System.out.println(message);
         if (log == null) {
-            log = new EntityLog(toString(), world);
+            log = new EntityLog(toString(), calendar);
         }
         log.log(message);
         log.flush();
     }
 
-    @Override
-    public World getWorld() {
-        return world;
+    public void setCalendar(WorldCalendar cal) {
+        calendar = cal;
     }
 
-    public void setWorld(World w) {
-        world = w;
-    }
-
-    public long getTime() {
-        return calendar.getTime();
-    }
-
-    public void setTime(long t) {
-        calendar.setTime(t);
-    }
-
-    public void setDatabaseAccessUtility(DatabaseAccessUtility databaseUtility) {
-        world.setDatabaseAccessUtility(databaseUtility);
-    }
 }
 

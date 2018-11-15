@@ -80,11 +80,6 @@ enum TestActionEnum implements ActionEnum<TestAgent> {
     public static int waitTime = 200;
 
     @Override
-    public String getChromosomeDesc() {
-        return "TEST";
-    }
-
-    @Override
     public Action<TestAgent> getAction(TestAgent a) {
         List<TestAgent> thisAgentAsList = new ArrayList<TestAgent>();
         thisAgentAsList.add(a);

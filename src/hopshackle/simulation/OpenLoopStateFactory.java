@@ -56,7 +56,6 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, A
 
     public void processEvent(AgentEvent event) {
         if (event.getEvent() == AgentEvent.Type.ACTION_EXECUTED) {
-            if (event.getAction().hasNoAssociatedDecision()) return;
             A actingAgent = (A) event.getAgent();
             if (actingAgent.isDead()) {
                 throw new AssertionError("Should be alive");

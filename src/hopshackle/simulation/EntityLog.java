@@ -12,12 +12,12 @@ public class EntityLog {
 	protected File logFile;
 	protected boolean logFileOpen;
 	protected FileWriter logWriter;
-	protected World world;
+	protected WorldCalendar calendar;
 	private long birth;
 
-	public EntityLog(String logFileName, World w) {
+	public EntityLog(String logFileName, WorldCalendar cal) {
 		logFile = new File(logDir + File.separator + logFileName + ".txt");
-		world = w;
+		calendar = cal;
 		logFileOpen = false;
 	}
 
@@ -36,11 +36,11 @@ public class EntityLog {
 				return;
 			}
 		}
-		if (world != null) {
+		if (calendar != null) {
 			if (logUsingDate) {
-				message = world.getCurrentDate() + ": " + message;
+				message = calendar.getDate() + ": " + message;
 			} else {
-				long age = world.getCurrentTime() - birth;
+				long age = calendar.getTime() - birth;
 				message = age + ": " + message; 
 			}
 		}

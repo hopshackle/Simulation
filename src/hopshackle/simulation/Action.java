@@ -76,9 +76,6 @@ public abstract class Action<A extends Agent> implements Delayed {
     protected State currentState = State.PROPOSED;
     private ActionEnum<A> actionType;
     private long uniqueId = idFountain.getAndIncrement();
-    protected Action<A> followUpAction;
-    protected List<ActionEnum<A>> possibleOptions = new ArrayList<ActionEnum<A>>();
-    protected boolean hasNoAssociatedDecision;
 
     public Action(ActionEnum<A> type, A a, boolean recordAction) {
         this(type, a, 1000, recordAction);
@@ -271,7 +268,7 @@ public abstract class Action<A extends Agent> implements Delayed {
     public long getDelay(TimeUnit tu) {
         switch (getState()) {
             case EXECUTING:
-                return tu.convert(getEndTime() - world.getCurrentTime(), TimeUnit.MILLISECONDS);
+                return tu.convert(getEndTime() - world.getCurrentTime() - 1, TimeUnit.MILLISECONDS);
             default:
                 return tu.convert(getStartTime() - world.getCurrentTime(), TimeUnit.MILLISECONDS);
         }
@@ -390,26 +387,6 @@ public abstract class Action<A extends Agent> implements Delayed {
     @Override
     public String toString() {
         return actionType.toString();
-    }
-
-    public List<ActionEnum<A>> getNextOptions() {
-        return possibleOptions;
-    }
-
-    public Action<A> getFollowOnAction() {
-        return followUpAction;
-    }
-
-    public Action<A> clone(A newPlayer) {
-        return this;
-    }
-
-    public A getNextActor() {
-        return nextActor;
-    }
-
-    public boolean hasNoAssociatedDecision() {
-        return hasNoAssociatedDecision;
     }
 
 }

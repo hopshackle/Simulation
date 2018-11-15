@@ -59,13 +59,6 @@ public enum BasicActions implements ActionEnum<BasicAgent> {
 		return null;
 	}
 
-
-
-	@Override
-	public String getChromosomeDesc() {
-		return "BASIC01";
-	}
-
 	@Override
 	public boolean isChooseable(BasicAgent a) {
 		BasicHex h = (BasicHex)a.getLocation();

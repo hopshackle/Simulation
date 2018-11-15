@@ -4,8 +4,6 @@ import java.io.Serializable;
 
 public interface ActionEnum<A extends Agent> extends Serializable {
 
-	public String getChromosomeDesc();
-	
 	public Action<A> getAction(A a);
 	
 	/* 
@@ -15,7 +13,7 @@ public interface ActionEnum<A extends Agent> extends Serializable {
 	 * It should always be checked by any Decider.
 	 * 
 	 */
-	public boolean isChooseable(A a);
+	default boolean isChooseable(A a) {return false;}
 	
-	public Enum<?> getEnum();
+	default Enum<?> getEnum() {return null;}
 }

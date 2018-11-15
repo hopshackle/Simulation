@@ -107,13 +107,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             tree.reset();
         }
 
-        class FollowOnEventFilter implements EventFilter {
-            @Override
-            public boolean ignore(AgentEvent event) {
-                return (event.getAction() == null) ? false : event.getAction().hasNoAssociatedDecision();
-            }
-        }
-        ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(decProp), new FollowOnEventFilter());
+        ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(decProp), null);
 
         OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
         childDecider = createChildDecider(tree, currentPlayer, false);

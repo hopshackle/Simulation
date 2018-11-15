@@ -200,11 +200,6 @@ enum RightLeft implements ActionEnum<Agent> {
 	DITHER;
 
 	@Override
-	public String getChromosomeDesc() {
-		return "RL";
-	}
-
-	@Override
 	public Action<Agent> getAction(Agent a) {
 		return new TestAction(this, a, false);
 	}
