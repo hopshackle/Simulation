@@ -1,4 +1,6 @@
-package hopshackle.simulation;
+package hopshackle.simulation.games;
+
+import hopshackle.simulation.Decider;
 
 /**
  * Created by james on 08/07/2017.

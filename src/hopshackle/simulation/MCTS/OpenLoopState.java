@@ -1,4 +1,9 @@
-package hopshackle.simulation;
+package hopshackle.simulation.MCTS;
+
+import hopshackle.simulation.ActionEnum;
+import hopshackle.simulation.Agent;
+import hopshackle.simulation.games.Game;
+import hopshackle.simulation.State;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;

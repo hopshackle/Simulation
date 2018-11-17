@@ -1,7 +1,7 @@
 package hopshackle.simulation.games.resistance;
 
 import hopshackle.simulation.*;
-import org.w3c.dom.ranges.Range;
+import hopshackle.simulation.games.Game;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,6 +46,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         for (int i = 1; i <= playerCount; i++) {
             allPlayers[i] = new ResistancePlayer(world, this, i);
         }
+        scoreCalculator = new ResistanceScoreCalculator();
         initialise();
     }
 
@@ -137,6 +138,10 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         return failedMissions >= 3 || successfulMissions >= 3 || failedVotes == 5;
     }
 
+    public boolean spiesHaveWon() {
+        return failedMissions >= 3 || failedVotes == 5;
+    }
+
     private void updateCurrentPlayer() {
         currentPlayer = (currentPlayer + 1) % playerCount;
         if (currentPlayer == 0) currentPlayer = playerCount;
@@ -185,6 +190,8 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                         currentPlayer = firstPlayer;
                         failedVotes++;
                         missionTeamVotes = new boolean[playerCount + 1];
+                        currentPhase = Phase.ASSEMBLE;
+                        currentMissionTeam = new ArrayList();
                     }
                 }
                 break;
@@ -229,6 +236,14 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         } else {
             throw new AssertionError("Cannot vote in phase " + currentPhase);
         }
+    }
+
+    public List<Integer> getTraitors() {
+        List<Integer> retValue = new ArrayList();
+        for (int i = 1; i < traitorIdentities.length; i++) {
+            if (traitorIdentities[i]) retValue.add(i);
+        }
+        return retValue;
     }
 
     public String toString() {

@@ -1,6 +1,8 @@
 package hopshackle.simulation.test.refactor;
 
 import static org.junit.Assert.*;
+
+import hopshackle.simulation.MCTS.*;
 import hopshackle.simulation.*;
 
 import java.util.*;
@@ -13,7 +15,7 @@ public class MCTSDeciderTest {
 	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	StateFactory<TestAgent> factory = new LinearStateFactory<TestAgent>(genVar);
 	BaseStateDecider<TestAgent> rolloutDecider = new SimpleMazeDecider();
-	MonteCarloTree<TestAgent> tree;
+    TranspositionTableMCTree<TestAgent> tree;
 	// This is a single agent test, so no opponent model is needed, and the last parameter is safely null
 	MCTSMasterDecider<TestAgent> masterDecider;
 	DeciderProperties localProp;
@@ -65,12 +67,12 @@ public class MCTSDeciderTest {
 		 * The test plan is to cycle through decisions, and check that the MonteCarloTree is working as expected
 		 * 
 		 */
-		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
 		mazeGame = new SimpleMazeGame(2, agent);
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
-		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
+        TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree) masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		assertEquals(tree.numberOfStates(), 7);
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
@@ -84,7 +86,7 @@ public class MCTSDeciderTest {
 		
 		startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
-		tree = masterDecider.getTree(agent);
+		tree = (TranspositionTableMCTree) masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		startStats = tree.getStatisticsFor(startState);
 		assertEquals(tree.numberOfStates(), 3);
@@ -101,7 +103,7 @@ public class MCTSDeciderTest {
 	public void multiplePlayersWithMultipleTrees() {
 		localProp.setProperty("MonteCarloSingleTree", "false");
 		masterDecider.injectProperties(localProp);
-		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
 		TestAgent[] players = new TestAgent[3];
 		players[0] = agent;
 		players[1] = new TestAgent(world);
@@ -116,7 +118,7 @@ public class MCTSDeciderTest {
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		assertEquals(mazeGame.playerToMove, 0);
 		mazeGame.oneMove();
-		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
+        TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree)masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		assertEquals(tree.numberOfStates(), 4);
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
@@ -142,7 +144,7 @@ public class MCTSDeciderTest {
 	public void singleTree() {
 		localProp.setProperty("MonteCarloSingleTree", "true");
 		masterDecider.injectProperties(localProp);
-		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
 		TestAgent[] players = new TestAgent[3];
 		players[0] = agent;
 		players[1] = new TestAgent(world);
@@ -158,7 +160,7 @@ public class MCTSDeciderTest {
 		assertEquals(mazeGame.playerToMove, 0);
 
 		mazeGame.oneMove();
-		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
+        TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree)masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
 		assertEquals(tree.numberOfStates(), 7);	// more states visited as we use state of other players
@@ -188,12 +190,12 @@ public class MCTSDeciderTest {
 	public void RAVEChildDeciderUpdates() {
 		localProp.setProperty("MonteCarloRAVE", "GellySilver");
 		localProp.setProperty("MonteCarloRAVEWeight", "2");
-		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
 		mazeGame = new SimpleMazeGame(2, agent);
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
-		MonteCarloTree<TestAgent> tree = masterDecider.getTree(agent);
+        TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree) masterDecider.getTree(agent);
 		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT, 0.0, 1), 6.77, 0.01);
 		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT, 0.0, 1), 0.91, 0.01);
 		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST, 0.0, 1), 4.29, 0.01);

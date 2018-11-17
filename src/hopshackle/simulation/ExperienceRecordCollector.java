@@ -1,6 +1,7 @@
 package hopshackle.simulation;
 
 import hopshackle.simulation.ExperienceRecord.ERState;
+import hopshackle.simulation.games.Game;
 
 import java.util.*;
 

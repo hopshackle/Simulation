@@ -2,6 +2,7 @@ package hopshackle.simulation.test.refactor;
 
 import java.util.*;
 
+import hopshackle.simulation.MCTS.*;
 import hopshackle.simulation.*;
 
 import static org.junit.Assert.*;
@@ -57,7 +58,7 @@ public class OpenLoopSingleTreeTest {
         localProp.setProperty("MonteCarloHeuristicOnExpansion","true");
         localProp.setProperty("MonteCarloMAST", "true");
         localProp.setProperty("MonteCarloHeuristicOnSelection","false");
-        tree = new MonteCarloTree<TestAgent>(localProp, 3);
+        tree = new OpenLoopMCTree<>(localProp, 3);
         masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
         masterDecider.injectProperties(localProp);
         Dice.setSeed(6l);
@@ -100,7 +101,7 @@ public class OpenLoopSingleTreeTest {
         // This test emulates a few rollouts of a game within MCTSMasterDecider
         // If we do 6 rollouts
         State<TestAgent> initial = factory.getCurrentState(players[0]);
-        tree.insertState(initial);
+        tree.insertRoot(initial, 1);
         Set<String> addedStates = new HashSet<>();
         addedStates.add(initial.toString());
         String newState = "";

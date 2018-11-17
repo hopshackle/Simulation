@@ -2,6 +2,8 @@ package hopshackle.simulation.test.refactor;
 
 import static org.junit.Assert.*;
 
+import hopshackle.simulation.MCTS.OpenLoopState;
+import hopshackle.simulation.MCTS.OpenLoopStateFactory;
 import hopshackle.simulation.*;
 
 import java.util.*;

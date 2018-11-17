@@ -1,8 +1,14 @@
 package hopshackle.simulation.test.refactor;
 
 import static org.junit.Assert.*;
+
+import hopshackle.simulation.MCTS.MCActionValueDecider;
+import hopshackle.simulation.MCTS.MCStatistics;
+import hopshackle.simulation.MCTS.MonteCarloTree;
 import hopshackle.simulation.*;
 import java.util.*;
+
+import hopshackle.simulation.MCTS.TranspositionTableMCTree;
 import org.junit.*;
 
 public class MCTreeTest {
@@ -10,7 +16,7 @@ public class MCTreeTest {
 	State<TestAgent> test, other, yetAnother;
 	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
-	MonteCarloTree<TestAgent> tree;
+	TranspositionTableMCTree<TestAgent> tree;
 	World world;
 	TestAgent agent;
 	DeciderProperties localProp;
@@ -82,7 +88,7 @@ public class MCTreeTest {
 
 	@Test
 	public void settingUpdatesLeft() {
-		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
 		assertEquals(tree.updatesLeft(), 0);
 		assertFalse(tree.containsState(test));
 		tree.setUpdatesLeft(1);
@@ -91,7 +97,7 @@ public class MCTreeTest {
 
 	@Test
 	public void addANode() {
-		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
 		tree.setUpdatesLeft(1);
 		tree.insertState(test);
 		assertTrue(tree.containsState(test));
@@ -103,7 +109,7 @@ public class MCTreeTest {
 	public void seriesOfActionsFromSameStateThroughUCTLogic() {
 		// This uses the same numeric test case as in MCStatisticsTest (but one level higher in 
 		// the object hierarchy)
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp);
 		tree.insertState(test);
 		TestActionEnum next = (TestActionEnum) tree.getNextAction(test, leftRightOnly);
 		boolean firstLeft = false;
@@ -141,7 +147,7 @@ public class MCTreeTest {
 
 	@Test
 	public void getNextActionWithAPreviouslyUnseenActionShouldReturnIt() {
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp);
 		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
@@ -154,7 +160,7 @@ public class MCTreeTest {
 
 	@Test
 	public void getNextActionWithRestrictedListShouldObeyRestrictions() {
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp);
 		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
@@ -168,7 +174,7 @@ public class MCTreeTest {
 
 	@Test
 	public void getBestActionWithAPreviouslyUnseenActionShouldNotReturnIt() {
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp);
 		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
@@ -181,7 +187,7 @@ public class MCTreeTest {
 
 	@Test
 	public void getBestActionWithRestrictedListShouldObeyRestrictions() {
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp);
 		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
@@ -196,7 +202,7 @@ public class MCTreeTest {
 
 	@Test
 	public void updateStateWithAPreviouslyUnseenActionShouldError() {
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp);
 		tree.insertState(test);
 		try {
 			tree.updateState(test, TestActionEnum.TEST, test, 1.0);
@@ -212,7 +218,7 @@ public class MCTreeTest {
 		localProp.setProperty("RandomDeciderMaxChance", "0.0");
 		localProp.setProperty("RandomDeciderMinChance", "0.0");
 		localProp.setProperty("MonteCarloMAST", "true");
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
 		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString(), 1), 5.0, 0.001);
@@ -231,7 +237,7 @@ public class MCTreeTest {
 		localProp.setProperty("RandomDeciderMaxChance", "1.0");
 		localProp.setProperty("RandomDeciderMinChance", "1.0");
 		localProp.setProperty("MonteCarloMAST", "true");
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 4.0);
 		assertEquals(tree.getActionValue(TestActionEnum.RIGHT.toString(), 1), 5.0, 0.001);
@@ -261,7 +267,7 @@ public class MCTreeTest {
 	
 	@Test
 	public void successorStatesInTree() {
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp);
 		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, other, 0.0);
 		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 0);
@@ -298,7 +304,7 @@ public class MCTreeTest {
 		localProp.setProperty("MonteCarloHeuristicWeighting", "2.0");
 		localProp.setProperty("MonteCarloInterpolateExploration", "true");
 		localProp.setProperty("MonteCarloRAVEExploreConstant", "1.0");
-		tree = new MonteCarloTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<TestAgent>(localProp);
 	//	tree.setOfflineHeuristic(new RAVEHeuristic<>(tree, 1.0));
 		tree.insertState(test);
 		tree.updateState(test, TestActionEnum.LEFT, other, 2.0);

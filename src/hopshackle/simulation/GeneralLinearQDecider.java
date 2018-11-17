@@ -78,7 +78,7 @@ public class GeneralLinearQDecider<A extends Agent> extends BaseStateDecider<A> 
 		w[varIndex] += delta - w[varIndex] * lambda;
 	}
 
-	protected void setWeights(String option, double[] w) {
+	public void setWeights(String option, double[] w) {
 		// for testing only
 		weights.put(option, w);
 	}

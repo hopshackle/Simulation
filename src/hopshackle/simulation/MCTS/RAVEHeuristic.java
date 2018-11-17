@@ -1,4 +1,6 @@
-package hopshackle.simulation;
+package hopshackle.simulation.MCTS;
+
+import hopshackle.simulation.*;
 
 import java.util.ArrayList;
 import java.util.List;

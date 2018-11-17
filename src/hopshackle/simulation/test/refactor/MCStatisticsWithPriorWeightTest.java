@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
+import hopshackle.simulation.MCTS.*;
 import hopshackle.simulation.*;
 
 import org.junit.*;
@@ -13,7 +14,7 @@ public class MCStatisticsWithPriorWeightTest {
 	List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
 	MCStatistics<TestAgent> stats;
-	MonteCarloTree<TestAgent> startingTree;
+    TranspositionTableMCTree<TestAgent> startingTree;
 	DeciderProperties localProp;
 	State<TestAgent> dummyState = new State<TestAgent>() {
 		@Override
@@ -40,7 +41,7 @@ public class MCStatisticsWithPriorWeightTest {
 		localProp.setProperty("MonteCarloHeuristicWeighting", "5");
 		localProp.setProperty("MonteCarloChoice", "default");
 		
-		startingTree = new MonteCarloTree<TestAgent>(localProp, 1);
+		startingTree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
 	//	startingTree.setOfflineHeuristic(new MASTHeuristic<TestAgent>(startingTree));
 		startingTree.insertState(dummyState);
 		startingTree.updateState(dummyState, TestActionEnum.RIGHT, dummyState, toArray(2.0), 1);

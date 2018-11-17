@@ -32,4 +32,8 @@ public class ResistancePlayer extends Agent {
     public Resistance getGame() {
         return game;
     }
+    @Override
+    public String toString() {
+        return "Player " + number;
+    }
 }

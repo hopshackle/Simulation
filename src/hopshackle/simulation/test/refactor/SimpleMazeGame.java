@@ -1,10 +1,11 @@
 package hopshackle.simulation.test.refactor;
 
 import hopshackle.simulation.*;
+import hopshackle.simulation.games.Game;
 
 import java.util.*;
 
-public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>>{
+public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
 
 	int target = 0;
 	int numberOfPlayers;

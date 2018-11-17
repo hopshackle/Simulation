@@ -4,8 +4,11 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
+import hopshackle.simulation.MCTS.MCStatistics;
+import hopshackle.simulation.MCTS.MonteCarloTree;
 import hopshackle.simulation.*;
 
+import hopshackle.simulation.MCTS.TranspositionTableMCTree;
 import org.junit.*;
 
 public class MCStatisticsTest {
@@ -155,7 +158,7 @@ public class MCStatisticsTest {
     public void qAndvMinVisits() {
         localProp.setProperty("MonteCarloMinVisitsOnActionForQType", "1");
         localProp.setProperty("MonteCarloMinVisitsOnActionForVType", "2");
-        MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>(localProp, 1);
+        TranspositionTableMCTree<TestAgent> tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
         tree.insertState(A);
 
         tree.updateState(A, TestActionEnum.LEFT, C, 10);
@@ -217,7 +220,7 @@ public class MCStatisticsTest {
     public void qAndvUpdated() {
         localProp.setProperty("MonteCarloMinVisitsOnActionForQType", "0");
         localProp.setProperty("MonteCarloMinVisitsOnActionForVType", "0");
-        MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>(localProp, 1);
+        TranspositionTableMCTree<TestAgent> tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
         tree.insertState(A);
         tree.insertState(B);
         tree.insertState(C);
@@ -268,7 +271,7 @@ public class MCStatisticsTest {
         localProp.setProperty("MonteCarloRL", "true");
         localProp.setProperty("MonteCarloRLBaseValue", "50.0");
         localProp.setProperty("Alpha", "0.05");
-        MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>(localProp, 1);
+        TranspositionTableMCTree<TestAgent> tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
         tree.insertState(A);
         tree.insertState(B);
         tree.insertState(C);
@@ -322,7 +325,7 @@ public class MCStatisticsTest {
         localProp.setProperty("MonteCarloRL", "true");
         localProp.setProperty("MonteCarloRLBaseValue", "0.0");
         localProp.setProperty("Alpha", "0.1");
-        MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>(localProp, 1);
+        TranspositionTableMCTree<TestAgent> tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
         tree.insertState(A);
         tree.insertState(B);
 
@@ -338,7 +341,7 @@ public class MCStatisticsTest {
 
     @Test
     public void updatingForSeveralDifferentActorsDoNotClash() {
-        MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>(localProp, 3);
+        TranspositionTableMCTree<TestAgent> tree = new TranspositionTableMCTree<TestAgent>(localProp, 3);
         tree.insertState(A);
         tree.insertState(B);
 
@@ -367,7 +370,7 @@ public class MCStatisticsTest {
 
     @Test
     public void updatingViaTreeDoesNotCreateClashes() {
-        MonteCarloTree<TestAgent> tree = new MonteCarloTree<TestAgent>(localProp, 3);
+        TranspositionTableMCTree<TestAgent> tree = new TranspositionTableMCTree<TestAgent>(localProp, 3);
         tree.insertState(A);
         tree.insertState(B);
 

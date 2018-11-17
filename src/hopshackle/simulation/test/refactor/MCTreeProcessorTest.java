@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
+import hopshackle.simulation.MCTS.*;
 import hopshackle.simulation.*;
 
 import org.encog.neural.data.basic.*;
@@ -366,7 +367,7 @@ public class MCTreeProcessorTest {
 	
 	@Test
 	public void treeStateWithOneActionIsNotExtracted() {
-		MonteCarloTree<TestAgent> retValue = new MonteCarloTree<TestAgent>(localProp, 2);
+        TranspositionTableMCTree<TestAgent> retValue = new TranspositionTableMCTree<TestAgent>(localProp, 2);
 		State<TestAgent> agentState2 = stateFactory.getCurrentState(agent2);
 		retValue.insertState(agentState2);
 		double[] rewardRight = {-0.5, 0.5};
@@ -379,7 +380,7 @@ public class MCTreeProcessorTest {
 	}
 	
 	private MonteCarloTree<TestAgent> generateTree() {
-		MonteCarloTree<TestAgent> retValue = new MonteCarloTree<TestAgent>(localProp, 2);
+        TranspositionTableMCTree<TestAgent> retValue = new TranspositionTableMCTree<TestAgent>(localProp, 2);
 		State<TestAgent> agentState1 = stateFactory.getCurrentState(agent1);
 		State<TestAgent> agentState2 = stateFactory.getCurrentState(agent2);
 		retValue.insertState(agentState1);

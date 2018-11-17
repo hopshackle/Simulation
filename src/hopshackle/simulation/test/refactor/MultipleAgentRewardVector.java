@@ -1,6 +1,9 @@
 package hopshackle.simulation.test.refactor;
 
 import java.util.*;
+
+import hopshackle.simulation.MCTS.MCTSMasterDecider;
+import hopshackle.simulation.MCTS.MonteCarloTree;
 import hopshackle.simulation.*;
 
 import static org.junit.Assert.*;
@@ -21,7 +24,6 @@ public class MultipleAgentRewardVector {
 	List<GeneticVariable<TestAgent>> genVar = new ArrayList<GeneticVariable<TestAgent>>(EnumSet.allOf(TestGenVar.class));
 	StateFactory<TestAgent> factory = new LinearStateFactory<TestAgent>(genVar);
 	BaseStateDecider<TestAgent> rolloutDecider = new SimpleMazeDecider();
-	MonteCarloTree<TestAgent> tree;
 	// This is a single agent test, so no opponent model is needed, and the last parameter is safely null
 	MCTSMasterDecider<TestAgent> masterDecider;
 	ExperienceRecordCollector<TestAgent> erc;
@@ -51,7 +53,7 @@ public class MultipleAgentRewardVector {
 		localProp.setProperty("MaxTurnsPerGame", "10000");
 		localProp.setProperty("GameOrdinalRewards", "0");
 		localProp.setProperty("MonteCarloOpenLoop", "false");
-		tree = new MonteCarloTree<TestAgent>(localProp, 1);
+	//	tree = new MonteCarloTree<TestAgent>(localProp, 1);
 		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
 		masterDecider.injectProperties(localProp);
 		Dice.setSeed(6l);

@@ -377,7 +377,7 @@ public class NeuralDecider<A extends Agent> extends BaseStateDecider<A> implemen
 
     // TODO: This does not properly support validation error checking. I think I can implement that using the Strategy
     // concept in Encog 3.3. After each iteration I check the validation error, and stop training if this has increased.
-    protected double teach(BasicNeuralDataSet allData) {
+    public double teach(BasicNeuralDataSet allData) {
 
         if (shuffleTrainingData)
             allData = shuffle(allData);

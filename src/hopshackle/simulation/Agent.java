@@ -1,6 +1,7 @@
 package hopshackle.simulation;
 
 import hopshackle.simulation.AgentEvent.Type;
+import hopshackle.simulation.games.Game;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
