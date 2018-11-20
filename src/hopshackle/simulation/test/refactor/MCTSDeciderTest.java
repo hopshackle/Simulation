@@ -103,7 +103,6 @@ public class MCTSDeciderTest {
 	public void multiplePlayersWithMultipleTrees() {
 		localProp.setProperty("MonteCarloSingleTree", "false");
 		masterDecider.injectProperties(localProp);
-		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
 		TestAgent[] players = new TestAgent[3];
 		players[0] = agent;
 		players[1] = new TestAgent(world);
@@ -123,8 +122,8 @@ public class MCTSDeciderTest {
 		assertEquals(tree.numberOfStates(), 4);
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT, 1)[0], 5.450, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST, 1)[0], -6.3175, 0.01);
+		assertEquals(startStats.getMean(TestActionEnum.LEFT, 1)[0], 4.91, 0.01);    // was 5.45
+		assertEquals(startStats.getMean(TestActionEnum.TEST, 1)[0], -6.001, 0.01); // was -6.3175
 		assertEquals(startStats.getMean(TestActionEnum.RIGHT, 1)[0], -6.859, 0.01);
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 95);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 3);
@@ -188,17 +187,17 @@ public class MCTSDeciderTest {
 	
 	@Test
 	public void RAVEChildDeciderUpdates() {
-		localProp.setProperty("MonteCarloRAVE", "GellySilver");
-		localProp.setProperty("MonteCarloRAVEWeight", "2");
+		localProp.setProperty("MonteCarloRAVE", "true");
+		localProp.setProperty("MonteCarloRAVEExploreConstant", "2");
 		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
 		mazeGame = new SimpleMazeGame(2, agent);
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneMove();
         TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree) masterDecider.getTree(agent);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT, 0.0, 1), 6.77, 0.01);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT, 0.0, 1), 0.91, 0.01);
-		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST, 0.0, 1), 4.29, 0.01);
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT, 0.0, 1), 7.10, 0.01); // was 6.77
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT, 0.0, 1), 0.84, 0.01); // was 0.91
+		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.TEST, 0.0, 1), 2.59, 0.01); // was 4.59
 	}
 }
 

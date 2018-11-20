@@ -2,6 +2,7 @@ package hopshackle.simulation.MCTS;
 
 import hopshackle.simulation.*;
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -58,38 +59,50 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
     }
     @Override
     public void insertRoot(State<P> state) {
-        super.insertRoot(state);
+        rootNode = new MCStatistics<P>(this, state);
         insertState(state);
     }
 
     @Override
-    public void processTrajectory(List<Pair<State<P>, ActionWithRef<P>>> trajectory, double[] finalScores) {
-        // 'Learning' in this context means updating the MonteCarloTree
+    public void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, double[] finalScores) {
+        long endTime = trajectory.get(trajectory.size()-1).getValue2();
         for (int i = 0; i < trajectory.size(); i++) {  // traverse through trajectory
-            Pair<State<P>, ActionWithRef<P>> tuple = trajectory.get(i);
+            Triplet<State<P>, ActionWithRef<P>, Long> tuple = trajectory.get(i);
             State<P> state = tuple.getValue0();
             ActionEnum<P> actionTaken = tuple.getValue1().actionTaken;
-            State<P> nextState = i < trajectory.size() ? trajectory.get(i + 1).getValue0() : null;
+            State<P> nextState = i < trajectory.size() - 1 ? trajectory.get(i + 1).getValue0() : null;
             int actingPlayer = tuple.getValue1().agentRef;
+            long time = tuple.getValue2();
+
+            double discountFactor = gamma;
+            if (gamma < 1.0) discountFactor = Math.pow(gamma, (endTime - time) / timePeriod);
+            double[] discountedScores = new double[finalScores.length];
+            for (int j = 0; j < discountedScores.length; j++)
+                discountedScores[j] = finalScores[j] * discountFactor;
 
             if (containsState(state)) {
                 // in tree, so update state
-                updateState(state, actionTaken, nextState, finalScores, actingPlayer);
+                updateState(state, actionTaken, nextState, discountedScores, actingPlayer);
             } else if (updatesLeft() > 0) {
                 insertState(state);
-                updateState(state, actionTaken, nextState, finalScores, actingPlayer);
+                updateState(state, actionTaken, nextState, discountedScores, actingPlayer);
             }
 
             if (RAVE) {
                 for (int j = i; j >= 0; j--) { // all previous actions in the trajectory have their RAVE stats updated
                     State<P> previousState = trajectory.get(j).getValue0();
-                    updateRAVE(previousState, actionTaken, finalScores, actingPlayer);
+                    updateRAVE(previousState, actionTaken, discountedScores, actingPlayer);
                 }
             }
         }
     }
 
-    @Override
+    //public for testing
+    public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double reward) {
+        updateState(state, action, nextState, toArray(reward), 1);
+    }
+
+    // public for testing
     public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double[] reward, int actingPlayer) {
         String stateAsString = state.getAsString();
         if (debug) {
@@ -173,16 +186,17 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
     }
 
     @Override
-    public List<String> getAllStatesWithMinVisits(int minV) {
-        List<String> retValue = new ArrayList<String>();
+    public List<MCStatistics<P>> getAllNodesWithMinVisits(int minV) {
+        List<MCStatistics<P>> retValue = new ArrayList();
         for (String key : tree.keySet()) {
             if (tree.get(key).getVisits() >= minV)
-                retValue.add(key);
+                retValue.add(tree.get(key));
         }
         return retValue;
     }
 
-    public void pruneTree(String newRoot) {
+    @Override
+    public void pruneTree(MCStatistics<P> newRoot) {
 		/*
 		- Create a new, empty tree as in refresh()
 		- statesToCopy = empty Queue
@@ -195,7 +209,7 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
         Map<String, MCStatistics<P>> newTree = new HashMap<String, MCStatistics<P>>();
         Queue<String> q = new LinkedBlockingQueue<String>();
         Set<String> processed = new HashSet<String>();
-        q.add(newRoot);
+        q.add(newRoot.getReferenceState().getAsString());
         do {
             String state = q.poll();
             processed.add(state);
@@ -213,15 +227,16 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
 
     @Override
     public boolean withinTree(State<P> state) {
-        return tree.containsKey(state.getAsString());
+        return state == null ? false : tree.containsKey(state.getAsString());
     }
 
     @Override
-    public int[] getDepthsFrom(String root) {
+    public int[] getDepths() {
         Map<String, Integer> depths = new HashMap<String, Integer>();
         double[] visitDepth = new double[10];
         int[] atDepth = new int[11];
         Queue<String> q = new LinkedBlockingQueue<String>();
+        String root = rootNode.getReferenceState().toString();
         depths.put(root, 0);
         q.add(root);
         do {

@@ -8,16 +8,13 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 
 	private Decider<P> rolloutDecider;
 	private MonteCarloTree<P> tree;
-	private boolean RAVE, useLookahead;
-	
+
 	public MCTSChildDecider(StateFactory<P> stateFactory, MonteCarloTree<P> tree, Decider<P> rolloutDecider, DeciderProperties prop) {
 		super(stateFactory);
 		injectProperties(prop);
 		localDebug = false;
 		this.rolloutDecider = rolloutDecider;
 		this.tree = tree;
-		useLookahead = getProperty("LookaheadQLearning", "false").equals("true");
-		RAVE = !getProperty("MonteCarloRAVE", "false").equals("false");
 	}
 
 	@Override
@@ -53,12 +50,6 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 
 	@Override
 	public void learnFrom(ExperienceRecord<P> exp, double maxResult) {}
-
-	@Override
-	public void injectProperties(DeciderProperties prop) {
-		super.injectProperties(prop);
-		RAVE = getProperty("MonteCarloRAVE", "false").equals("true");
-	}
 
 	public void setRolloutDecider(Decider<P> rollout) {
 		rolloutDecider = rollout;

@@ -76,7 +76,7 @@ public class MCStatistics<P extends Agent> {
                 successorNodesByAction.put(key, nextNode);
                 tree.setUpdatesLeft(tree.updatesLeft() - 1);
             }
-        } else {
+        } else if (nextState != null) {
             Map<String, Integer> currentStates = successorStatesByAction.get(key);
             if (currentStates == null) {
                 currentStates = new HashMap<String, Integer>();
@@ -170,6 +170,9 @@ public class MCStatistics<P extends Agent> {
             successors.addAll(states.keySet());
         }
         return successors;
+    }
+    public MCStatistics<P> getSuccessorNode(ActionEnum<P> action) {
+        return successorNodesByAction.getOrDefault(new ActionWithRef<>(action, state.getActorRef()), null);
     }
 
     public int getVisits() {
@@ -397,6 +400,10 @@ public class MCStatistics<P extends Agent> {
             return actors[0];
         }
         return state.getActorRef();
+    }
+
+    public State<P> getReferenceState() {
+        return state;
     }
 
     public Set<Integer> actorsFrom() {

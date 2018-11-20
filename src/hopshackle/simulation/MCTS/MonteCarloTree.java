@@ -1,7 +1,7 @@
 package hopshackle.simulation.MCTS;
 
 import hopshackle.simulation.*;
-import org.javatuples.Pair;
+import org.javatuples.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -21,7 +21,7 @@ public abstract class MonteCarloTree<P extends Agent> {
     protected DeciderProperties properties;
     private BaseStateDecider<P> offlineHeuristic = new noHeuristic<>();
     protected boolean MAST, RAVE;
-    protected double RAVE_C;
+    protected double RAVE_C, gamma, timePeriod;
 
     /**
      * Basic constructor. Note the mandatory injection of properties.
@@ -60,6 +60,9 @@ public abstract class MonteCarloTree<P extends Agent> {
             offlineHeuristic = new noHeuristic<P>();
         }
         id = idFountain.getAndIncrement();
+        timePeriod = properties.getPropertyAsDouble("TimePeriodForGamma", "1000");
+        gamma = properties.getPropertyAsDouble("Gamma", "1.0");
+
     }
 
     /**
@@ -87,13 +90,7 @@ public abstract class MonteCarloTree<P extends Agent> {
         return updatesLeft;
     }
 
-    public abstract void processTrajectory(List<Pair<State<P>, ActionWithRef<P>>> trajectory, double[] finalScores);
-
-    public void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double reward) {
-        updateState(state, action, nextState, toArray(reward), 1);
-    }
-
-    public abstract void updateState(State<P> state, ActionEnum<P> action, State<P> nextState, double[] reward, int actingPlayer);
+    public abstract void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, double[] finalScores);
 
     protected void updateActionValues(ActionEnum<P> action, int actingPlayer, double reward) {
         String actionAsString = action.toString();
@@ -116,7 +113,7 @@ public abstract class MonteCarloTree<P extends Agent> {
 
     public abstract ActionEnum<P> getBestAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent);
 
-    public abstract List<String> getAllStatesWithMinVisits(int minV);
+    public abstract List<MCStatistics<P>> getAllNodesWithMinVisits(int minV);
 
     public double getActionValue(String k, int playerRef) {
         if (actionValues.get(playerRef - 1).containsKey(k)) {
@@ -125,20 +122,11 @@ public abstract class MonteCarloTree<P extends Agent> {
         return 0.0;
     }
 
-    public int getActionCount(String k, int playerRef) {
-        if (actionValues.get(playerRef - 1).containsKey(k)) {
-            return actionValues.get(playerRef - 1).get(k).visits;
-        }
-        return 0;
-    }
-
     public abstract int numberOfStates();
 
-    public abstract void pruneTree(String newRoot);
+    public abstract void pruneTree(MCStatistics<P> newRoot);
 
-    public void insertRoot(State<P> state) {
-        rootNode = new MCStatistics<P>(this, state);
-    }
+    public abstract void insertRoot(State<P> state);
 
     public MCStatistics getRootStatistics() {
         return rootNode;
@@ -148,7 +136,7 @@ public abstract class MonteCarloTree<P extends Agent> {
 
     public abstract boolean withinTree(State<P> state);
 
-    public abstract int[] getDepthsFrom(String root);
+    public abstract int[] getDepths();
 
     public void setOfflineHeuristic(BaseStateDecider<P> newHeuristic) {
         offlineHeuristic = newHeuristic;
@@ -176,7 +164,7 @@ public abstract class MonteCarloTree<P extends Agent> {
         entityLogger.log(s);
     }
 
-    private double[] toArray(double single) {
+    protected double[] toArray(double single) {
         double[] retValue = new double[1];
         retValue[0] = single;
         return retValue;

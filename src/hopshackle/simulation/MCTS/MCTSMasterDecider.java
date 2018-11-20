@@ -3,8 +3,10 @@ package hopshackle.simulation.MCTS;
 import hopshackle.simulation.*;
 import hopshackle.simulation.AgentEvent.Type;
 import hopshackle.simulation.games.Game;
+import org.javatuples.Triplet;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
@@ -99,7 +101,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         }
         if (reuseOldTree) {
             int before = tree.numberOfStates();
-            tree.pruneTree(currentState.getAsString());
+            tree.pruneTree(tree.getStatisticsFor(currentState));
             if (debug) {
                 agent.log("Pruning reduces states in tree from " + before + " to " + tree.numberOfStates());
             }
@@ -109,7 +111,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
         //      ExperienceRecordCollector<A> erc = new ExperienceRecordCollector<A>(new StandardERFactory<A>(decProp), null);
 
-        //       OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
+        //      OnInstructionTeacher<A> teacher = new OnInstructionTeacher<A>();
         childDecider = createChildDecider(tree, currentPlayer, false);
         //      teacher.registerDecider(childDecider);
         //      teacher.registerToERStream(erc);
@@ -137,12 +139,12 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
                     player.setDecider(childDecider);
                 }
             }
-
+/*
             if (openLoop) {
                 // set open loop references for the cloned game to inherit the same starting states
                 ((OpenLoopStateFactory<A>) stateFactory).cloneGame(game, clonedGame);
             }
-/*
+
             if (singleTree) {
                 for (A player : clonedGame.getAllPlayers())
                     erc.registerAgentWithReference(player, clonedAgent);
@@ -151,7 +153,15 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             }
             */
             clonedGame.playGame(rolloutLimit);
-            tree.processTrajectory(clonedGame.getTrajectory(), clonedGame.getFinalScores());
+            List<Triplet<State<A>, ActionWithRef<A>, Long>> trajectoryToUse = new ArrayList();
+            if (!singleTree) {
+                // filter trajectory to just our actions
+                trajectoryToUse = clonedGame.getTrajectory().stream()
+                        .filter(t -> t.getValue1().agentRef == clonedAgent.getActorRef()).collect(Collectors.toList());
+            } else {
+                trajectoryToUse = clonedGame.getTrajectory();
+            }
+            tree.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
             //        teacher.teach();
 
             long now = System.currentTimeMillis();
@@ -174,7 +184,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
         // Then we look at the statistics in the tree for the current state to make a decision
         agent.log(tree.getRootStatistics().toString(debug));
-        int[] atDepth = tree.getDepthsFrom(currentState.getAsString());
+        int[] atDepth = tree.getDepths();
         agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
         agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
 
@@ -234,6 +244,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");
         trainRolloutDeciderUsingAllPlayerExperiences = getProperty("MonteCarloTrainRolloutDeciderFromAllPlayers", "false").equals("true");
         openLoop = getProperty("MonteCarloOpenLoop", "false").equals("true");
+        /*
         if (openLoop && !(stateFactory instanceof OpenLoopStateFactory)) {
             // we override the provided state factory TODO: or, possibly keep both
             if (singleTree) {
@@ -242,6 +253,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
                 this.stateFactory = OpenLoopStateFactory.newInstance();
             }
         }
+        */
         deciderAsHeuristic = getProperty("MonteCarloRolloutAsHeuristic", "false").equals("true");
         if (treeProcessor == null) treeProcessor = new MCTreeProcessor<A>(dp, this.name);
         rolloutLimit = getPropertyAsInteger("MonteCarloRolloutLimit", "0");

@@ -287,11 +287,11 @@ public class MCTreeTest {
 		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 2);
 		assertEquals(tree.numberOfStates(), 3);
 		
-		tree.pruneTree(test.getAsString());	// should have no impact
+		tree.pruneTree(tree.getStatisticsFor(test));	// should have no impact
 		assertEquals(tree.getStatisticsFor(test).getSuccessorStates().size(), 2);
 		assertEquals(tree.numberOfStates(), 3);
 		
-		tree.pruneTree(other.getAsString());
+		tree.pruneTree(tree.getStatisticsFor(other));
 		assertTrue(tree.getStatisticsFor(test) == null);
 		assertEquals(tree.getStatisticsFor(other).getSuccessorStates().size(), 1);
 		assertEquals(tree.numberOfStates(), 2);

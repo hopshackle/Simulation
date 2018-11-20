@@ -42,11 +42,10 @@ public class MCTreeProcessor<A extends Agent> {
         }
         TranspositionTableMCTree tree = (TranspositionTableMCTree) t;
 
-        List<String> temp = tree.getAllStatesWithMinVisits(minVisits);
-        for (String key : temp) {
-            MCStatistics<A> stats = tree.getStatisticsFor(key);
+        List<MCStatistics<A>> temp = tree.getAllNodesWithMinVisits(minVisits);
+        for (MCStatistics<A> stats : temp) {
             if (stats.getPossibleActions().size() < 2) continue;
-            double[] input = convertStateAsStringToArray(key);
+            double[] input = convertStateAsStringToArray(stats.getReferenceState().getAsString());
             inputData.add(input);
             double[] targetOutput = getOutputValuesAsArray(stats);
             outputData.add(targetOutput);

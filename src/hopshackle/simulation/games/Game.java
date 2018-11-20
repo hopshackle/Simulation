@@ -2,6 +2,7 @@ package hopshackle.simulation.games;
 
 import hopshackle.simulation.*;
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 
 import java.util.*;
 
@@ -14,7 +15,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     public boolean debug = false;
     protected GameScoreCalculator scoreCalculator;
     protected WorldCalendar calendar;
-    protected List<Pair<State<P>, ActionWithRef<P>>> trajectory = new ArrayList();
+    protected List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory = new ArrayList();
 
     public abstract Game<P, A> clone(P perspectivePlayer);
 
@@ -125,7 +126,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         if (action == null) return;
         P currentPlayer = getCurrentPlayer();
         Decider<P> decider = currentPlayer.getDecider();
-        trajectory.add(new Pair(decider.getCurrentState(currentPlayer), new ActionWithRef(action.getType(), getPlayerNumber(getCurrentPlayer()))));
+        trajectory.add(new Triplet(decider.getCurrentState(currentPlayer), new ActionWithRef(action.getType(), getPlayerNumber(getCurrentPlayer())), action.getStartTime()));
 
         action.addToAllPlans(); // this is for compatibility with Action statuses in a real-time simulation
         // it also means that each agent tracks the actions they execute over a game
@@ -151,7 +152,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         calendar = cal;
     }
 
-    public List<Pair<State<P>, ActionWithRef<P>>> getTrajectory() {
+    public List<Triplet<State<P>, ActionWithRef<P>, Long>> getTrajectory() {
         return trajectory;
     }
 
