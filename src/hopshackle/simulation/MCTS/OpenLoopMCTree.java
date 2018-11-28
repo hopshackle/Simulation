@@ -22,8 +22,8 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
         List<MCStatistics<P>> nodeTrajectory = new ArrayList();
         nodeTrajectory.add(currentPointer);
 
-        long endTime = trajectory.get(trajectory.size()).getValue2();
-        for (int i = 0; i < trajectory.size()-1; i++) {  // traverse through trajectory
+        long endTime = trajectory.get(trajectory.size() - 1).getValue2();
+        for (int i = 0; i < trajectory.size(); i++) {  // traverse through trajectory
             Triplet<State<P>, ActionWithRef<P>, Long> tuple = trajectory.get(i);
             ActionEnum<P> actionTaken = tuple.getValue1().actionTaken;
             int actingPlayer = tuple.getValue1().agentRef;
@@ -35,39 +35,48 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
                 discountedScores[j] = finalScores[j] * discountFactor;
 
             // we update, and get the next node
-            currentPointer = currentPointer.update(actionTaken, discountedScores, actingPlayer);
-            if (currentPointer != null)
-                nodeTrajectory.add(currentPointer);
+            if (currentPointer != null) {
+                currentPointer = currentPointer.update(actionTaken, discountedScores, actingPlayer);
+                if (currentPointer != null) nodeTrajectory.add(currentPointer);
+            }
+            if (MAST) {
+                updateActionValues(actionTaken, actingPlayer, discountedScores[actingPlayer - 1]);
+            }
             if (RAVE) {
                 for (MCStatistics node : nodeTrajectory) { // all previous actions (plus this one) in the trajectory have their RAVE stats updated
                     node.updateRAVE(actionTaken, finalScores, actingPlayer);
                 }
             }
         }
+        resetGame();
+    }
+
+    public void resetGame() {
+        currentPointer = rootNode;
     }
 
     @Override
     public ActionEnum<P> getNextAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent) {
         if (currentPointer != null) {
             if (currentPointer.hasUntriedAction(possibleActions, decidingAgent)) {
-                return currentPointer.getRandomUntriedAction(possibleActions, decidingAgent);
+                ActionEnum<P> action = currentPointer.getRandomUntriedAction(possibleActions, decidingAgent);
+                currentPointer = null;
+                return action;
             } else {
-                return currentPointer.getUCTAction(possibleActions, decidingAgent);
+                ActionEnum<P> action = currentPointer.getUCTAction(possibleActions, decidingAgent);
+                currentPointer = currentPointer.getSuccessorNode(new ActionWithRef<>(action, decidingAgent));
+                return action;
             }
         } else {
             throw new AssertionError("currentPointer is currently null in OpenLoopMCTree");
         }
     }
 
-    @Override
-    public ActionEnum<P> getBestAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent) {
-        return currentPointer.getBestAction(possibleActions, decidingAgent);
-    }
 
     @Override
     public void insertRoot(State<P> state) {
         rootNode = new MCStatistics(this, state);
-        currentPointer = rootNode;
+        resetGame();
     }
 
     @Override
@@ -85,8 +94,10 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
             if (predicate.test(nextNode)) {
                 retValue.add(nextNode);
             }
-            for (ActionEnum action : nextNode.getPossibleActions()) {
-                processQueue.add(nextNode.getSuccessorNode(action));
+            for (ActionWithRef<P> action : nextNode.getPossibleActions()) {
+                MCStatistics<P> successor = nextNode.getSuccessorNode(action);
+                if (successor != null)
+                    processQueue.add(successor);
             }
             // if node has visits below threshold, then with open loop, so muct all its children
         } while (!processQueue.isEmpty());
@@ -119,12 +130,12 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
         int[] atDepth = new int[11];
         Queue<MCStatistics<P>> q = new LinkedBlockingQueue();
         Queue<MCStatistics<P>> nextQ = new LinkedBlockingQueue();
-        q.add(rootNode);
+        if (rootNode != null) q.add(rootNode);
         int currentDepth = 0;
         do {
             do {
                 MCStatistics<P> state = q.poll();
-                for (ActionEnum<P> action : state.getPossibleActions()) {
+                for (ActionWithRef<P> action : state.getPossibleActions()) {
                     MCStatistics<P> toCopy = state.getSuccessorNode(action);
                     if (toCopy != null) {
                         nextQ.add(toCopy);
@@ -136,7 +147,7 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
             q = nextQ;
             nextQ = new LinkedBlockingQueue();
             currentDepth++;
-        } while (currentDepth < 12);
+        } while (!q.isEmpty() && currentDepth < 11);
 
         int[] retValue = new int[21];
         for (int i = 0; i < 11; i++) {

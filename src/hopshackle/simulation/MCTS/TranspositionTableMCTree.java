@@ -59,8 +59,8 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
     }
     @Override
     public void insertRoot(State<P> state) {
-        rootNode = new MCStatistics<P>(this, state);
         insertState(state);
+        rootNode = tree.get(state.getAsString());
     }
 
     @Override
@@ -178,11 +178,6 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
     @Override
     public int numberOfStates() {
         return tree.size();
-    }
-
-    @Override
-    public ActionEnum<P> getBestAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent) {
-        return tree.get(state.getAsString()).getBestAction(possibleActions, decidingAgent);
     }
 
     @Override

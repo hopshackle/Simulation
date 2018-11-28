@@ -3,10 +3,11 @@ package hopshackle.simulation.MCTS;
 import hopshackle.simulation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MCStatistics<P extends Agent> {
 
-    private List<ActionEnum<P>> allActions = new ArrayList<>();
+    private List<ActionWithRef<P>> allActions = new ArrayList<>();
     private MonteCarloTree<P> tree;
     private Map<ActionWithRef<P>, MCData> map = new HashMap<>();
     private Map<ActionWithRef<P>, MCData> RAVE = new HashMap<>();
@@ -26,7 +27,7 @@ public class MCStatistics<P extends Agent> {
 
     // test method only
     public MCStatistics(DeciderProperties properties, int players, State<P> state) {
-        this(new TranspositionTableMCTree(properties, players), state);
+        this(new TranspositionTableMCTree<>(properties, players), state);
     }
 
     public MCStatistics(MonteCarloTree<P> tree, State<P> state) {
@@ -64,60 +65,36 @@ public class MCStatistics<P extends Agent> {
     public MCStatistics<P> update(ActionEnum<P> action, State<P> nextState, double[] reward, int agentRef) {
         double[] V = reward;
         double[] Q = reward;
-        if (!allActions.contains(action)) {
-            addAction(action, agentRef);
-        }
-        ActionWithRef key = new ActionWithRef(action, agentRef);
-        MCStatistics<P> nextNode = null;
-        if (openLoop) {
-            nextNode = successorNodesByAction.get(key);
-            if (nextNode == null && tree.updatesLeft() > 0) {
-                nextNode = new MCStatistics<P>(tree, null);
-                successorNodesByAction.put(key, nextNode);
-                tree.setUpdatesLeft(tree.updatesLeft() - 1);
-            }
-        } else if (nextState != null) {
-            Map<String, Integer> currentStates = successorStatesByAction.get(key);
-            if (currentStates == null) {
-                currentStates = new HashMap<String, Integer>();
-                successorStatesByAction.put(key, currentStates);
-            }
-            if (tree.withinTree(nextState)) {
-                String nextStateAsString = nextState.getAsString();
-                if (!currentStates.containsKey(nextStateAsString)) {
-                    currentStates.put(nextStateAsString, 1);
-                } else {
-                    currentStates.put(nextStateAsString, currentStates.get(nextStateAsString) + 1);
-                }
-            }
-            nextNode = tree.getStatisticsFor(nextState);
-        }
 
-        // this is a leaf node we cannot update its value
+        ActionWithRef<P> actionRef = new ActionWithRef<>(action, agentRef);
+        addAction(actionRef);
+        MCStatistics<P> nextNode = nextNodeFrom(actionRef, nextState);
+
+        // if this is a leaf node we cannot update its value
         if (nextNode != null) {
             V = nextNode.getV(agentRef);
             Q = nextNode.getQ(agentRef);
             if (V.length == 0) V = reward;
             if (Q.length == 0) Q = reward;
         }
-        if (map.containsKey(key)) {
-            MCData old = map.get(key);
+        if (map.containsKey(actionRef)) {
+            MCData old = map.get(actionRef);
             if (tree.debug)
-                tree.log(String.format("\tInitial Action values MC:%.2f\tV:%.2f\tQ:%.2f", old.mean, old.V, old.Q));
-            if (tree.debug) tree.log(String.format("\tAction update         MC:%.2f\tV:%.2f\tQ:%.2f", reward, V, Q));
+                tree.log(String.format("\tInitial Action values MC:%.2f\tV:%.2f\tQ:%.2f", old.mean[agentRef], old.V[agentRef], old.Q[agentRef]));
+            if (tree.debug) tree.log(String.format("\tAction update         MC:%.2f\tV:%.2f\tQ:%.2f", reward[agentRef], V[agentRef], Q[agentRef]));
             MCData newMCD = new MCData(old, reward, V, Q);
             if (tree.debug)
-                tree.log(String.format("\tNew Action values     MC:%.2f\tV:%.2f\tQ:%.2f", newMCD.mean, newMCD.V, newMCD.Q));
-            map.put(key, newMCD);
+                tree.log(String.format("\tNew Action values     MC:%.2f\tV:%.2f\tQ:%.2f", newMCD.mean[agentRef], newMCD.V[agentRef], newMCD.Q[agentRef]));
+            map.put(actionRef, newMCD);
         } else {
-            map.put(key, new MCData(key.toString(), reward, tree.properties));
+            map.put(actionRef, new MCData(actionRef.toString(), reward, tree.properties));
         }
         totalVisits++;
         return nextNode;
     }
 
     protected void updateRAVE(ActionEnum<P> action, double[] reward, int agentRef) {
-        ActionWithRef key = new ActionWithRef(action, agentRef);
+        ActionWithRef<P> key = new ActionWithRef<>(action, agentRef);
         if (RAVE.containsKey(key)) {
             MCData old = RAVE.get(key);
             MCData newMCD = new MCData(old, reward);
@@ -129,7 +106,7 @@ public class MCStatistics<P extends Agent> {
     }
 
     public double getRAVEValue(ActionEnum<P> action, double exploreC, int player) {
-        return getRAVEValue(new ActionWithRef(action, player), exploreC);
+        return getRAVEValue(new ActionWithRef<>(action, player), exploreC);
     }
 
     public double getRAVEValue(ActionWithRef key, double exploreC) {
@@ -140,58 +117,81 @@ public class MCStatistics<P extends Agent> {
         return retValue;
     }
 
-    private void addAction(ActionEnum<P> newAction, int agentRef) {
-        if (!allActions.contains(newAction)) {
-            allActions.add(newAction);
-            ActionWithRef key = new ActionWithRef(newAction, agentRef);
-            if (map.containsKey(key))
+    private void addAction(ActionWithRef<P> actionRef) {
+        if (!allActions.contains(actionRef)) {
+            allActions.add(actionRef);
+            if (map.containsKey(actionRef))
                 throw new AssertionError("MCData already exists");
-            map.put(key, new MCData(key.toString(), tree.properties, tree.maxActors));
-
+            map.put(actionRef, new MCData(actionRef.toString(), tree.properties, tree.maxActors));
         }
     }
 
-    public List<ActionEnum<P>> getPossibleActions() {
+    private MCStatistics<P> nextNodeFrom(ActionWithRef<P> actionRef, State<P> nextState) {
+        MCStatistics<P> nextNode = null;
+        if (openLoop) {
+            nextNode = successorNodesByAction.get(actionRef);
+            if (nextNode == null && tree.updatesLeft() > 0) {
+                nextNode = new MCStatistics<>(tree, null);
+                successorNodesByAction.put(actionRef, nextNode);
+                tree.setUpdatesLeft(tree.updatesLeft() - 1);
+            }
+        } else if (nextState != null) {
+            Map<String, Integer> currentStates = successorStatesByAction.computeIfAbsent(actionRef, k -> new HashMap<>());
+            if (tree.withinTree(nextState)) {
+                String nextStateAsString = nextState.getAsString();
+                if (!currentStates.containsKey(nextStateAsString)) {
+                    currentStates.put(nextStateAsString, 1);
+                } else {
+                    currentStates.put(nextStateAsString, currentStates.get(nextStateAsString) + 1);
+                }
+            }
+            nextNode = tree.getStatisticsFor(nextState);
+        }
+        return nextNode;
+    }
+
+    public List<ActionWithRef<P>> getPossibleActions() {
         return allActions;
     }
+    public List<ActionEnum<P>> getPossibleActions(int agent) {
+        return allActions.stream()
+                .filter(ar -> ar.agentRef == agent)
+                .map(ar -> ar.actionTaken)
+                .collect(Collectors.toList());
+    }
 
-    public Map<String, Integer> getSuccessorStatesFrom(ActionEnum<P> action) {
-        Map<String, Integer> retValue = new HashMap<>();
-        for (int actingAgent : actorsFrom()) {
-            ActionWithRef key = new ActionWithRef(action, actingAgent);
-            retValue.putAll(successorStatesByAction.getOrDefault(key, new HashMap<String, Integer>()));
-        }
-        return retValue;
+    public Map<String, Integer> getSuccessorStatesFrom(ActionWithRef<P> actionRef) {
+        return successorStatesByAction.getOrDefault(actionRef, new HashMap());
     }
 
     public Set<String> getSuccessorStates() {
-        Set<String> successors = new HashSet<String>();
+        Set<String> successors = new HashSet<>();
         for (Map<String, Integer> states : successorStatesByAction.values()) {
             successors.addAll(states.keySet());
         }
         return successors;
     }
-    public MCStatistics<P> getSuccessorNode(ActionEnum<P> action) {
-        return successorNodesByAction.getOrDefault(new ActionWithRef<>(action, state.getActorRef()), null);
+
+    public MCStatistics<P> getSuccessorNode(ActionWithRef<P> actionRef) {
+        return successorNodesByAction.getOrDefault(actionRef, null);
     }
 
     public int getVisits() {
         return totalVisits;
     }
 
+    public int getVisits(ActionWithRef<P> key) {
+        return map.containsKey(key) ? map.get(key).visits : 0;
+    }
     public int getVisits(ActionEnum<P> action) {
-        int retValue = 0;
-        for (int agentRef : actorsFrom()) {
-            ActionWithRef key = new ActionWithRef(action, agentRef);
-            if (map.containsKey(key)) {
-                retValue += map.get(key).visits;
-            }
-        }
-        return retValue;
+        return map.keySet().stream()
+                .filter(ar -> ar.actionTaken.equals(action))
+                .mapToInt(ar -> map.get(ar).visits)
+                .sum();
     }
 
     public double[] getMean(ActionEnum<P> action, int agentRef) {
-        ActionWithRef key = new ActionWithRef(action, agentRef);
+        ActionWithRef<P> key = new ActionWithRef<>(action, agentRef);
         if (map.containsKey(key)) {
             return map.get(key).mean;
         } else {
@@ -242,15 +242,11 @@ public class MCStatistics<P extends Agent> {
     }
 
     private boolean hasActionBeenTried(ActionEnum<P> action, int player) {
-        ActionWithRef key = new ActionWithRef(action, player);
+        ActionWithRef<P> key = new ActionWithRef<>(action, player);
         if (!map.containsKey(key)) {
-            addAction(action, player);
+            addAction(key);
             return false;
-        } else {
-            if (map.get(key).visits == 0)
-                return false;
-        }
-        return true;
+        } else return map.get(key).visits != 0;
     }
 
     public boolean hasUntriedAction(List<ActionEnum<P>> availableActions, int player) {
@@ -301,7 +297,7 @@ public class MCStatistics<P extends Agent> {
         List<Double> heuristicValues = heuristic.valueOptions(availableActions, state, player);
         boolean sqrtInterpolation = interpolationMethod.equals("RAVE");
         for (ActionEnum<P> action : availableActions) {
-            ActionWithRef key = new ActionWithRef(action, player);
+            ActionWithRef<P> key = new ActionWithRef<>(action, player);
             MCData data = map.get(key);
             if (data == null) continue;
             double actionScore = score(data, player);
@@ -338,11 +334,11 @@ public class MCStatistics<P extends Agent> {
     public String toString(boolean verbose) {
         double[] V = getV(getMostCommonActor());
         double[] Q = getQ(getMostCommonActor());
-        StringBuffer retValue = new StringBuffer(String.format("MC Statistics\tVisits: %d\tV|Q", totalVisits));
+        StringBuilder retValue = new StringBuilder(String.format("MC Statistics\tVisits: %d\tV|Q", totalVisits));
         for (int i = 0; i < V.length; i++)
             retValue.append(String.format("\t[%.2f|%.2f]", V[i], Q[i]));
         retValue.append("\n");
-        for (ActionWithRef k : keysInVisitOrder()) {
+        for (ActionWithRef<P> k : keysInVisitOrder()) {
             String output = "";
             if (heuristicWeight > 0.0) {
                 double[] heuristicValues = new double[tree.maxActors];
@@ -359,7 +355,7 @@ public class MCStatistics<P extends Agent> {
             if (verbose) {
                 Map<String, Integer> successors = successorStatesByAction.getOrDefault(k, new HashMap<String, Integer>());
                 for (String succKey : successors.keySet()) {
-                    if (tree.stateRef(succKey) != "0") {
+                    if (!tree.stateRef(succKey).equals("0")) {
                         retValue.append(String.format("\t\tState %s transitioned to %d times\n", tree.stateRef(succKey), successors.get(succKey)));
                     }
                 }
@@ -368,12 +364,12 @@ public class MCStatistics<P extends Agent> {
         return retValue.toString();
     }
 
-    private List<ActionWithRef> keysInVisitOrder() {
-        Map<String, ActionWithRef> reverseKey = new HashMap<>();
-        for (ActionWithRef key : map.keySet()) {
+    private List<ActionWithRef<P>> keysInVisitOrder() {
+        Map<String, ActionWithRef<P>> reverseKey = new HashMap<>();
+        for (ActionWithRef<P> key : map.keySet()) {
             reverseKey.put(map.get(key).key, key);
         }
-        List<ActionWithRef> retValue = new ArrayList<>();
+        List<ActionWithRef<P>> retValue = new ArrayList<>();
         List<MCData> sortedByVisit = new ArrayList<>();
         sortedByVisit.addAll(map.values());
         Collections.sort(sortedByVisit);
@@ -436,7 +432,7 @@ public class MCStatistics<P extends Agent> {
             ActionEnum<P> retValue = null;
             double score = Double.NEGATIVE_INFINITY;
             for (ActionEnum<P> action : availableActions) {
-                ActionWithRef key = new ActionWithRef(action, player);
+                ActionWithRef<P> key = new ActionWithRef<>(action, player);
                 if (map.containsKey(key)) {
                     MCData data = map.get(key);
                     double actionScore = robustMC ? data.visits : score(data, player);
@@ -462,7 +458,7 @@ class MCData implements Comparable<MCData> {
 
     private double alpha;
     private double[] baseValue;
-    protected boolean useBaseValue;
+    private boolean useBaseValue;
     private int visitLimit;
 
     public void refresh(DeciderProperties properties) {
@@ -543,7 +539,7 @@ class MCData implements Comparable<MCData> {
 
     @Override
     public String toString() {
-        StringBuffer retValue = new StringBuffer();
+        StringBuilder retValue = new StringBuilder();
         retValue.append(String.format("Visits:%d\tMC|V|Q", visits));
         for (int i = 0; i < maxActors; i++) {
             retValue.append(String.format("\t[%.2f|%.2f|%.2f]", mean[i], V[i], Q[i]));

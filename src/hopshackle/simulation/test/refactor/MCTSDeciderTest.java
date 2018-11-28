@@ -71,7 +71,7 @@ public class MCTSDeciderTest {
 		mazeGame = new SimpleMazeGame(2, agent);
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
-		mazeGame.oneMove();
+		mazeGame.oneAction();
         TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree) masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		assertEquals(tree.numberOfStates(), 7);
@@ -85,7 +85,7 @@ public class MCTSDeciderTest {
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
 		
 		startState = masterDecider.getCurrentState(agent);
-		mazeGame.oneMove();
+		mazeGame.oneAction();
 		tree = (TranspositionTableMCTree) masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		startStats = tree.getStatisticsFor(startState);
@@ -116,7 +116,7 @@ public class MCTSDeciderTest {
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		assertEquals(mazeGame.playerToMove, 0);
-		mazeGame.oneMove();
+		mazeGame.oneAction();
         TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree)masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		assertEquals(tree.numberOfStates(), 4);
@@ -133,7 +133,7 @@ public class MCTSDeciderTest {
 		State<TestAgent> secondPlayerState = masterDecider.getCurrentState(players[1]);
 		assertFalse(tree.containsState(secondPlayerState));
 		
-		mazeGame.oneMove();
+		mazeGame.oneAction();
 		assertEquals(mazeGame.playerToMove, 2);
 		State<TestAgent> thirdPlayerState = masterDecider.getCurrentState(players[2]);
 		assertFalse(tree.containsState(thirdPlayerState));
@@ -158,7 +158,7 @@ public class MCTSDeciderTest {
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		assertEquals(mazeGame.playerToMove, 0);
 
-		mazeGame.oneMove();
+		mazeGame.oneAction();
         TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree)masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
 		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
@@ -177,7 +177,7 @@ public class MCTSDeciderTest {
 		assertTrue(tree.containsState(secondPlayerState));
 		assertEquals(tree.getStatisticsFor(secondPlayerState).getVisits(), 99);
 		
-		mazeGame.oneMove();
+		mazeGame.oneAction();
 		assertEquals(mazeGame.playerToMove, 2);
 		State<TestAgent> thirdPlayerState = masterDecider.getCurrentState(players[2]);
 		assertTrue(tree.containsState(thirdPlayerState));
@@ -193,7 +193,7 @@ public class MCTSDeciderTest {
 		mazeGame = new SimpleMazeGame(2, agent);
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
-		mazeGame.oneMove();
+		mazeGame.oneAction();
         TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree) masterDecider.getTree(agent);
 		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.LEFT, 0.0, 1), 7.10, 0.01); // was 6.77
 		assertEquals(tree.getStatisticsFor(startState).getRAVEValue(TestActionEnum.RIGHT, 0.0, 1), 0.84, 0.01); // was 0.91

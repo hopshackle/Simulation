@@ -174,27 +174,27 @@ public class MCTreeTest {
 
 	@Test
 	public void getBestActionWithAPreviouslyUnseenActionShouldNotReturnIt() {
-		tree = new TranspositionTableMCTree<TestAgent>(localProp);
-		tree.insertState(test);
+		tree = new TranspositionTableMCTree<>(localProp);
+		tree.insertRoot(test);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
-		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly, 1);
-		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions, 1);
+		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(leftRightOnly, 1);
+		TestActionEnum allA = (TestActionEnum) tree.getBestAction(allActions, 1);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
 		assertTrue(allA == TestActionEnum.RIGHT);
 	}
 
 	@Test
 	public void getBestActionWithRestrictedListShouldObeyRestrictions() {
-		tree = new TranspositionTableMCTree<TestAgent>(localProp);
-		tree.insertState(test);
+		tree = new TranspositionTableMCTree<>(localProp);
+		tree.insertRoot(test);
 		tree.updateState(test, TestActionEnum.LEFT, test, 2.0);
 		tree.updateState(test, TestActionEnum.RIGHT, test, 2.0);
 		tree.updateState(test, TestActionEnum.TEST, test, 5.0);
 		tree.updateState(test, TestActionEnum.LEFT, test, 1.0);
-		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(test, leftRightOnly, 1);
-		TestActionEnum allA = (TestActionEnum) tree.getBestAction(test, allActions, 1);
+		TestActionEnum leftRight = (TestActionEnum) tree.getBestAction(leftRightOnly, 1);
+		TestActionEnum allA = (TestActionEnum) tree.getBestAction(allActions, 1);
 		assertTrue(leftRight == TestActionEnum.RIGHT);
 		assertTrue(allA == TestActionEnum.TEST);
 	}
@@ -202,7 +202,7 @@ public class MCTreeTest {
 
 	@Test
 	public void updateStateWithAPreviouslyUnseenActionShouldError() {
-		tree = new TranspositionTableMCTree<TestAgent>(localProp);
+		tree = new TranspositionTableMCTree<>(localProp);
 		tree.insertState(test);
 		try {
 			tree.updateState(test, TestActionEnum.TEST, test, 1.0);

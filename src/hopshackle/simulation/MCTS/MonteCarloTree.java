@@ -111,7 +111,10 @@ public abstract class MonteCarloTree<P extends Agent> {
 
     public abstract ActionEnum<P> getNextAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent);
 
-    public abstract ActionEnum<P> getBestAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent);
+    public ActionEnum<P> getBestAction(List<ActionEnum<P>> possibleActions, int decidingAgent) {
+        return rootNode.getBestAction(possibleActions, decidingAgent);
+
+    }
 
     public abstract List<MCStatistics<P>> getAllNodesWithMinVisits(int minV);
 
@@ -132,7 +135,7 @@ public abstract class MonteCarloTree<P extends Agent> {
         return rootNode;
     }
 
-    public abstract MCStatistics getStatisticsFor(State<P> state);
+    public abstract MCStatistics<P> getStatisticsFor(State<P> state);
 
     public abstract boolean withinTree(State<P> state);
 

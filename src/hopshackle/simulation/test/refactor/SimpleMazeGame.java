@@ -77,13 +77,6 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
 
 	}
 
-	public void oneMove() {
-		Action<?> action = players[playerToMove].getDecider().decide(players[playerToMove], HopshackleUtilities.convertList(allActions));
-		action.start();
-		action.run();
-		nextPlayer();
-	}
-
 	private void nextPlayer() {
 		playerToMove++;
 		if (playerToMove == numberOfPlayers) playerToMove = 0;

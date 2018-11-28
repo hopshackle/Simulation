@@ -54,9 +54,10 @@ public class OpenLoopSingleTreeTest {
         localProp.setProperty("GameOrdinalRewards", "0");
         localProp.setProperty("MonteCarloHeuristicOnExpansion", "true");
         localProp.setProperty("MonteCarloMAST", "true");
+        localProp.setProperty("MonteCarloOpenLoop", "true");
         localProp.setProperty("MonteCarloHeuristicOnSelection", "false");
         tree = new OpenLoopMCTree<>(localProp, 3);
-        masterDecider = new MCTSMasterDecider<TestAgent>(null, rolloutDecider, rolloutDecider);
+        masterDecider = new MCTSMasterDecider<TestAgent>(new SingletonStateFactory(), rolloutDecider, rolloutDecider);
         masterDecider.injectProperties(localProp);
         Dice.setSeed(6l);
         players = new TestAgent[3];
@@ -65,23 +66,57 @@ public class OpenLoopSingleTreeTest {
             players[i] = new TestAgent(world);
             players[i].setDecider(masterDecider);
         }
-        game = new SimpleMazeGame(3, players);
+        game = new SimpleMazeGame(4, players);
     }
 
     @Test
-    public void openLoopStateMovesWithGameNotPlayers() {
-        for (int i = 0; i < 3; i++) {
-            players[i].setDecider(new SimpleMazeDecider());
-            // for this test we just want to use simple deciders
-        }
+    public void openLoopStateOnlyIncludesActionsForActingPlayers() {
+        tree = (OpenLoopMCTree) masterDecider.getTree(players[0]);
         assertEquals(tree.numberOfStates(), 1);
 
         assertTrue(tree.withinTree(null));
-        game.oneMove();
-        assertFalse(tree.withinTree(null));
-        assertEquals(tree.numberOfStates(), 100);
 
+        assertEquals(game.getPossibleActions().size(), 3);
+        game.oneAction();
+        assertEquals(game.getPossibleActions().size(), 3);
+
+        MCStatistics<TestAgent> rootStats = tree.getRootStatistics();
+        assertEquals(rootStats.getPossibleActions(1).size(), 3);
+        assertEquals(rootStats.getPossibleActions().size(), 3);
+
+        assertEquals(tree.numberOfStates(), 96);
         assertEquals(tree.getRootStatistics().getVisits(), 99);
+        MCStatistics left = tree.getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 1));
+        assertNotNull(left);
+        MCStatistics left2 = tree.getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 2));
+        assertNull(left2);
+
+        MCStatistics leftleft = left.getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 2));
+        assertNotNull(leftleft);
+        MCStatistics leftleft2 = left.getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 1));
+        assertNull(leftleft2);
+
+        MCStatistics leftleftright = leftleft.getSuccessorNode(new ActionWithRef(TestActionEnum.RIGHT, 3));
+        assertNotNull(leftleftright);
+        MCStatistics leftleftright2 = leftleft.getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 1));
+        assertNull(leftleftright2);
+    }
+
+    @Test
+    public void openLoopBranchesCorrectlyForAllPlayers() {
+        tree = (OpenLoopMCTree) masterDecider.getTree(players[0]);
+        game.oneAction();
+
+        MCStatistics<TestAgent> stats = tree.getRootStatistics();
+        assertEquals(stats.getPossibleActions().size(), 3);
+
+        // we now take LEFT action each time, and check there are three actions for each other player
+        stats = stats.getSuccessorNode(new ActionWithRef<>(TestActionEnum.LEFT, 1));
+        assertEquals(stats.getPossibleActions().size(), 3);
+        stats = stats.getSuccessorNode(new ActionWithRef<>(TestActionEnum.LEFT, 2));
+        assertEquals(stats.getPossibleActions().size(), 3);
+        stats = stats.getSuccessorNode(new ActionWithRef<>(TestActionEnum.LEFT, 3));
+        assertEquals(stats.getPossibleActions().size(), 3);
     }
 
     @Test
@@ -90,30 +125,31 @@ public class OpenLoopSingleTreeTest {
         // If we do 6 rollouts
         MCTSChildDecider<TestAgent> childDecider = masterDecider.createChildDecider(tree, 1, false);
         // just use one all the time, otherwise we re-register a new decider each time and get multiple tree updates
-        for (int loop = 0; loop < 6; loop++) {
+        for (int loop = 0; loop < 8; loop++) {
             tree.setUpdatesLeft(1);
             SimpleMazeGame clonedGame = (SimpleMazeGame) game.clone(players[0]);
             List<TestAgent> clonedPlayers = clonedGame.getAllPlayers();
-            childDecider.setRolloutDecider(new HardCodedDecider<TestAgent>(TestActionEnum.LEFT));
+            childDecider.setRolloutDecider(new HardCodedDecider<>(TestActionEnum.LEFT));
             clonedPlayers.get(0).setDecider(childDecider);
             for (int i = 1; i < 3; i++) {
                 MCTSChildDecider d = masterDecider.createChildDecider(tree, i + 1, true);
-                if (i == 1) d.setRolloutDecider(new HardCodedDecider<TestAgent>(TestActionEnum.TEST));
-                if (i == 2) d.setRolloutDecider(new HardCodedDecider<TestAgent>(TestActionEnum.RIGHT));
+                if (i == 1) d.setRolloutDecider(new HardCodedDecider<>(TestActionEnum.TEST));
+                if (i == 2) d.setRolloutDecider(new HardCodedDecider<>(TestActionEnum.RIGHT));
                 clonedPlayers.get(i).setDecider(d);
             }
 
             clonedGame.playGame();
+            tree.processTrajectory(clonedGame.getTrajectory(), clonedGame.getFinalScores());
 
             MCStatistics<TestAgent> rootStats = tree.getRootStatistics();
             assertEquals(rootStats.getVisits(), loop + 1);
 
-            MCStatistics<TestAgent> testStats = rootStats.getSuccessorNode(TestActionEnum.TEST);
-            MCStatistics<TestAgent> leftStats = rootStats.getSuccessorNode(TestActionEnum.LEFT);
-            MCStatistics<TestAgent> leftTest = leftStats == null ? null : leftStats.getSuccessorNode(TestActionEnum.TEST);
-            MCStatistics<TestAgent> leftLeft = leftStats == null ? null : leftStats.getSuccessorNode(TestActionEnum.LEFT);
-            MCStatistics<TestAgent> leftRight = leftStats == null ? null : leftStats.getSuccessorNode(TestActionEnum.RIGHT);
-            MCStatistics<TestAgent> rightStats = rootStats.getSuccessorNode(TestActionEnum.RIGHT);
+            MCStatistics<TestAgent> testStats = rootStats.getSuccessorNode(new ActionWithRef<>(TestActionEnum.TEST, 1));
+            MCStatistics<TestAgent> leftStats = rootStats.getSuccessorNode(new ActionWithRef<>(TestActionEnum.LEFT, 1));
+            MCStatistics<TestAgent> leftTest = leftStats == null ? null : leftStats.getSuccessorNode(new ActionWithRef<>(TestActionEnum.TEST, 2));
+            MCStatistics<TestAgent> leftLeft = leftStats == null ? null : leftStats.getSuccessorNode(new ActionWithRef<>(TestActionEnum.LEFT, 2));
+            MCStatistics<TestAgent> leftRight = leftStats == null ? null : leftStats.getSuccessorNode(new ActionWithRef<>(TestActionEnum.RIGHT, 2));
+            MCStatistics<TestAgent> rightStats = rootStats.getSuccessorNode(new ActionWithRef<>(TestActionEnum.RIGHT, 1));
             int explored = 0, leftExplored = 0;
             if (testStats != null) explored++;
             if (leftStats != null) explored++;
@@ -124,10 +160,16 @@ public class OpenLoopSingleTreeTest {
 
             // Then in terms of tree structure, we expect there to be three states descended from the initial state
             // with the next two exploring the other two options from player 1 going LEFT
+
+            double[] newScoreTest = rootStats.getMean(TestActionEnum.TEST, 1);
+            double[] newScoreLeft = rootStats.getMean(TestActionEnum.LEFT, 1);
+            double[] newScoreRight = rootStats.getMean(TestActionEnum.RIGHT, 1);
             switch (loop) {
-                case 5:
+                case 7:
                     assertEquals(leftExplored, 3);
                     break;
+                case 6:
+                case 5:
                 case 4:
                     assertEquals(leftExplored, 2);
                     assertEquals(explored, 3);
@@ -146,44 +188,6 @@ public class OpenLoopSingleTreeTest {
                     assertEquals(explored, 1);
                     break;
             }
-
-            double[] newScoreTest = rootStats.getMean(TestActionEnum.TEST, 1);
-            double[] newScoreLeft = rootStats.getMean(TestActionEnum.LEFT, 1);
-            double[] newScoreRight = rootStats.getMean(TestActionEnum.RIGHT, 1);
-            for (int p = 2; p <= 3; p++) {
-                double[] newTest = rootStats.getMean(TestActionEnum.TEST, p);
-                if (newTest[0] != 0.00 || newTest[1] != 0.00 || newTest[2] != 0.00)
-                    newScoreTest = newTest;
-                double[] newLeft = rootStats.getMean(TestActionEnum.LEFT, p);
-                if (newLeft[0] != 0.00 || newLeft[1] != 0.00 || newLeft[2] != 0.00)
-                    newScoreLeft = newLeft;
-                double[] newRight = rootStats.getMean(TestActionEnum.RIGHT, p);
-                if (newRight[0] != 0.00 || newRight[1] != 0.00 || newRight[2] != 0.00)
-                    newScoreRight = newRight;
-            }
-            // one, and only one of these should be non-zero
-            double[] nonZeroScore;
-            if (newScoreTest[2] != 0.0) {
-                nonZeroScore = newScoreTest;
-                assertEquals(newScoreLeft[2], 0.0, 0.01);
-                assertEquals(newScoreRight[2], 0.0, 0.01);
-            } else if (newScoreLeft[2] != 0.0) {
-                nonZeroScore = newScoreLeft;
-                assertEquals(newScoreTest[2], 0.0, 0.01);
-                assertEquals(newScoreRight[2], 0.0, 0.01);
-            } else {
-                assertTrue(newScoreRight[2] != 0.0);
-                nonZeroScore = newScoreRight;
-                assertEquals(newScoreLeft[2], 0.0, 0.01);
-                assertEquals(newScoreTest[2], 0.0, 0.01);
-            }
-            //           System.out.println(tree.toString(true));
-            if (loop > 3) {
-                // once we are investigating actions for players 2 and 3, their decisions will have no impact
-                // on the score for 1 (this assumes that we always go LEFT at root of tree)
-                assertEquals(nonZeroScore[0], 3.0, 0.01);
-            }
-            System.out.println(HopshackleUtilities.formatArray(nonZeroScore, ",", "%.2f"));
         }
 
         MCStatistics<TestAgent> rootStats = tree.getRootStatistics();
@@ -193,10 +197,6 @@ public class OpenLoopSingleTreeTest {
         assertTrue(rootStats.getBestAction(possibleActions, 1) == TestActionEnum.LEFT);
         assertTrue(rootStats.getBestAction(possibleActions, 2) == TestActionEnum.LEFT);
         assertTrue(rootStats.getBestAction(possibleActions, 3) == TestActionEnum.TEST);
-
-        assertNotEquals(rootStats.getV(1)[0], 0.0, 0.001);
-        assertEquals(rootStats.getV(2).length, 0.0, 0.001);
-        assertEquals(rootStats.getV(3).length, 0.0, 0.001);
     }
 
 }

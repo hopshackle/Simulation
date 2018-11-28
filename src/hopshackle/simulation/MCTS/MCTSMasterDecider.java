@@ -69,8 +69,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         State<A> currentState = stateFactory.getCurrentState(agent);
         // We initialise a new tree, and then rollout N times
         // We listen to the ER stream for the cloned agent, and
-        // once the game is finished, we use this to update the MonteCarloTree
-        // using an OnInstructionTeacher.
+        // once the game is finished, we process the trajectory to update the MCTree
         // This is not using any Lookahead; just the record of state to state transitions
         if (!treeMap.containsKey(agent)) {
             // we need to listen to the agent, so that on its death we can remove the tree from the map
@@ -94,7 +93,11 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         }
         MonteCarloTree<A> tree = treeMap.get(agent);
         if (tree == null) {    // i.e. agent has no tree in map, so must be their first turn in a new game
-            tree = new TranspositionTableMCTree<A>(decProp, game.getAllPlayers().size());
+            if (openLoop) {
+                tree = new OpenLoopMCTree<A>(decProp, game.getAllPlayers().size());
+            } else {
+                tree = new TranspositionTableMCTree<A>(decProp, game.getAllPlayers().size());
+            }
             if (deciderAsHeuristic) {
                 tree.setOfflineHeuristic(rolloutDecider);
             }
@@ -119,8 +122,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         tree.insertRoot(currentState);
         int N = Math.min(maxRollouts, maxRolloutsPerOption * chooseableOptions.size());
 
-        // Prune OpenLoop maintained tree to start from currentState of all tracked agents
-        if (openLoop) ((OpenLoopStateFactory<A>) stateFactory).prune();
         int actualI = 0;
         for (int i = 0; i < N; i++) {
             tree.setUpdatesLeft(1);
@@ -188,7 +189,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
         agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
 
-        ActionEnum<A> best = tree.getBestAction(currentState, chooseableOptions, currentPlayer);
+        ActionEnum<A> best = tree.getBestAction(chooseableOptions, currentPlayer);
         if (best == null) {
             throw new AssertionError("No action chosen");
         }
@@ -224,7 +225,11 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         if (treeMap.containsKey(agent)) {
             return treeMap.get(agent);
         }
-        treeMap.put(agent, new TranspositionTableMCTree<A>(decProp, agent.getGame().getAllPlayers().size()));
+        if (openLoop) {
+            treeMap.put(agent, new OpenLoopMCTree<>(decProp, agent.getGame().getAllPlayers().size()));
+        } else {
+            treeMap.put(agent, new TranspositionTableMCTree<>(decProp, agent.getGame().getAllPlayers().size()));
+        }
         return treeMap.get(agent);
     }
 
