@@ -101,7 +101,7 @@ public class MCTSDeciderTest {
 	
 	@Test
 	public void multiplePlayersWithMultipleTrees() {
-		localProp.setProperty("MonteCarloSingleTree", "false");
+		localProp.setProperty("MonteCarloSingleTree", "ignoreOthers");
 		masterDecider.injectProperties(localProp);
 		TestAgent[] players = new TestAgent[3];
 		players[0] = agent;
@@ -141,9 +141,9 @@ public class MCTSDeciderTest {
 	
 	@Test
 	public void singleTree() {
-		localProp.setProperty("MonteCarloSingleTree", "true");
+		localProp.setProperty("MonteCarloSingleTree", "single");
 		masterDecider.injectProperties(localProp);
-		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
+		tree = new TranspositionTableMCTree<>(localProp, 1);
 		TestAgent[] players = new TestAgent[3];
 		players[0] = agent;
 		players[1] = new TestAgent(world);
@@ -156,12 +156,14 @@ public class MCTSDeciderTest {
 		}
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
+        State<TestAgent> secondPlayerState = masterDecider.getCurrentState(players[1]);
+        State<TestAgent> thirdPlayerState = masterDecider.getCurrentState(players[2]);
 		assertEquals(mazeGame.playerToMove, 0);
 
 		mazeGame.oneAction();
         TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree)masterDecider.getTree(agent);
 		System.out.println(tree.toString(true));
-		MCStatistics<TestAgent> startStats = tree.getStatisticsFor(startState);
+		MCStatistics<TestAgent> startStats;
 		assertEquals(tree.numberOfStates(), 7);	// more states visited as we use state of other players
 		startStats = tree.getStatisticsFor(startState);
 		assertEquals(startStats.getVisits(), 99);
@@ -171,18 +173,33 @@ public class MCTSDeciderTest {
 		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 97);
 		assertEquals(startStats.getVisits(TestActionEnum.TEST), 1);
 		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
-		
+
 		assertEquals(mazeGame.playerToMove, 1);
-		State<TestAgent> secondPlayerState = masterDecider.getCurrentState(players[1]);
+        assertFalse(tree.containsState(secondPlayerState));
+        assertFalse(tree.containsState(thirdPlayerState));
+        secondPlayerState = masterDecider.getCurrentState(players[1]);
 		assertTrue(tree.containsState(secondPlayerState));
 		assertEquals(tree.getStatisticsFor(secondPlayerState).getVisits(), 99);
-		
-		mazeGame.oneAction();
-		assertEquals(mazeGame.playerToMove, 2);
-		State<TestAgent> thirdPlayerState = masterDecider.getCurrentState(players[2]);
-		assertTrue(tree.containsState(thirdPlayerState));
-		assertEquals(tree.getStatisticsFor(thirdPlayerState).getVisits(), 98);
-		
+		// with TT-states, the second player state is identical regardless of what the first player does
+        // there is a special case for the first iteration, as this is the first visit to the root node,
+        // and also counts as a visit to the newly created child node
+
+        thirdPlayerState = masterDecider.getCurrentState(players[2]);
+		assertFalse(tree.containsState(thirdPlayerState));
+		assertTrue(thirdPlayerState.getAsString().equals("100|020|000|100"));       // we are at 100 time units
+		assertEquals(tree.getStatisticsFor("100|020|000|200").getVisits(), 98); // and we will move at 200 time units
+		// from now on, we only add one node per visit, so the next node created has 98 visits
+
+        mazeGame.oneAction();
+        assertFalse(tree.containsState(thirdPlayerState));
+        assertEquals(mazeGame.playerToMove, 2);
+        thirdPlayerState = masterDecider.getCurrentState(players[2]);
+        assertTrue(tree.containsState(thirdPlayerState));
+        assertEquals(tree.getStatisticsFor(thirdPlayerState).getVisits(), 99);
+        startState = masterDecider.getCurrentState(players[0]);     // as agent about to move, this has the current state in the tree
+        assertEquals(startStats.getVisits(), 99);
+        assertEquals(tree.getStatisticsFor("100|010|100|400").getVisits(), 1);
+            // and this is only 1, because in almost all cases player 1 wins the game on their second move
 	}
 	
 	@Test

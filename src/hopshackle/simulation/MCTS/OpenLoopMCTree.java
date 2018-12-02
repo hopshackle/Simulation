@@ -9,16 +9,14 @@ import java.util.function.Predicate;
 
 public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
 
-    private MCStatistics<P> currentPointer;
-
     public OpenLoopMCTree(DeciderProperties properties, int numberOfAgents) {
         super(properties, numberOfAgents);
-        insertRoot(null);
+        reset();
     }
 
     @Override
     public void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, double[] finalScores) {
-        currentPointer = rootNode;
+        MCStatistics<P> currentPointer = rootNode;
         List<MCStatistics<P>> nodeTrajectory = new ArrayList();
         nodeTrajectory.add(currentPointer);
 
@@ -48,23 +46,18 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
                 }
             }
         }
-        resetGame();
-    }
-
-    public void resetGame() {
-        currentPointer = rootNode;
     }
 
     @Override
     public ActionEnum<P> getNextAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent) {
+        OpenLoopState<P> OLState = (OpenLoopState) state;
+        MCStatistics<P> currentPointer = OLState.currentNodesByPlayer.get(decidingAgent);
         if (currentPointer != null) {
             if (currentPointer.hasUntriedAction(possibleActions, decidingAgent)) {
                 ActionEnum<P> action = currentPointer.getRandomUntriedAction(possibleActions, decidingAgent);
-                currentPointer = null;
                 return action;
             } else {
                 ActionEnum<P> action = currentPointer.getUCTAction(possibleActions, decidingAgent);
-                currentPointer = currentPointer.getSuccessorNode(new ActionWithRef<>(action, decidingAgent));
                 return action;
             }
         } else {
@@ -75,8 +68,28 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
 
     @Override
     public void insertRoot(State<P> state) {
-        rootNode = new MCStatistics(this, state);
-        resetGame();
+        // do nothing
+    }
+
+    @Override
+    public void reset() {
+        rootNode = new MCStatistics(this, null);
+    }
+
+    @Override
+    public MCStatistics<P> getStatisticsFor(State<P> state) {
+        if (state instanceof OpenLoopState) {
+            OpenLoopState<P> OLState = (OpenLoopState) state;
+            return (OLState.currentNodesByPlayer.get(OLState.currentPlayer));
+        } else {
+            throw new AssertionError("Invalid type of state " + state.getClass());
+        }
+    }
+
+    @Override
+    public boolean withinTree(State<P> state) {
+        if (state != null && state instanceof OpenLoopState) return true;
+        return false;
     }
 
     @Override
@@ -112,16 +125,6 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
     @Override
     public void pruneTree(MCStatistics<P> newRoot) {
         rootNode = newRoot;
-    }
-
-    @Override
-    public MCStatistics getStatisticsFor(State<P> state) {
-        return currentPointer;
-    }
-
-    @Override
-    public boolean withinTree(State<P> state) {
-        return currentPointer != null;
     }
 
     @Override

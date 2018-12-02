@@ -16,6 +16,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     protected GameScoreCalculator scoreCalculator;
     protected WorldCalendar calendar;
     protected List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory = new ArrayList();
+    private List<GameListener<P>> listeners = new ArrayList<>();
 
     public abstract Game<P, A> clone(P perspectivePlayer);
 
@@ -109,6 +110,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     protected void endOfGameHouseKeeping() {
         // may be overridden
         if (log != null) log.close();
+        sendMessage(new GameEvent(GameEvent.Type.GAME_OVER, this));
     }
 
     public void oneAction() {
@@ -133,6 +135,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         action.start();
         action.run();
 
+        sendMessage(new GameEvent(new ActionWithRef<>(action.getType(), currentPlayer.getActorRef()),this));
         if (debug)
             log(getCurrentPlayer().toString() + "  : " + action.toString());
 
@@ -156,5 +159,12 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         return trajectory;
     }
 
+    public void registerListener(GameListener<P> listener) {
+        if (!listeners.contains(listener))
+            listeners.add(listener);
+    }
+    protected void sendMessage(GameEvent event) {
+        listeners.stream().forEach(l -> l.processGameEvent(event));
+    }
 }
 

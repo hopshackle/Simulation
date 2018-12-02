@@ -27,7 +27,7 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 		}
 
         int decidingAgentRef = decidingAgent.getActorRef();
-		if (tree.withinTree(state)) {
+		if (state != null) { // within tree
 			return tree.getNextAction(state, chooseableOptions, decidingAgentRef);
 		} else {
 			return rolloutDecider.makeDecision(decidingAgent, chooseableOptions);

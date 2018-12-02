@@ -6,15 +6,14 @@ import java.util.*;
 
 public class SingletonStateFactory<A extends Agent> implements StateFactory<A> {
 
-    Map<Integer, State<A>> singletonStates = new HashMap();
+    State<A> singletonState;
 
     @Override
     public State<A> getCurrentState(A agent) {
-        if (!singletonStates.containsKey(agent.getActorRef())) {
+        if (singletonState == null) {
 
-            int actorRef = agent.getActorRef();
 
-            State<A> singleton = new State<A>() {
+            singletonState = new State<A>() {
                 @Override
                 public double[] getAsArray() {
                     return new double[0];
@@ -22,7 +21,7 @@ public class SingletonStateFactory<A extends Agent> implements StateFactory<A> {
 
                 @Override
                 public int getActorRef() {
-                    return actorRef;
+                    throw new AssertionError("Not implemented");
                 }
 
                 @Override
@@ -46,9 +45,8 @@ public class SingletonStateFactory<A extends Agent> implements StateFactory<A> {
                 }
             };
 
-            singletonStates.put(actorRef, singleton);
         }
-        return singletonStates.get(agent.getActorRef());
+        return singletonState;
     }
 
     @Override

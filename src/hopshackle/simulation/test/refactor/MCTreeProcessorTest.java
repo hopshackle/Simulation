@@ -39,7 +39,7 @@ public class MCTreeProcessorTest {
 //		localProp.setProperty("NeuralLearningMomentum", "0.98");
 		localProp.setProperty("NeuralLearningIterations", "100");
 		localProp.setProperty("MonteCarloOpenLoop", "false");
-		localProp.setProperty("MonteCarloSingleTree", "false");
+		localProp.setProperty("MonteCarloSingleTree", "ignoreOthers");
 		processor = new TestMCTreeProcessor(localProp);
 		world = new World();
 		agent1 = new TestAgent(world);
