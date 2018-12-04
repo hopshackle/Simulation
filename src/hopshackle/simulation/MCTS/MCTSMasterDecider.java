@@ -95,7 +95,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
         int actualI = 0;
         for (int i = 0; i < N; i++) {
-            tree.setUpdatesLeft(1);
             Game<A, ActionEnum<A>> clonedGame = game.clone(agent);
             A clonedAgent = clonedGame.getPlayer(currentPlayer);
             if (openLoop) {
@@ -119,8 +118,17 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
             clonedGame.playGame(rolloutLimit);
             List<Triplet<State<A>, ActionWithRef<A>, Long>> trajectoryToUse = tree.filterTrajectory(clonedGame.getTrajectory(), agent.getActorRef());
-            tree.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
-
+            if (multiTree) {
+                treeMap.values().stream().forEach(
+                        t -> {
+                            t.setUpdatesLeft(1);
+                            t.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
+                        }
+                );
+            } else {
+                tree.setUpdatesLeft(1);
+                tree.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
+            }
             long now = System.currentTimeMillis();
             actualI = i;
             if (millisecondsPerMove > 0 && now >= startTime + millisecondsPerMove) break;
@@ -198,14 +206,22 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         MonteCarloTree<A> retValue;
         if (openLoop) {
             retValue = new OpenLoopMCTree<>(decProp, agent.getGame().getAllPlayers().size());
+            if (multiTree) {
+                // use a different tree for all players
+                agent.getGame().getAllPlayers().stream()
+                        .filter(p -> p != agent)
+                        .forEach(p -> treeMap.put(p.getActorRef(), new OpenLoopMCTree<>(decProp, agent.getGame().getAllPlayers().size())));
+            }
         } else {
             retValue = new TranspositionTableMCTree<>(decProp, agent.getGame().getAllPlayers().size());
         }
-        treeMap.put(agent.getActorRef(), retValue);
         if (singleTree) {
+            // use the same tree for all players
             Game<A, ActionEnum<A>> game = agent.getGame();
             for (A player : game.getAllPlayers())
                 treeMap.put(player.getActorRef(), retValue);
+        } else {
+            treeMap.put(agent.getActorRef(), retValue);
         }
         if (deciderAsHeuristic) {
             retValue.setOfflineHeuristic(rolloutDecider);

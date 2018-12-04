@@ -162,7 +162,7 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
                 return stats.getUCTAction(possibleActions, decidingAgent);
             }
         } else {
-            throw new AssertionError(stateAsString + " not found in MonteCarloTree to choose action");
+            return null;
         }
     }
 

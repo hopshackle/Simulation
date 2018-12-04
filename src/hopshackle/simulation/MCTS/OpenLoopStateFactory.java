@@ -8,7 +8,7 @@ import java.util.*;
 public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, GameListener<A> {
 
     private String treeType;
-    private Map<Integer, MCStatistics<A>> currentNodes;
+    private Map<Integer, MCStatistics<A>> currentNodes = new HashMap<>();
 
     public OpenLoopStateFactory(String treeSetting, Map<Integer, MonteCarloTree<A>> startingTrees, Game<A, ActionEnum<A>> game) {
         game.registerListener(this);
@@ -19,6 +19,7 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, G
             case "ignoreOthers":
                 game.getAllPlayers().stream()
                         .mapToInt(game::getPlayerNumber)
+                        .filter(startingTrees.keySet()::contains)
                         .forEach(
                                 p -> currentNodes.put(p, startingTrees.get(p).rootNode)
                         );
@@ -34,7 +35,10 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, G
      */
     @Override
     public State<A> getCurrentState(A agent) {
-        return new OpenLoopState<>(agent.getActorRef(), HopshackleUtilities.cloneMap(currentNodes));
+        if (currentNodes.get(agent.getActorRef()) == null) return null;
+        Set<Integer> actors = currentNodes.get(agent.getActorRef()).actorsFrom();
+        int actingAgent = actors.size() == 1 ? actors.iterator().next() : agent.getActorRef();
+        return new OpenLoopState<>(actingAgent, HopshackleUtilities.cloneMap(currentNodes));
     }
 
     @Override
@@ -70,8 +74,10 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, G
                                 .forEach(
                                         p -> {
                                             MCStatistics<A> node = currentNodes.getOrDefault(p, null);
-                                            MCStatistics<A> newNode = node.getSuccessorNode(event.actionTaken);
-                                            currentNodes.put(p, newNode);
+                                            if (node != null) {
+                                                MCStatistics<A> newNode = node.getSuccessorNode(event.actionTaken);
+                                                currentNodes.put(p, newNode);
+                                            }
                                         }
                                 );
                         break;

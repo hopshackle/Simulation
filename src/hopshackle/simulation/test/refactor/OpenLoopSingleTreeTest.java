@@ -134,8 +134,6 @@ public class OpenLoopSingleTreeTest {
         tree = (OpenLoopMCTree) masterDecider.getTree(players[0]);
         assertEquals(tree.numberOfStates(), 1);
 
-        assertTrue(tree.withinTree(null));
-
         assertEquals(game.getPossibleActions().size(), 3);
         game.oneAction();
         assertEquals(game.getPossibleActions().size(), 3);
@@ -172,8 +170,6 @@ public class OpenLoopSingleTreeTest {
 
         assertEquals(tree.numberOfStates(), 1);
         assertEquals(tree2.numberOfStates(), 1);
-        assertTrue(tree.withinTree(null));
-        assertTrue(tree2.withinTree(null));
 
         assertEquals(game.getPossibleActions().size(), 3);
         game.oneAction();
@@ -202,13 +198,6 @@ public class OpenLoopSingleTreeTest {
         assertNull(leftleftright);
         MCStatistics leftleftright2 = leftleft2.getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 1));
         assertNotNull(leftleftright2);
-    }
-
-    @Test
-    public void openLoopPerPlayerTreeHasNodesForAllPlayers() {
-        localProp.setProperty("MonteCarloSingleTree", "perPlayer");
-        setupGame();
-        fail("Not yet implemented");
     }
 
     @Test
@@ -248,12 +237,6 @@ public class OpenLoopSingleTreeTest {
         assertEquals(stats.getPossibleActions().size(), 3);
     }
 
-    @Test
-    public void openLoopPerPlayerBranchesCorrectly() {
-        localProp.setProperty("MonteCarloSingleTree", "perPlayer");
-        setupGame();
-        fail("Not yet implemented");
-    }
 
     @Test
     public void openLoopSingleTreeUpdatesOncePerMove() {
@@ -261,19 +244,23 @@ public class OpenLoopSingleTreeTest {
         tree = (OpenLoopMCTree) masterDecider.getTree(players[0]);
         // This test emulates a few rollouts of a game within MCTSMasterDecider
         // If we do 6 rollouts
-        MCTSChildDecider<TestAgent>[] childDecider = new MCTSChildDecider[3];
-        for (int i = 0; i < 3; i++) {
-            childDecider[i] = masterDecider.createChildDecider(singletonStateFactory, tree, i + 1, false);
-        }
-        childDecider[0].setRolloutDecider(new HardCodedDecider<>(TestActionEnum.LEFT));
-        childDecider[1].setRolloutDecider(new HardCodedDecider<>(TestActionEnum.TEST));
-        childDecider[2].setRolloutDecider(new HardCodedDecider<>(TestActionEnum.RIGHT));
+        Map<Integer, MonteCarloTree<TestAgent>> treeMap = new HashMap<>();
+        for (int i = 0; i < 3; i++) treeMap.put(i, tree);
 
         // just use one all the time, otherwise we re-register a new decider each time and get multiple tree updates
         for (int loop = 0; loop < 8; loop++) {
             tree.setUpdatesLeft(1);
             SimpleMazeGame clonedGame = (SimpleMazeGame) game.clone(players[0]);
             List<TestAgent> clonedPlayers = clonedGame.getAllPlayers();
+
+            MCTSChildDecider<TestAgent>[] childDecider = new MCTSChildDecider[3];
+            for (int i = 0; i < 3; i++) {
+                childDecider[i] = masterDecider.createChildDecider(new OpenLoopStateFactory<TestAgent>("single", treeMap, clonedGame), tree, i + 1, false);
+            }
+            childDecider[0].setRolloutDecider(new HardCodedDecider<>(TestActionEnum.LEFT));
+            childDecider[1].setRolloutDecider(new HardCodedDecider<>(TestActionEnum.TEST));
+            childDecider[2].setRolloutDecider(new HardCodedDecider<>(TestActionEnum.RIGHT));
+
             for (int i = 0; i < 3; i++) clonedPlayers.get(i).setDecider(childDecider[i]);
 
             clonedGame.playGame();
@@ -326,12 +313,11 @@ public class OpenLoopSingleTreeTest {
         }
 
         MCStatistics<TestAgent> rootStats = tree.getRootStatistics();
-        System.out.println(rootStats);
         // from the root state player 1 will want to go left ... but the other two players have never
         // acted from this state, so will default to expansion policy (which uses MAST)
         assertTrue(rootStats.getBestAction(possibleActions, 1) == TestActionEnum.LEFT);
         assertTrue(rootStats.getBestAction(possibleActions, 2) == TestActionEnum.LEFT);
-        assertTrue(rootStats.getBestAction(possibleActions, 3) == TestActionEnum.TEST);
+        assertTrue(rootStats.getBestAction(possibleActions, 3) == TestActionEnum.LEFT);
     }
 
     @Test
@@ -342,17 +328,19 @@ public class OpenLoopSingleTreeTest {
         for (int i = 0; i < 3; i++) {
             tree[i] = masterDecider.getTree(players[i]);
         }
-        MCTSChildDecider<TestAgent> childDecider = masterDecider.createChildDecider(singletonStateFactory, tree[0], 1, false);
-        childDecider.setRolloutDecider(new HardCodedDecider<>(TestActionEnum.LEFT));
 
+        Map<Integer, MonteCarloTree<TestAgent>> treeMap = new HashMap<>();
+        treeMap.put(1, tree[0]);
         // This test emulates a few rollouts of a game within MCTSMasterDecider
         for (int loop = 0; loop < 8; loop++) {
             for (int i = 0; i < 3; i++) tree[i].setUpdatesLeft(1);
             SimpleMazeGame clonedGame = (SimpleMazeGame) game.clone(players[0]);
+            MCTSChildDecider<TestAgent> childDecider = masterDecider.createChildDecider(new OpenLoopStateFactory<TestAgent>("single", treeMap, clonedGame), tree[0], 1, false);
+            childDecider.setRolloutDecider(new HardCodedDecider<>(TestActionEnum.LEFT));
             List<TestAgent> clonedPlayers = clonedGame.getAllPlayers();
             clonedPlayers.get(0).setDecider(childDecider);
             clonedPlayers.get(1).setDecider(new HardCodedDecider<>(TestActionEnum.TEST));
-            clonedPlayers.get(1).setDecider(new HardCodedDecider<>(TestActionEnum.RIGHT));
+            clonedPlayers.get(2).setDecider(new HardCodedDecider<>(TestActionEnum.RIGHT));
 
             clonedGame.playGame();
             tree[0].processTrajectory(tree[0].filterTrajectory(clonedGame.getTrajectory(), 1), clonedGame.getFinalScores());

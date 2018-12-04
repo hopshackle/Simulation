@@ -5,8 +5,8 @@ import java.util.*;
 
 public class OpenLoopState<A extends Agent> implements State<A> {
 
-    protected Map<Integer, MCStatistics<A>> currentNodesByPlayer = new HashMap<>();
-    protected int currentPlayer;
+    public final Map<Integer, MCStatistics<A>> currentNodesByPlayer = new HashMap<>();
+    public final int currentPlayer;
 
     public OpenLoopState(int playerToAct, Map<Integer, MCStatistics<A>> currentNodes) {
         currentPlayer = playerToAct;

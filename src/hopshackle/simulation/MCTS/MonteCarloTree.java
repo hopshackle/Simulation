@@ -21,7 +21,8 @@ public abstract class MonteCarloTree<P extends Agent> {
     protected boolean debug = false;
     protected DeciderProperties properties;
     private BaseStateDecider<P> offlineHeuristic = new noHeuristic<>();
-    protected boolean MAST, RAVE, singleTree;
+    protected String treeSetting;
+    protected boolean MAST, RAVE, singleTree, multiTree, ignoreOthers;
     protected double RAVE_C, gamma, timePeriod;
 
     /**
@@ -52,7 +53,10 @@ public abstract class MonteCarloTree<P extends Agent> {
         MAST = properties.getProperty("MonteCarloMAST", "false").equals("true");
         RAVE = properties.getProperty("MonteCarloRAVE", "false").equals("true");
         RAVE_C = properties.getPropertyAsDouble("MonteCarloRAVEExploreConstant", "0.0");
-        singleTree = properties.getProperty("MonteCarloSingleTree", "single").equals("single");
+        treeSetting = properties.getProperty("MonteCarloSingleTree", "single");
+        singleTree = treeSetting.equals("single");
+        multiTree = treeSetting.equals("perPlayer");
+        ignoreOthers = treeSetting.endsWith("ignoreOthers");
         // Now we add in the heuristic to use, if any
         if (MAST) {
             offlineHeuristic = new MASTHeuristic<>(this);
@@ -95,7 +99,7 @@ public abstract class MonteCarloTree<P extends Agent> {
     public abstract void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, double[] finalScores);
 
     public List<Triplet<State<P>, ActionWithRef<P>, Long>> filterTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, int actorRef) {
-        if (!singleTree) {
+        if (ignoreOthers) {
             // filter trajectory to just our actions
             return trajectory.stream()
                     .filter(t -> t.getValue1().agentRef == actorRef).collect(Collectors.toList());

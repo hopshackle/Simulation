@@ -50,8 +50,11 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
 
     @Override
     public ActionEnum<P> getNextAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent) {
-        OpenLoopState<P> OLState = (OpenLoopState) state;
-        MCStatistics<P> currentPointer = OLState.currentNodesByPlayer.get(decidingAgent);
+        MCStatistics<P> currentPointer = null;
+        if (state != null && state instanceof OpenLoopState) {
+            OpenLoopState<P> OLState = (OpenLoopState) state;
+            currentPointer = OLState.currentNodesByPlayer.get(decidingAgent);
+        }
         if (currentPointer != null) {
             if (currentPointer.hasUntriedAction(possibleActions, decidingAgent)) {
                 ActionEnum<P> action = currentPointer.getRandomUntriedAction(possibleActions, decidingAgent);
@@ -61,7 +64,7 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
                 return action;
             }
         } else {
-            throw new AssertionError("currentPointer is currently null in OpenLoopMCTree");
+            return null;
         }
     }
 

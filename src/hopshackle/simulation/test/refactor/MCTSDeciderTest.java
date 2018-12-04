@@ -190,13 +190,17 @@ public class MCTSDeciderTest {
 		assertEquals(tree.getStatisticsFor("100|020|000|200").getVisits(), 98); // and we will move at 200 time units
 		// from now on, we only add one node per visit, so the next node created has 98 visits
 
+        startState = masterDecider.getCurrentState(players[1]);
         mazeGame.oneAction();
+        tree = (TranspositionTableMCTree)masterDecider.getTree(agent);
+        // because we are using a single tree, this should be the same
         assertFalse(tree.containsState(thirdPlayerState));
         assertEquals(mazeGame.playerToMove, 2);
         thirdPlayerState = masterDecider.getCurrentState(players[2]);
+        assertTrue(thirdPlayerState.getAsString().equals("100|020|000|200"));       // we are at 200 time units
         assertTrue(tree.containsState(thirdPlayerState));
         assertEquals(tree.getStatisticsFor(thirdPlayerState).getVisits(), 99);
-        startState = masterDecider.getCurrentState(players[0]);     // as agent about to move, this has the current state in the tree
+        startStats = tree.getStatisticsFor(startState);
         assertEquals(startStats.getVisits(), 99);
         assertEquals(tree.getStatisticsFor("100|010|100|400").getVisits(), 1);
             // and this is only 1, because in almost all cases player 1 wins the game on their second move
