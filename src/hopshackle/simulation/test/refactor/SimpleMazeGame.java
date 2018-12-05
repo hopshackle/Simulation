@@ -37,7 +37,7 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
 	}
 
 	@Override
-	public Game<TestAgent, ActionEnum<TestAgent>> clone(TestAgent perspectivePlayer) {
+	public SimpleMazeGame clone(TestAgent perspectivePlayer) {
 		World clonedWorld = new World();
 		long currentTime = perspectivePlayer.getWorld().getCurrentTime();
 		clonedWorld.setCalendar(new FastCalendar(currentTime));

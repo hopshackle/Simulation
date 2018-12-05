@@ -9,6 +9,7 @@ import static org.junit.Assert.*;
 
 import hopshackle.simulation.games.GameEvent;
 import org.junit.*;
+import sun.java2d.pipe.SpanShapeRenderer;
 
 public class OpenLoopStateFactoryTest {
 
@@ -276,16 +277,38 @@ public class OpenLoopStateFactoryTest {
 
     @Test
     public void processingAnEventOutOfTreeReturnsNull() {
-        fail("Not yet implemented");
+        localProp.setProperty("MonteCarloSingleTree", "single");
+        setUpTrees();
+        SimpleMazeGame newGame = masterGame.clone(masterPlayers[1]);
+        factory = new OpenLoopStateFactory<>("single", trees, newGame);
+        for (int i = 0; i < newGame.numberOfPlayers; i++) assertNotNull(factory.getCurrentState(newGame.players[i]));
+        factory.processGameEvent(new GameEvent<>(new ActionWithRef<>(TestActionEnum.TEST, 2), newGame));
+        // this is an action not seen in the original game...so moves us out of the tree
+        for (int i = 0; i < newGame.numberOfPlayers; i++) assertNull(factory.getCurrentState(newGame.players[i]));
     }
 
     @Test
     public void reuseOfOpenLoopTree() {
-        fail("Not yet implemented");
+        localProp.setProperty("MonteCarloSingleTree", "perPlayer");
+        localProp.setProperty("MonteCarloRetainTreeBetweenActions", "true");
+        setUpTrees();
+        assertEquals(masterGame.getCurrentPlayer().getActorRef(), 2);
+        MCStatistics<TestAgent> oldRoot = trees.get(2).getRootStatistics();
+        int previousRootVisits = oldRoot.getVisits();
+        int previousVisits = 0;
+        MCStatistics<TestAgent> moveLeft = trees.get(2).getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 2));
+        previousVisits += moveLeft.getVisits();
+        MCStatistics<TestAgent> moveRight = trees.get(2).getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.RIGHT, 2));
+        previousVisits += moveRight.getVisits();
+        MCStatistics<TestAgent> moveTest = trees.get(2).getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.TEST, 2));
+        previousVisits += moveTest.getVisits();
+        masterGame.oneAction();
+        assertEquals(oldRoot.getVisits(), 99 + previousRootVisits);
+        // as we visit the root an additional 99 times
+        MCStatistics<TestAgent> newRoot = trees.get(2).getRootStatistics();
+        assertTrue(newRoot == moveLeft || newRoot == moveRight || newRoot == moveTest);
+
+        assertEquals(moveLeft.getVisits() + moveRight.getVisits() + moveTest.getVisits(), 99 + previousVisits);
     }
 
-    @Test
-    public void factoryListensToGameAndUpdates() {
-        fail("Not yet implemented");
-    }
 }
