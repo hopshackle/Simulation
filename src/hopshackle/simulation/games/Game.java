@@ -20,9 +20,9 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 
     public abstract Game<P, A> clone(P perspectivePlayer);
 
-    public static void cloneCoreFields(Game newGame, Game original) {
-        newGame.scoreCalculator = original.scoreCalculator;
-        newGame.trajectory = HopshackleUtilities.cloneList(original.trajectory);
+    public void cloneCoreFieldsFrom(Game original) {
+        scoreCalculator = original.scoreCalculator;
+  //      trajectory = HopshackleUtilities.cloneList(original.trajectory);
         // Each element of trajectory is immutable, so not cloned
     }
 

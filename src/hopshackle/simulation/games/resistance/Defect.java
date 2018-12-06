@@ -12,6 +12,14 @@ public class Defect implements ActionEnum<ResistancePlayer> {
     public String toString() {
         return "DEFECT";
     }
+
+    public boolean equals(Object other) {
+        return (other instanceof Defect);
+    }
+
+    public int hashCode() {
+        return 30983;
+    }
 }
 
 class DefectAction extends GameAction<ResistancePlayer> {

@@ -16,8 +16,22 @@ public class IncludeInTeam implements ActionEnum<ResistancePlayer> {
         return new IncludeInTeamAction(this, resistancePlayer);
     }
 
+    @Override
     public String toString() {
         return "INCLUDE_" + playerToInclude;
+    }
+
+    @Override
+    public int hashCode() {
+        return playerToInclude * 149 + 73609;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof IncludeInTeam) {
+            if (((IncludeInTeam) other).playerToInclude == playerToInclude) return true;
+        }
+        return false;
     }
 }
 
@@ -30,7 +44,7 @@ class IncludeInTeamAction extends GameAction<ResistancePlayer> {
         toInclude = actionEnum.playerToInclude;
     }
 
-    public void doStuff(){
+    public void doStuff() {
         actor.getGame().includeInTeam(toInclude);
     }
 

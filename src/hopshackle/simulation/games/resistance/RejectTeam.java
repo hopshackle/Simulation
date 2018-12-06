@@ -14,6 +14,14 @@ public class RejectTeam implements ActionEnum<ResistancePlayer> {
         return "REJECT";
     }
 
+    public boolean equals(Object other) {
+        return (other instanceof RejectTeam);
+    }
+
+    public int hashCode() {
+        return 88493;
+    }
+
 }
 
 class RejectTeamAction extends GameAction<ResistancePlayer> {

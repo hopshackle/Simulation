@@ -12,6 +12,14 @@ public class SupportTeam implements ActionEnum<ResistancePlayer> {
     public String toString() {
         return "SUPPORT";
     }
+
+    public boolean equals(Object other) {
+        return (other instanceof SupportTeam);
+    }
+
+    public int hashCode() {
+        return 88819;
+    }
 }
 
 class SupportTeamAction extends GameAction<ResistancePlayer> {

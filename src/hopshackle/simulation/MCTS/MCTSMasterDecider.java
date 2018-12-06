@@ -171,15 +171,16 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         if (openLoop && reuseOldTree) {
             // we need to apply the decision taken to all relevant trees
             ActionWithRef<A> actionTaken = new ActionWithRef<>(best, agent.getActorRef());
-            treeMap.keySet().stream()
-                    .forEach(
-                            // TODO: This does not currently take account of any action partial visibility
-                            p -> {
-                                MCStatistics<A> rootStats = treeMap.get(p).rootNode;
-                                MCStatistics<A> successorStats = rootStats.getSuccessorNode(actionTaken);
-                                treeMap.get(p).rootNode = successorStats;
-                            }
-                    );
+                treeMap.keySet().stream()
+                        .filter(p -> (p==1 && singleTree) || !singleTree)
+                        .forEach(
+                                // TODO: This does not currently take account of any action partial visibility
+                                p -> {
+                                    MCStatistics<A> rootStats = treeMap.get(p).rootNode;
+                                    MCStatistics<A> successorStats = rootStats.getSuccessorNode(actionTaken);
+                                    treeMap.get(p).rootNode = successorStats;
+                                }
+                        );
         }
 
         return best;

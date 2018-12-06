@@ -11,6 +11,14 @@ public class Cooperate implements ActionEnum<ResistancePlayer> {
     }
 
     public String toString() {return "COOPERATE";}
+
+    public boolean equals(Object other) {
+        return (other instanceof Cooperate);
+    }
+
+    public int hashCode() {
+        return 31039;
+    }
 }
 
 class CooperateAction extends GameAction<ResistancePlayer> {

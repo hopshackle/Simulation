@@ -10,6 +10,7 @@ import java.util.stream.*;
 public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlayer>> {
 
     public enum Phase {ASSEMBLE, VOTE, MISSION;}
+
     private static AtomicLong idFountain = new AtomicLong(1);
     private static int[][] teamMembersByMissionandPlayercount = new int[][]{
             {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -23,6 +24,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     private boolean[] traitorIdentities;
     private ResistancePlayer[] allPlayers;
     private int mission = 0, defectorsOnMission = 0, failedMissions = 0, failedVotes = 0, successfulMissions = 0, firstPlayer = 0, currentPlayer;
+    private List<List<Integer>> failedMissionDetails;
     private List<Integer> currentMissionTeam;
     private boolean[] missionTeamVotes;
     private Phase currentPhase;
@@ -38,37 +40,28 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
      */
 
     public Resistance(int numberOfPlayers, int numberOfTraitors, World world) {
+        this(numberOfPlayers, numberOfTraitors, world, false);
+    }
+
+    private Resistance(int numberOfPlayers, int numberOfTraitors, World world, boolean cloned) {
         debug = true;
         playerCount = numberOfPlayers;
         traitorCount = numberOfTraitors;
         traitorIdentities = new boolean[playerCount + 1];
+        missionTeamVotes = new boolean[playerCount + 1];
+        failedMissionDetails = new ArrayList<>();
         allPlayers = new ResistancePlayer[playerCount + 1];
         for (int i = 1; i <= playerCount; i++) {
             allPlayers[i] = new ResistancePlayer(world, this, i);
         }
+        this.world = world;
         scoreCalculator = new ResistanceScoreCalculator();
-        initialise();
+        if (!cloned) initialise();
     }
 
     private void initialise() {
-        int traitorsAllocated = 0;
-        do {
-            int t = Dice.roll(1, playerCount);
-            if (!traitorIdentities[t]) {
-                traitorIdentities[t] = true;
-                log(String.format("Player %d is traitor", t));
-                traitorsAllocated++;
-            }
-        } while (traitorsAllocated < traitorCount);
-
-        for (int i = 1; i <= playerCount; i++) {
-            if (traitorIdentities[i] == true) {
-                allPlayers[i].setTraitor(true);
-                for (int j = 1; j < playerCount; j++) {
-                    if (j != i && traitorIdentities[j]) allPlayers[i].setOtherTraitor(j);
-                }
-            }
-        }
+        randomiseTraitors();
+        updatePlayersWithTraitorInformation();
 
         mission = 1;
         firstPlayer = 1;
@@ -77,10 +70,81 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         currentMissionTeam = new ArrayList();
     }
 
-
     @Override
-    public Game<ResistancePlayer, ActionEnum<ResistancePlayer>> clone(ResistancePlayer perspectivePlayer) {
-        return null;
+    public Resistance clone(ResistancePlayer perspective) {
+        Resistance retValue = new Resistance(playerCount, traitorCount, world, true);
+        retValue.cloneCoreFieldsFrom(this);
+        retValue.debug = false;
+
+        // now undo initialise
+        retValue.mission = mission;
+        retValue.firstPlayer = firstPlayer;
+        retValue.currentPlayer = currentPlayer;
+        retValue.currentPhase = currentPhase;
+        for (int i = 0; i < missionTeamVotes.length; i++)
+            retValue.missionTeamVotes[i] = missionTeamVotes[i];
+        retValue.defectorsOnMission = defectorsOnMission;
+        retValue.failedVotes = failedVotes;
+        retValue.currentMissionTeam = HopshackleUtilities.cloneList(currentMissionTeam);
+        retValue.failedMissionDetails = HopshackleUtilities.cloneList(failedMissionDetails);
+        // note that the details of failed historic missions are immutable, so this shallow copy is legit
+
+        // traitor identities is the tricky bit, as this includes hidden information
+        // if the perspective player is a traitor...then it's easy, we just copy as they have complete information
+        // otherwise we need to sample...the one piece of inference we should use is that any determinisation
+        // must be compatible with the mission failures to date. I.e. each failed mission must have had a number of
+        // traitors at least equal to the observed defections
+        if (traitorIdentities[perspective.getActorRef()]) {
+            for (int i = 0; i < traitorIdentities.length; i++)
+                retValue.traitorIdentities[i] = traitorIdentities[i];
+            retValue.updatePlayersWithTraitorInformation();
+        } else {
+            retValue.randomiseTraitors();
+            retValue.updatePlayersWithTraitorInformation();
+        }
+
+        return retValue;
+    }
+
+    private void randomiseTraitors() {
+        do {
+            int traitorsAllocated = 0;
+            do {
+                int t = Dice.roll(1, playerCount);
+                if (!traitorIdentities[t]) {
+                    traitorIdentities[t] = true;
+                    if (debug) log(String.format("Player %d is traitor", t));
+                    traitorsAllocated++;
+                }
+            } while (traitorsAllocated < traitorCount);
+        } while (!traitorsCompatibleWithHistory());
+    }
+
+    private boolean traitorsCompatibleWithHistory() {
+        for (List<Integer> failedTeam : failedMissionDetails) {
+            int observedDefections = failedTeam.get(failedTeam.size()-1);
+            int traitorsOnMission = 0;
+            for (int i = 0; i < failedTeam.size()-1; i++) {
+                if (traitorIdentities[failedTeam.get(i)])
+                    traitorsOnMission++;
+            }
+            if (observedDefections > traitorsOnMission) {
+                log("Randomisation incompatible with defection history...retrying");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void updatePlayersWithTraitorInformation() {
+        for (int i = 1; i <= playerCount; i++) {
+            if (traitorIdentities[i] == true) {
+                allPlayers[i].setTraitor(true);
+                for (int j = 1; j < playerCount; j++) {
+                    if (j != i && traitorIdentities[j]) allPlayers[i].setOtherTraitor(j);
+                }
+            }
+        }
     }
 
     @Override
@@ -100,7 +164,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
 
     @Override
     public int getPlayerNumber(ResistancePlayer player) {
-        for (int i = 1; i < playerCount; i++)
+        for (int i = 1; i <= playerCount; i++)
             if (allPlayers[i] == player) return i;
         throw new AssertionError("No such player in this game");
     }
@@ -135,11 +199,11 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
 
     @Override
     public boolean gameOver() {
-        return failedMissions >= 3 || successfulMissions >= 3 || failedVotes == 5;
+        return failedMissions >= 3 || successfulMissions >= 3 || failedVotes >= 5;
     }
 
     public boolean spiesHaveWon() {
-        return failedMissions >= 3 || failedVotes == 5;
+        return failedMissions >= 3 || failedVotes >= 5;
     }
 
     private void updateCurrentPlayer() {
@@ -168,7 +232,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                     if (debug)
                         log(String.format("Mission Team proposal: %s", HopshackleUtilities.formatList(currentMissionTeam, ", ", null)));
                 } else {
-                    updateCurrentPlayer();
+                    // continue
                 }
                 break;
             case VOTE:
@@ -201,6 +265,8 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                         successfulMissions++;
                     } else {
                         failedMissions++;
+                        currentMissionTeam.add(defectorsOnMission);
+                        failedMissionDetails.add(currentMissionTeam);
                     }
                     if (debug) log(String.format("%d total defectors on mission", defectorsOnMission));
                     currentPhase = Phase.ASSEMBLE;
@@ -223,6 +289,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
             throw new AssertionError("Defect not a possible action at this point");
         }
     }
+
     public void includeInTeam(int player) {
         if (currentPhase == Phase.ASSEMBLE && !currentMissionTeam.contains(player)) {
             currentMissionTeam.add(player);
@@ -230,6 +297,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
             throw new AssertionError("Cannot include a team member in phase " + currentPhase);
         }
     }
+
     public void voteForMission(int player, boolean vote) {
         if (currentPhase == Phase.VOTE) {
             missionTeamVotes[player] = vote;
@@ -249,5 +317,8 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     public String toString() {
         return String.format("Resistance Game %d: Phase %s Mission %d, with %d failed missions so far", refID, currentPhase, mission, failedMissions);
     }
-    public Phase getPhase() { return currentPhase;}
+
+    public Phase getPhase() {
+        return currentPhase;
+    }
 }

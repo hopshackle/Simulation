@@ -17,7 +17,7 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
 
     public TranspositionTableMCTree(DeciderProperties properties, int numberOfAgents) {
         super(properties, numberOfAgents);
-        tree = new HashMap<String, MCStatistics<P>>();
+        tree = new HashMap<>();
     }
 
     @Override
