@@ -57,13 +57,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     @Override
     public ActionEnum<A> makeDecision(A agent, List<ActionEnum<A>> chooseableOptions) {
 
-        if (chooseableOptions.size() == 1) {
-            agent.log("Only one action possible...skipping MCTS");
-            return chooseableOptions.get(0);
-            // TODO: If we have a time budget, then in the future it may make sense to
-            // construct a Tree anyway, as parts may be of relevance in later turns
-        }
-
         long startTime = System.currentTimeMillis();
         Game<A, ActionEnum<A>> game = agent.getGame();
         int currentPlayer = game.getPlayerNumber(agent);
@@ -91,6 +84,14 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         tree.insertRoot(currentState);
 
         int N = Math.min(maxRollouts, maxRolloutsPerOption * chooseableOptions.size());
+        if (chooseableOptions.size() == 1) {
+            agent.log("Only one action possible...skipping MCTS");
+            // return chooseableOptions.get(0);
+            // TODO: If we have a time budget, then in the future it may make sense to
+            // construct a Tree anyway, as parts may be of relevance in later turns
+            N = 1;
+        }
+
         childDecider = createChildDecider(stateFactory, tree, currentPlayer, false);
 
         int actualI = 0;

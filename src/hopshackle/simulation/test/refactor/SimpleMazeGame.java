@@ -77,7 +77,12 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
 
 	}
 
-	private void nextPlayer() {
+    @Override
+    public String logName() {
+        return "SimpleMazeGame";
+    }
+
+    private void nextPlayer() {
 		playerToMove++;
 		if (playerToMove == numberOfPlayers) playerToMove = 0;
 	}

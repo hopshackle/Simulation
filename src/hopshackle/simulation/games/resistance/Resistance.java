@@ -76,18 +76,20 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         retValue.cloneCoreFieldsFrom(this);
         retValue.debug = false;
 
-        // now undo initialise
+        // now initialise
         retValue.mission = mission;
+        retValue.successfulMissions = successfulMissions;
+        retValue.failedMissions = failedMissions;
+        retValue.failedMissionDetails = HopshackleUtilities.cloneList(failedMissionDetails);
+        // note that the details of failed historic missions are immutable, so this shallow copy is legit
+        retValue.failedVotes = failedVotes;
         retValue.firstPlayer = firstPlayer;
         retValue.currentPlayer = currentPlayer;
         retValue.currentPhase = currentPhase;
         for (int i = 0; i < missionTeamVotes.length; i++)
             retValue.missionTeamVotes[i] = missionTeamVotes[i];
         retValue.defectorsOnMission = defectorsOnMission;
-        retValue.failedVotes = failedVotes;
         retValue.currentMissionTeam = HopshackleUtilities.cloneList(currentMissionTeam);
-        retValue.failedMissionDetails = HopshackleUtilities.cloneList(failedMissionDetails);
-        // note that the details of failed historic missions are immutable, so this shallow copy is legit
 
         // traitor identities is the tricky bit, as this includes hidden information
         // if the perspective player is a traitor...then it's easy, we just copy as they have complete information
@@ -107,9 +109,11 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     }
 
     private void randomiseTraitors() {
+        int redeterminisationCount = 0;
         do {
             int traitorsAllocated = 0;
             do {
+                redeterminisationCount++;
                 int t = Dice.roll(1, playerCount);
                 if (!traitorIdentities[t]) {
                     traitorIdentities[t] = true;
@@ -117,7 +121,10 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                     traitorsAllocated++;
                 }
             } while (traitorsAllocated < traitorCount);
-        } while (!traitorsCompatibleWithHistory());
+        } while (redeterminisationCount < 200 && !traitorsCompatibleWithHistory());
+        if (redeterminisationCount > 10 && debug) {
+            log(redeterminisationCount + " randomisations until compatible with defection history");
+        }
     }
 
     private boolean traitorsCompatibleWithHistory() {
@@ -129,7 +136,6 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                     traitorsOnMission++;
             }
             if (observedDefections > traitorsOnMission) {
-                log("Randomisation incompatible with defection history...retrying");
                 return false;
             }
         }
@@ -261,6 +267,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                 break;
             case MISSION:
                 if (currentPlayer == currentMissionTeam.get(teamMembersByMissionandPlayercount[mission][playerCount] - 1)) {
+                    // last member of team to decide...so move on to next phase
                     if (defectorsOnMission == 0) {
                         successfulMissions++;
                     } else {
@@ -316,6 +323,11 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
 
     public String toString() {
         return String.format("Resistance Game %d: Phase %s Mission %d, with %d failed missions so far", refID, currentPhase, mission, failedMissions);
+    }
+
+    @Override
+    public String logName() {
+        return String.format("Resistance %d", refID);
     }
 
     public Phase getPhase() {

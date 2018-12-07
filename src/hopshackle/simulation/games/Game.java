@@ -64,7 +64,6 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         if (debug) {
             log(String.format("Finished Game after %d actions, GameOver: %s, and scores %s", actions, gameOver(),
                     HopshackleUtilities.formatArray(finalScores, ", ", "%.2f")));
-            log.flush();
         }
 
         return finalScores;
@@ -145,11 +144,13 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     public void log(String message) {
         System.out.println(message);
         if (log == null) {
-            log = new EntityLog(toString(), calendar);
+            log = new EntityLog(logName() + ".log", calendar);
         }
         log.log(message);
         log.flush();
     }
+
+    public abstract String logName();
 
     public void setCalendar(WorldCalendar cal) {
         calendar = cal;
