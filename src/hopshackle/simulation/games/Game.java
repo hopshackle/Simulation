@@ -11,7 +11,6 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     protected double[] finalScores;
     private EntityLog log;
     private static SimpleGameScoreCalculator simpleGameScoreCalculator = new SimpleGameScoreCalculator();
-    public static final int MAX_TURNS = SimProperties.getPropertyAsInteger("MaxTurnsPerGame", "50000");
     public boolean debug = false;
     protected GameScoreCalculator scoreCalculator;
     protected WorldCalendar calendar;

@@ -4,9 +4,11 @@ import com.mysql.cj.x.protobuf.MysqlxExpect;
 import hopshackle.simulation.*;
 import hopshackle.simulation.AgentEvent.Type;
 import hopshackle.simulation.games.Game;
+import hopshackle.simulation.metric.StatsCollator;
 import org.javatuples.Triplet;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
@@ -21,7 +23,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private boolean useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
     private boolean reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
     private boolean trainRolloutDeciderOverGames, trainRolloutDeciderUsingAllPlayerExperiences;
-    private String treeSetting = getProperty("MonteCarloSingleTree", "single");
+    private String treeSetting = getProperty("MonteCarloTree", "single");
     private boolean singleTree = treeSetting.equals("single");
     private boolean multiTree = treeSetting.equals("perPlayer");
     private boolean openLoop;
@@ -29,7 +31,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private boolean deciderAsHeuristic;
     private int rolloutLimit;
     private boolean writeGameLog;
-    private boolean debug = true;
+    private boolean debug = false;
     private MCTreeProcessor<A> treeProcessor;
 
     public MCTSMasterDecider(StateFactory<A> stateFactory, BaseStateDecider<A> rolloutDecider, Decider<A> opponentModel) {
@@ -65,6 +67,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         // once the game is finished, we process the trajectory to update the MCTree
         // This is not using any Lookahead; just the record of state to state transitions
         MonteCarloTree<A> tree = getTree(agent);
+ //      System.out.println(String.format("Starting turn for %d at %s", currentPlayer, game.toString()));
 
         State<A> currentState = stateFactory.getCurrentState(agent);
         if (reuseOldTree) {
@@ -84,6 +87,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         tree.insertRoot(currentState);
 
         int N = Math.min(maxRollouts, maxRolloutsPerOption * chooseableOptions.size());
+        AtomicInteger nodesExpanded = new AtomicInteger(0);
         if (chooseableOptions.size() == 1) {
             agent.log("Only one action possible...skipping MCTS");
             // return chooseableOptions.get(0);
@@ -124,11 +128,13 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
                         t -> {
                             t.setUpdatesLeft(1);
                             t.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
+                            if (t.updatesLeft == 0) nodesExpanded.incrementAndGet();
                         }
                 );
             } else {
                 tree.setUpdatesLeft(1);
                 tree.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
+                if (tree.updatesLeft == 0) nodesExpanded.incrementAndGet();
             }
             long now = System.currentTimeMillis();
             actualI = i;
@@ -153,6 +159,11 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         int[] atDepth = tree.getDepths();
         agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
         agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
+        Map<String, Double> newStats = new HashMap<>();
+        newStats.put(toString() + "|MAX_DEPTH", maxDepth(atDepth));
+        newStats.put(toString()+ "|ITERATIONS", (double) actualI);
+        newStats.put(toString() + "|NODES", nodesExpanded.doubleValue());
+        StatsCollator.addStatistics(newStats);
 
         ActionEnum<A> best = tree.getBestAction(chooseableOptions, currentPlayer);
         if (best == null) {
@@ -172,19 +183,26 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         if (openLoop && reuseOldTree) {
             // we need to apply the decision taken to all relevant trees
             ActionWithRef<A> actionTaken = new ActionWithRef<>(best, agent.getActorRef());
-                treeMap.keySet().stream()
-                        .filter(p -> (p==1 && singleTree) || !singleTree)
-                        .forEach(
-                                // TODO: This does not currently take account of any action partial visibility
-                                p -> {
-                                    MCStatistics<A> rootStats = treeMap.get(p).rootNode;
-                                    MCStatistics<A> successorStats = rootStats.getSuccessorNode(actionTaken);
-                                    treeMap.get(p).rootNode = successorStats;
-                                }
-                        );
+            treeMap.keySet().stream()
+                    .filter(p -> (p == 1 && singleTree) || !singleTree)
+                    .forEach(
+                            // TODO: This does not currently take account of any action partial visibility
+                            p -> {
+                                MCStatistics<A> rootStats = treeMap.get(p).rootNode;
+                                MCStatistics<A> successorStats = rootStats.getSuccessorNode(actionTaken);
+                                treeMap.get(p).rootNode = successorStats;
+                            }
+                    );
         }
 
         return best;
+    }
+
+    private double maxDepth(int[] depths) {
+        for (int i = 0; i < 11; i++) {
+            if (depths[i] == 0) return i - 1;
+        }
+        return 10;
     }
 
     @Override
@@ -241,7 +259,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         useAVDForRollout = getProperty("MonteCarloActionValueRollout", "false").equals("true");
         useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
         reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
-        treeSetting = getProperty("MonteCarloSingleTree", "single");
+        treeSetting = getProperty("MonteCarloTree", "single");
         singleTree = treeSetting.equals("single");
         multiTree = treeSetting.equals("perPlayer");
         trainRolloutDeciderOverGames = getProperty("MonteCarloTrainRolloutDecider", "false").equals("true");

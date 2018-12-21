@@ -44,7 +44,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     }
 
     private Resistance(int numberOfPlayers, int numberOfTraitors, World world, boolean cloned) {
-        debug = true;
+        debug = false;
         playerCount = numberOfPlayers;
         traitorCount = numberOfTraitors;
         traitorIdentities = new boolean[playerCount + 1];
@@ -111,6 +111,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     private void randomiseTraitors() {
         int redeterminisationCount = 0;
         do {
+            for (int i = 0; i < traitorIdentities.length; i++) traitorIdentities[i] = false;
             int traitorsAllocated = 0;
             do {
                 redeterminisationCount++;

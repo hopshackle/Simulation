@@ -53,7 +53,7 @@ public abstract class MonteCarloTree<P extends Agent> {
         MAST = properties.getProperty("MonteCarloMAST", "false").equals("true");
         RAVE = properties.getProperty("MonteCarloRAVE", "false").equals("true");
         RAVE_C = properties.getPropertyAsDouble("MonteCarloRAVEExploreConstant", "0.0");
-        treeSetting = properties.getProperty("MonteCarloSingleTree", "single");
+        treeSetting = properties.getProperty("MonteCarloTree", "single");
         singleTree = treeSetting.equals("single");
         multiTree = treeSetting.equals("perPlayer");
         ignoreOthers = treeSetting.endsWith("ignoreOthers");

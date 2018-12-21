@@ -27,4 +27,9 @@ public class RandomDecider<A extends Agent> extends BaseStateDecider<A> {
 	public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
 	}
 
+	@Override
+    public String toString() {
+	    return "RANDOM";
+    }
+
 }

@@ -38,7 +38,7 @@ public class OpenLoopSingleTreeTest {
         world = new World();
         world.setCalendar(new FastCalendar(0l));
         localProp = SimProperties.getDeciderProperties("GLOBAL");
-        localProp.setProperty("MonteCarloSingleTree", "single");
+        localProp.setProperty("MonteCarloTree", "single");
         localProp.setProperty("MonteCarloReward", "true");
         localProp.setProperty("MonteCarloRL", "false");
         localProp.setProperty("MonteCarloUCTType", "MC");
@@ -92,7 +92,7 @@ public class OpenLoopSingleTreeTest {
 
     @Test
     public void openLoopIgnoreOthersHasDifferentTreesPerPlayer() {
-        localProp.setProperty("MonteCarloSingleTree", "ignoreOthers");
+        localProp.setProperty("MonteCarloTree", "ignoreOthers");
         setupGame();
 
         MonteCarloTree<TestAgent>[] trees = new MonteCarloTree[3];
@@ -111,7 +111,7 @@ public class OpenLoopSingleTreeTest {
 
     @Test
     public void openLoopMultiTreeHasDifferentTreesPerPlayer() {
-        localProp.setProperty("MonteCarloSingleTree", "perPlayer");
+        localProp.setProperty("MonteCarloTree", "perPlayer");
         setupGame();
 
         MonteCarloTree<TestAgent>[] trees = new MonteCarloTree[3];
@@ -162,7 +162,7 @@ public class OpenLoopSingleTreeTest {
 
     @Test
     public void openLoopIgnoreOthersTreeNodeOnlyHasNodesForActingPlayer() {
-        localProp.setProperty("MonteCarloSingleTree", "ignoreOthers");
+        localProp.setProperty("MonteCarloTree", "ignoreOthers");
         setupGame();
         tree = (OpenLoopMCTree) masterDecider.getTree(players[0]);
         MonteCarloTree<TestAgent> tree2 = masterDecider.getTree(players[1]);
@@ -220,7 +220,7 @@ public class OpenLoopSingleTreeTest {
 
     @Test
     public void openLoopIgnoreOthersBranchesCorrectly() {
-        localProp.setProperty("MonteCarloSingleTree", "ignoreOthers");
+        localProp.setProperty("MonteCarloTree", "ignoreOthers");
         setupGame();
         tree = (OpenLoopMCTree) masterDecider.getTree(players[0]);
         game.oneAction();
@@ -322,7 +322,7 @@ public class OpenLoopSingleTreeTest {
 
     @Test
     public void openLoopIgnoreOthersUpdatesOncePerMove() {
-        localProp.setProperty("MonteCarloSingleTree", "ignoreOthers");
+        localProp.setProperty("MonteCarloTree", "ignoreOthers");
         setupGame();
         MonteCarloTree<TestAgent>[] tree = new MonteCarloTree[3];
         for (int i = 0; i < 3; i++) {

@@ -101,7 +101,7 @@ public class MCTSDeciderTest {
 	
 	@Test
 	public void multiplePlayersWithMultipleTrees() {
-		localProp.setProperty("MonteCarloSingleTree", "ignoreOthers");
+		localProp.setProperty("MonteCarloTree", "ignoreOthers");
 		masterDecider.injectProperties(localProp);
 		TestAgent[] players = new TestAgent[3];
 		players[0] = agent;
@@ -141,7 +141,7 @@ public class MCTSDeciderTest {
 	
 	@Test
 	public void singleTree() {
-		localProp.setProperty("MonteCarloSingleTree", "single");
+		localProp.setProperty("MonteCarloTree", "single");
 		masterDecider.injectProperties(localProp);
 		tree = new TranspositionTableMCTree<>(localProp, 1);
 		TestAgent[] players = new TestAgent[3];

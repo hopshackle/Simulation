@@ -63,7 +63,7 @@ public class OpenLoopStateFactoryTest {
 
     @Test
     public void singleTreeEventsTrackedCorrectly() {
-        localProp.setProperty("MonteCarloSingleTree", "single");
+        localProp.setProperty("MonteCarloTree", "single");
         setUpTrees();
         // create an OLSF and tree
         // Run a MazeGame move to populate the tree
@@ -103,7 +103,7 @@ public class OpenLoopStateFactoryTest {
 
     @Test
     public void multiTreeEventsTrackedCorrectly() {
-        localProp.setProperty("MonteCarloSingleTree", "perPlayer");
+        localProp.setProperty("MonteCarloTree", "perPlayer");
         setUpTrees();
         // create an OLSF and tree
         // Run a MazeGame move to populate the tree
@@ -167,7 +167,7 @@ public class OpenLoopStateFactoryTest {
 
     @Test
     public void soloTreeEventsTrackedCorrectly() {
-        localProp.setProperty("MonteCarloSingleTree", "ignoreOthers");
+        localProp.setProperty("MonteCarloTree", "ignoreOthers");
         setUpTrees();
         // create an OLSF and tree
         // Run a MazeGame move to populate the tree
@@ -277,7 +277,7 @@ public class OpenLoopStateFactoryTest {
 
     @Test
     public void processingAnEventOutOfTreeReturnsNull() {
-        localProp.setProperty("MonteCarloSingleTree", "single");
+        localProp.setProperty("MonteCarloTree", "single");
         setUpTrees();
         SimpleMazeGame newGame = masterGame.clone(masterPlayers[1]);
         factory = new OpenLoopStateFactory<>("single", trees, newGame);
@@ -289,7 +289,7 @@ public class OpenLoopStateFactoryTest {
 
     @Test
     public void reuseOfOpenLoopTree() {
-        localProp.setProperty("MonteCarloSingleTree", "perPlayer");
+        localProp.setProperty("MonteCarloTree", "perPlayer");
         localProp.setProperty("MonteCarloRetainTreeBetweenActions", "true");
         setUpTrees();
         assertEquals(masterGame.getCurrentPlayer().getActorRef(), 2);
