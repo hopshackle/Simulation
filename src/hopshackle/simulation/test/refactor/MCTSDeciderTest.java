@@ -36,18 +36,21 @@ public class MCTSDeciderTest {
 		localProp.setProperty("Gamma", "0.95");
 		localProp.setProperty("TimePeriodForGamma", "1000");
 		localProp.setProperty("IncrementalScoreReward", "false");
+        localProp.setProperty("MonteCarloTimePerMove", "1000");
 		localProp.setProperty("MonteCarloRolloutCount", "99");
 		localProp.setProperty("MonteCarloActionValueRollout", "false");
 		localProp.setProperty("MonteCarloActionValueOpponentModel", "false");
 		localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
 		localProp.setProperty("MonteCarloRetainTreeBetweenActions", "false");
 		localProp.setProperty("MonteCarloOpenLoop", "false");
+        localProp.setProperty("MonteCarloTree", "ignoreOthers");
 		localProp.setProperty("MonteCarloChoice", "default");
 		localProp.setProperty("MonteCarloHeuristicOnSelection", "false");
+		localProp.setProperty("MonteCarloRetainTreeBetweenActions","false");
 		localProp.setProperty("MonteCarloMAST", "false");
 		localProp.setProperty("MaxTurnsPerGame", "10000");
 		localProp.setProperty("GameOrdinalRewards", "0");
-		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
+		masterDecider = new MCTSMasterDecider<>(factory, rolloutDecider, rolloutDecider);
 		masterDecider.injectProperties(localProp);
 		agent.setDecider(masterDecider);
 		Dice.setSeed(6l);
@@ -67,7 +70,7 @@ public class MCTSDeciderTest {
 		 * The test plan is to cycle through decisions, and check that the MonteCarloTree is working as expected
 		 * 
 		 */
-		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
+		tree = new TranspositionTableMCTree<>(localProp, 1);
 		mazeGame = new SimpleMazeGame(2, agent);
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
@@ -101,6 +104,8 @@ public class MCTSDeciderTest {
 	
 	@Test
 	public void multiplePlayersWithMultipleTrees() {
+	    // TODO: Really this test should have "perPlayer" and be different to "single" (currently they are identical)
+        // As on a "perPlayer" basis we should put in states of other players from the perspective of our information set
 		localProp.setProperty("MonteCarloTree", "ignoreOthers");
 		masterDecider.injectProperties(localProp);
 		TestAgent[] players = new TestAgent[3];

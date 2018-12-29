@@ -31,7 +31,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private boolean deciderAsHeuristic;
     private int rolloutLimit;
     private boolean writeGameLog;
-    private boolean debug = false;
+    private boolean debug = true;
     private MCTreeProcessor<A> treeProcessor;
 
     public MCTSMasterDecider(StateFactory<A> stateFactory, BaseStateDecider<A> rolloutDecider, Decider<A> opponentModel) {
@@ -100,7 +100,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
         int actualI = 0;
         for (int i = 0; i < N; i++) {
-            Game<A, ActionEnum<A>> clonedGame = game.clone(agent);
+            Game<A, ActionEnum<A>> clonedGame = game.clone();
+            clonedGame.redeterminise(agent.getActorRef());      // IS-MCTS, we redeterminise once at the start of each iteration
             A clonedAgent = clonedGame.getPlayer(currentPlayer);
             if (openLoop) {
                 OpenLoopStateFactory<A> factory = new OpenLoopStateFactory<>(treeSetting, treeMap, clonedGame);

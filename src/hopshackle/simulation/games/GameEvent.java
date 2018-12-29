@@ -29,11 +29,8 @@ public class GameEvent<A extends Agent> {
     public GameEvent(ActionWithRef<A> actionTaken, Game game) {
         type = Type.MOVE;
         this.game = game;
-        // TODO: For the moment we are fully observable moves...this will need to be adapted for partially observable
-        // moves later
         this.actionTaken = actionTaken;
-        for (int i = 1; i <= game.getAllPlayers().size(); i++)
-            visibleTo.add(i);
+        visibleTo = ((GameActionEnum) actionTaken.actionTaken).isVisibleTo(actionTaken.agentRef, game);
     }
 
     public List<Integer> visibleTo() {

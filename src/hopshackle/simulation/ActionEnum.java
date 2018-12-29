@@ -16,4 +16,5 @@ public interface ActionEnum<A extends Agent> extends Serializable {
 	default boolean isChooseable(A a) {return false;}
 	
 	default Enum<?> getEnum() {return null;}
+
 }

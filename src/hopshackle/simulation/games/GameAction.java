@@ -12,4 +12,5 @@ public abstract class GameAction<A extends Agent> extends Action<A> {
     public void doNextDecision() {
         // do nothing
     }
+
 }

@@ -3,7 +3,7 @@ package hopshackle.simulation.games.resistance;
 import hopshackle.simulation.*;
 import hopshackle.simulation.games.*;
 
-public class IncludeInTeam implements ActionEnum<ResistancePlayer> {
+public class IncludeInTeam implements GameActionEnum<ResistancePlayer> {
 
     public final int playerToInclude;
 

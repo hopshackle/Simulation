@@ -2,6 +2,7 @@ package hopshackle.simulation.test.refactor;
 
 import hopshackle.simulation.*;
 import hopshackle.simulation.games.Game;
+import hopshackle.simulation.games.GameDeterminisationMemory;
 
 import java.util.*;
 
@@ -17,8 +18,43 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
 	public SimpleMazeGame(int target, TestAgent player) {
 		this(target, new TestAgent[] {player});
 	}
-	
-	public String getRef() {
+
+    @Override
+    public Game<TestAgent, ActionEnum<TestAgent>> cloneLocalFields() {
+        World clonedWorld = new World();
+        long currentTime = getCurrentPlayer().getWorld().getCurrentTime();
+        clonedWorld.setCalendar(new FastCalendar(currentTime));
+
+        TestAgent[] clonedPlayers = new TestAgent[numberOfPlayers];
+        for (int i = 0; i < numberOfPlayers; i++) {
+            TestAgent original = players[i];
+            TestAgent clonedPlayer = new TestAgent(clonedWorld);
+            clonedPlayer.setAge(original.getAge());
+            clonedPlayer.position = original.position;
+            clonedPlayer.addGold(original.getGold());
+            clonedPlayers[i] = clonedPlayer;
+        }
+
+        SimpleMazeGame retValue = new SimpleMazeGame(target, clonedPlayers);
+        retValue.playerToMove = this.playerToMove;
+        retValue.reward = new double[numberOfPlayers];
+        for (int i = 0; i < numberOfPlayers; i++) {
+            retValue.reward[i] = this.reward[i];
+        }
+        return retValue;
+    }
+
+    @Override
+    public boolean isCompatibleWith(Game<TestAgent, ActionEnum<TestAgent>> otherState, ActionWithRef<TestAgent> actionRef) {
+        return true;
+    }
+
+    @Override
+    public void redeterminise(int perspectivePlayer) {}
+//    @Override
+//    public void undeterminise(GameDeterminisationMemory referenceData) {}
+
+    public String getRef() {
 		return "SimpleMazeGame";
 	}
 
@@ -34,31 +70,6 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
 			this.players[i].setGame(this);
 		}
 		playerToMove = 0;
-	}
-
-	@Override
-	public SimpleMazeGame clone(TestAgent perspectivePlayer) {
-		World clonedWorld = new World();
-		long currentTime = perspectivePlayer.getWorld().getCurrentTime();
-		clonedWorld.setCalendar(new FastCalendar(currentTime));
-
-		TestAgent[] clonedPlayers = new TestAgent[numberOfPlayers];
-		for (int i = 0; i < numberOfPlayers; i++) {
-			TestAgent original = players[i];
-			TestAgent clonedPlayer = new TestAgent(clonedWorld);
-			clonedPlayer.setAge(original.getAge());
-			clonedPlayer.position = original.position;
-			clonedPlayer.addGold(original.getGold());
-			clonedPlayers[i] = clonedPlayer;
-		}
-		
-		SimpleMazeGame retValue = new SimpleMazeGame(target, clonedPlayers);
-		retValue.playerToMove = this.playerToMove;
-		retValue.reward = new double[numberOfPlayers];
-		for (int i = 0; i < numberOfPlayers; i++) {
-			retValue.reward[i] = this.reward[i];
-		}
-		return retValue;
 	}
 
 	@Override

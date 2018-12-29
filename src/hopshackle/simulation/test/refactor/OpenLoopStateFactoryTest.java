@@ -279,7 +279,7 @@ public class OpenLoopStateFactoryTest {
     public void processingAnEventOutOfTreeReturnsNull() {
         localProp.setProperty("MonteCarloTree", "single");
         setUpTrees();
-        SimpleMazeGame newGame = masterGame.clone(masterPlayers[1]);
+        SimpleMazeGame newGame = (SimpleMazeGame) masterGame.clone();
         factory = new OpenLoopStateFactory<>("single", trees, newGame);
         for (int i = 0; i < newGame.numberOfPlayers; i++) assertNotNull(factory.getCurrentState(newGame.players[i]));
         factory.processGameEvent(new GameEvent<>(new ActionWithRef<>(TestActionEnum.TEST, 2), newGame));

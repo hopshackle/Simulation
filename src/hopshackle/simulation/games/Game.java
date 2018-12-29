@@ -5,9 +5,11 @@ import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 
+    private static AtomicLong idFountain = new AtomicLong(1);
     protected double[] finalScores;
     private EntityLog log;
     private static SimpleGameScoreCalculator simpleGameScoreCalculator = new SimpleGameScoreCalculator();
@@ -16,16 +18,48 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     protected WorldCalendar calendar;
     protected List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory = new ArrayList();
     private List<GameListener<P>> listeners = new ArrayList<>();
+    private long refID = idFountain.getAndIncrement();
 
-    public abstract Game<P, A> clone(P perspectivePlayer);
 
-    public void cloneCoreFieldsFrom(Game original) {
+    public abstract Game<P, A> cloneLocalFields();
+
+    @Override
+    public final Game<P, A> clone() {
+        Game<P, A> retValue = this.cloneLocalFields();
+        retValue.cloneCoreFieldsFrom(this);
+        return retValue;
+    }
+
+    private void cloneCoreFieldsFrom(Game<P, A> original) {
         scoreCalculator = original.scoreCalculator;
-  //      trajectory = HopshackleUtilities.cloneList(original.trajectory);
+        //      trajectory = HopshackleUtilities.cloneList(original.trajectory);
         // Each element of trajectory is immutable, so not cloned
     }
 
-    public abstract String getRef();
+    /*
+    This Game is the master for this method, so otherState is compatible as long as the state is
+    one that thisPerspective believes that otherPerspective could believe.
+    This is false if thisPerspective and otherPerspective have information in common, and this subset is not
+    identical between the two states.
+     */
+    public abstract boolean isCompatibleWith(Game<P, A> otherState, ActionWithRef<P> actionRef);
+
+    /*
+    Redeterminises hidden information from that player's perspective (WARNING: mutable state)
+    TODO: In the future we may need to apply a distribution over belief states
+    */
+    public abstract void redeterminise(int perspectivePlayer);
+
+    /*
+    Undeterminises by taking the current game as the base, and updating (WARNING: mutable state) it to
+    be compatible with referenceData. If the observed game history of this is incompatible with
+    referenceData, then this wins out.
+     */
+ //   public abstract void undeterminise(GameDeterminisationMemory referenceData);
+
+    public String getRef() {
+        return String.valueOf(refID);
+    }
 
     public abstract P getCurrentPlayer();
 
@@ -120,7 +154,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     }
 
     /* Note that the action is assumed to have a link to the Game
-    and does not stand separate...it is responsible for updatign the game state
+    and does not stand separate...it is responsible for updating the game state
      */
     public void applyAction(Action action) {
         if (action == null) return;
@@ -133,7 +167,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         action.start();
         action.run();
 
-        sendMessage(new GameEvent(new ActionWithRef<>(action.getType(), currentPlayer.getActorRef()),this));
+        sendMessage(new GameEvent(new ActionWithRef<>(action.getType(), currentPlayer.getActorRef()), this));
         if (debug)
             log(getCurrentPlayer().toString() + "  : " + action.toString());
 
@@ -163,6 +197,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         if (!listeners.contains(listener))
             listeners.add(listener);
     }
+
     protected void sendMessage(GameEvent event) {
         listeners.stream().forEach(l -> l.processGameEvent(event));
     }

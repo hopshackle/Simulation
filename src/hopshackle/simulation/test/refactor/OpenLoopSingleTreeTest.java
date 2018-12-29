@@ -250,7 +250,7 @@ public class OpenLoopSingleTreeTest {
         // just use one all the time, otherwise we re-register a new decider each time and get multiple tree updates
         for (int loop = 0; loop < 8; loop++) {
             tree.setUpdatesLeft(1);
-            SimpleMazeGame clonedGame = (SimpleMazeGame) game.clone(players[0]);
+            SimpleMazeGame clonedGame = (SimpleMazeGame) game.clone();
             List<TestAgent> clonedPlayers = clonedGame.getAllPlayers();
 
             MCTSChildDecider<TestAgent>[] childDecider = new MCTSChildDecider[3];
@@ -334,7 +334,7 @@ public class OpenLoopSingleTreeTest {
         // This test emulates a few rollouts of a game within MCTSMasterDecider
         for (int loop = 0; loop < 8; loop++) {
             for (int i = 0; i < 3; i++) tree[i].setUpdatesLeft(1);
-            SimpleMazeGame clonedGame = (SimpleMazeGame) game.clone(players[0]);
+            SimpleMazeGame clonedGame = (SimpleMazeGame) game.clone();
             MCTSChildDecider<TestAgent> childDecider = masterDecider.createChildDecider(new OpenLoopStateFactory<TestAgent>("single", treeMap, clonedGame), tree[0], 1, false);
             childDecider.setRolloutDecider(new HardCodedDecider<>(TestActionEnum.LEFT));
             List<TestAgent> clonedPlayers = clonedGame.getAllPlayers();

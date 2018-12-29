@@ -55,20 +55,24 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, G
     public void processGameEvent(GameEvent<A> event) {
         switch (event.type) {
             case MOVE:
-                MCStatistics<A> currentNode = currentNodes.getOrDefault(event.actionTaken.agentRef, null);
+                boolean gameLevelEvent = (event.actionTaken.agentRef == -1);
+                int agentRef = gameLevelEvent ? event.visibleTo().get(0) : event.actionTaken.agentRef;
+                MCStatistics<A> currentNode = currentNodes.getOrDefault(agentRef, null);
                 switch (treeType) {
                     case "single":
-                        // we progress all nodes according to the active player
+                        // technically a single tree is only really valid if we have perfect information moves
+                        // in practise we progress all nodes according to the active player
                         if (currentNode != null) {
                             MCStatistics<A> newNode = currentNode.getSuccessorNode(event.actionTaken);
                             currentNodes.keySet().stream()
+                 //                   .filter(event.visibleTo()::contains)
                                     .forEach(
                                             p -> currentNodes.put(p, newNode)
                                     );
                         } // else we are not in the tree
                         break;
                     case "perPlayer":
-                        // we progress all players according to the action taken in their own tree
+                        // we progress all players according to the action taken in their own tree (which may be none)
                         currentNodes.keySet().stream()
                                 .filter(event.visibleTo()::contains)
                                 .forEach(
@@ -83,7 +87,7 @@ public class OpenLoopStateFactory<A extends Agent> implements StateFactory<A>, G
                         break;
                     case "ignoreOthers":
                         // we just progress the one node for the acting player
-                        if (currentNode != null) {
+                        if (!gameLevelEvent && currentNode != null) {
                             MCStatistics<A> newNode = currentNode.getSuccessorNode(event.actionTaken);
                             currentNodes.put(event.actionTaken.agentRef, newNode);
                         } // else we are not in the tree

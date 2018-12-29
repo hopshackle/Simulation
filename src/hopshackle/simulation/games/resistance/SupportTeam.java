@@ -3,7 +3,9 @@ package hopshackle.simulation.games.resistance;
 import hopshackle.simulation.*;
 import hopshackle.simulation.games.*;
 
-public class SupportTeam implements ActionEnum<ResistancePlayer> {
+import java.util.List;
+
+public class SupportTeam implements GameActionEnum<ResistancePlayer> {
     @Override
     public Action<ResistancePlayer> getAction(ResistancePlayer resistancePlayer) {
         return new SupportTeamAction(resistancePlayer);
@@ -19,6 +21,11 @@ public class SupportTeam implements ActionEnum<ResistancePlayer> {
 
     public int hashCode() {
         return 88819;
+    }
+
+    @Override
+    public List<Integer> isVisibleTo(int actorRef, Game game) {
+        return actorVisibilityOnly(actorRef);
     }
 }
 

@@ -1,6 +1,7 @@
 package hopshackle.simulation.games.resistance;
 
 import hopshackle.simulation.*;
+
 import java.util.*;
 
 public class ResistancePlayer extends Agent {
@@ -20,6 +21,7 @@ public class ResistancePlayer extends Agent {
         traitor = traitorStatus;
         otherTraitors = new ArrayList();
     }
+
     public void setOtherTraitor(int traitorNumber) {
         if (!otherTraitors.contains(traitorNumber))
             otherTraitors.add(traitorNumber);
@@ -28,12 +30,18 @@ public class ResistancePlayer extends Agent {
     public int getPlayerNumber() {
         return number;
     }
+
     @Override
     public Resistance getGame() {
         return game;
     }
+
     @Override
     public String toString() {
         return "Player " + number;
+    }
+
+    public boolean isTraitor() {
+        return traitor;
     }
 }
