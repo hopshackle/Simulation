@@ -2,13 +2,9 @@ package hopshackle.simulation.test.refactor;
 
 import static org.junit.Assert.*;
 
-import hopshackle.simulation.MCTS.MCActionValueDecider;
-import hopshackle.simulation.MCTS.MCStatistics;
-import hopshackle.simulation.MCTS.MonteCarloTree;
+import hopshackle.simulation.MCTS.*;
 import hopshackle.simulation.*;
 import java.util.*;
-
-import hopshackle.simulation.MCTS.TranspositionTableMCTree;
 import org.junit.*;
 
 public class MCTreeTest {

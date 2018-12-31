@@ -67,7 +67,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         // once the game is finished, we process the trajectory to update the MCTree
         // This is not using any Lookahead; just the record of state to state transitions
         MonteCarloTree<A> tree = getTree(agent);
- //      System.out.println(String.format("Starting turn for %d at %s", currentPlayer, game.toString()));
+        //      System.out.println(String.format("Starting turn for %d at %s", currentPlayer, game.toString()));
 
         State<A> currentState = stateFactory.getCurrentState(agent);
         if (reuseOldTree) {
@@ -124,18 +124,25 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
             clonedGame.playGame(rolloutLimit);
             List<Triplet<State<A>, ActionWithRef<A>, Long>> trajectoryToUse = tree.filterTrajectory(clonedGame.getTrajectory(), agent.getActorRef());
-            if (multiTree) {
-                treeMap.values().stream().forEach(
-                        t -> {
-                            t.setUpdatesLeft(1);
-                            t.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
-                            if (t.updatesLeft == 0) nodesExpanded.incrementAndGet();
-                        }
-                );
-            } else {
-                tree.setUpdatesLeft(1);
-                tree.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
-                if (tree.updatesLeft == 0) nodesExpanded.incrementAndGet();
+            switch (treeSetting) {
+                case "perPlayer":
+                    treeMap.values().stream().forEach(
+                            t -> {
+                                t.setUpdatesLeft(1);
+                                t.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
+                                if (t.updatesLeft == 0) nodesExpanded.incrementAndGet();
+                            }
+                    );
+                    break;
+                case "single":
+                case "ignoreOthers":
+                    tree.setUpdatesLeft(1);
+                    tree.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
+                    if (tree.updatesLeft == 0) nodesExpanded.incrementAndGet();
+                    break;
+
+                default:
+                    throw new AssertionError("Unknown Tree Setting: " + treeSetting);
             }
             long now = System.currentTimeMillis();
             actualI = i;
@@ -162,7 +169,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
         Map<String, Double> newStats = new HashMap<>();
         newStats.put(toString() + "|MAX_DEPTH", maxDepth(atDepth));
-        newStats.put(toString()+ "|ITERATIONS", (double) actualI);
+        newStats.put(toString() + "|ITERATIONS", (double) actualI);
         newStats.put(toString() + "|NODES", nodesExpanded.doubleValue());
         StatsCollator.addStatistics(newStats);
 

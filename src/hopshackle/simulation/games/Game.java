@@ -15,11 +15,10 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     private static SimpleGameScoreCalculator simpleGameScoreCalculator = new SimpleGameScoreCalculator();
     public boolean debug = false;
     protected GameScoreCalculator scoreCalculator;
-    protected WorldCalendar calendar;
+    protected WorldCalendar calendar = new GameTurnCalendar(1);
     protected List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory = new ArrayList();
     private List<GameListener<P>> listeners = new ArrayList<>();
     private long refID = idFountain.getAndIncrement();
-
 
     public abstract Game<P, A> cloneLocalFields();
 
@@ -32,6 +31,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 
     private void cloneCoreFieldsFrom(Game<P, A> original) {
         scoreCalculator = original.scoreCalculator;
+        calendar = new GameTurnCalendar(original.calendar.getTime());
         //      trajectory = HopshackleUtilities.cloneList(original.trajectory);
         // Each element of trajectory is immutable, so not cloned
     }
@@ -172,6 +172,11 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
             log(getCurrentPlayer().toString() + "  : " + action.toString());
 
         updateGameStatus();
+    }
+
+    protected void applyGameAction(ActionEnum<P> action, long startTime) {
+        trajectory.add(new Triplet(null, new ActionWithRef(action, -1), startTime));
+        sendMessage(new GameEvent(new ActionWithRef<>(action, -1), this));
     }
 
     public void log(String message) {

@@ -10,7 +10,7 @@ public class FastCalendar implements WorldCalendar {
 
 	public FastCalendar(long startTime) {
 		time = new AtomicLong(startTime);
-		scheduledJobs = new ArrayList<CalendarTask>();
+		scheduledJobs = new ArrayList<>();
 	}
 
 

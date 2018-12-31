@@ -6,13 +6,26 @@ import hopshackle.simulation.games.*;
 public class VoteResult implements GameActionEnum<ResistancePlayer> {
 
     private String votesAsString;
+    private boolean voteSuccessful;
+    private boolean[] votes;
 
     public VoteResult(boolean[] votes) {
         StringBuilder temp = new StringBuilder();
-        for (int i = 0; i < votes.length; i++) {
+        this.votes = votes;
+        int votesInFavour = 0;
+        for (int i = 1; i < votes.length; i++) {
             temp.append(votes[i] ? "1" : "0");
+            if (votes[i]) votesInFavour++;
         }
+        voteSuccessful = votesInFavour > votes.length / 2;
         votesAsString = temp.toString();
+    }
+
+    public boolean isPassed() {
+        return voteSuccessful;
+    }
+    public boolean voteOfPlayer(int playerNumber) {
+        return votes[playerNumber];
     }
 
     @Override

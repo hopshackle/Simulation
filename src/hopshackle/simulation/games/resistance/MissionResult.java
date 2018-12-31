@@ -2,12 +2,15 @@ package hopshackle.simulation.games.resistance;
 
 import hopshackle.simulation.*;
 import hopshackle.simulation.games.*;
+import java.util.*;
 
 public class MissionResult implements GameActionEnum<ResistancePlayer> {
 
     private int totalDefectors;
+    private List<Integer> teamMembers;
 
-    public MissionResult(int defectors) {
+    public MissionResult(List<Integer> members, int defectors) {
+        teamMembers = HopshackleUtilities.cloneList(members);
         totalDefectors = defectors;
     }
 
@@ -22,13 +25,29 @@ public class MissionResult implements GameActionEnum<ResistancePlayer> {
 
     public boolean equals(Object other) {
         if (other instanceof MissionResult) {
-            if (((MissionResult)other).totalDefectors == totalDefectors)
-                return true;
+            MissionResult omr = (MissionResult) other;
+            if (omr.totalDefectors != totalDefectors)
+                return false;
+            if (omr.teamMembers.size() != teamMembers.size())
+                return false;
+            for (int tm : omr.teamMembers) {
+                if (!teamMembers.contains(tm))
+                    return false;
+            }
+            return true;
         }
         return false;
     }
 
+    public int getDefections() {
+        return totalDefectors;
+    }
+    public List<Integer> getTeam() {
+        return teamMembers;
+    }
+
     public int hashCode() {
-        return 44371 + totalDefectors * 58573;
+        int teamHash = teamMembers.stream().mapToInt(i -> i * 17).sum();
+        return 44371 + totalDefectors * 58573 + teamHash;
     }
 }

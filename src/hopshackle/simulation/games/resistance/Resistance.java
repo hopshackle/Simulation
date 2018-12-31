@@ -60,7 +60,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     }
 
     private void initialise() {
-        randomiseTraitors();
+        randomiseTraitorsExcluding(-1);
         updatePlayersWithTraitorInformation();
 
         mission = 1;
@@ -107,13 +107,13 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         if (traitorIdentities[perspective]) {
             // no change from basic clone
         } else {
-            randomiseTraitors();
+            randomiseTraitorsExcluding(perspective);
             updatePlayersWithTraitorInformation();
         }
 
     }
 
-    private void randomiseTraitors() {
+    private void randomiseTraitorsExcluding(int exclude) {
         int redeterminisationCount = 0;
         do {
             for (int i = 0; i < traitorIdentities.length; i++) traitorIdentities[i] = false;
@@ -121,7 +121,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
             do {
                 redeterminisationCount++;
                 int t = Dice.roll(1, playerCount);
-                if (!traitorIdentities[t]) {
+                if (t != exclude && !traitorIdentities[t]) {
                     traitorIdentities[t] = true;
                     if (debug) log(String.format("Player %d is traitor", t));
                     traitorsAllocated++;
@@ -229,6 +229,16 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         return failedMissions >= 3 || failedVotes >= 5;
     }
 
+    public int getMission() {
+        return mission;
+    }
+    public int getSuccessfulMissions() {
+        return successfulMissions;
+    }
+    public int getFailedVotes() {
+        return failedVotes;
+    }
+
     private void updateCurrentPlayer() {
         currentPlayer = (currentPlayer + 1) % playerCount;
         if (currentPlayer == 0) currentPlayer = playerCount;
@@ -248,7 +258,6 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         switch (currentPhase) {
             case ASSEMBLE:
                 if (currentMissionTeam.size() == teamMembersByMissionandPlayercount[mission][playerCount]) {
-                    sendMessage(new GameEvent(new ActionWithRef<>(new VoteResult(missionTeamVotes), -1), this));
                     currentPhase = Phase.VOTE;
                     missionTeamVotes = new boolean[playerCount + 1];
                     currentPlayer = firstPlayer;
@@ -263,6 +272,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                 updateCurrentPlayer();
                 if (currentPlayer == firstPlayer) {
                     // everyone has now voted
+                    applyGameAction(new VoteResult(missionTeamVotes), calendar.getTime());
                     int votesInFavour = 0;
                     for (int i = 1; i < missionTeamVotes.length; i++) {
                         if (missionTeamVotes[i]) votesInFavour++;
@@ -286,7 +296,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
             case MISSION:
                 if (currentPlayer == currentMissionTeam.get(teamMembersByMissionandPlayercount[mission][playerCount] - 1)) {
                     // last member of team to decide...so move on to next phase
-                    sendMessage(new GameEvent(new ActionWithRef<>(new MissionResult(defectorsOnMission), -1), this));
+                    applyGameAction(new MissionResult(currentMissionTeam, defectorsOnMission), calendar.getTime());
                     if (defectorsOnMission == 0) {
                         successfulMissions++;
                     } else {
@@ -297,6 +307,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                     if (debug) log(String.format("%d total defectors on mission", defectorsOnMission));
                     currentPhase = Phase.ASSEMBLE;
                     mission++;
+                    calendar.setTime(mission);
                     updateFirstPlayer();
                     currentPlayer = firstPlayer;
                     currentMissionTeam = new ArrayList();
