@@ -15,25 +15,30 @@ public class RunGame {
         int numberOfPlayers = HopshackleUtilities.getArgument(args, 0, 5);
         int numberOfTraitors = HopshackleUtilities.getArgument(args, 1, 2);
         int numberOfGames = HopshackleUtilities.getArgument(args, 2, 100);
+        String propertiesFile = HopshackleUtilities.getArgument(args, 3, "");
+
+        if (!propertiesFile.equals(""))
+            SimProperties.setFileLocation(propertiesFile);
+
         RandomDecider<ResistancePlayer> randomDecider = new RandomDecider<>(new SingletonStateFactory<>());
 
-        Set<String> deciderTypes = SimProperties.allDeciderNames();
-        Set<Decider<ResistancePlayer>> deciders = new HashSet<>();
-        for (String deciderName : deciderTypes) {
-            MCTSMasterDecider<ResistancePlayer> mctsDecider = new MCTSMasterDecider<>(new SingletonStateFactory<>(), null, null);
-            mctsDecider.injectProperties(SimProperties.getDeciderProperties(deciderName));
-            mctsDecider.setName(deciderName);
-            deciders.add(mctsDecider);
-        }
-
         DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("HH:mm:ss 'on' dd-LLL");
-        StringBuilder allNames = new StringBuilder();
-        deciderTypes.iterator().forEachRemaining(allNames::append);
-        System.out.println("Starting run at " + dateFormat.format(ZonedDateTime.now(ZoneId.of("UTC"))) + " for " + allNames.toString());
+ //       StringBuilder allNames = new StringBuilder();
+ //       deciderTypes.iterator().forEachRemaining(allNames::append);
+        System.out.println("Starting run at " + dateFormat.format(ZonedDateTime.now(ZoneId.of("UTC")))); // + " for " + allNames.toString());
         StatsCollator.clear();
 
-        Iterator<Decider<ResistancePlayer>> iterator = deciders.iterator();
         for (int i = 0; i < numberOfGames; i++) {
+            Set<String> deciderTypes = SimProperties.allDeciderNames();
+            List<Decider<ResistancePlayer>> deciders = new ArrayList<>();
+            for (String deciderName : deciderTypes) {
+                MCTSMasterDecider<ResistancePlayer> mctsDecider = new MCTSMasterDecider<>(new SingletonStateFactory<>(), null, null);
+                mctsDecider.injectProperties(SimProperties.getDeciderProperties(deciderName));
+                mctsDecider.setName(deciderName);
+                deciders.add(mctsDecider);
+                Collections.shuffle(deciders);
+            }
+            Iterator<Decider<ResistancePlayer>> iterator = deciders.iterator();
             Resistance game = new Resistance(numberOfPlayers, numberOfTraitors, new World());
             for (ResistancePlayer player : game.getAllPlayers()) {
                 if (!iterator.hasNext()) {

@@ -7,6 +7,7 @@ import hopshackle.simulation.*;
 
 import static org.junit.Assert.*;
 
+import hopshackle.simulation.games.GameTracker;
 import org.junit.*;
 
 /**
@@ -46,6 +47,7 @@ public class OpenLoopSingleTreeTest {
         localProp.setProperty("Gamma", "1.0");
         localProp.setProperty("TimePeriodForGamma", "1000");
         localProp.setProperty("IncrementalScoreReward", "false");
+        localProp.setProperty("MonteCarloTimePerMove", "1000");
         localProp.setProperty("MonteCarloRolloutCount", "99");
         localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
         localProp.setProperty("MonteCarloActionValueRollout", "false");
@@ -263,8 +265,9 @@ public class OpenLoopSingleTreeTest {
 
             for (int i = 0; i < 3; i++) clonedPlayers.get(i).setDecider(childDecider[i]);
 
+            GameTracker<TestAgent> gt = new GameTracker<>(clonedPlayers.get(0), clonedGame);
             clonedGame.playGame();
-            tree.processTrajectory(tree.filterTrajectory(clonedGame.getTrajectory(), 1), clonedGame.getFinalScores());
+            tree.processTrajectory(gt.getTrajectory(), clonedGame.getFinalScores());
 
             MCStatistics<TestAgent> rootStats = tree.getRootStatistics();
             assertEquals(rootStats.getVisits(), loop + 1);
@@ -342,8 +345,9 @@ public class OpenLoopSingleTreeTest {
             clonedPlayers.get(1).setDecider(new HardCodedDecider<>(TestActionEnum.TEST));
             clonedPlayers.get(2).setDecider(new HardCodedDecider<>(TestActionEnum.RIGHT));
 
+            GameTracker<TestAgent> gt = new GameTracker<>(clonedPlayers.get(0), clonedGame);
             clonedGame.playGame();
-            tree[0].processTrajectory(tree[0].filterTrajectory(clonedGame.getTrajectory(), 1), clonedGame.getFinalScores());
+            tree[0].processTrajectory(gt.getFilteredTrajectory(t -> t.getValue1().agentRef == 1), clonedGame.getFinalScores());
 
             MCStatistics<TestAgent> rootStats = tree[0].getRootStatistics();
             assertEquals(rootStats.getVisits(), loop + 1);

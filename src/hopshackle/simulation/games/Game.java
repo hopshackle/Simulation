@@ -16,7 +16,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     public boolean debug = false;
     protected GameScoreCalculator scoreCalculator;
     protected WorldCalendar calendar = new GameTurnCalendar(1);
-    protected List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory = new ArrayList();
+    protected List<Pair<ActionWithRef<P>, Long>> trajectory = new ArrayList();
     private List<GameListener<P>> listeners = new ArrayList<>();
     private long refID = idFountain.getAndIncrement();
 
@@ -102,6 +102,10 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         return finalScores;
     }
 
+    public long getTime() {
+        return calendar.getTime();
+    }
+
     public double[] getFinalScores() {
         if (finalScores == null)
             throw new AssertionError("Game is not yet over");
@@ -158,29 +162,31 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
      */
     public void applyAction(Action action) {
         if (action == null) return;
-        P currentPlayer = getCurrentPlayer();
-        Decider<P> decider = currentPlayer.getDecider();
-        trajectory.add(new Triplet(decider.getCurrentState(currentPlayer), new ActionWithRef(action.getType(), getPlayerNumber(getCurrentPlayer())), action.getStartTime()));
+        int actorRef = action.getActor().getActorRef();
+        if (actorRef != getCurrentPlayer().getActorRef()) {
+            throw new AssertionError("Only the current Player should really be taking actions");
+        }
+        trajectory.add(new Pair(new ActionWithRef(action.getType(), actorRef), action.getStartTime()));
+        sendMessage(new GameEvent(new ActionWithRef<>(action.getType(), actorRef), this));
 
         action.addToAllPlans(); // this is for compatibility with Action statuses in a real-time simulation
         // it also means that each agent tracks the actions they execute over a game
         action.start();
         action.run();
 
-        sendMessage(new GameEvent(new ActionWithRef<>(action.getType(), currentPlayer.getActorRef()), this));
         if (debug)
             log(getCurrentPlayer().toString() + "  : " + action.toString());
 
         updateGameStatus();
     }
 
-    protected void applyGameAction(ActionEnum<P> action, long startTime) {
-        trajectory.add(new Triplet(null, new ActionWithRef(action, -1), startTime));
+    protected void applyGameAction(GameActionEnum<P> action, long startTime) {
+        trajectory.add(new Pair(new ActionWithRef(action, -1), startTime));
         sendMessage(new GameEvent(new ActionWithRef<>(action, -1), this));
     }
 
     public void log(String message) {
-        System.out.println(message);
+  //      System.out.println(message);
         if (log == null) {
             log = new EntityLog(logName() + ".log", calendar);
         }
@@ -194,7 +200,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         calendar = cal;
     }
 
-    public List<Triplet<State<P>, ActionWithRef<P>, Long>> getTrajectory() {
+    public List<Pair<ActionWithRef<P>, Long>> getTrajectory() {
         return trajectory;
     }
 

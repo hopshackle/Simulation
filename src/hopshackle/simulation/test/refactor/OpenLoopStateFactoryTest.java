@@ -30,6 +30,7 @@ public class OpenLoopStateFactoryTest {
         localProp.setProperty("Gamma", "1.0");
         localProp.setProperty("TimePeriodForGamma", "1000");
         localProp.setProperty("IncrementalScoreReward", "false");
+        localProp.setProperty("MonteCarloTimePerMove", "1000");
         localProp.setProperty("MonteCarloRolloutCount", "99");
         localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
         localProp.setProperty("MonteCarloActionValueRollout", "false");
@@ -230,7 +231,9 @@ public class OpenLoopStateFactoryTest {
     @Test
     public void secondMoveInSoloTreeGameSetsUpSecondTreeOnly() {
         soloTreeEventsTrackedCorrectly();
-        masterGame.oneAction();
+        assertEquals(masterGame.getCurrentPlayer().getActorRef(), 2);
+        masterGame.oneAction(); // sets up tree for the current player only
+        assertEquals(masterGame.getCurrentPlayer().getActorRef(), 3);
         for (int i = 0; i < 3; i++)
             trees.put(i + 1, (OpenLoopMCTree) masterDecider.getTree(masterPlayers[i]));
 
@@ -245,7 +248,7 @@ public class OpenLoopStateFactoryTest {
         MCStatistics<TestAgent>[] root = new MCStatistics[3];
         for (int i = 0; i < 3; i++) {
             root[i] = trees.get(i + 1).getRootStatistics();
-            if (i != 2) {
+            if (i == 1) {   // player who has just acted, other trees will be empty
                 assertEquals(root[i].getVisits(), 99);
             } else {
                 assertEquals(root[i].getVisits(), 0);
@@ -253,25 +256,8 @@ public class OpenLoopStateFactoryTest {
         }
         for (int j = 0; j < 3; j++) {
             OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
-            if (j != 2) {
-                assertTrue(state.currentNodesByPlayer.get(j + 1) == root[j]);
-                assertEquals(state.currentPlayer, j + 1);
-            } else {
-                assertEquals(state.currentPlayer, j + 1);
-                assertEquals(state.currentNodesByPlayer.get(j + 1), root[j]);
-            }
-        }
-        MCStatistics<TestAgent> moveLeftNode = root[0].getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 1));
-        factory.processGameEvent(new GameEvent<>(new ActionWithRef<>(TestActionEnum.LEFT, 1), game));
-        for (int j = 0; j < 3; j++) {
-            OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
-            if (j == 0) {
-                assertTrue(state.currentNodesByPlayer.get(j + 1) == moveLeftNode);
-                assertEquals(state.currentPlayer, 1);
-            } else {
-                assertEquals(state.currentPlayer, j + 1);
-                assertEquals(state.currentNodesByPlayer.get(j + 1), root[j]);
-            }
+            assertEquals(state.currentPlayer, j + 1);
+            assertEquals(state.currentNodesByPlayer.get(j + 1), root[j]);
         }
     }
 

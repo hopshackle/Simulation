@@ -25,7 +25,7 @@ public class SimProperties {
 	public static void initialiseProperties(Properties baseline) {
 		geneticProperties = baseline;
 		initialised = true;
-		deciderPropertiesMap = new HashMap<String, DeciderProperties>();
+		deciderPropertiesMap = new HashMap<>();
 		initialiseProperties();
 	}
 	

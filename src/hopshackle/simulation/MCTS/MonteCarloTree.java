@@ -1,11 +1,11 @@
 package hopshackle.simulation.MCTS;
 
 import hopshackle.simulation.*;
+import hopshackle.simulation.games.*;
 import org.javatuples.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 public abstract class MonteCarloTree<P extends Agent> {
 
@@ -97,16 +97,6 @@ public abstract class MonteCarloTree<P extends Agent> {
     }
 
     public abstract void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, double[] finalScores);
-
-    public List<Triplet<State<P>, ActionWithRef<P>, Long>> filterTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, int actorRef) {
-        if (ignoreOthers) {
-            // filter trajectory to just our actions
-            return trajectory.stream()
-                    .filter(t -> t.getValue1().agentRef == actorRef).collect(Collectors.toList());
-        } else {
-            return trajectory;
-        }
-    }
 
     protected void updateActionValues(ActionEnum<P> action, int actingPlayer, double reward) {
         String actionAsString = action.toString();

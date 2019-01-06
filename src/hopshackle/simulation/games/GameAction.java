@@ -4,7 +4,7 @@ import hopshackle.simulation.*;
 
 public abstract class GameAction<A extends Agent> extends Action<A> {
 
-    public GameAction(ActionEnum<A> type, A player) {
+    public GameAction(GameActionEnum<A> type, A player) {
         super(type, player, true);
     }
 

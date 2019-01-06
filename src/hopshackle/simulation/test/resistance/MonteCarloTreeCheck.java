@@ -33,7 +33,7 @@ public class MonteCarloTreeCheck {
         localProp.setProperty("Gamma", "1.0");
         localProp.setProperty("TimePeriodForGamma", "1000");
         localProp.setProperty("IncrementalScoreReward", "false");
-        localProp.setProperty("MonteCarloRolloutCount", "1000");
+        localProp.setProperty("MonteCarloRolloutCount", "5000");
         localProp.setProperty("MonteCarloTimePerMove", "10000");
         localProp.setProperty("MonteCarloPriorActionWeightingForBestAction", "0");
         localProp.setProperty("MonteCarloActionValueRollout", "false");
@@ -106,8 +106,11 @@ public class MonteCarloTreeCheck {
             for (int otherTeamMember = 2; otherTeamMember <= 5; otherTeamMember++) {
                 includeNext[otherTeamMember] = rootStats.getSuccessorNode(new ActionWithRef<>(new IncludeInTeam(otherTeamMember), 1));
                 assertEquals(includeNext[otherTeamMember].getPossibleActions().size(), 2);
-                assertTrue(includeNext[otherTeamMember].getPossibleActions(1).contains(new SupportTeam()));
-                assertTrue(includeNext[otherTeamMember].getPossibleActions(1).contains(new RejectTeam()));
+                if (!includeNext[otherTeamMember].getPossibleActions(player).contains(new SupportTeam())){
+                    throw new AssertionError("HMM");
+                }
+                assertTrue(includeNext[otherTeamMember].getPossibleActions(player).contains(new SupportTeam()));
+                assertTrue(includeNext[otherTeamMember].getPossibleActions(player).contains(new RejectTeam()));
                 MCStatistics<ResistancePlayer>[] vote = new MCStatistics[2];
                 vote[0] = includeNext[otherTeamMember].getSuccessorNode(new ActionWithRef<>(new SupportTeam(), player));
                 vote[1] = includeNext[otherTeamMember].getSuccessorNode(new ActionWithRef<>(new RejectTeam(), player));
@@ -131,8 +134,8 @@ public class MonteCarloTreeCheck {
                         MCStatistics<ResistancePlayer> missionResultStats = null;
                         if (vr.isPassed()) {
                             if (player == 1 || player == otherTeamMember) {
-                                // were on the mission
-                                if (traitors.contains(player)) {
+                                // were on the mission. Dur to randomisation, 1 is the only player who will not be a traitor
+                                if (player != 1) {
                                     assertEquals(voteResultStats.getPossibleActions().size(), 2);
                                     assertTrue(voteResultStats.getPossibleActions().contains(new ActionWithRef<>(new Cooperate(), player)));
                                     assertTrue(voteResultStats.getPossibleActions().contains(new ActionWithRef<>(new Defect(), player)));
@@ -148,13 +151,15 @@ public class MonteCarloTreeCheck {
                             } else {
                                 missionResultStats = voteResultStats.getSuccessorNode(new ActionWithRef<>(new MissionResult(team, 0), -1));
                             }
-                            assertEquals(missionResultStats.getPossibleActions().size(), 5);
-                            final MCStatistics<ResistancePlayer> temp = missionResultStats;
-                            IntStream.rangeClosed(1, 5).
-                                    forEach(k -> {
-                                        assertTrue(temp.getPossibleActions(2).contains(new IncludeInTeam(k)));
-                                        assertNotNull(temp.getSuccessorNode(new ActionWithRef<>(new IncludeInTeam(k), 2)));
-                                    });
+                            if (missionResultStats.getVisits() > 5) {
+                                assertEquals(missionResultStats.getPossibleActions().size(), 5);
+                                final MCStatistics<ResistancePlayer> temp = missionResultStats;
+                                IntStream.rangeClosed(1, 5).
+                                        forEach(k -> {
+                                            assertTrue(temp.getPossibleActions(2).contains(new IncludeInTeam(k)));
+                                            assertNotNull(temp.getSuccessorNode(new ActionWithRef<>(new IncludeInTeam(k), 2)));
+                                        });
+                            }
                         } else {
                             // Vote was rejected
                             final MCStatistics<ResistancePlayer> temp = voteResultStats;
@@ -192,7 +197,7 @@ public class MonteCarloTreeCheck {
         MCStatistics<ResistancePlayer> rootStats = tree.getRootStatistics();
         assertEquals(rootStats.getPossibleActions(1).size(), 4);
         assertEquals(rootStats.getPossibleActions().size(), 4);
-        assertEquals(rootStats.getVisits(), 1000);
+        assertEquals(rootStats.getVisits(), 5000);
 
         // Now we check we have the following structure
         // 4 options to include the next one
@@ -266,7 +271,7 @@ public class MonteCarloTreeCheck {
         MCStatistics<ResistancePlayer> rootStats = tree.getRootStatistics();
         assertEquals(rootStats.getPossibleActions(1).size(), 4);
         assertEquals(rootStats.getPossibleActions().size(), 4);
-        assertEquals(rootStats.getVisits(), 1000);
+        assertEquals(rootStats.getVisits(), 5000);
 
         // Now we check we have the following structure
         // 4 options to include the next one

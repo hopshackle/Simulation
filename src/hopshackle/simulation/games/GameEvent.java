@@ -14,11 +14,13 @@ public class GameEvent<A extends Agent> {
     public final Type type;
     public final Game game;
     public final ActionWithRef<A> actionTaken;
+    public final long time;
     private List<Integer> visibleTo = new ArrayList<>();
 
     public GameEvent(Type type, Game game) {
         this.type = type;
         this.game = game;
+        time = game.getTime();
         actionTaken = null;
         if (type != Type.GAME_OVER)
             throw new AssertionError("Only GAME_OVER is valid with no further parameters");
@@ -29,6 +31,7 @@ public class GameEvent<A extends Agent> {
     public GameEvent(ActionWithRef<A> actionTaken, Game game) {
         type = Type.MOVE;
         this.game = game;
+        time = game.getTime();
         this.actionTaken = actionTaken;
         visibleTo = ((GameActionEnum) actionTaken.actionTaken).isVisibleTo(actionTaken.agentRef, game);
     }

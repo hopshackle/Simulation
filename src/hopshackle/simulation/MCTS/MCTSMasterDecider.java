@@ -4,12 +4,15 @@ import com.mysql.cj.x.protobuf.MysqlxExpect;
 import hopshackle.simulation.*;
 import hopshackle.simulation.AgentEvent.Type;
 import hopshackle.simulation.games.Game;
+import hopshackle.simulation.games.GameTracker;
 import hopshackle.simulation.metric.StatsCollator;
 import org.javatuples.Triplet;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
@@ -31,7 +34,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private boolean deciderAsHeuristic;
     private int rolloutLimit;
     private boolean writeGameLog;
-    private boolean debug = true;
+    private boolean debug = false;
     private MCTreeProcessor<A> treeProcessor;
 
     public MCTSMasterDecider(StateFactory<A> stateFactory, BaseStateDecider<A> rolloutDecider, Decider<A> opponentModel) {
@@ -63,10 +66,14 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         Game<A, ActionEnum<A>> game = agent.getGame();
         int currentPlayer = game.getPlayerNumber(agent);
 
+        if (treeSetting.equals("single") && !openLoop)
+            throw new AssertionError("MonteCarloTree=single is only support for MonteCarloOpenLoop=true");
+
         // We initialise a new tree, and then rollout N times
         // once the game is finished, we process the trajectory to update the MCTree
         // This is not using any Lookahead; just the record of state to state transitions
         MonteCarloTree<A> tree = getTree(agent);
+        if (!singleTree) game.getAllPlayers().stream().forEach(this::getTree);
         //      System.out.println(String.format("Starting turn for %d at %s", currentPlayer, game.toString()));
 
         State<A> currentState = stateFactory.getCurrentState(agent);
@@ -81,7 +88,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
                 // openLoop reuse old tree is processed after we have made the next decision
             }
         } else {
-            tree.reset();
+            treeMap.values().stream().forEach(MonteCarloTree::reset);
         }
 
         tree.insertRoot(currentState);
@@ -103,6 +110,23 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             Game<A, ActionEnum<A>> clonedGame = game.clone();
             clonedGame.redeterminise(agent.getActorRef());      // IS-MCTS, we redeterminise once at the start of each iteration
             A clonedAgent = clonedGame.getPlayer(currentPlayer);
+            GameTracker<A>[] gameTrackers = new GameTracker[game.getAllPlayers().size() + 1];
+            switch (treeSetting) {
+                case "perPlayer":
+                    for (A player : clonedGame.getAllPlayers()) {
+                        gameTrackers[player.getActorRef()] = new GameTracker<>(player, clonedGame);
+                    }
+                    break;
+                case "single":
+                    // we track the whole game trajectory
+                    gameTrackers[currentPlayer] = new GameTracker<>(clonedGame);
+                    break;
+                case "ignoreOthers":
+                    gameTrackers[currentPlayer] = new GameTracker<>(clonedAgent, clonedGame);
+                    break;
+                default:
+                    throw new AssertionError("Unknown Tree Setting: " + treeSetting);
+            }
             if (openLoop) {
                 OpenLoopStateFactory<A> factory = new OpenLoopStateFactory<>(treeSetting, treeMap, clonedGame);
                 childDecider = createChildDecider(factory, tree, currentPlayer, false);
@@ -123,20 +147,28 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             }
 
             clonedGame.playGame(rolloutLimit);
-            List<Triplet<State<A>, ActionWithRef<A>, Long>> trajectoryToUse = tree.filterTrajectory(clonedGame.getTrajectory(), agent.getActorRef());
+            // gameTracker tracks all events that are visible to us
+
             switch (treeSetting) {
                 case "perPlayer":
-                    treeMap.values().stream().forEach(
-                            t -> {
+                    treeMap.keySet().stream().forEach(
+                            p -> {
+                                List<Triplet<State<A>, ActionWithRef<A>, Long>> trajectory = gameTrackers[p].getTrajectory();
+                                MonteCarloTree<A> t = treeMap.get(p);
                                 t.setUpdatesLeft(1);
-                                t.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
+                                t.processTrajectory(trajectory, clonedGame.getFinalScores());
                                 if (t.updatesLeft == 0) nodesExpanded.incrementAndGet();
                             }
                     );
                     break;
-                case "single":
                 case "ignoreOthers":
+                case "single":
                     tree.setUpdatesLeft(1);
+                    Predicate<Triplet<State<A>, ActionWithRef<A>, Long>> filterFunction = (t -> true);
+                    // default is to use whole visible trajectory
+                    if (treeSetting.equals("ignoreOthers"))
+                        filterFunction = (t -> t.getValue1().agentRef == agent.getActorRef());
+                    List<Triplet<State<A>, ActionWithRef<A>, Long>> trajectoryToUse = gameTrackers[currentPlayer].getFilteredTrajectory(filterFunction);
                     tree.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
                     if (tree.updatesLeft == 0) nodesExpanded.incrementAndGet();
                     break;
@@ -181,7 +213,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         treeMap.put(agent.getActorRef(), tree);
         if (writeGameLog) {
             String message = agent.toString() + " " + best.toString() + " (after " + (actualI + 1) + " rollouts)";
-            System.out.println(message);
+      //      System.out.println(message);
             game.log(tree.getRootStatistics().toString(debug));
             game.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
             game.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));

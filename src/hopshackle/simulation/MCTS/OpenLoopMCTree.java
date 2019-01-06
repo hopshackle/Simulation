@@ -37,10 +37,10 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
                 currentPointer = currentPointer.update(actionTaken, discountedScores, actingPlayer);
                 if (currentPointer != null) nodeTrajectory.add(currentPointer);
             }
-            if (MAST) {
+            if (MAST && actingPlayer > 0) {
                 updateActionValues(actionTaken, actingPlayer, discountedScores[actingPlayer - 1]);
             }
-            if (RAVE) {
+            if (RAVE && actingPlayer > 0) {
                 for (MCStatistics node : nodeTrajectory) { // all previous actions (plus this one) in the trajectory have their RAVE stats updated
                     node.updateRAVE(actionTaken, finalScores, actingPlayer);
                 }

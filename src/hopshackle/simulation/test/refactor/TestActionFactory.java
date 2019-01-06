@@ -2,7 +2,7 @@ package hopshackle.simulation.test.refactor;
 
 import hopshackle.simulation.*;
 import hopshackle.simulation.ExperienceRecord.ERState;
-import hopshackle.simulation.games.Game;
+import hopshackle.simulation.games.*;
 
 import java.util.*;
 
@@ -70,7 +70,7 @@ class TestAction extends Action<TestAgent> {
     }
 }
 
-enum TestActionEnum implements ActionEnum<TestAgent> {
+enum TestActionEnum implements GameActionEnum<TestAgent> {
 
     TEST,
     LEFT,

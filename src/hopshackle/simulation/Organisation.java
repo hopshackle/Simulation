@@ -111,7 +111,7 @@ public class Organisation<T extends Agent> extends Location implements Persisten
         List<T> retValue = new ArrayList<T>();
         for (MembershipDetails md : membership.values()) {
             if (!md.hasTerminated()) {
-                T member = (T) Agent.getAgent(md.getMember());
+                T member = (T) AgentArchive.getAgent(md.getMember());
                 if (member != null)
                     retValue.add(member);
             }

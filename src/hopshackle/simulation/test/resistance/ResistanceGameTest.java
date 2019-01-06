@@ -2,14 +2,11 @@ package hopshackle.simulation.test.resistance;
 
 import static org.junit.Assert.*;
 
-import com.sun.deploy.security.MozillaSSLRootCertStore;
 import hopshackle.simulation.MCTS.SingletonStateFactory;
-import hopshackle.simulation.games.*;
 import hopshackle.simulation.games.resistance.*;
 import hopshackle.simulation.*;
-
 import java.util.*;
-import java.util.stream.IntStream;
+import java.util.stream.*;
 
 import org.junit.*;
 
@@ -61,10 +58,10 @@ public class ResistanceGameTest {
                 }
         );
 
-        IntStream.range(2, 7).forEach(i -> assertTrue(game.getTrajectory().get(i).getValue1().actionTaken instanceof SupportTeam));
-        assertTrue(game.getTrajectory().get(7).getValue1().actionTaken instanceof VoteResult);
-        VoteResult vr = (VoteResult) game.getTrajectory().get(7).getValue1().actionTaken;
-        assertTrue(vr.toString().equals("VOTE_RESULT: 11111"));
+        IntStream.range(2, 7).forEach(i -> assertTrue(game.getTrajectory().get(i).getValue0().actionTaken instanceof SupportTeam));
+        assertTrue(game.getTrajectory().get(7).getValue0().actionTaken instanceof VoteResult);
+        VoteResult vr = (VoteResult) game.getTrajectory().get(7).getValue0().actionTaken;
+        assertEquals(vr.toString(),"VOTE_RESULT: 11111");
         assertTrue(vr.isPassed());
         IntStream.rangeClosed(1, 5).forEach(i -> assertTrue(vr.voteOfPlayer(i)));
         assertSame(game.getFailedVotes(), 0);
@@ -87,10 +84,10 @@ public class ResistanceGameTest {
                 }
         );
 
-        IntStream.range(2, 7).forEach(i -> assertTrue(game.getTrajectory().get(i).getValue1().actionTaken instanceof RejectTeam));
-        assertTrue(game.getTrajectory().get(7).getValue1().actionTaken instanceof VoteResult);
-        VoteResult vr = (VoteResult) game.getTrajectory().get(7).getValue1().actionTaken;
-        assertTrue(vr.toString().equals("VOTE_RESULT: 00000"));
+        IntStream.range(2, 7).forEach(i -> assertTrue(game.getTrajectory().get(i).getValue0().actionTaken instanceof RejectTeam));
+        assertTrue(game.getTrajectory().get(7).getValue0().actionTaken instanceof VoteResult);
+        VoteResult vr = (VoteResult) game.getTrajectory().get(7).getValue0().actionTaken;
+        assertEquals(vr.toString(),"VOTE_RESULT: 00000");
         assertFalse(vr.isPassed());
         IntStream.rangeClosed(1, 5).forEach(i -> assertFalse(vr.voteOfPlayer(i)));
         assertSame(game.getFailedVotes(), 1);
@@ -118,9 +115,9 @@ public class ResistanceGameTest {
                 }
         );
 
-        assertTrue(game.getTrajectory().get(8).getValue1().actionTaken instanceof Cooperate);
-        assertTrue(game.getTrajectory().get(9).getValue1().actionTaken instanceof Cooperate);
-        assertTrue(game.getTrajectory().get(10).getValue1().actionTaken instanceof MissionResult);
+        assertTrue(game.getTrajectory().get(8).getValue0().actionTaken instanceof Cooperate);
+        assertTrue(game.getTrajectory().get(9).getValue0().actionTaken instanceof Cooperate);
+        assertTrue(game.getTrajectory().get(10).getValue0().actionTaken instanceof MissionResult);
 
         assertSame(game.getFailedVotes(), 0);
         assertSame(game.getMission(), 2);
@@ -148,10 +145,10 @@ public class ResistanceGameTest {
                 }
         );
 
-        assertTrue(game.getTrajectory().get(8).getValue1().actionTaken instanceof Defect);
-        assertTrue(game.getTrajectory().get(9).getValue1().actionTaken instanceof Cooperate);
-        assertTrue(game.getTrajectory().get(10).getValue1().actionTaken instanceof MissionResult);
-        MissionResult mr = (MissionResult) game.getTrajectory().get(10).getValue1().actionTaken;
+        assertTrue(game.getTrajectory().get(8).getValue0().actionTaken instanceof Defect);
+        assertTrue(game.getTrajectory().get(9).getValue0().actionTaken instanceof Cooperate);
+        assertTrue(game.getTrajectory().get(10).getValue0().actionTaken instanceof MissionResult);
+        MissionResult mr = (MissionResult) game.getTrajectory().get(10).getValue0().actionTaken;
         assertEquals(mr.getDefections(),1);
         assertEquals(mr.getTeam().size(), 2);
         assertEquals((int)mr.getTeam().get(0), traitor);

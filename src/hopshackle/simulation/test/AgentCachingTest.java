@@ -14,6 +14,7 @@ public class AgentCachingTest {
 
 	@Before
 	public void setUp() {
+        AgentArchive.switchOn(true);
 		world = new World();
 		world.setName("testWorld");
 		SimProperties.setProperty("DatabaseWriterBufferLimit", "1");
@@ -21,19 +22,19 @@ public class AgentCachingTest {
 		Thread t = new Thread(testJunit);
 		t.start();
 		world.setDatabaseAccessUtility(testJunit);
-		Agent.clearAndResetCacheBuffer(1);
+		AgentArchive.clearAndResetCacheBuffer(1);
 		testAgent = new BasicAgent(world);
 	}
 	
 	@Test
 	public void livingAgentIsReturnedFromCache() {
-		Agent agentReturnedFromCache = Agent.getAgent(testAgent.getUniqueID());
+		Agent agentReturnedFromCache = AgentArchive.getAgent(testAgent.getUniqueID());
 		assertEquals(agentReturnedFromCache, testAgent);
 	}
 	
 	@Test
 	public void nullReturnedIfAgentNotKnown() {
-		Agent agentReturnedFromCache = Agent.getAgent(2302739);
+		Agent agentReturnedFromCache = AgentArchive.getAgent(2302739);
 		assertTrue(agentReturnedFromCache == null);
 	}
 	
@@ -44,10 +45,10 @@ public class AgentCachingTest {
 		test2.die("Ooops");
 		wasteTime();
 		wasteTime();
-		Agent agentReturnedFromCache = Agent.getAgent(testAgent.getUniqueID());
+		Agent agentReturnedFromCache = AgentArchive.getAgent(testAgent.getUniqueID());
 		assertTrue(agentReturnedFromCache == null);
 		AgentRetriever<BasicAgent> agentRetriever = new BasicAgentRetriever(ConnectionFactory.getConnection("junit", "root", "Metternich", "", true));
-		agentReturnedFromCache = Agent.getAgent(testAgent.getUniqueID(), agentRetriever, world);
+		agentReturnedFromCache = AgentArchive.getAgent(testAgent.getUniqueID(), agentRetriever, world);
 		assertTrue(agentReturnedFromCache != null);
 		assertFalse(agentReturnedFromCache == testAgent);
 		assertEquals(agentReturnedFromCache.getUniqueID(), testAgent.getUniqueID());
@@ -61,7 +62,7 @@ public class AgentCachingTest {
 		BasicAgent test2 = new BasicAgent(world);
 		test2.die("Ooops");
 		wasteTime();
-		Agent agentReturnedFromCache = Agent.getAgent(testAgent.getUniqueID());
+		Agent agentReturnedFromCache = AgentArchive.getAgent(testAgent.getUniqueID());
 		assertTrue(agentReturnedFromCache == null);
 	}
 	

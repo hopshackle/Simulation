@@ -230,7 +230,7 @@ public class BasicAgent extends Agent implements Persistent {
 		List<BasicAgent> partners = new ArrayList<BasicAgent>();
 		BasicAgentRetriever bar = new BasicAgentRetriever();
 		for (Long id : allPartners) {
-			BasicAgent s = (BasicAgent) BasicAgent.getAgent(id, bar, world);
+			BasicAgent s = (BasicAgent) AgentArchive.getAgent(id, bar, world);
 			if (s != null)
 				partners.add(s);
 		}

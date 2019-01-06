@@ -17,11 +17,6 @@ public abstract class Agent extends Observable {
 	public static String newline = System.getProperty("line.separator");
 	protected static Logger errorLogger = Logger.getLogger("hopshackle.simulation");
 	protected static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
-	
-	private static HashMap<Long, Agent> cacheOfTheLiving = new HashMap<Long, Agent>();
-	private static HashMap<Long, String> cacheOfTheDead = new HashMap<Long, String>();
-	private static Queue<Agent> queueForTheFerryman = new LinkedList<Agent>();
-	private static int deadAgentsToHoldInLivingCache = 1000;
 
 	protected Location location;
 	protected World world;
@@ -57,7 +52,6 @@ public abstract class Agent extends Observable {
 		if (world != null)
 			uniqueID = idFountain.getAndIncrement();
 		generalAgentInitialisation(world);
-		cacheOfTheLiving.put(uniqueID, this);
 	}
 
 	public Agent (Location l, Decider<?> d, World world) {
@@ -77,14 +71,15 @@ public abstract class Agent extends Observable {
 	private void generalAgentInitialisation(World world) {
 		this.world = world;
 		if (world != null) setBirth(world.getCurrentTime());
-		inventory = new ArrayList<Artefact>();
+		inventory = new ArrayList<>();
 		gold =0;
 		actionPlan = new ActionPlan(this);
-		parents = new ArrayList<Long>();
-		children = new ArrayList<Long>();
-		listeners = new ArrayList<AgentListener>();
+		parents = new ArrayList<>();
+		children = new ArrayList<>();
+		listeners = new ArrayList<>();
 		knowledgeOfLocations = new MapKnowledge(this);
 		whatCanIDo = world.getWorldLogic(this);
+		AgentArchive.newAgent(this);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -119,13 +114,7 @@ public abstract class Agent extends Observable {
 			inheritancePolicy.apply(this);
 		}
 
-		if (queueForTheFerryman.size() >= deadAgentsToHoldInLivingCache) {
-			Agent agentToRemoveFromCache = queueForTheFerryman.poll();
-			cacheOfTheLiving.remove(agentToRemoveFromCache.getUniqueID());
-			cacheOfTheDead.put(agentToRemoveFromCache.getUniqueID(), world.toString());
-		}
-		queueForTheFerryman.offer(this);
-
+		AgentArchive.deathOf(this);
 		death = getWorld().getCurrentTime();
 		deathLocation = getLocation();
 		AgentEvent deathEvent = new AgentEvent(this, Type.DEATH);
@@ -354,10 +343,11 @@ public abstract class Agent extends Observable {
 	public int getNumberOfChildren() {
 		return children.size();
 	}
+
 	public List<Agent> getChildren() {
 		List<Agent> retList = new ArrayList<Agent>();
 		for (Long child : children) {
-			Agent a = Agent.getAgent(child, agentRetriever, world);
+			Agent a = AgentArchive.getAgent(child, agentRetriever, world);
 			if (a != null)
 				retList.add(a);
 			else
@@ -431,31 +421,6 @@ public abstract class Agent extends Observable {
 		for (AgentListener el : listeners) {
 			el.processEvent(ae);
 		}
-	}
-
-	public static void clearAndResetCacheBuffer(int i) {
-		if (i < 1) i = 1;
-		deadAgentsToHoldInLivingCache = i;
-		queueForTheFerryman.clear();
-		cacheOfTheDead.clear();
-		cacheOfTheLiving.clear();
-	}
-
-	public static Agent getAgent(long uniqueRef) {
-		Agent retValue = cacheOfTheLiving.get(uniqueRef);
-		return retValue;
-	}
-	public static Agent getAgent(long uniqueRef, AgentRetriever<?> agentRetriever, World world) {
-		Agent firstAttempt = getAgent(uniqueRef);
-		if (firstAttempt != null)
-			return firstAttempt;
-
-		Agent secondAttempt = null;
-		String worldName = cacheOfTheDead.get(uniqueRef);
-		if (worldName != null && worldName != "" && agentRetriever != null && world != null) {
-			secondAttempt = agentRetriever.getAgent(uniqueRef, worldName, world);
-		}
-		return secondAttempt;
 	}
 
 	public JourneyPlan getJourneyPlan() {

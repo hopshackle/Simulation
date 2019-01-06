@@ -104,8 +104,6 @@ public class MCTSDeciderTest {
 	
 	@Test
 	public void multiplePlayersWithMultipleTrees() {
-	    // TODO: Really this test should have "perPlayer" and be different to "single" (currently they are identical)
-        // As on a "perPlayer" basis we should put in states of other players from the perspective of our information set
 		localProp.setProperty("MonteCarloTree", "ignoreOthers");
 		masterDecider.injectProperties(localProp);
 		TestAgent[] players = new TestAgent[3];
@@ -143,73 +141,61 @@ public class MCTSDeciderTest {
 		State<TestAgent> thirdPlayerState = masterDecider.getCurrentState(players[2]);
 		assertFalse(tree.containsState(thirdPlayerState));
 	}
-	
-	@Test
-	public void singleTree() {
-		localProp.setProperty("MonteCarloTree", "single");
-		masterDecider.injectProperties(localProp);
-		tree = new TranspositionTableMCTree<>(localProp, 1);
-		TestAgent[] players = new TestAgent[3];
-		players[0] = agent;
-		players[1] = new TestAgent(world);
-		players[1].addGold(0.1);
-		players[2] = new TestAgent(world);
-		players[2].addGold(0.2);
-		mazeGame = new SimpleMazeGame(2, players);
-		for (TestAgent a : players) {
-			a.setDecider(masterDecider);
-		}
-		
-		State<TestAgent> startState = masterDecider.getCurrentState(agent);
+
+    @Test
+    public void perPlayerTree() {
+        localProp.setProperty("MonteCarloTree", "perPlayer");
+        masterDecider.injectProperties(localProp);
+        TestAgent[] players = new TestAgent[3];
+        players[0] = agent;
+        players[1] = new TestAgent(world);
+        players[1].addGold(0.1);
+        players[2] = new TestAgent(world);
+        players[2].addGold(0.2);
+        mazeGame = new SimpleMazeGame(2, players);
+        for (TestAgent a : players) {
+            a.setDecider(masterDecider);
+        }
+
+        State<TestAgent> startState = masterDecider.getCurrentState(agent);
         State<TestAgent> secondPlayerState = masterDecider.getCurrentState(players[1]);
         State<TestAgent> thirdPlayerState = masterDecider.getCurrentState(players[2]);
-		assertEquals(mazeGame.playerToMove, 0);
+        assertEquals(mazeGame.playerToMove, 0);
 
-		mazeGame.oneAction();
-        TranspositionTableMCTree<TestAgent> tree = (TranspositionTableMCTree)masterDecider.getTree(agent);
-		System.out.println(tree.toString(true));
-		MCStatistics<TestAgent> startStats;
-		assertEquals(tree.numberOfStates(), 7);	// more states visited as we use state of other players
-		startStats = tree.getStatisticsFor(startState);
-		assertEquals(startStats.getVisits(), 99);
-		assertEquals(startStats.getMean(TestActionEnum.LEFT, 1)[0], 4.812, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.TEST, 1)[0], -6.964, 0.01);
-		assertEquals(startStats.getMean(TestActionEnum.RIGHT, 1)[0], -9.078, 0.01);
-		assertEquals(startStats.getVisits(TestActionEnum.LEFT), 97);
-		assertEquals(startStats.getVisits(TestActionEnum.TEST), 1);
-		assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
-
-		assertEquals(mazeGame.playerToMove, 1);
-        assertFalse(tree.containsState(secondPlayerState));
-        assertFalse(tree.containsState(thirdPlayerState));
-        secondPlayerState = masterDecider.getCurrentState(players[1]);
-		assertTrue(tree.containsState(secondPlayerState));
-		assertEquals(tree.getStatisticsFor(secondPlayerState).getVisits(), 99);
-		// with TT-states, the second player state is identical regardless of what the first player does
-        // there is a special case for the first iteration, as this is the first visit to the root node,
-        // and also counts as a visit to the newly created child node
-
-        thirdPlayerState = masterDecider.getCurrentState(players[2]);
-		assertFalse(tree.containsState(thirdPlayerState));
-		assertTrue(thirdPlayerState.getAsString().equals("100|020|000|100"));       // we are at 100 time units
-		assertEquals(tree.getStatisticsFor("100|020|000|200").getVisits(), 98); // and we will move at 200 time units
-		// from now on, we only add one node per visit, so the next node created has 98 visits
-
-        startState = masterDecider.getCurrentState(players[1]);
         mazeGame.oneAction();
         tree = (TranspositionTableMCTree)masterDecider.getTree(agent);
-        // because we are using a single tree, this should be the same
-        assertFalse(tree.containsState(thirdPlayerState));
-        assertEquals(mazeGame.playerToMove, 2);
-        thirdPlayerState = masterDecider.getCurrentState(players[2]);
-        assertTrue(thirdPlayerState.getAsString().equals("100|020|000|200"));       // we are at 200 time units
-        assertTrue(tree.containsState(thirdPlayerState));
-        assertEquals(tree.getStatisticsFor(thirdPlayerState).getVisits(), 99);
+        TranspositionTableMCTree tree2 = (TranspositionTableMCTree)masterDecider.getTree(players[1]);
+        System.out.println(tree.toString(true));
+        MCStatistics<TestAgent> startStats;
+        assertEquals(tree.numberOfStates(), 10);	// more states visited as we use state of other players
         startStats = tree.getStatisticsFor(startState);
         assertEquals(startStats.getVisits(), 99);
-        assertEquals(tree.getStatisticsFor("100|010|100|400").getVisits(), 1);
-            // and this is only 1, because in almost all cases player 1 wins the game on their second move
-	}
+        assertEquals(startStats.getMean(TestActionEnum.LEFT, 1)[0], 4.812, 0.01);
+        assertEquals(startStats.getMean(TestActionEnum.TEST, 1)[0], -5.22, 0.01);
+        assertEquals(startStats.getMean(TestActionEnum.RIGHT, 1)[0], -6.19, 0.01);
+        assertEquals(startStats.getVisits(TestActionEnum.LEFT), 94);
+        assertEquals(startStats.getVisits(TestActionEnum.TEST), 4);
+        assertEquals(startStats.getVisits(TestActionEnum.RIGHT), 1);
+
+        assertEquals(mazeGame.playerToMove, 1);
+        assertFalse(tree.containsState(secondPlayerState));
+        assertTrue(tree2.containsState(secondPlayerState)); // this is the secondPlayerState before p1 moved
+        assertEquals(tree2.getStatisticsFor(secondPlayerState).getVisits(), 99);
+        assertFalse(tree.containsState(thirdPlayerState));
+        secondPlayerState = masterDecider.getCurrentState(players[1]); // this is the secondPlayerState after p1 moved
+        assertFalse(tree.containsState(secondPlayerState));
+        assertTrue(tree2.containsState(secondPlayerState));
+        assertEquals(tree2.getStatisticsFor(secondPlayerState).getVisits(), 98); // and all bar one of the rollouts must have visited it
+
+        startState = masterDecider.getCurrentState(players[0]);
+        mazeGame.oneAction();
+        tree = (TranspositionTableMCTree)masterDecider.getTree(agent);
+        assertFalse(tree.containsState(secondPlayerState));
+        assertEquals(mazeGame.playerToMove, 2);
+        assertEquals(tree.getStatisticsFor(startState).getVisits(), 99);
+        startState = masterDecider.getCurrentState(players[0]);
+        assertEquals(tree.getStatisticsFor(startState).getVisits(), 98);
+    }
 	
 	@Test
 	public void RAVEChildDeciderUpdates() {

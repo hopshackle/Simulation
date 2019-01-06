@@ -131,6 +131,7 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
 
 	@Override
 	public void updateGameStatus() {
-		nextPlayer();
+		calendar.setTime(calendar.getTime() + 1000);
+	    nextPlayer();
 	}
 }

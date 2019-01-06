@@ -170,6 +170,7 @@ public class RunBasicWorldGUI {
 		if (iterationNumber == 0)
 			return;
 
+		AgentArchive.switchOn(true);
 		World w = new World(new ActionProcessor(runName, realTime), 
 				runName + "_" + iterationNumber,
 				((long)endTime) * 60l * 1000l, null);
@@ -188,6 +189,6 @@ public class RunBasicWorldGUI {
 		}
 		
 		new BasicRunWorld(w, showGUI, ((long)endTime) * 60l * 1000l);
-		Agent.clearAndResetCacheBuffer(500);
+		AgentArchive.clearAndResetCacheBuffer(500);
 	}
 }

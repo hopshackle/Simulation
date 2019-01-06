@@ -17,7 +17,7 @@ public class VoteResult implements GameActionEnum<ResistancePlayer> {
             temp.append(votes[i] ? "1" : "0");
             if (votes[i]) votesInFavour++;
         }
-        voteSuccessful = votesInFavour > votes.length / 2;
+        voteSuccessful = votesInFavour > (votes.length-1) / 2.0;
         votesAsString = temp.toString();
     }
 
@@ -39,8 +39,8 @@ public class VoteResult implements GameActionEnum<ResistancePlayer> {
 
     public boolean equals(Object other) {
         if (other instanceof hopshackle.simulation.games.resistance.VoteResult) {
-            if (((VoteResult) other).votesAsString.equals(votesAsString));
-                return true;
+            String otherString = ((VoteResult) other).votesAsString;
+            return otherString.equals(votesAsString);
         }
         return false;
     }

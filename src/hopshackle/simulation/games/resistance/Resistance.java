@@ -44,7 +44,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     }
 
     private Resistance(int numberOfPlayers, int numberOfTraitors, World world, boolean cloned) {
-        debug = true;
+        debug = false;
         playerCount = numberOfPlayers;
         traitorCount = numberOfTraitors;
         traitorIdentities = new boolean[playerCount + 1];
