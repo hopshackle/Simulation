@@ -1,6 +1,6 @@
 package hopshackle.simulation;
 
-public interface DAO<T extends Persistent> {
+public interface DAO<T> {
 
 	String getTableCreationSQL(String tableSuffix);
 

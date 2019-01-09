@@ -60,6 +60,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     public String getRef() {
         return String.valueOf(refID);
     }
+    public long getID() { return refID;}
 
     public abstract P getCurrentPlayer();
 
@@ -212,5 +213,6 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     protected void sendMessage(GameEvent event) {
         listeners.stream().forEach(l -> l.processGameEvent(event));
     }
+
 }
 

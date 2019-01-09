@@ -24,11 +24,11 @@ public class ConnectionFactory {
         connectionProperties.setProperty("jdbcCompliantTruncation",
                 Boolean.toString(truncate));
 
-//		String connectionStr = "jdbc:mysql://" + hostname + "/" + db;
+		String connectionStr = "jdbc:mysql://" + hostname + ":3306/" + db;
 //		if (hostname == "") // NamedPipes more efficient if we're on the local machine
 //			connectionStr = connectionStr + "?socketFactory=com.mysql.jdbc.NamedPipeSocketFactory";
 
-        String connectionStr = "jdbc:mysql:///" + db;
+//        String connectionStr = "jdbc:mysql:///" + db;
 
         try {
             //		Class.forName("com.mysql.cj.jdbc.Driver").newInstance();

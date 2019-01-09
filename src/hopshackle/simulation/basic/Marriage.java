@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Marriage implements Persistent {
 
-	private static DatabaseWriter<Marriage> marriageWriter = new DatabaseWriter<Marriage>(new MarriageDAO());
+	private static DatabaseWriter<Marriage> writer;
 	private BasicAgent seniorPartner, juniorPartner;
 	private long startDate, dissolutionDate;
 	private World world;
@@ -43,7 +43,7 @@ public class Marriage implements Persistent {
 		juniorPartner.setMarriage(null);
 		dissolutionDate = world.getCurrentTime();
 		
-		marriageWriter.write(this, getWorld().toString());
+		if (writer != null) writer.write(this, getWorld().toString());
 		
 		juniorPartner.decide();
 		seniorPartner.decide();
@@ -75,4 +75,11 @@ public class Marriage implements Persistent {
 	public long getId() {
 		return uniqueId;
 	}
+
+    public static void setDBU(DatabaseAccessUtility dbu) {
+        if (writer != null) {
+            writer.writeBuffer();
+        }
+        writer = new DatabaseWriter<>(new MarriageDAO(), dbu);
+    }
 }

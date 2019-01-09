@@ -12,7 +12,6 @@ public class DatabaseAccessUtility implements Runnable{
 	protected static Logger logger = Logger.getLogger("hopshackle.simulation");
 	private long timeout = (long) SimProperties.getPropertyAsDouble("DatabaseUtilityTimeout", "10");
 	private volatile boolean done = false;
-	private long startTime = System.currentTimeMillis();
 	private List<DatabaseWriter> writers = new ArrayList<>();
 
 	public DatabaseAccessUtility() {
@@ -26,7 +25,7 @@ public class DatabaseAccessUtility implements Runnable{
 	}
 
 	private void otherSetup(){
-		queue = new LinkedBlockingQueue<String>();
+		queue = new LinkedBlockingQueue<>();
 	}
 
 	public synchronized void addUpdate(String update) {
@@ -37,12 +36,9 @@ public class DatabaseAccessUtility implements Runnable{
 			logger.severe("DBU getting new data after shut-down: " + update);
 	}
 
-	public void registerDatabaseWriter(DatabaseWriter<?> writer) {
-		writers.add(writer);
-	}
 	public void flushWriters() {
 		for (DatabaseWriter writer : writers) {
-			writer.writeBuffer(this);
+			writer.writeBuffer();
 //			System.out.println("Flushing buffer for " + writer.toString());
 		}
 	}

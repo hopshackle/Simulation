@@ -64,7 +64,7 @@ public class BasicRunWorld {
 			e.printStackTrace();
 		}
 
-		erFactory = new StandardERFactory<BasicAgent>(SimProperties.getDeciderProperties("GLOBAL"));
+		erFactory = new StandardERFactory<>(SimProperties.getDeciderProperties("GLOBAL"));
 		this.showGUI = showGUI;
 		endTime = runTime;
 		w = w1;

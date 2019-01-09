@@ -3,9 +3,9 @@ package hopshackle.simulation;
 import java.util.*;
 
 /* S indicates the State representation to use for start and end states
- * 
+ *
  */
-public class ExperienceRecord<A extends Agent> implements Persistent {
+public class ExperienceRecord<A extends Agent> {
 
     public enum ERState {
         UNSEEN, DECISION_TAKEN, ACTION_COMPLETED, NEXT_ACTION_TAKEN;
@@ -13,7 +13,7 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
 
     private DeciderProperties properties;
     private boolean incrementalScoreAffectsReward, dbStorage;
-    private static DatabaseWriter<ExperienceRecord<?>> writer = new DatabaseWriter<ExperienceRecord<?>>(new ExpRecDAO());
+    private static DatabaseWriter<ExperienceRecord<?>> writer;
     protected double lambda, gamma, traceCap, timePeriod;
     private State<A> startState, startStateWithLookahead, endState;
     protected double[] startStateAsArray, startStateWithLookaheadAsArray, endStateAsArray;
@@ -236,15 +236,21 @@ public class ExperienceRecord<A extends Agent> implements Persistent {
         return actingAgentNumber;
     }
 
-    public World getWorld() {
-        return actingAgent.getWorld();
-    }
-
     protected void setState(ExperienceRecord.ERState newState) {
-        if (dbStorage && newState == ERState.NEXT_ACTION_TAKEN && getState() != ERState.NEXT_ACTION_TAKEN) {
-            writer.write(this, getWorld().toString());
+        if (dbStorage && writer != null && newState == ERState.NEXT_ACTION_TAKEN && getState() != ERState.NEXT_ACTION_TAKEN) {
+            writer.write(this, actingAgent.getWorld().toString());
+        }
+        if (dbStorage && writer == null) {
+            throw new AssertionError("DatabaseWriter has not been initialised for ExperienceRecords");
         }
         expRecState = newState;
+    }
+
+    public static void setDBU(DatabaseAccessUtility dbu) {
+        if (writer != null) {
+            writer.writeBuffer();
+        }
+        writer = new DatabaseWriter<>(new ExpRecDAO(), dbu);
     }
 
     public double getDiscountPeriod() {

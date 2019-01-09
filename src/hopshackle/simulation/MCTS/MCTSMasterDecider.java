@@ -36,6 +36,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     private boolean writeGameLog;
     private boolean debug = false;
     private MCTreeProcessor<A> treeProcessor;
+    private DatabaseWriter<MCTSDecision> writer;
+    private String writerSuffix;
 
     public MCTSMasterDecider(StateFactory<A> stateFactory, BaseStateDecider<A> rolloutDecider, Decider<A> opponentModel) {
         super(stateFactory);
@@ -47,6 +49,12 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             this.opponentModel = new RandomDecider<A>(stateFactory);
     }
 
+    public void setWriter(DatabaseWriter<MCTSDecision> dbw, String suffix) {
+        if (writer != null)
+            writer.writeBuffer();
+        writerSuffix = suffix;
+        writer = dbw;
+    }
 
     public MCTSChildDecider<A> createChildDecider(StateFactory<A> stateFactoryForChild, MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
         MCTSChildDecider<A> retValue;
@@ -194,21 +202,24 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             }
         }
 
-        // Then we look at the statistics in the tree for the current state to make a decision
-        agent.log(tree.getRootStatistics().toString(debug));
-        int[] atDepth = tree.getDepths();
-        agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
-        agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
-        Map<String, Double> newStats = new HashMap<>();
-        newStats.put(toString() + "|MAX_DEPTH", maxDepth(atDepth));
-        newStats.put(toString() + "|ITERATIONS", (double) actualI);
-        newStats.put(toString() + "|NODES", nodesExpanded.doubleValue());
-        StatsCollator.addStatistics(newStats);
-
         ActionEnum<A> best = tree.getBestAction(chooseableOptions, currentPlayer);
         if (best == null) {
             throw new AssertionError("No action chosen");
         }
+        MCTSDecision decision = new MCTSDecision(tree, actualI, best, this.name, nodesExpanded.get(), game.getTime());
+        if (writer !=null) writer.write(decision, writerSuffix);
+
+        // Then we look at the statistics in the tree for the current state to make a decision
+        int[] atDepth = decision.depths;
+        agent.log(tree.getRootStatistics().toString(debug));
+        agent.log(String.format("Tree depths: (%d) %d %d %d %d %d %d %d %d %d %d", atDepth[10], atDepth[0], atDepth[1], atDepth[2], atDepth[3], atDepth[4], atDepth[5], atDepth[6], atDepth[7], atDepth[8], atDepth[9]));
+        agent.log(String.format("Visit depths: %d %d %d %d %d %d %d %d %d %d", atDepth[11], atDepth[12], atDepth[13], atDepth[14], atDepth[15], atDepth[16], atDepth[17], atDepth[18], atDepth[19], atDepth[20]));
+        Map<String, Double> newStats = new HashMap<>();
+        newStats.put(toString() + "|MAX_DEPTH", (double) decision.maxDepth);
+        newStats.put(toString() + "|ITERATIONS", (double) actualI);
+        newStats.put(toString() + "|NODES", nodesExpanded.doubleValue());
+        StatsCollator.addStatistics(newStats);
+
 
         treeMap.put(agent.getActorRef(), tree);
         if (writeGameLog) {
@@ -236,13 +247,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         }
 
         return best;
-    }
-
-    private double maxDepth(int[] depths) {
-        for (int i = 0; i < 11; i++) {
-            if (depths[i] == 0) return i - 1;
-        }
-        return 10;
     }
 
     @Override

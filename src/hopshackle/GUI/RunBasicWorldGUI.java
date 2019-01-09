@@ -182,6 +182,9 @@ public class RunBasicWorldGUI {
 		}
 		w.setLocationMap(new HexMap<BasicHex>(selectedFile, BasicHex.getHexFactory()));
 		w.setDatabaseAccessUtility(databaseUtility);
+        Marriage.setDBU(databaseUtility);
+        Village.setDBU(databaseUtility);
+        BasicAgent.setDBU(databaseUtility);
 		
 		if (loadStateSpace && stateSpaceToLoad.matches(".*\\*\\*")) {
 			String amendedStateSpace = stateSpaceToLoad.replace("**", String.format("%d", iterationNumber));

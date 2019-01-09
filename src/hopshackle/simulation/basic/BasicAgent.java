@@ -19,7 +19,7 @@ public class BasicAgent extends Agent implements Persistent {
 	protected static String baseDir = SimProperties.getProperty("BaseDirectory", "C:\\Simulations");
 	protected static Name maleNamer = new Name(new File(baseDir + "\\MaleNames.txt"));
 	protected static Name femaleNamer = new Name(new File(baseDir + "\\FemaleNames.txt"));
-	private static DatabaseWriter<BasicAgent> agentWriter = new DatabaseWriter<BasicAgent>(new BasicAgentDAO());
+	private static DatabaseWriter<BasicAgent> writer;
 	private static BasicAgentRetriever masterAgentRetriever = new BasicAgentRetriever();
 	private static double debugChance = 0.01;
 	private static int locationMemoryLimit = SimProperties.getPropertyAsInteger("BasicLocationMemory", "100");
@@ -158,13 +158,9 @@ public class BasicAgent extends Agent implements Persistent {
 			errorLogger.severe("Dying when already dead. " + toString());
 			return;
 		}
-		agentWriter.write(this, getWorld().toString());
+		if (writer !=null) writer.write(this, getWorld().toString());
 		super.die(reason);
 		dissolveMarriage();
-	}
-
-	public static DatabaseWriter<BasicAgent> getAgentWriter() {
-		return agentWriter;
 	}
 
 	public void recordSpendOfMovementPoints(int mp) {
@@ -297,5 +293,12 @@ public class BasicAgent extends Agent implements Persistent {
 			errorLogger.severe("Invalid number format in breeding age ranges. Defaulting to no breeding. " + e.getMessage());
 		}
 	}
+
+    public static void setDBU(DatabaseAccessUtility dbu) {
+        if (writer != null) {
+            writer.writeBuffer();
+        }
+        writer = new DatabaseWriter<>(new BasicAgentDAO(), dbu);
+    }
 
 }

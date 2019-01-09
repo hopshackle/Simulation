@@ -2,20 +2,20 @@ package hopshackle.simulation;
 
 import java.util.*;
 
-public class DatabaseWriter<T extends Persistent> {
+public class DatabaseWriter<T> {
 
     private List<String> knownSuffixes = new ArrayList<>();
     private String lastSuffix;
     private StringBuffer buffer;
     private int numberInBuffer;
     private static int bufferLimit = SimProperties.getPropertyAsInteger("DatabaseWriterBufferLimit", "10");
-    private ArrayList<DatabaseAccessUtility> dbus;
+    private DatabaseAccessUtility databaseAccessUtility;
     private DAO<T> DAO;
 
-    public DatabaseWriter(DAO<T> DAO) {
+    public DatabaseWriter(DAO<T> DAO, DatabaseAccessUtility dbu) {
         this.DAO = DAO;
         numberInBuffer = 0;
-        dbus = new ArrayList<>();
+        databaseAccessUtility = dbu;
     }
 
     public void write(T thing, String tableSuffix) {
@@ -23,31 +23,22 @@ public class DatabaseWriter<T extends Persistent> {
             lastSuffix = tableSuffix;
 
             if (knownSuffixes.contains(tableSuffix)) {
-                writeBuffer(thing.getWorld().getDBU());
+                writeBuffer();
                 // do not recreate tables if we have already processed data for this suffix
                 // we just want to incrementally add
             } else {
-                updateWorldListeners(thing.getWorld());
-                writeBuffer(thing.getWorld().getDBU());
+                writeBuffer();
 
                 String sqlDelete = DAO.getTableDeletionSQL(tableSuffix);
-                thing.getWorld().updateDatabase(sqlDelete);
+                databaseAccessUtility.addUpdate(sqlDelete);
                 String sqlQuery = DAO.getTableCreationSQL(tableSuffix);
-                thing.getWorld().updateDatabase(sqlQuery);
+                databaseAccessUtility.addUpdate(sqlQuery);
 
                 knownSuffixes.add(tableSuffix);
             }
         }
 
         addToBuffer(thing);
-    }
-
-    private void updateWorldListeners(World world) {
-        DatabaseAccessUtility dbu = world.getDBU();
-        if (dbu != null && !dbus.contains(dbu)) {
-            dbus.add(dbu);
-            dbu.registerDatabaseWriter(this);
-        }
     }
 
     private void addToBuffer(T thing) {
@@ -57,16 +48,16 @@ public class DatabaseWriter<T extends Persistent> {
         buffer.append(DAO.getValues(thing));
         numberInBuffer++;
         if (numberInBuffer >= bufferLimit)
-            writeBuffer(thing.getWorld().getDBU());
+            writeBuffer();
     }
 
-    public void writeBuffer(DatabaseAccessUtility dbu) {
+    public void writeBuffer() {
         // write if not null
-        if (dbu != null && numberInBuffer > 0) {
+        if (databaseAccessUtility != null && numberInBuffer > 0) {
             if (DAO instanceof DAODuplicateUpdate)
-                dbu.addUpdate(buffer.toString() + ((DAODuplicateUpdate) DAO).getOnDuplicateKey());
+                databaseAccessUtility.addUpdate(buffer.toString() + ((DAODuplicateUpdate) DAO).getOnDuplicateKey());
             else
-                dbu.addUpdate(buffer.toString());
+                databaseAccessUtility.addUpdate(buffer.toString());
         }
 
         // initialise new buffer
