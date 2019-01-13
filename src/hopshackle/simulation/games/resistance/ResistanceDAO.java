@@ -1,7 +1,6 @@
 package hopshackle.simulation.games.resistance;
 
 import hopshackle.simulation.*;
-
 import java.util.Arrays;
 
 public class ResistanceDAO implements DAO<Resistance> {
@@ -14,25 +13,27 @@ public class ResistanceDAO implements DAO<Resistance> {
                 " traitors  TINYINT		        NOT NULL, " +
                 " traitorWin TINYINT		NOT NULL,"		+
                 " totalMissions TINYINT 	NOT NULL,"		+
-                " successfulMissions TINYINT NOT NULL" +
+                " successfulMissions TINYINT NOT NULL," +
+                " gameID    INT             NOT NULL" +
                 ");";
     }
 
     @Override
     public String getTableUpdateSQL(String tableSuffix) {
         return "INSERT INTO Games_" + tableSuffix +
-                " (players, traitors, traitorWin, totalMissions, successfulMissions) VALUES";
+                " (players, traitors, traitorWin, totalMissions, successfulMissions, gameID) VALUES";
     }
 
     @Override
     public String getValues(Resistance game) {
 
-        return String.format(" (%d, %d, %d, %d, %d)",
+        return String.format(" (%d, %d, %d, %d, %d, %d)",
                 game.getAllPlayers().size(),
                 game.getTraitors().size(),
                 Arrays.stream(game.getFinalScores()).filter(i -> i == 1.0).count() == game.getTraitors().size() ? 1 : 0,
                 game.getMission() - 1,
-                game.getSuccessfulMissions()
+                game.getSuccessfulMissions(),
+                game.getID()
         );
     }
 

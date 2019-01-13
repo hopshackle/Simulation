@@ -29,7 +29,7 @@ public class StatsCollator {
 
     public static String summaryString() {
         return statistics.entrySet().stream()
-                .map(tuple -> String.format("%-20s = %.2f\n", tuple.getKey(), tuple.getValue() /
+                .map(tuple -> String.format("%-20s = %.4g\n", tuple.getKey(), tuple.getValue() /
                         count.get(tuple.getKey())))
                 .sorted()
                 .collect(Collectors.joining());

@@ -18,12 +18,12 @@ public class RunGame {
         int numberOfTraitors = HopshackleUtilities.getArgument(args, 2, 2);
         int numberOfGames = HopshackleUtilities.getArgument(args, 3, 100);
         String propertiesFile = HopshackleUtilities.getArgument(args, 4, "");
-
-        boolean includeRandom = SimProperties.getProperty("ResistanceIncludeRandom", "false").equals("true");
-
         if (!propertiesFile.equals("")) {
             SimProperties.setFileLocation(propertiesFile);
         }
+
+        boolean includeRandom = SimProperties.getProperty("ResistanceIncludeRandom", "false").equals("true");
+        boolean useSameDeciderForWholeTeam = SimProperties.getProperty("ResistanceSameDeciderForTeam", "false").equals("true");
 
         RandomDecider<ResistancePlayer> randomDecider = new RandomDecider<>(new SingletonStateFactory<>());
         DatabaseAccessUtility dbu = new DatabaseAccessUtility();
@@ -37,6 +37,7 @@ public class RunGame {
         StatsCollator.clear();
         DatabaseWriter<Resistance> gameWriter = new DatabaseWriter<>(new ResistanceDAO(), dbu);
         DatabaseWriter<MCTSDecision> mctsWriter = new DatabaseWriter<>(new MCTSDecisionDAO(), dbu);
+        DatabaseWriter<ResistancePlayer> playerWriter = new DatabaseWriter<>(new ResistancePlayerDAO(), dbu);
 
         for (int i = 0; i < numberOfGames; i++) {
             Set<String> deciderTypes = SimProperties.allDeciderNames();
@@ -52,15 +53,23 @@ public class RunGame {
             }
             Iterator<Decider<ResistancePlayer>> iterator = deciders.iterator();
             Resistance game = new Resistance(numberOfPlayers, numberOfTraitors, new World());
-            for (ResistancePlayer player : game.getAllPlayers()) {
-                if (!iterator.hasNext())
-                    iterator = deciders.iterator();
+            if (useSameDeciderForWholeTeam) {
+                game.getAllPlayers().stream()
+                        .forEach(p -> {
+                            Decider<ResistancePlayer> deciderToUse = p.isTraitor() ? deciders.get(0) : deciders.get(1);
+                            p.setDecider(deciderToUse);
+                        });
+            } else {
+                for (ResistancePlayer player : game.getAllPlayers()) {
+                    if (!iterator.hasNext())
+                        iterator = deciders.iterator();
 
-                player.setDecider(iterator.next());
-
+                    player.setDecider(iterator.next());
+                }
             }
             game.playGame();
             gameWriter.write(game, runName);
+            game.getAllPlayers().forEach(p -> playerWriter.write(p, runName));
             String winningTeam = game.getFinalScores()[game.getTraitors().get(0) - 1] >= 1.0 ? "TRAITORS" : "LOYALISTS";
             System.out.println(String.format("Finished Game %d with victory for %s", i + 1, winningTeam));
             StatsCollator.addStatistics("TRAITOR_WIN", winningTeam.equals("TRAITORS") ? 1.0 : 0.0);

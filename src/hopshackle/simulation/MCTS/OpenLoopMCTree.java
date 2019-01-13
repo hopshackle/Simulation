@@ -102,7 +102,7 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
 
     private List<MCStatistics<P>> getAllNodesThatMeetCriteria(Predicate<MCStatistics<P>> predicate) {
         List<MCStatistics<P>> retValue = new ArrayList<>();
-        Queue<MCStatistics<P>> processQueue = new ArrayBlockingQueue(100);
+        Queue<MCStatistics<P>> processQueue = new LinkedList<>();
         processQueue.add(rootNode);
 
         do {
