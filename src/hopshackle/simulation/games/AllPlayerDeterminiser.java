@@ -2,11 +2,12 @@ package hopshackle.simulation.games;
 
 import hopshackle.simulation.*;
 import hopshackle.simulation.MCTS.*;
+import hopshackle.simulation.games.resistance.Resistance;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class AllPlayerDeterminiser<G extends Game, P extends Agent> {
+public abstract class AllPlayerDeterminiser<G extends Game, P extends Agent> extends Game<P, ActionEnum<P>> {
 
     public final int root;      // the master player ref
     protected MCStatistics<P> mctsNode;
@@ -19,14 +20,17 @@ public abstract class AllPlayerDeterminiser<G extends Game, P extends Agent> {
                 .collect(Collectors.toMap(e -> e.getKey(), e -> (G) e.getValue().clone()));
     }
 
-    public AllPlayerDeterminiser(G gameToCopy, int rootPlayerID) {
+    public AllPlayerDeterminiser(G rootGame, int rootPlayerID) {
         root = rootPlayerID;
         determinisationsByPlayer = new HashMap<>();
 
-        int playerCount = gameToCopy.getAllPlayers().size();
+        int playerCount = rootGame.getAllPlayers().size();
 
         for (int i = 1; i <= playerCount; i++) {
-            determinisationsByPlayer.put(i, determinise(i, gameToCopy));
+            if (i == rootPlayerID)
+                determinisationsByPlayer.put(i, rootGame);
+            else
+                determinisationsByPlayer.put(i, determinise(i, rootGame));
         }
     }
 
@@ -107,6 +111,7 @@ public abstract class AllPlayerDeterminiser<G extends Game, P extends Agent> {
             throw new AssertionError(playerID + " does not have a determinisation");
         return retValue;
     }
+
     public G getMasterDeterminisation() {
         return determinisationsByPlayer.get(root);
     }

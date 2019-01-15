@@ -51,6 +51,12 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     public abstract void redeterminise(int perspectivePlayer);
 
     /*
+    Returns an AllPlayerDeterminiser that redeterminises from the perspective of every agent apart from the perspectivePlayer
+    This will also clone the game (N-1) times
+     */
+    public abstract AllPlayerDeterminiser<?, P> getAPD(int perspectivePlayer);
+
+    /*
     Undeterminises by taking the current game as the base, and updating (WARNING: mutable state) it to
     be compatible with referenceData. If the observed game history of this is incompatible with
     referenceData, then this wins out.

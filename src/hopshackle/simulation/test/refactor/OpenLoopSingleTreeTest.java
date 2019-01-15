@@ -60,6 +60,7 @@ public class OpenLoopSingleTreeTest {
         localProp.setProperty("MonteCarloMAST", "true");
         localProp.setProperty("MonteCarloOpenLoop", "true");
         localProp.setProperty("MonteCarloHeuristicOnSelection", "false");
+        localProp.setProperty("MonteCarloRandomTieBreaks", "false");
     }
 
     private void setupGame() {

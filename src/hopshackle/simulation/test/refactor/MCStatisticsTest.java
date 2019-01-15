@@ -13,8 +13,8 @@ import org.junit.*;
 
 public class MCStatisticsTest {
 
-    List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
-    List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
+    List<ActionEnum<TestAgent>> allActions = new ArrayList<>(EnumSet.allOf(TestActionEnum.class));
+    List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<>(EnumSet.allOf(TestActionEnum.class));
     MCStatistics<TestAgent> stats;
     DeciderProperties localProp;
     TestState A, B, C, END;
@@ -31,11 +31,12 @@ public class MCStatisticsTest {
         localProp.setProperty("MonteCarloHeuristicWeighting", "0.0");
         localProp.setProperty("MonteCarloRL", "false");
         localProp.setProperty("MonteCarloHeuristicOnExpansion", "false");
+        localProp.setProperty("MonteCarloParentalVisitValidity", "false");
     }
 
     @Test
     public void createEmpty() {
-        stats = new MCStatistics<TestAgent>(localProp, 1, A);
+        stats = new MCStatistics<>(localProp, 1, A);
         assertEquals(stats.getVisits(TestActionEnum.LEFT), 0);
         assertEquals(stats.getVisits(TestActionEnum.RIGHT), 0);
         assertEquals(stats.getVisits(TestActionEnum.TEST), 0);
@@ -46,7 +47,7 @@ public class MCStatisticsTest {
 
     @Test
     public void updateWithNewVisit() {
-        stats = new MCStatistics<TestAgent>(localProp, 1, A);
+        stats = new MCStatistics<>(localProp, 1, A);
         stats.update(TestActionEnum.LEFT, toArray(2.0), 1);
         stats.update(TestActionEnum.LEFT, toArray(3.5), 1);
         stats.update(TestActionEnum.LEFT, toArray(-1.0), 1);
@@ -65,7 +66,7 @@ public class MCStatisticsTest {
 
     @Test
     public void cycleThroughActionsIfNotAllTried() {
-        stats = new MCStatistics<TestAgent>(localProp, 1, A);
+        stats = new MCStatistics<>(localProp, 1, A);
         assertTrue(stats.hasUntriedAction(leftRightOnly, 1));
         TestActionEnum newAction = (TestActionEnum) stats.getRandomUntriedAction(leftRightOnly, 1);
         stats.update(newAction, toArray(1.0), 1);
@@ -78,7 +79,7 @@ public class MCStatisticsTest {
 
     @Test
     public void uctActionReturnsBestBound() {
-        stats = new MCStatistics<TestAgent>(localProp, 1, A);
+        stats = new MCStatistics<>(localProp, 1, A);
         stats.update(TestActionEnum.LEFT, toArray(2.0), 1);
         stats.update(TestActionEnum.RIGHT, toArray(1.0), 1);
         assertFalse(stats.hasUntriedAction(leftRightOnly, 1));
@@ -145,7 +146,7 @@ public class MCStatisticsTest {
 
     @Test
     public void updateWithPreviouslyUnknownActionShouldError() {
-        stats = new MCStatistics<TestAgent>(localProp, 1, A);
+        stats = new MCStatistics<>(localProp, 1, A);
         try {
             stats.update(TestActionEnum.LEFT, toArray(5.0), 1);
             fail("Error should be thrown if unseen action used.");
@@ -341,13 +342,13 @@ public class MCStatisticsTest {
 
     @Test
     public void updatingForSeveralDifferentActorsDoNotClash() {
-        TranspositionTableMCTree<TestAgent> tree = new TranspositionTableMCTree<TestAgent>(localProp, 3);
+        TranspositionTableMCTree<TestAgent> tree = new TranspositionTableMCTree<>(localProp, 3);
         tree.insertState(A);
         tree.insertState(B);
 
         MCStatistics statsA = tree.getStatisticsFor(A);
-        statsA.update(TestActionEnum.LEFT, B, new double[] {0.0, 1.0, 0.01}, 1);
-        statsA.update(TestActionEnum.LEFT, B, new double[] {1.0, 2.0, 0.2}, 1);
+        statsA.update(TestActionEnum.LEFT, B, new double[]{0.0, 1.0, 0.01}, 1);
+        statsA.update(TestActionEnum.LEFT, B, new double[]{1.0, 2.0, 0.2}, 1);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 1)[0], 0.5, 0.001);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 1)[1], 1.5, 0.001);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 1)[2], 0.105, 0.001);
@@ -356,8 +357,8 @@ public class MCStatisticsTest {
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 2)[1], 0.0, 0.001);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 2)[2], 0.0, 0.001);
 
-        statsA.update(TestActionEnum.LEFT, B, new double[] {1.0, 2.0, 1.01}, 2);
-        statsA.update(TestActionEnum.LEFT, B, new double[] {2.0, 3.0, 1.2}, 2);
+        statsA.update(TestActionEnum.LEFT, B, new double[]{1.0, 2.0, 1.01}, 2);
+        statsA.update(TestActionEnum.LEFT, B, new double[]{2.0, 3.0, 1.2}, 2);
 
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 1)[0], 0.5, 0.001);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 1)[1], 1.5, 0.001);
@@ -374,8 +375,8 @@ public class MCStatisticsTest {
         tree.insertState(A);
         tree.insertState(B);
 
-        tree.updateState(A, TestActionEnum.LEFT, B, new double[] {0.0, 1.0, 0.01}, 1);
-        tree.updateState(A, TestActionEnum.LEFT, C, new double[] {1.0, 2.0, 0.2}, 1);
+        tree.updateState(A, TestActionEnum.LEFT, B, new double[]{0.0, 1.0, 0.01}, 1);
+        tree.updateState(A, TestActionEnum.LEFT, C, new double[]{1.0, 2.0, 0.2}, 1);
         MCStatistics statsA = tree.getStatisticsFor(A);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 1)[0], 0.5, 0.001);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 1)[1], 1.5, 0.001);
@@ -385,8 +386,8 @@ public class MCStatisticsTest {
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 2)[1], 0.0, 0.001);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 2)[2], 0.0, 0.001);
 
-        tree.updateState(A, TestActionEnum.LEFT, B, new double[] {1.0, 2.0, 1.01}, 2);
-        tree.updateState(A, TestActionEnum.LEFT, B, new double[] {2.0, 3.0, 1.2}, 2);
+        tree.updateState(A, TestActionEnum.LEFT, B, new double[]{1.0, 2.0, 1.01}, 2);
+        tree.updateState(A, TestActionEnum.LEFT, B, new double[]{2.0, 3.0, 1.2}, 2);
 
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 1)[0], 0.5, 0.001);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 1)[1], 1.5, 0.001);
@@ -395,6 +396,99 @@ public class MCStatisticsTest {
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 2)[0], 1.5, 0.001);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 2)[1], 2.5, 0.001);
         assertEquals(statsA.getMean(TestActionEnum.LEFT, 2)[2], 1.105, 0.001);
+    }
+
+    @Test
+    public void useTotalVisitsOnlyWithVisitValiditySwitchedOff() {
+        /*
+        we set up MCStatistics, and visit it, 5 times with leftRightOnly
+        then we visit it with allActions
+        // at each point, we check that the output of getUCTValues is as we expect for each of LEFT, RIGHT, TEST
+         */
+        stats = new MCStatistics<>(localProp, 1, A);
+        int leftChosen = 0, testChosen = 0;
+        for (int i = 0; i < 5; i++) {
+            double expectedActionScore = leftChosen == 0 ? 0.0 : 1.0;
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[0], expectedActionScore, 0.01);  // actionScore
+            double expectedExplorationTerm = leftChosen == 0 ? Double.MAX_VALUE : Math.sqrt(Math.log(i) / leftChosen);
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[1], expectedExplorationTerm, 0.01);  // explorationTerm
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[2], leftChosen, 0.01);  // n
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[3], i, 0.01);  // N
+
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[0], 0.0, 0.01);  // actionScore
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[1], Double.MAX_VALUE, 0.01);  // explorationTerm
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[2], 0, 0.01);  // n
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[3], i, 0.01);  // N
+
+            ActionEnum action = stats.getNextAction(leftRightOnly, 1);
+            stats.update(action, new double[]{1.0}, 1);
+            if (action.equals(TestActionEnum.LEFT)) leftChosen++;
+        }
+        for (int i = 0; i < 5; i++) {
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[0], 1.0, 0.01);  // actionScore
+            double expectedExplorationTerm = leftChosen == 0 ? Double.MAX_VALUE : Math.sqrt(Math.log(i+5) / leftChosen);
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[1], expectedExplorationTerm, 0.01);  // explorationTerm
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[2], leftChosen, 0.01);  // n
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[3], i+5, 0.01);  // N
+
+            double expectedActionScore = testChosen == 0 ? 0.0 : 1.0;
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[0], expectedActionScore, 0.01);  // actionScore
+            expectedExplorationTerm = testChosen == 0 ? Double.MAX_VALUE : Math.sqrt(Math.log(i+5) / testChosen);
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[1], expectedExplorationTerm, 0.01);  // explorationTerm
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[2], testChosen, 0.01);  // n
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[3], i+5, 0.01);  // N
+
+            ActionEnum action = stats.getNextAction(allActions, 1);
+            stats.update(action, new double[]{1.0}, 1);
+            if (action.equals(TestActionEnum.LEFT)) leftChosen++;
+            if (action.equals(TestActionEnum.TEST)) testChosen++;
+            assertNotEquals(testChosen, 0.0, 0.01); // first one should be Test
+        }
+    }
+
+    @Test
+    public void useParentalValidVistsWhenSwitchedOn() {
+        // repeat of previous test case, with different setting
+        localProp.setProperty("MonteCarloParentalVisitValidity", "true");
+        stats = new MCStatistics<>(localProp, 1, A);
+        int leftChosen = 0, testChosen = 0;
+        for (int i = 0; i < 5; i++) {
+            double expectedActionScore = leftChosen == 0 ? 0.0 : 1.0;
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[0], expectedActionScore, 0.01);  // actionScore
+            double expectedExplorationTerm = leftChosen == 0 ? Double.MAX_VALUE : Math.sqrt(Math.log(i) / leftChosen);
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[1], expectedExplorationTerm, 0.01);  // explorationTerm
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[2], leftChosen, 0.01);  // n
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[3], i, 0.01);  // N
+
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[0], 0.0, 0.01);  // actionScore
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[1], Double.MAX_VALUE, 0.01);  // explorationTerm
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[2], 0, 0.01);  // n
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[3], 0.0, 0.01);  // N
+
+            ActionEnum action = stats.getNextAction(leftRightOnly, 1);
+            stats.update(action, new double[]{1.0}, 1);
+            if (action.equals(TestActionEnum.LEFT)) leftChosen++;
+        }
+        for (int i = 0; i < 5; i++) {
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[0], 1.0, 0.01);  // actionScore
+            double expectedExplorationTerm = leftChosen == 0 ? Double.MAX_VALUE : Math.sqrt(Math.log(i+5) / leftChosen);
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[1], expectedExplorationTerm, 0.01);  // explorationTerm
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[2], leftChosen, 0.01);  // n
+            assertEquals(stats.getUCTValue(TestActionEnum.LEFT, 1)[3], i+5, 0.01);  // N
+
+            double expectedActionScore = testChosen == 0 ? 0.0 : 1.0;
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[0], expectedActionScore, 0.01);  // actionScore
+            expectedExplorationTerm = testChosen == 0 ? Double.MAX_VALUE : Math.sqrt(Math.log(i) / testChosen);
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[1], expectedExplorationTerm, 0.01);  // explorationTerm
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[2], testChosen, 0.01);  // n
+            assertEquals(stats.getUCTValue(TestActionEnum.TEST, 1)[3], i, 0.01);  // N
+
+            ActionEnum action = stats.getNextAction(allActions, 1);
+            stats.update(action, new double[]{1.0}, 1);
+            if (action.equals(TestActionEnum.LEFT)) leftChosen++;
+            if (action.equals(TestActionEnum.TEST)) testChosen++;
+            assertNotEquals(testChosen, 0.0, 0.01); // first one should be Test
+        }
     }
 
     private double[] toArray(double single) {

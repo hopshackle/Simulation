@@ -6,8 +6,8 @@ import java.util.*;
 
 public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 
-    private Decider<P> rolloutDecider;
-    private MonteCarloTree<P> tree;
+    protected Decider<P> rolloutDecider;
+    protected MonteCarloTree<P> tree;
 
     public MCTSChildDecider(StateFactory<P> stateFactory, MonteCarloTree<P> tree, Decider<P> rolloutDecider, DeciderProperties prop) {
         super(stateFactory);

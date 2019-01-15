@@ -5,6 +5,8 @@ import hopshackle.simulation.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.javatuples.*;
+
 public class MCStatistics<P extends Agent> {
 
     private List<ActionWithRef<P>> allActions = new ArrayList<>();
@@ -13,10 +15,11 @@ public class MCStatistics<P extends Agent> {
     private Map<ActionWithRef<P>, MCData> RAVE = new HashMap<>();
     private Map<ActionWithRef<P>, Map<String, Integer>> successorStatesByAction = new HashMap<>();
     private Map<ActionWithRef<P>, MCStatistics<P>> successorNodesByAction = new HashMap<>();
+    private Map<ActionWithRef<P>, Integer> visitValidity = new HashMap<>();
     private int totalVisits = 0;
     private int RAVEVisits = 0;
     private boolean useBaseValue, offlineHeuristicOnExpansion, offlineHeuristicOnSelection;
-    private boolean robustMC, simpleMC, interpolateExploration;
+    private boolean robustMC, simpleMC, interpolateExploration, parentalVisitcount, randomJiggle;
     private String interpolationMethod;
     private double C, heuristicWeight;
     private double[] baseValue;
@@ -24,6 +27,7 @@ public class MCStatistics<P extends Agent> {
     private int minVisitsForQ, minVisitsForV;
     private State<P> state;
     private boolean openLoop;
+    private static Random rnd = new Random(4892);
 
     // test method only
     public MCStatistics(DeciderProperties properties, int players, State<P> state) {
@@ -52,6 +56,8 @@ public class MCStatistics<P extends Agent> {
         useBaseValue = tree.properties.getProperty("MonteCarloRL", "false").equals("true");
         robustMC = tree.properties.getProperty("MonteCarloChoice", "default").equals("robust");
         simpleMC = tree.properties.getProperty("MonteCarloChoice", "default").equals("simple");
+        parentalVisitcount = tree.properties.getProperty("MonteCarloParentalVisitValidity", "false").equals("true");
+        randomJiggle = tree.properties.getProperty("MonteCarloRandomTieBreaks", "true").equals("true");
         if (!useBaseValue) base = 0.0;
         baseValue = new double[tree.maxActors];
         for (int i = 0; i < tree.maxActors; i++) baseValue[i] = base;
@@ -81,7 +87,8 @@ public class MCStatistics<P extends Agent> {
             MCData old = map.get(actionRef);
             if (tree.debug)
                 tree.log(String.format("\tInitial Action values MC:%.2f\tV:%.2f\tQ:%.2f", old.mean[agentRef], old.V[agentRef], old.Q[agentRef]));
-            if (tree.debug) tree.log(String.format("\tAction update         MC:%.2f\tV:%.2f\tQ:%.2f", reward[agentRef], V[agentRef], Q[agentRef]));
+            if (tree.debug)
+                tree.log(String.format("\tAction update         MC:%.2f\tV:%.2f\tQ:%.2f", reward[agentRef], V[agentRef], Q[agentRef]));
             MCData newMCD = new MCData(old, reward, V, Q);
             if (tree.debug)
                 tree.log(String.format("\tNew Action values     MC:%.2f\tV:%.2f\tQ:%.2f", newMCD.mean[agentRef], newMCD.V[agentRef], newMCD.Q[agentRef]));
@@ -123,6 +130,7 @@ public class MCStatistics<P extends Agent> {
             if (map.containsKey(actionRef))
                 throw new AssertionError("MCData already exists");
             map.put(actionRef, new MCData(actionRef.toString(), tree.properties, tree.maxActors));
+            visitValidity.put(actionRef, 0);
         }
     }
 
@@ -153,6 +161,7 @@ public class MCStatistics<P extends Agent> {
     public List<ActionWithRef<P>> getPossibleActions() {
         return allActions;
     }
+
     public List<ActionEnum<P>> getPossibleActions(int agent) {
         return allActions.stream()
                 .filter(ar -> ar.agentRef == agent)
@@ -183,6 +192,7 @@ public class MCStatistics<P extends Agent> {
     public int getVisits(ActionWithRef<P> key) {
         return map.containsKey(key) ? map.get(key).visits : 0;
     }
+
     public int getVisits(ActionEnum<P> action) {
         return map.keySet().stream()
                 .filter(ar -> ar.actionTaken.equals(action))
@@ -256,6 +266,13 @@ public class MCStatistics<P extends Agent> {
         return false;
     }
 
+    private void updateParentalVisits(List<ActionEnum<P>> actions, int decidingAgent) {
+        actions.forEach(a -> {
+            ActionWithRef<P> actionWithRef = new ActionWithRef<>(a, decidingAgent);
+            visitValidity.put(actionWithRef, visitValidity.get(actionWithRef) + 1);
+        });
+    }
+
     public ActionEnum<P> getRandomUntriedAction(List<ActionEnum<P>> availableActions, int decidingAgent) {
         BaseStateDecider<P> heuristic = tree == null ? new noHeuristic<P>() : tree.getOfflineHeuristic();
         return getRandomUntriedAction(availableActions, heuristic, decidingAgent);
@@ -281,41 +298,68 @@ public class MCStatistics<P extends Agent> {
         return untried.get(diceRoll - 1);
     }
 
+    public ActionEnum<P> getNextAction(List<ActionEnum<P>> availableActions, int player) {
+        ActionEnum<P> retValue = hasUntriedAction(availableActions, player)
+                ? getRandomUntriedAction(availableActions, player)
+                : getUCTAction(availableActions, player);
+
+        if (parentalVisitcount) updateParentalVisits(availableActions, player);
+        return retValue;
+    }
+
     public ActionEnum<P> getUCTAction(List<ActionEnum<P>> availableActions, int player) {
-        return getUCTAction(availableActions, tree != null ? tree.getOfflineHeuristic() : new noHeuristic<P>(), player);
+        return getUCTAction(availableActions, tree != null ? tree.getOfflineHeuristic() : new noHeuristic<>(), player);
     }
 
     public ActionEnum<P> getUCTAction(List<ActionEnum<P>> availableActions, BaseStateDecider<P> heuristic, int player) {
         if (hasUntriedAction(availableActions, player))
             throw new AssertionError("Should not be looking for UCT action while there are still untried actions");
-        return getAction(availableActions, heuristic, C, player);
+        return getAction(availableActions, heuristic, false, player);
     }
 
-    private ActionEnum<P> getAction(List<ActionEnum<P>> availableActions, BaseStateDecider<P> heuristic, double exploreC, int player) {
+    // returns array of baseActionScore, explorationTerm, n, N
+    public double[] getUCTValue(ActionEnum<P> action, int player) {
+        double[] retValue = new double[4];
+        ActionWithRef<P> key = new ActionWithRef<>(action, player);
+        MCData data = map.get(key);
+        if (data == null) {
+            addAction(key);
+            data = map.get(key);
+        }
+        double actionScore = score(data, player);
+        double visits = (double) data.visits;
+        double totalEffectiveVisits = parentalVisitcount ? visitValidity.get(key) : totalVisits;
+        double coreExplorationTerm = visits == 0 ? Double.MAX_VALUE : C * Math.sqrt(Math.log(totalEffectiveVisits) / visits);
+        retValue[0] = actionScore;
+        retValue[1] = coreExplorationTerm;
+        retValue[2] = visits;
+        retValue[3] = totalEffectiveVisits;
+        return retValue;
+    }
+
+    private ActionEnum<P> getAction(List<ActionEnum<P>> availableActions, BaseStateDecider<P> heuristic, boolean bestAction, int player) {
         double best = Double.NEGATIVE_INFINITY;
         ActionEnum<P> retValue = null;
         List<Double> heuristicValues = heuristic.valueOptions(availableActions, state, player);
         boolean sqrtInterpolation = interpolationMethod.equals("RAVE");
         for (ActionEnum<P> action : availableActions) {
-            ActionWithRef<P> key = new ActionWithRef<>(action, player);
-            MCData data = map.get(key);
-            if (data == null) continue;
-            double actionScore = score(data, player);
-            double visits = (double) data.visits;
-            double coreExplorationTerm = exploreC * Math.sqrt(Math.log(totalVisits) / visits);
+            double[] UCTValues = getUCTValue(action, player);
+            double actionScore = UCTValues[0];
+            double coreExplorationTerm = bestAction ? 0.0 : UCTValues[1];
             double score = actionScore + coreExplorationTerm; // the vanilla result without heuristics
             if (offlineHeuristicOnSelection) {
                 int i = availableActions.indexOf(action);
                 // we weight the heuristic value as a number of equivalent visits
-                double beta = heuristicWeight / (heuristicWeight + visits);
+                double beta = heuristicWeight / (heuristicWeight + UCTValues[2]);
                 if (sqrtInterpolation)
-                    beta = Math.sqrt(heuristicWeight / (3 * totalVisits + heuristicWeight));
+                    beta = Math.sqrt(heuristicWeight / (3 * UCTValues[3] + heuristicWeight));
 
                 if (interpolateExploration)
                     score = beta * heuristicValues.get(i) + (1.0 - beta) * score;
                 else
                     score = beta * heuristicValues.get(i) + (1.0 - beta) * actionScore + coreExplorationTerm;
             }
+            if (randomJiggle) score += rnd.nextDouble() * 1e-6;
             if (score > best) {
                 best = score;
                 retValue = action;
@@ -449,7 +493,7 @@ public class MCStatistics<P extends Agent> {
             return retValue;
         } else {
             // otherwise, we use all the standard heuristics, but without any C
-            return getAction(availableActions, tree.getOfflineHeuristic(), 0.0, player);
+            return getAction(availableActions, tree.getOfflineHeuristic(), true, player);
         }
     }
 }
@@ -460,6 +504,12 @@ class MCData implements Comparable<MCData> {
     private double[] baseValue;
     private boolean useBaseValue;
     private int visitLimit;
+    int maxActors;
+    double[] mean, Q, V;
+    int visits;
+    int limit = visitLimit;
+    String key;
+
 
     public void refresh(DeciderProperties properties) {
         alpha = properties.getPropertyAsDouble("Alpha", "0.05");
@@ -472,11 +522,6 @@ class MCData implements Comparable<MCData> {
         for (int i = 0; i < maxActors; i++) baseValue[i] = base;
     }
 
-    int maxActors;
-    double[] mean, Q, V;
-    int visits;
-    int limit = visitLimit;
-    String key;
 
     public MCData(String key, DeciderProperties properties, int players) {
         this(key, 0, new double[players], properties);

@@ -7,19 +7,19 @@ import java.util.*;
 
 public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
-    private Map<Integer, MonteCarloTree<A>> treeMap = new HashMap<>();
-    private BaseStateDecider<A> rolloutDecider;
-    private Decider<A> opponentModel;
+    protected Map<Integer, MonteCarloTree<A>> treeMap = new HashMap<>();
+    protected BaseStateDecider<A> rolloutDecider;
+    protected Decider<A> opponentModel;
     private int maxRollouts = getPropertyAsInteger("MonteCarloRolloutCount", "99");
     private int maxRolloutsPerOption = getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
-    private boolean useAVDForRollout = getProperty("MonteCarloActionValueRollout", "false").equals("true");
-    private boolean useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
+    protected boolean useAVDForRollout = getProperty("MonteCarloActionValueRollout", "false").equals("true");
+    protected boolean useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
     private boolean reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
     private boolean trainRolloutDeciderOverGames, trainRolloutDeciderUsingAllPlayerExperiences;
-    private String treeSetting = getProperty("MonteCarloTree", "single");
+    protected String treeSetting = getProperty("MonteCarloTree", "single");
     private boolean singleTree = treeSetting.equals("single");
     private boolean multiTree = treeSetting.equals("perPlayer");
-    private boolean openLoop;
+    protected boolean openLoop;
     private long millisecondsPerMove;
     private boolean deciderAsHeuristic;
     private boolean writeGameLog;

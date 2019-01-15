@@ -46,6 +46,7 @@ public class MonteCarloTreeCheck {
         localProp.setProperty("MonteCarloMAST", "false");
         localProp.setProperty("MonteCarloOpenLoop", "true");
         localProp.setProperty("MonteCarloHeuristicOnSelection", "false");
+        localProp.setProperty("MonteCarloRandomTieBreaks", "false");
         Dice.setSeed(6l);
         game = new Resistance(5, 2, world);
     }

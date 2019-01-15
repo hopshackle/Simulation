@@ -98,29 +98,29 @@ public class MCStatisticsWithPriorWeightTest {
 
     @Test
     public void uctActionReturnsBestBound() {
-        stats = new MCStatistics<TestAgent>(startingTree, dummyState);
+        stats = new MCStatistics<>(startingTree, dummyState);
         stats.update(TestActionEnum.LEFT, toArray(2.0), 1);
         stats.update(TestActionEnum.RIGHT, toArray(1.0), 1);
         assertFalse(stats.hasUntriedAction(leftRightOnly, 1));
         TestActionEnum nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly, 1);
-        assertTrue(nextPick == TestActionEnum.RIGHT);
-        assertTrue(stats.getBestAction(leftRightOnly, 1) == TestActionEnum.RIGHT);
+        assertSame(nextPick, TestActionEnum.RIGHT);
+        assertSame(stats.getBestAction(leftRightOnly, 1), TestActionEnum.RIGHT);
         stats.update(nextPick, toArray(-2.0), 1);
         nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly, 1);
-        assertTrue(nextPick == TestActionEnum.RIGHT);
-        assertTrue(stats.getBestAction(leftRightOnly, 1) == TestActionEnum.RIGHT);
+        assertSame(nextPick, TestActionEnum.RIGHT);
+        assertSame(stats.getBestAction(leftRightOnly, 1), TestActionEnum.RIGHT);
         stats.update(nextPick, toArray(0.0), 1);
         nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly, 1);
-        assertTrue(nextPick == TestActionEnum.RIGHT);
-        assertTrue(stats.getBestAction(leftRightOnly, 1) == TestActionEnum.RIGHT);
+        assertSame(nextPick, TestActionEnum.RIGHT);
+        assertSame(stats.getBestAction(leftRightOnly, 1), TestActionEnum.RIGHT);
         stats.update(nextPick, toArray(-1.0), 1);
         nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly, 1);
-        assertTrue(nextPick == TestActionEnum.LEFT);
-        assertTrue(stats.getBestAction(leftRightOnly, 1) == TestActionEnum.RIGHT);
+        assertSame(nextPick, TestActionEnum.LEFT);
+        assertSame(stats.getBestAction(leftRightOnly, 1), TestActionEnum.RIGHT);
         stats.update(nextPick, toArray(1.0), 1);
         nextPick = (TestActionEnum) stats.getUCTAction(leftRightOnly, 1);
-        assertTrue(nextPick == TestActionEnum.RIGHT);
-        assertTrue(stats.getBestAction(leftRightOnly, 1) == TestActionEnum.RIGHT);
+        assertSame(nextPick, TestActionEnum.RIGHT);
+        assertSame(stats.getBestAction(leftRightOnly, 1), TestActionEnum.RIGHT);
         // in this test, the actionvalues in tree are never updated
 		/* Expected results for C, N (total), 
 		 * n (for this action) and Q

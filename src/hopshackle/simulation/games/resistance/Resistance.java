@@ -1,6 +1,7 @@
 package hopshackle.simulation.games.resistance;
 
 import hopshackle.simulation.*;
+import hopshackle.simulation.games.AllPlayerDeterminiser;
 import hopshackle.simulation.games.Game;
 import hopshackle.simulation.games.GameDeterminisationMemory;
 import hopshackle.simulation.games.GameEvent;
@@ -362,5 +363,10 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
 
     public Phase getPhase() {
         return currentPhase;
+    }
+
+    @Override
+    public AllPlayerDeterminiser getAPD(int player) {
+        throw new AssertionError("Not yet implemented");
     }
 }

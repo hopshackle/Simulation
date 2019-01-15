@@ -67,7 +67,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
         //      do {
         // TODO: We did loop through all decisions to see if one fit. However we now also
         // check priority against the plan - which could mean that a low probability, high priority
-        // decisoin *always* gets made
+        // decision *always* gets made
         // so when deciding here, we do not apply the actionPolicy to override existing plans
         // this is only used when an action is suggested by another agent (or an environmental
         // constraint outside of the main decision cycle)

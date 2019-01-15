@@ -56,13 +56,7 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
             currentPointer = OLState.currentNodesByPlayer.get(decidingAgent);
         }
         if (currentPointer != null) {
-            if (currentPointer.hasUntriedAction(possibleActions, decidingAgent)) {
-                ActionEnum<P> action = currentPointer.getRandomUntriedAction(possibleActions, decidingAgent);
-                return action;
-            } else {
-                ActionEnum<P> action = currentPointer.getUCTAction(possibleActions, decidingAgent);
-                return action;
-            }
+            return currentPointer.getNextAction(possibleActions, decidingAgent);
         } else {
             return null;
         }

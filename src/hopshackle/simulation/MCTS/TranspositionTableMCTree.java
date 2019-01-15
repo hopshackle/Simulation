@@ -156,11 +156,7 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
         String stateAsString = state.getAsString();
         if (tree.containsKey(stateAsString)) {
             MCStatistics<P> stats = tree.get(stateAsString);
-            if (stats.hasUntriedAction(possibleActions, decidingAgent)) {
-                return stats.getRandomUntriedAction(possibleActions, decidingAgent);
-            } else {
-                return stats.getUCTAction(possibleActions, decidingAgent);
-            }
+            return stats.getNextAction(possibleActions, decidingAgent);
         } else {
             return null;
         }

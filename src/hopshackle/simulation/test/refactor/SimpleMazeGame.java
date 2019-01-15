@@ -1,6 +1,7 @@
 package hopshackle.simulation.test.refactor;
 
 import hopshackle.simulation.*;
+import hopshackle.simulation.games.AllPlayerDeterminiser;
 import hopshackle.simulation.games.Game;
 import hopshackle.simulation.games.GameDeterminisationMemory;
 
@@ -134,4 +135,9 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
 		calendar.setTime(calendar.getTime() + 1000);
 	    nextPlayer();
 	}
+
+	@Override
+    public AllPlayerDeterminiser getAPD(int player) {
+	    throw new AssertionError("Not yet implemented");
+    }
 }
