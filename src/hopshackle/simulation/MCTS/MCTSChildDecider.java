@@ -28,10 +28,13 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
 
         int decidingAgentRef = decidingAgent.getActorRef();
         ActionEnum<P> retValue = tree.getNextAction(state, chooseableOptions, decidingAgentRef);
-        if (retValue == null) retValue = rolloutDecider.makeDecision(decidingAgent, chooseableOptions);
+        if (retValue == null) retValue = rolloutDecision(decidingAgent, chooseableOptions);
         return retValue;
     }
 
+    protected ActionEnum<P> rolloutDecision(P decidingAgent, List<ActionEnum<P>> chooseableOptions) {
+        return rolloutDecider.makeDecision(decidingAgent, chooseableOptions);
+    }
 
     @Override
     public double valueOption(ActionEnum<P> option, P decidingAgent) {

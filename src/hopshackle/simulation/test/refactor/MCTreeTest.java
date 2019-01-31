@@ -27,7 +27,9 @@ public class MCTreeTest {
 		localProp.setProperty("MonteCarloHeuristicOnSelection", "true");
 		localProp.setProperty("MonteCarloHeuristicOnExpansion", "false");
 		localProp.setProperty("MonteCarloMAST", "false");
-		leftRightOnly.remove(TestActionEnum.TEST);
+        localProp.setProperty("MonteCarloParentalVisitValidity", "false");
+
+        leftRightOnly.remove(TestActionEnum.TEST);
 		test = new State<TestAgent>() {
 			@Override
 			public double[] getAsArray() {

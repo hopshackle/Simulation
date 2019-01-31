@@ -46,7 +46,8 @@ public class MonteCarloTreeCheck {
         localProp.setProperty("MonteCarloMAST", "false");
         localProp.setProperty("MonteCarloOpenLoop", "true");
         localProp.setProperty("MonteCarloHeuristicOnSelection", "false");
-        localProp.setProperty("MonteCarloRandomTieBreaks", "false");
+        localProp.setProperty("MonteCarloRandomTieBreaks", "true");
+        localProp.setProperty("MonteCarloParentalVisitValidity", "true");
         Dice.setSeed(6l);
         game = new Resistance(5, 2, world);
     }
@@ -107,7 +108,7 @@ public class MonteCarloTreeCheck {
             for (int otherTeamMember = 2; otherTeamMember <= 5; otherTeamMember++) {
                 includeNext[otherTeamMember] = rootStats.getSuccessorNode(new ActionWithRef<>(new IncludeInTeam(otherTeamMember), 1));
                 assertEquals(includeNext[otherTeamMember].getPossibleActions().size(), 2);
-                if (!includeNext[otherTeamMember].getPossibleActions(player).contains(new SupportTeam())){
+                if (!includeNext[otherTeamMember].getPossibleActions(player).contains(new SupportTeam())) {
                     throw new AssertionError("HMM");
                 }
                 assertTrue(includeNext[otherTeamMember].getPossibleActions(player).contains(new SupportTeam()));
@@ -157,8 +158,10 @@ public class MonteCarloTreeCheck {
                                 final MCStatistics<ResistancePlayer> temp = missionResultStats;
                                 IntStream.rangeClosed(1, 5).
                                         forEach(k -> {
-                                            assertTrue(temp.getPossibleActions(2).contains(new IncludeInTeam(k)));
-                                            assertNotNull(temp.getSuccessorNode(new ActionWithRef<>(new IncludeInTeam(k), 2)));
+                                            ActionEnum<ResistancePlayer> includeInTeam = new IncludeInTeam(k);
+                                            assertTrue(temp.getPossibleActions(2).contains(includeInTeam));
+                                            if (temp.getVisits(includeInTeam) > 1)
+                                                assertNotNull(temp.getSuccessorNode(new ActionWithRef<>(includeInTeam, 2)));
                                         });
                             }
                         } else {

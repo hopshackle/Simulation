@@ -19,6 +19,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     protected List<Pair<ActionWithRef<P>, Long>> trajectory = new ArrayList();
     private List<GameListener<P>> listeners = new ArrayList<>();
     private long refID = idFountain.getAndIncrement();
+    private int currentPlayer;
 
     public abstract Game<P, A> cloneLocalFields();
 
@@ -30,6 +31,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     }
 
     private void cloneCoreFieldsFrom(Game<P, A> original) {
+        currentPlayer = original.currentPlayer;
         scoreCalculator = original.scoreCalculator;
         calendar = new GameTurnCalendar(original.calendar.getTime());
         //      trajectory = HopshackleUtilities.cloneList(original.trajectory);
@@ -67,6 +69,15 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         return String.valueOf(refID);
     }
     public long getID() { return refID;}
+
+    protected void changeCurrentPlayer(int newPlayer) {
+        int oldPlayer = currentPlayer;
+        currentPlayer = newPlayer;
+        if (oldPlayer != newPlayer) sendMessage(new GameEvent(oldPlayer, this));
+    }
+    public final int getCurrentPlayerRef() {
+        return currentPlayer;
+    }
 
     public abstract P getCurrentPlayer();
 
@@ -170,9 +181,11 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     public void applyAction(Action action) {
         if (action == null) return;
         int actorRef = action.getActor().getActorRef();
-        if (actorRef != getCurrentPlayer().getActorRef()) {
+        if (actorRef != getCurrentPlayerRef()) {
             throw new AssertionError("Only the current Player should really be taking actions");
         }
+
+        // we update the trajectory now, as we need to record this from the startState, in which the decision was taken
         trajectory.add(new Pair(new ActionWithRef(action.getType(), actorRef), action.getStartTime()));
         sendMessage(new GameEvent(new ActionWithRef<>(action.getType(), actorRef), this));
 

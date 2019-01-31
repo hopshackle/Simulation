@@ -3,6 +3,7 @@ package hopshackle.simulation.MCTS;
 import hopshackle.simulation.*;
 import hopshackle.simulation.games.*;
 import hopshackle.simulation.metric.StatsCollator;
+
 import java.util.*;
 
 public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
@@ -45,12 +46,14 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         writer = dbw;
     }
 
-    public MCTSChildDecider<A> createChildDecider(StateFactory<A> stateFactoryForChild, MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
+    public MCTSChildDecider<A> createChildDecider(Game clonedGame, MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
         MCTSChildDecider<A> retValue;
+
+        StateFactory<A> childFactory = openLoop ? new OpenLoopStateFactory<>(treeSetting, treeMap, clonedGame) : stateFactory;
         if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
-            retValue = new MCTSChildDecider<>(stateFactoryForChild, tree, new MCActionValueDecider<>(tree, stateFactory, currentPlayer), decProp);
+            retValue = new MCTSChildDecider<>(childFactory, tree, new MCActionValueDecider<>(tree, stateFactory, currentPlayer), decProp);
         else
-            retValue = new MCTSChildDecider<>(stateFactoryForChild, tree, rolloutDecider, decProp);
+            retValue = new MCTSChildDecider<>(childFactory, tree, rolloutDecider, decProp);
 
         retValue.setName("Child_MCTS");
         return retValue;
@@ -103,7 +106,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         for (int i = 0; i < N; i++) {
             Game<A, ActionEnum<A>> clonedGame = game.clone();
 
-            executeSearch(tree, clonedGame);
+            executeSearch(clonedGame);
 
             long now = System.currentTimeMillis();
             actualI = i;
@@ -170,17 +173,13 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         return best;
     }
 
-    protected void executeSearch(MonteCarloTree<A> tree, Game<A, ActionEnum<A>> clonedGame) {
-        int currentPlayer = clonedGame.getCurrentPlayer().getActorRef();
+    protected void executeSearch(Game<A, ActionEnum<A>> clonedGame) {
+        MonteCarloTree<A> tree = getTree(clonedGame.getCurrentPlayer());
+        int currentPlayer = clonedGame.getCurrentPlayerRef();
         clonedGame.redeterminise(currentPlayer);      // IS-MCTS, we redeterminise once at the start of each iteration
 
-        MCTSChildDecider<A> childDecider;
-        if (openLoop) {
-            OpenLoopStateFactory<A> factory = new OpenLoopStateFactory<>(treeSetting, treeMap, clonedGame);
-            childDecider = createChildDecider(factory, tree, currentPlayer, false);
-        } else {
-            childDecider = createChildDecider(stateFactory, tree, currentPlayer, false);
-        }
+        MCTSChildDecider<A> childDecider = createChildDecider(clonedGame, tree, currentPlayer, false);
+
         if (useAVDForOpponent)
             opponentModel = new MCActionValueDecider<>(tree, this.stateFactory, currentPlayer);
 

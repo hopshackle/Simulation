@@ -19,7 +19,7 @@ public class MCStatistics<P extends Agent> {
     private int totalVisits = 0;
     private int RAVEVisits = 0;
     private boolean useBaseValue, offlineHeuristicOnExpansion, offlineHeuristicOnSelection;
-    private boolean robustMC, simpleMC, interpolateExploration, parentalVisitcount, randomJiggle;
+    private boolean robustMC, simpleMC, interpolateExploration, parentalVisitcount;
     private String interpolationMethod;
     private double C, heuristicWeight;
     private double[] baseValue;
@@ -27,7 +27,6 @@ public class MCStatistics<P extends Agent> {
     private int minVisitsForQ, minVisitsForV;
     private State<P> state;
     private boolean openLoop;
-    private static Random rnd = new Random(4892);
 
     // test method only
     public MCStatistics(DeciderProperties properties, int players, State<P> state) {
@@ -57,7 +56,6 @@ public class MCStatistics<P extends Agent> {
         robustMC = tree.properties.getProperty("MonteCarloChoice", "default").equals("robust");
         simpleMC = tree.properties.getProperty("MonteCarloChoice", "default").equals("simple");
         parentalVisitcount = tree.properties.getProperty("MonteCarloParentalVisitValidity", "false").equals("true");
-        randomJiggle = tree.properties.getProperty("MonteCarloRandomTieBreaks", "true").equals("true");
         if (!useBaseValue) base = 0.0;
         baseValue = new double[tree.maxActors];
         for (int i = 0; i < tree.maxActors; i++) baseValue[i] = base;
@@ -269,7 +267,7 @@ public class MCStatistics<P extends Agent> {
     private void updateParentalVisits(List<ActionEnum<P>> actions, int decidingAgent) {
         actions.forEach(a -> {
             ActionWithRef<P> actionWithRef = new ActionWithRef<>(a, decidingAgent);
-            visitValidity.put(actionWithRef, visitValidity.get(actionWithRef) + 1);
+            visitValidity.put(actionWithRef, visitValidity.getOrDefault(actionWithRef, 0) + 1);
         });
     }
 
@@ -329,7 +327,7 @@ public class MCStatistics<P extends Agent> {
         double actionScore = score(data, player);
         double visits = (double) data.visits;
         double totalEffectiveVisits = parentalVisitcount ? visitValidity.get(key) : totalVisits;
-        double coreExplorationTerm = visits == 0 ? Double.MAX_VALUE : C * Math.sqrt(Math.log(totalEffectiveVisits) / visits);
+        double coreExplorationTerm = visits == 0 ? Double.MAX_VALUE : C * Math.sqrt(Math.log(totalEffectiveVisits > 0 ? totalEffectiveVisits : 1) / visits);
         retValue[0] = actionScore;
         retValue[1] = coreExplorationTerm;
         retValue[2] = visits;
@@ -359,7 +357,6 @@ public class MCStatistics<P extends Agent> {
                 else
                     score = beta * heuristicValues.get(i) + (1.0 - beta) * actionScore + coreExplorationTerm;
             }
-            if (randomJiggle) score += rnd.nextDouble() * 1e-6;
             if (score > best) {
                 best = score;
                 retValue = action;

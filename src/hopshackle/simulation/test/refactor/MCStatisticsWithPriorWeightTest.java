@@ -11,8 +11,8 @@ import org.junit.*;
 
 public class MCStatisticsWithPriorWeightTest {
 
-    List<ActionEnum<TestAgent>> allActions = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
-    List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<ActionEnum<TestAgent>>(EnumSet.allOf(TestActionEnum.class));
+    List<ActionEnum<TestAgent>> allActions = new ArrayList<>(EnumSet.allOf(TestActionEnum.class));
+    List<ActionEnum<TestAgent>> leftRightOnly = new ArrayList<>(EnumSet.allOf(TestActionEnum.class));
     MCStatistics<TestAgent> stats;
     TranspositionTableMCTree<TestAgent> startingTree;
     DeciderProperties localProp;
@@ -57,6 +57,7 @@ public class MCStatisticsWithPriorWeightTest {
         localProp.setProperty("MonteCarloMAST", "true");
         localProp.setProperty("MonteCarloHeuristicWeighting", "5");
         localProp.setProperty("MonteCarloChoice", "default");
+        localProp.setProperty("MonteCarloParentalVisitValidity", "false");
 
         startingTree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
         //	startingTree.setOfflineHeuristic(new MASTHeuristic<TestAgent>(startingTree));

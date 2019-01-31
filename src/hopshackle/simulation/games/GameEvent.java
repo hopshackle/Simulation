@@ -8,18 +8,17 @@ public class GameEvent<A extends Agent> {
 
     public enum Type {
         MOVE,
+        PLAYER_CHANGE,
         GAME_OVER
     }
 
     public final Type type;
-    public final Game game;
     public final ActionWithRef<A> actionTaken;
     public final long time;
     private List<Integer> visibleTo = new ArrayList<>();
 
     public GameEvent(Type type, Game game) {
         this.type = type;
-        this.game = game;
         time = game.getTime();
         actionTaken = null;
         if (type != Type.GAME_OVER)
@@ -30,10 +29,16 @@ public class GameEvent<A extends Agent> {
 
     public GameEvent(ActionWithRef<A> actionTaken, Game game) {
         type = Type.MOVE;
-        this.game = game;
         time = game.getTime();
         this.actionTaken = actionTaken;
         visibleTo = ((GameActionEnum) actionTaken.actionTaken).isVisibleTo(actionTaken.agentRef, game);
+    }
+
+    public GameEvent(int previousPlayer, Game game) {
+        type = Type.PLAYER_CHANGE;
+        time = game.getTime();
+        actionTaken = new ActionWithRef<>(null, previousPlayer);
+        // not visible to anyone...this is purely for technical use in MRIS-MCTS and variants
     }
 
     public List<Integer> visibleTo() {

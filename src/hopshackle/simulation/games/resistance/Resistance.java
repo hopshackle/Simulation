@@ -25,7 +25,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     private int playerCount, traitorCount;
     private boolean[] traitorIdentities;
     private ResistancePlayer[] allPlayers;
-    private int mission = 0, defectorsOnMission = 0, failedMissions = 0, failedVotes = 0, successfulMissions = 0, firstPlayer = 0, currentPlayer;
+    private int mission = 0, defectorsOnMission = 0, failedMissions = 0, failedVotes = 0, successfulMissions = 0, firstPlayer = 0;
     private List<List<Integer>> failedMissionDetails;
     private List<Integer> currentMissionTeam;
     private boolean[] missionTeamVotes;
@@ -66,7 +66,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
 
         mission = 1;
         firstPlayer = 1;
-        currentPlayer = 1;
+        changeCurrentPlayer(1);
         currentPhase = Phase.ASSEMBLE;
         currentMissionTeam = new ArrayList();
     }
@@ -84,7 +84,6 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         // note that the details of failed historic missions are immutable, so this shallow copy is legit
         retValue.failedVotes = failedVotes;
         retValue.firstPlayer = firstPlayer;
-        retValue.currentPlayer = currentPlayer;
         retValue.currentPhase = currentPhase;
         for (int i = 0; i < missionTeamVotes.length; i++)
             retValue.missionTeamVotes[i] = missionTeamVotes[i];
@@ -178,7 +177,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
 
     @Override
     public ResistancePlayer getCurrentPlayer() {
-        return allPlayers[currentPlayer];
+        return allPlayers[getCurrentPlayerRef()];
     }
 
     @Override
@@ -213,7 +212,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                 retValue.add(new RejectTeam());
                 break;
             case MISSION:
-                if (traitorIdentities[currentPlayer])
+                if (traitorIdentities[getCurrentPlayerRef()])
                     retValue.add(new Defect());
                 retValue.add(new Cooperate());
                 break;
@@ -233,16 +232,19 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     public int getMission() {
         return mission;
     }
+
     public int getSuccessfulMissions() {
         return successfulMissions;
     }
+
     public int getFailedVotes() {
         return failedVotes;
     }
 
     private void updateCurrentPlayer() {
-        currentPlayer = (currentPlayer + 1) % playerCount;
-        if (currentPlayer == 0) currentPlayer = playerCount;
+        int newPlayer = (getCurrentPlayerRef() + 1) % playerCount;
+        if (newPlayer == 0) newPlayer = playerCount;
+        changeCurrentPlayer(newPlayer);
     }
 
     private void updateFirstPlayer() {
@@ -261,7 +263,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                 if (currentMissionTeam.size() == teamMembersByMissionandPlayercount[mission][playerCount]) {
                     currentPhase = Phase.VOTE;
                     missionTeamVotes = new boolean[playerCount + 1];
-                    currentPlayer = firstPlayer;
+                    changeCurrentPlayer(firstPlayer);
                     failedVotes = 0;
                     if (debug)
                         log(String.format("Mission Team proposal: %s", HopshackleUtilities.formatList(currentMissionTeam, ", ", null)));
@@ -271,7 +273,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                 break;
             case VOTE:
                 updateCurrentPlayer();
-                if (currentPlayer == firstPlayer) {
+                if (getCurrentPlayerRef() == firstPlayer) {
                     // everyone has now voted
                     applyGameAction(new VoteResult(missionTeamVotes), calendar.getTime());
                     int votesInFavour = 0;
@@ -282,11 +284,11 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                         log(String.format("%d out of %d votes in favour of proposed team", votesInFavour, playerCount));
                     if (votesInFavour > playerCount / 2.0) {
                         currentPhase = Phase.MISSION;
-                        currentPlayer = currentMissionTeam.get(0);
+                        changeCurrentPlayer(currentMissionTeam.get(0));
                         defectorsOnMission = 0;
                     } else {
                         updateFirstPlayer();
-                        currentPlayer = firstPlayer;
+                        changeCurrentPlayer(firstPlayer);
                         failedVotes++;
                         missionTeamVotes = new boolean[playerCount + 1];
                         currentPhase = Phase.ASSEMBLE;
@@ -295,7 +297,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                 }
                 break;
             case MISSION:
-                if (currentPlayer == currentMissionTeam.get(teamMembersByMissionandPlayercount[mission][playerCount] - 1)) {
+                if (getCurrentPlayerRef() == currentMissionTeam.get(teamMembersByMissionandPlayercount[mission][playerCount] - 1)) {
                     // last member of team to decide...so move on to next phase
                     applyGameAction(new MissionResult(currentMissionTeam, defectorsOnMission), calendar.getTime());
                     if (defectorsOnMission == 0) {
@@ -310,10 +312,10 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                     mission++;
                     calendar.setTime(mission);
                     updateFirstPlayer();
-                    currentPlayer = firstPlayer;
+                    changeCurrentPlayer(firstPlayer);
                     currentMissionTeam = new ArrayList();
                 } else {
-                    currentPlayer = currentMissionTeam.get(currentMissionTeam.indexOf(currentPlayer) + 1);
+                    changeCurrentPlayer(currentMissionTeam.get(currentMissionTeam.indexOf(getCurrentPlayerRef()) + 1));
                 }
                 break;
         }
@@ -321,7 +323,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
 
     // no method for cooperation, as this is the default assumption
     public void defect(int player) {
-        if (currentPlayer == player && currentPhase == Phase.MISSION && traitorIdentities[player]) {
+        if (getCurrentPlayerRef() == player && currentPhase == Phase.MISSION && traitorIdentities[player]) {
             defectorsOnMission++;
         } else {
             throw new AssertionError("Defect not a possible action at this point");

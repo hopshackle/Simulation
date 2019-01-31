@@ -44,7 +44,17 @@ public class RunGame {
             List<Decider<ResistancePlayer>> deciders = new ArrayList<>();
             if (includeRandom) deciders.add(randomDecider);
             for (String deciderName : deciderTypes) {
-                MCTSMasterDecider<ResistancePlayer> mctsDecider = new MCTSMasterDecider<>(new SingletonStateFactory<>(), null, null);
+                MCTSMasterDecider<ResistancePlayer> mctsDecider;
+                switch (SimProperties.getDeciderProperties(deciderName).getProperty("MonteCarloConstructor", "IS-MCTS")) {
+                    case "IS-MCTS":
+                        mctsDecider = new MCTSMasterDecider<>(new SingletonStateFactory<>(), null, null);
+                        break;
+                    case "MRIS":
+                        mctsDecider = new MRISMCTSDecider<>(new SingletonStateFactory<>(), null, null);
+                        break;
+                    default:
+                        throw new AssertionError("Unknown constructor type " + SimProperties.getDeciderProperties(deciderName).getProperty("MonteCarloConstructor", "IS-MCTS"));
+                }
                 mctsDecider.injectProperties(SimProperties.getDeciderProperties(deciderName));
                 mctsDecider.setName(deciderName);
                 mctsDecider.setWriter(mctsWriter, runName);
@@ -71,7 +81,7 @@ public class RunGame {
             gameWriter.write(game, runName);
             game.getAllPlayers().forEach(p -> playerWriter.write(p, runName));
             String winningTeam = game.getFinalScores()[game.getTraitors().get(0) - 1] >= 1.0 ? "TRAITORS" : "LOYALISTS";
-            System.out.println(String.format("Finished Game %d with victory for %s", i + 1, winningTeam));
+            System.out.println(String.format("Finished Game %d with victory for %s at %s", i + 1, winningTeam, dateFormat.format(ZonedDateTime.now(ZoneId.of("UTC")))));
             StatsCollator.addStatistics("TRAITOR_WIN", winningTeam.equals("TRAITORS") ? 1.0 : 0.0);
             List<Integer> traitors = game.getTraitors();
             for (int j = 1; j <= numberOfPlayers; j++) {
