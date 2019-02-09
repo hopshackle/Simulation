@@ -49,7 +49,7 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
     }
 
     @Override
-    public void redeterminise(int perspectivePlayer) {
+    public void redeterminise(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame) {
     }
 //    @Override
 //    public void undeterminise(GameDeterminisationMemory referenceData) {}

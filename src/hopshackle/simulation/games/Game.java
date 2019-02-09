@@ -48,9 +48,15 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 
     /*
     Redeterminises hidden information from that player's perspective (WARNING: mutable state)
+    The new state must be compatible with the information set of the ISPlayer (which may or may not be the same as the perspectivePlayer)
+    If they are the same, then we just re-randomise all information hidden to the perspectivePlayer
+    If they are different, then we re-randomise subject to the result being compatible with the ISPlayer's knowledge (i.e.
+    it is a determinisation that the ISPlayer could believe the perspectivePlayer to hold, even if they know if is false)
+    In many games ISPlayer has no effect...it has an impact where there is overlap of private information sets. For example in Hanabi,
+    or Resistance where the Traitor players share perfect information.
     TODO: In the future we may need to apply a distribution over belief states
     */
-    public abstract void redeterminise(int perspectivePlayer);
+    public abstract void redeterminise(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame);
 
     /*
     Returns an AllPlayerDeterminiser that redeterminises from the perspective of every agent apart from the perspectivePlayer
@@ -230,7 +236,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     }
 
     protected void sendMessage(GameEvent event) {
-        listeners.stream().forEach(l -> l.processGameEvent(event));
+        listeners.forEach(l -> l.processGameEvent(event));
     }
 
 }

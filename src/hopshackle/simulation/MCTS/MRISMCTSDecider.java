@@ -13,15 +13,26 @@ public class MRISMCTSDecider<P extends Agent> extends MCTSMasterDecider<P> {
         super(stateFactory, rolloutDecider, opponentModel);
     }
 
+
     @Override
-    protected void executeSearch(Game<P, ActionEnum<P>> clonedGame) {
-        /*
-        MRIS games work like normal IS-MCTS games, except that we redeterminise the game state after each move
-        We do this by listening to the game, and mutable redeterminising it after each PLAYER_CHANGE event
-         */
-        determiniser = new MRISGameDeterminiser<>(clonedGame);
+    protected void preIterationProcessing(Game clonedGame, Game rootGame) {
+        int perspective = clonedGame.getCurrentPlayerRef();
+        clonedGame.redeterminise(perspective, perspective, Optional.empty());
+        // initial determinisation is as for IS-MCTS
+
+        // we then kick off determiniser to re-determinise before each tree action is taken
+        Optional<Game> rootOption = MRISRootConsistency ? Optional.of(rootGame) : Optional.empty();
+        determiniser = new MRISGameDeterminiser<>(clonedGame, rootOption);
         clonedGame.registerListener(determiniser);
-        super.executeSearch(clonedGame);
+        if (debug) {
+            clonedGame.debug = true;
+            clonedGame.log(String.format("Starting status of clonedGame: %s", clonedGame.toString()));
+        }
+    }
+
+    @Override
+    protected void postIterationProcessing(Game clonedGame) {
+        if (debug) clonedGame.log(String.format("MRIS Redeterminisations: %d", determiniser.count));
     }
 
     @Override
@@ -54,23 +65,31 @@ class MRISChildDecider<P extends Agent> extends MCTSChildDecider<P> {
         determiniser.switchOn(false);
         return super.rolloutDecision(decidingAgent, chooseableOptions);
     }
+
+
+
 }
 
 class MRISGameDeterminiser<P extends Agent> implements GameListener<P> {
 
     private boolean on = true;
+    int count = 0;
     private Game trackedGame;
+    private Optional<Game> rootGame;
 
-    MRISGameDeterminiser(Game game) {
+    MRISGameDeterminiser(Game game, Optional<Game> rootGame) {
         trackedGame = game;
+        this.rootGame = rootGame;
     }
 
     @Override
     public void processGameEvent(GameEvent<P> event) {
         if (!on) return;
         if (event.type == GameEvent.Type.PLAYER_CHANGE) {
-            // event triggers after the player has changed
-            trackedGame.redeterminise(trackedGame.getCurrentPlayerRef());
+            // event triggers after previousPlayer has acted, and before the currentPlayer takes their turn
+            int ISPlayer = rootGame.isPresent() ? rootGame.get().getCurrentPlayerRef() : event.actionTaken.agentRef;
+            trackedGame.redeterminise(trackedGame.getCurrentPlayerRef(), ISPlayer, rootGame);
+            count++;
         }
     }
 

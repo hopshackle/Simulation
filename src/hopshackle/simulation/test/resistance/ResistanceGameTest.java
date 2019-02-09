@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import hopshackle.simulation.MCTS.SingletonStateFactory;
 import hopshackle.simulation.games.resistance.*;
 import hopshackle.simulation.*;
+
 import java.util.*;
 import java.util.stream.*;
 
@@ -26,21 +27,8 @@ public class ResistanceGameTest {
 
     @Test
     public void chooseFirstTeam() {
-        int firstTraitor = game.getTraitors().get(0);
-        game.applyAction((new IncludeInTeam(firstTraitor)).getAction(game.getCurrentPlayer()));
-        assertSame(game.getPhase(), Resistance.Phase.ASSEMBLE);
-        IntStream.rangeClosed(1, 5).forEach(i -> assertEquals(rl.data.get(i).size(), 1));
-
-        for (int i = 1; i <= game.getAllPlayers().size(); i++) {
-            if (game.getTraitors().contains(i)) continue;
-            game.applyAction((new IncludeInTeam(i)).getAction(game.getCurrentPlayer()));
-            break;
-        }
-        // we should now have a full team, including one traitor, and one loyalist
-        assertSame(game.getPhase(), Resistance.Phase.VOTE);
-        IntStream.rangeClosed(1, 5).forEach(i -> assertEquals(rl.data.get(i).size(), 2));
+        chooseTeam(true);
         assertEquals(game.getTrajectory().size(), 2);
-
         assertSame(game.getCurrentPlayer().getActorRef(), 1);
     }
 
@@ -61,7 +49,7 @@ public class ResistanceGameTest {
         IntStream.range(2, 7).forEach(i -> assertTrue(game.getTrajectory().get(i).getValue0().actionTaken instanceof SupportTeam));
         assertTrue(game.getTrajectory().get(7).getValue0().actionTaken instanceof VoteResult);
         VoteResult vr = (VoteResult) game.getTrajectory().get(7).getValue0().actionTaken;
-        assertEquals(vr.toString(),"VOTE_RESULT: 11111");
+        assertEquals(vr.toString(), "VOTE_RESULT: 11111");
         assertTrue(vr.isPassed());
         IntStream.rangeClosed(1, 5).forEach(i -> assertTrue(vr.voteOfPlayer(i)));
         assertSame(game.getFailedVotes(), 0);
@@ -87,7 +75,7 @@ public class ResistanceGameTest {
         IntStream.range(2, 7).forEach(i -> assertTrue(game.getTrajectory().get(i).getValue0().actionTaken instanceof RejectTeam));
         assertTrue(game.getTrajectory().get(7).getValue0().actionTaken instanceof VoteResult);
         VoteResult vr = (VoteResult) game.getTrajectory().get(7).getValue0().actionTaken;
-        assertEquals(vr.toString(),"VOTE_RESULT: 00000");
+        assertEquals(vr.toString(), "VOTE_RESULT: 00000");
         assertFalse(vr.isPassed());
         IntStream.rangeClosed(1, 5).forEach(i -> assertFalse(vr.voteOfPlayer(i)));
         assertSame(game.getFailedVotes(), 1);
@@ -149,10 +137,10 @@ public class ResistanceGameTest {
         assertTrue(game.getTrajectory().get(9).getValue0().actionTaken instanceof Cooperate);
         assertTrue(game.getTrajectory().get(10).getValue0().actionTaken instanceof MissionResult);
         MissionResult mr = (MissionResult) game.getTrajectory().get(10).getValue0().actionTaken;
-        assertEquals(mr.getDefections(),1);
+        assertEquals(mr.getDefections(), 1);
         assertEquals(mr.getTeam().size(), 2);
-        assertEquals((int)mr.getTeam().get(0), traitor);
-        assertEquals((int)mr.getTeam().get(1), loyalist);
+        assertEquals((int) mr.getTeam().get(0), traitor);
+        assertEquals((int) mr.getTeam().get(1), loyalist);
 
         assertSame(game.getFailedVotes(), 0);
         assertSame(game.getMission(), 2);
@@ -160,4 +148,41 @@ public class ResistanceGameTest {
         assertSame(game.getPhase(), Resistance.Phase.ASSEMBLE);
     }
 
+    @Test
+    public void gameOverAfterFiveFailedVotes() {
+        for (int vote = 0; vote < 5; vote++) {
+            chooseTeam(false);
+            IntStream.rangeClosed(1, 5).forEach(
+                    i -> {
+                        RejectTeam reject = new RejectTeam();
+                        game.applyAction(reject.getAction(game.getCurrentPlayer()));
+                    }
+            );
+            assertSame(game.getFailedVotes(), vote + 1);
+            assertSame(game.getMission(), 1);
+            assertSame(game.getSuccessfulMissions(), 0);
+            assertSame(game.getPhase(), Resistance.Phase.ASSEMBLE);
+        }
+        assertTrue(game.gameOver());
+        assertTrue(game.spiesHaveWon());
+    }
+
+
+    private void chooseTeam(boolean firstTeam) {
+        int firstTraitor = game.getTraitors().get(0);
+        game.applyAction((new IncludeInTeam(firstTraitor)).getAction(game.getCurrentPlayer()));
+        assertSame(game.getPhase(), Resistance.Phase.ASSEMBLE);
+        if (firstTeam)
+            IntStream.rangeClosed(1, 5).forEach(i -> assertEquals(rl.data.get(i).size(), 1));
+
+        for (int i = 1; i <= game.getAllPlayers().size(); i++) {
+            if (game.getTraitors().contains(i)) continue;
+            game.applyAction((new IncludeInTeam(i)).getAction(game.getCurrentPlayer()));
+            break;
+        }
+        // we should now have a full team, including one traitor, and one loyalist
+        assertSame(game.getPhase(), Resistance.Phase.VOTE);
+        if (firstTeam)
+            IntStream.rangeClosed(1, 5).forEach(i -> assertEquals(rl.data.get(i).size(), 2));
+    }
 }

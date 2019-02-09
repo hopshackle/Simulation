@@ -58,8 +58,8 @@ public class MRISMCTSTest {
 
         assertEquals(game.playerChange, 9, 2);
         int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
-        // we always redeterminise at the start, so we should have one more than playerChange
         assertEquals(updates, game.playerChange + 1);
+        // wew redeterminise every time the Player changes, plus once at the start of the iteration
     }
 
     @Test
@@ -70,12 +70,12 @@ public class MRISMCTSTest {
         MonteCarloTree<MRISAgent> tree = MRISDecider.getTree(game.getCurrentPlayer());
         State<MRISAgent> currentState = factory.getCurrentState(game.getCurrentPlayer());
         tree.insertRoot(currentState);
+
         MRISDecider.executeSearch(game);
 
         assertEquals(game.playerChange, 90, 10);
         int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
-        // we always redeterminise at the start, so we should have one more than playerChange
-        assertEquals(updates, 10, 10);
+        assertTrue(updates < game.playerChange / 2);
     }
 }
 
@@ -118,7 +118,7 @@ class MRISTestGame extends Game<MRISAgent, ActionEnum<MRISAgent>> {
     }
 
     @Override
-    public void redeterminise(int perspectivePlayer) {
+    public void redeterminise(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame) {
         int newCount = redeterminisationCounts.getOrDefault(perspectivePlayer, 0) + 1;
         redeterminisationCounts.put(perspectivePlayer, newCount);
     }
@@ -251,6 +251,8 @@ class MRISTestDecider extends MRISMCTSDecider<MRISAgent> {
 
     @Override
     public void executeSearch(Game<MRISAgent, ActionEnum<MRISAgent>> clonedGame) {
+        preIterationProcessing(clonedGame, clonedGame);
         super.executeSearch(clonedGame);
+        postIterationProcessing(clonedGame);
     }
 }

@@ -20,11 +20,11 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     protected String treeSetting = getProperty("MonteCarloTree", "single");
     private boolean singleTree = treeSetting.equals("single");
     private boolean multiTree = treeSetting.equals("perPlayer");
-    protected boolean openLoop;
+    protected boolean openLoop, MRISRootConsistency;
     private long millisecondsPerMove;
     private boolean deciderAsHeuristic;
     private boolean writeGameLog;
-    private boolean debug = false;
+    protected boolean debug = false;
     private MCTreeProcessor<A> treeProcessor;
     private DatabaseWriter<MCTSDecision> writer;
     private String writerSuffix;
@@ -105,9 +105,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         int actualI = 0;
         for (int i = 0; i < N; i++) {
             Game<A, ActionEnum<A>> clonedGame = game.clone();
-
+            preIterationProcessing(clonedGame, game);
             executeSearch(clonedGame);
-
+            postIterationProcessing(clonedGame);
             long now = System.currentTimeMillis();
             actualI = i;
             if (millisecondsPerMove > 0 && now >= startTime + millisecondsPerMove) break;
@@ -145,7 +145,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         newStats.put(toString() + "|NODES", (double) nodesExpanded);
         StatsCollator.addStatistics(newStats);
 
-
         treeMap.put(agent.getActorRef(), tree);
         if (writeGameLog) {
             String message = agent.toString() + " " + best.toString() + " (after " + (actualI + 1) + " rollouts)";
@@ -176,7 +175,6 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     protected void executeSearch(Game<A, ActionEnum<A>> clonedGame) {
         MonteCarloTree<A> tree = getTree(clonedGame.getCurrentPlayer());
         int currentPlayer = clonedGame.getCurrentPlayerRef();
-        clonedGame.redeterminise(currentPlayer);      // IS-MCTS, we redeterminise once at the start of each iteration
 
         MCTSChildDecider<A> childDecider = createChildDecider(clonedGame, tree, currentPlayer, false);
 
@@ -184,6 +182,15 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             opponentModel = new MCActionValueDecider<>(tree, this.stateFactory, currentPlayer);
 
         MCTSUtilities.launchGame(treeMap, clonedGame, childDecider, opponentModel, decProp);
+    }
+
+    protected void preIterationProcessing(Game clonedGame, Game rootGame) {
+        int perspective = clonedGame.getCurrentPlayerRef();
+        clonedGame.redeterminise(perspective, perspective, Optional.empty());
+        // IS-MCTS, we redeterminise once at the start of each iteration
+    }
+    protected void postIterationProcessing(Game clonedGame) {
+
     }
 
     @Override
@@ -247,6 +254,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         trainRolloutDeciderUsingAllPlayerExperiences = getProperty("MonteCarloTrainRolloutDeciderFromAllPlayers", "false").equals("true");
         openLoop = getProperty("MonteCarloOpenLoop", "false").equals("true");
         deciderAsHeuristic = getProperty("MonteCarloRolloutAsHeuristic", "false").equals("true");
+        MRISRootConsistency = getProperty("MonteCarloMRISRootConsistency", "false").equals("true");
         if (treeProcessor == null) treeProcessor = new MCTreeProcessor<>(dp, this.name);
     }
 

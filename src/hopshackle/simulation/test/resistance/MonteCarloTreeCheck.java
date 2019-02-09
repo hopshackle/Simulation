@@ -70,7 +70,7 @@ public class MonteCarloTreeCheck {
         do {
             if (players[0].isTraitor()) {
                 int nonTraitor = players[1].isTraitor() ? 3 : 2;
-                game.redeterminise(nonTraitor);
+                game.redeterminise(nonTraitor, nonTraitor, Optional.empty());
                 setupGame();
             }
         } while (players[0].isTraitor());
@@ -186,7 +186,7 @@ public class MonteCarloTreeCheck {
         do {
             if (players[0].isTraitor()) {
                 int nonTraitor = players[1].isTraitor() ? 3 : 2;
-                game.redeterminise(nonTraitor);
+                game.redeterminise(nonTraitor, nonTraitor, Optional.empty());
                 setupGame();
             }
         } while (players[0].isTraitor());
@@ -260,7 +260,7 @@ public class MonteCarloTreeCheck {
         do {
             if (players[0].isTraitor()) {
                 int nonTraitor = players[1].isTraitor() ? 3 : 2;
-                game.redeterminise(nonTraitor);
+                game.redeterminise(nonTraitor, nonTraitor, Optional.empty());
                 setupGame();
             }
         } while (players[0].isTraitor());
@@ -310,7 +310,7 @@ public class MonteCarloTreeCheck {
                 int nonTraitor = game.getAllPlayers().stream()
                         .filter(p -> !p.isTraitor() && p != players[0])
                         .findFirst().get().getPlayerNumber();
-                game.redeterminise(nonTraitor);
+                game.redeterminise(nonTraitor, nonTraitor, Optional.empty());
                 setupGame();
             }
         } while (!players[0].isTraitor());

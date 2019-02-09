@@ -63,7 +63,7 @@ public class RunGame {
             }
             Iterator<Decider<ResistancePlayer>> iterator = deciders.iterator();
             Resistance game = new Resistance(numberOfPlayers, numberOfTraitors, new World());
-            if (useSameDeciderForWholeTeam) {
+            if (useSameDeciderForWholeTeam && deciders.size() > 1) {
                 game.getAllPlayers().stream()
                         .forEach(p -> {
                             Decider<ResistancePlayer> deciderToUse = p.isTraitor() ? deciders.get(0) : deciders.get(1);
