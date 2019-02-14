@@ -153,7 +153,7 @@ public class MonteCarloTreeCheck {
                             } else {
                                 missionResultStats = voteResultStats.getSuccessorNode(new ActionWithRef<>(new MissionResult(team, 0), -1));
                             }
-                            if (missionResultStats.getVisits() > 5) {
+                            if (missionResultStats.getVisits() > 10) {
                                 assertEquals(missionResultStats.getPossibleActions().size(), 5);
                                 final MCStatistics<ResistancePlayer> temp = missionResultStats;
                                 IntStream.rangeClosed(1, 5).

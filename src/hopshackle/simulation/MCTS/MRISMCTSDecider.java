@@ -13,7 +13,6 @@ public class MRISMCTSDecider<P extends Agent> extends MCTSMasterDecider<P> {
         super(stateFactory, rolloutDecider, opponentModel);
     }
 
-
     @Override
     protected void preIterationProcessing(Game clonedGame, Game rootGame) {
         int perspective = clonedGame.getCurrentPlayerRef();

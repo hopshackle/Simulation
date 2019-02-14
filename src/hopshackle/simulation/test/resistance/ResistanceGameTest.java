@@ -167,6 +167,95 @@ public class ResistanceGameTest {
         assertTrue(game.spiesHaveWon());
     }
 
+    @Test
+    public void voteResultEquality() {
+        VoteResult vr1 = new VoteResult(new boolean[]{true, false, true});
+        VoteResult vr2 = new VoteResult(new boolean[]{true, true, true});
+        assertFalse("11".equals("01"));
+        assertFalse(vr1.equals(vr2));
+    }
+
+    @Test
+    public void redeterminiseISAndPPBothTraitor() {
+        // firstly we set up a game that meets criteria
+        // then we loop redeterminise and check invariants
+        // we want to have a vanilla game, and a game that has had some water under the bridge
+        int secondTraitor = game.getTraitors().get(1);
+        int firstTraitor = game.getTraitors().get(0);
+        for (int loop = 0; loop < 100; loop++) {
+            game.redeterminise(firstTraitor, secondTraitor, Optional.empty());
+            assertTrue(game.getTraitors().contains(firstTraitor));
+            assertTrue(game.getTraitors().contains(secondTraitor));
+            assertEquals(game.getTraitors().size(), 2);
+        }
+
+        game.applyAction((new IncludeInTeam(1)).getAction(game.getCurrentPlayer()));
+        game.applyAction((new IncludeInTeam(2)).getAction(game.getCurrentPlayer()));
+        game.applyAction((new SupportTeam()).getAction(game.getCurrentPlayer()));
+        for (int loop = 0; loop < 100; loop++) {
+            game.redeterminise(firstTraitor, secondTraitor, Optional.empty());
+            assertTrue(game.getTraitors().contains(firstTraitor));
+            assertTrue(game.getTraitors().contains(secondTraitor));
+            assertEquals(game.getTraitors().size(), 2);
+        }
+    }
+
+    @Test
+    public void redeterminiseISOnlyTraitor() {
+        List<Integer> loyalists = IntStream.rangeClosed(1, 5).filter(i -> !game.getTraitors().contains(i)).mapToObj(i -> i).collect(Collectors.toList());
+        int firstTraitor = game.getTraitors().get(0);
+        Set<Integer> traitorsAfterRedeterminisation = new HashSet<>();
+        for (int loop = 0; loop < 100; loop++) {
+            Resistance clonedGame = (Resistance) game.clone();
+            clonedGame.redeterminise(loyalists.get(1), firstTraitor, Optional.empty());
+            traitorsAfterRedeterminisation.addAll(clonedGame.getTraitors());
+            assertEquals(clonedGame.getTraitors().size(), 2);
+        }
+        assertEquals(traitorsAfterRedeterminisation.size(), 4);
+        assertFalse(traitorsAfterRedeterminisation.contains(loyalists.get(1)));
+    }
+
+    @Test
+    public void redeterminiseISOnlyTraitorWithReferenceGame() {
+        List<Integer> loyalists = IntStream.rangeClosed(1, 5).filter(i -> !game.getTraitors().contains(i)).mapToObj(i -> i).collect(Collectors.toList());
+        int firstTraitor = game.getTraitors().get(0);
+        Resistance rootGame = (Resistance) game.clone();
+        Set<Integer> traitorsAfterRedeterminisation = new HashSet<>();
+        for (int loop = 0; loop < 100; loop++) {
+            game.redeterminise(loyalists.get(1), firstTraitor, Optional.of(rootGame));
+            traitorsAfterRedeterminisation.addAll(game.getTraitors());
+            assertEquals(game.getTraitors().size(), 2);
+        }
+        assertEquals(traitorsAfterRedeterminisation.size(), 4);
+        assertFalse(traitorsAfterRedeterminisation.contains(loyalists.get(1)));
+    }
+
+    @Test
+    public void redeterminiseISAndPPLoyalAndDifferent() {
+        List<Integer> loyalists = IntStream.rangeClosed(1, 5).filter(i -> !game.getTraitors().contains(i)).mapToObj(i -> i).collect(Collectors.toList());
+        Resistance rootGame = (Resistance) game.clone();
+        Set<Integer> traitorsAfterRedeterminisation = new HashSet<>();
+        for (int loop = 0; loop < 100; loop++) {
+            game.redeterminise(loyalists.get(1), loyalists.get(2), Optional.of(rootGame));
+            traitorsAfterRedeterminisation.addAll(game.getTraitors());
+            assertEquals(game.getTraitors().size(), 2);
+        }
+        assertEquals(traitorsAfterRedeterminisation.size(), 5);
+    }
+
+    @Test
+    public void redeterminiseISAndPPLoyalAndSame() {
+        List<Integer> loyalists = IntStream.rangeClosed(1, 5).filter(i -> !game.getTraitors().contains(i)).mapToObj(i -> i).collect(Collectors.toList());
+        Resistance rootGame = (Resistance) game.clone();
+        Set<Integer> traitorsAfterRedeterminisation = new HashSet<>();
+        for (int loop = 0; loop < 100; loop++) {
+            game.redeterminise(loyalists.get(1), loyalists.get(1), Optional.of(rootGame));
+            traitorsAfterRedeterminisation.addAll(game.getTraitors());
+            assertEquals(game.getTraitors().size(), 2);
+        }
+        assertEquals(traitorsAfterRedeterminisation.size(), 4);
+        assertFalse(traitorsAfterRedeterminisation.contains(loyalists.get(1)));
+    }
 
     private void chooseTeam(boolean firstTeam) {
         int firstTraitor = game.getTraitors().get(0);
