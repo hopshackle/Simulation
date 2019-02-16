@@ -5,12 +5,12 @@ import hopshackle.simulation.games.*;
 
 import java.util.*;
 
-public class MRISMCTSDecider<P extends Agent> extends MCTSMasterDecider<P> {
+public class MRISMCTSDecider<P extends Agent> extends OLMCTSMasterDecider<P> {
 
     private MRISGameDeterminiser<P> determiniser;
 
-    public MRISMCTSDecider(StateFactory<P> stateFactory, BaseStateDecider<P> rolloutDecider, Decider<P> opponentModel) {
-        super(stateFactory, rolloutDecider, opponentModel);
+    public MRISMCTSDecider(Game<P, ActionEnum<P>> game, StateFactory<P> stateFactory, BaseStateDecider<P> rolloutDecider, Decider<P> opponentModel) {
+        super(game, stateFactory, rolloutDecider, opponentModel);
     }
 
     @Override
@@ -38,11 +38,11 @@ public class MRISMCTSDecider<P extends Agent> extends MCTSMasterDecider<P> {
     public MCTSChildDecider<P> createChildDecider(Game clonedGame, MonteCarloTree<P> tree, int currentPlayer, boolean opponent) {
         MCTSChildDecider<P> retValue;
 
-        StateFactory<P> childFactory = openLoop ? new OpenLoopStateFactory<>(treeSetting, treeMap, clonedGame) : stateFactory;
+        OpenLoopTreeTracker<P> treeTracker = new OpenLoopTreeTracker<>(treeSetting, treeMap, clonedGame);
         if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
-            retValue = new MRISChildDecider<>(determiniser, childFactory, tree, new MCActionValueDecider<>(tree, stateFactory, currentPlayer), decProp);
+            retValue = new MRISChildDecider<>(determiniser, stateFactory, treeTracker, new MCActionValueDecider<>(tree, stateFactory, currentPlayer), decProp);
         else
-            retValue = new MRISChildDecider<>(determiniser, childFactory, tree, rolloutDecider, decProp);
+            retValue = new MRISChildDecider<>(determiniser, stateFactory, treeTracker, rolloutDecider, decProp);
 
         retValue.setName("Child_MRIS");
         return retValue;
@@ -50,22 +50,33 @@ public class MRISMCTSDecider<P extends Agent> extends MCTSMasterDecider<P> {
 }
 
 
-class MRISChildDecider<P extends Agent> extends MCTSChildDecider<P> {
+class MRISChildDecider<P extends Agent> extends OLMCTSChildDecider<P> {
 
     private MRISGameDeterminiser<P> determiniser;
 
-    MRISChildDecider(MRISGameDeterminiser<P> gameDeterminiser, StateFactory<P> stateFactory, MonteCarloTree<P> tree, Decider<P> rolloutDecider, DeciderProperties prop) {
-        super(stateFactory, tree, rolloutDecider, prop);
+    MRISChildDecider(MRISGameDeterminiser<P> gameDeterminiser, StateFactory<P> stateFactory, OpenLoopTreeTracker<P> treeTracker, Decider<P> rolloutDecider, DeciderProperties prop) {
+        super(stateFactory, treeTracker, rolloutDecider, prop);
         this.determiniser = gameDeterminiser;
     }
-
+/*
     @Override
     protected ActionEnum<P> rolloutDecision(P decidingAgent, List<ActionEnum<P>> chooseableOptions) {
         determiniser.switchOn(false);
         return super.rolloutDecision(decidingAgent, chooseableOptions);
     }
-
-
+*/
+    @Override
+    protected ActionEnum<P> getNextTreeAction(State<P> state, List<ActionEnum<P>> chooseableOptions, int decidingAgentRef) {
+        MCStatistics<P> currentPointer = treeTracker.getCurrentNode(decidingAgentRef);
+        if (currentPointer != null) {
+            ActionEnum<P> retValue = currentPointer.getNextAction(chooseableOptions, decidingAgentRef);
+            if (currentPointer.getSuccessorNode(new ActionWithRef<>(retValue, decidingAgentRef)) == null) {
+                // we will expand this node on BP
+                determiniser.switchOn(false);
+            }
+        }
+        return null;
+    }
 
 }
 

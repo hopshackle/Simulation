@@ -5,8 +5,8 @@ import hopshackle.simulation.games.*;
 
 public class CRISMCTSDecider<A extends Agent> extends MCTSMasterDecider<A>{
 
-    public CRISMCTSDecider(StateFactory<A> stateFactory, BaseStateDecider<A> rolloutDecider, Decider<A> opponentModel) {
-        super(stateFactory, rolloutDecider, opponentModel);
+    public CRISMCTSDecider(Game<A, ActionEnum<A>> game, StateFactory<A> stateFactory, BaseStateDecider<A> rolloutDecider, Decider<A> opponentModel) {
+        super(game, stateFactory, rolloutDecider, opponentModel);
     }
 
     /*

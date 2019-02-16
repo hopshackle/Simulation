@@ -159,7 +159,16 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     }
 
     private boolean traitorsCompatibleWithHistory() {
-        for (List<Integer> failedTeam : failedMissionDetails) {
+        List<List<Integer>> teamsToCheck = HopshackleUtilities.cloneList(failedMissionDetails);
+        if (currentPhase == Phase.MISSION && defectorsOnMission > 0) {
+            // the current mission might be fated to fail too
+            int index = currentMissionTeam.indexOf(getCurrentPlayerRef());
+            List<Integer> incompleteFailedMission = new ArrayList<>();
+            for (int i = 0; i < index; i++) incompleteFailedMission.add(currentMissionTeam.get(i));
+            incompleteFailedMission.add(defectorsOnMission);
+            teamsToCheck.add(incompleteFailedMission);
+        }
+        for (List<Integer> failedTeam : teamsToCheck) {
             int observedDefections = failedTeam.get(failedTeam.size() - 1);
             int traitorsOnMission = 0;
             for (int i = 0; i < failedTeam.size() - 1; i++) {
@@ -170,6 +179,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                 return false;
             }
         }
+
         return true;
     }
 
@@ -298,8 +308,8 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                         log(String.format("%d out of %d votes in favour of proposed team", votesInFavour, playerCount));
                     if (votesInFavour > playerCount / 2.0) {
                         currentPhase = Phase.MISSION;
-                        changeCurrentPlayer(currentMissionTeam.get(0));
                         defectorsOnMission = 0;
+                        changeCurrentPlayer(currentMissionTeam.get(0));
                     } else {
                         updateFirstPlayer();
                         changeCurrentPlayer(firstPlayer);

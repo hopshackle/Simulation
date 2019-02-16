@@ -50,9 +50,6 @@ public class MCTSDeciderTest {
 		localProp.setProperty("MonteCarloMAST", "false");
 		localProp.setProperty("MaxTurnsPerGame", "10000");
 		localProp.setProperty("GameOrdinalRewards", "0");
-		masterDecider = new MCTSMasterDecider<>(factory, rolloutDecider, rolloutDecider);
-		masterDecider.injectProperties(localProp);
-		agent.setDecider(masterDecider);
 		Dice.setSeed(6l);
 	}
 	
@@ -72,6 +69,9 @@ public class MCTSDeciderTest {
 		 */
 		tree = new TranspositionTableMCTree<>(localProp, 1);
 		mazeGame = new SimpleMazeGame(2, agent);
+        masterDecider = new MCTSMasterDecider<>(mazeGame, factory, rolloutDecider, rolloutDecider);
+        masterDecider.injectProperties(localProp);
+        agent.setDecider(masterDecider);
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneAction();
@@ -105,7 +105,6 @@ public class MCTSDeciderTest {
 	@Test
 	public void multiplePlayersWithMultipleTrees() {
 		localProp.setProperty("MonteCarloTree", "ignoreOthers");
-		masterDecider.injectProperties(localProp);
 		TestAgent[] players = new TestAgent[3];
 		players[0] = agent;
 		players[1] = new TestAgent(world);
@@ -113,6 +112,8 @@ public class MCTSDeciderTest {
 		players[2] = new TestAgent(world);
 		players[2].addGold(0.2);
 		mazeGame = new SimpleMazeGame(2, players);
+        masterDecider = new MCTSMasterDecider<>(mazeGame, factory, rolloutDecider, rolloutDecider);
+        masterDecider.injectProperties(localProp);
 		for (TestAgent a : players) {
 			a.setDecider(masterDecider);
 		}
@@ -145,7 +146,6 @@ public class MCTSDeciderTest {
     @Test
     public void perPlayerTree() {
         localProp.setProperty("MonteCarloTree", "perPlayer");
-        masterDecider.injectProperties(localProp);
         TestAgent[] players = new TestAgent[3];
         players[0] = agent;
         players[1] = new TestAgent(world);
@@ -153,6 +153,8 @@ public class MCTSDeciderTest {
         players[2] = new TestAgent(world);
         players[2].addGold(0.2);
         mazeGame = new SimpleMazeGame(2, players);
+        masterDecider = new MCTSMasterDecider<>(mazeGame, factory, rolloutDecider, rolloutDecider);
+        masterDecider.injectProperties(localProp);
         for (TestAgent a : players) {
             a.setDecider(masterDecider);
         }
@@ -203,6 +205,9 @@ public class MCTSDeciderTest {
 		localProp.setProperty("MonteCarloRAVEExploreConstant", "2");
 		tree = new TranspositionTableMCTree<TestAgent>(localProp, 1);
 		mazeGame = new SimpleMazeGame(2, agent);
+        masterDecider = new MCTSMasterDecider<>(mazeGame, factory, rolloutDecider, rolloutDecider);
+        masterDecider.injectProperties(localProp);
+        agent.setDecider(masterDecider);
 		
 		State<TestAgent> startState = masterDecider.getCurrentState(agent);
 		mazeGame.oneAction();

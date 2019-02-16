@@ -27,9 +27,13 @@ public class MCTSChildDecider<P extends Agent> extends BaseAgentDecider<P> {
         }
 
         int decidingAgentRef = decidingAgent.getActorRef();
-        ActionEnum<P> retValue = tree.getNextAction(state, chooseableOptions, decidingAgentRef);
+        ActionEnum<P> retValue = getNextTreeAction(state, chooseableOptions, decidingAgentRef);
         if (retValue == null) retValue = rolloutDecision(decidingAgent, chooseableOptions);
         return retValue;
+    }
+
+    protected ActionEnum<P> getNextTreeAction(State<P> state, List<ActionEnum<P>> chooseableOptions, int decidingAgentRef) {
+        return tree.getNextAction(state, chooseableOptions, decidingAgentRef);
     }
 
     protected ActionEnum<P> rolloutDecision(P decidingAgent, List<ActionEnum<P>> chooseableOptions) {

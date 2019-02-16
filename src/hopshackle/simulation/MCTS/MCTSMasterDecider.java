@@ -9,27 +9,28 @@ import java.util.*;
 public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
     protected Map<Integer, MonteCarloTree<A>> treeMap = new HashMap<>();
+    protected Game<A, ActionEnum<A>> masterGame;
     protected BaseStateDecider<A> rolloutDecider;
     protected Decider<A> opponentModel;
     private int maxRollouts = getPropertyAsInteger("MonteCarloRolloutCount", "99");
     private int maxRolloutsPerOption = getPropertyAsInteger("MonteCarloRolloutPerOption", "50");
     protected boolean useAVDForRollout = getProperty("MonteCarloActionValueRollout", "false").equals("true");
     protected boolean useAVDForOpponent = getProperty("MonteCarloActionValueOpponentModel", "false").equals("true");
-    private boolean reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
+    protected boolean reuseOldTree = getProperty("MonteCarloRetainTreeBetweenActions", "false").equals("true");
     private boolean trainRolloutDeciderOverGames, trainRolloutDeciderUsingAllPlayerExperiences;
     protected String treeSetting = getProperty("MonteCarloTree", "single");
-    private boolean singleTree = treeSetting.equals("single");
-    private boolean multiTree = treeSetting.equals("perPlayer");
+    protected boolean singleTree = treeSetting.equals("single");
+    protected boolean multiTree = treeSetting.equals("perPlayer");
     protected boolean openLoop, MRISRootConsistency;
     private long millisecondsPerMove;
-    private boolean deciderAsHeuristic;
+    protected boolean deciderAsHeuristic;
     private boolean writeGameLog;
     protected boolean debug = false;
     private MCTreeProcessor<A> treeProcessor;
     private DatabaseWriter<MCTSDecision> writer;
     private String writerSuffix;
 
-    public MCTSMasterDecider(StateFactory<A> stateFactory, BaseStateDecider<A> rolloutDecider, Decider<A> opponentModel) {
+    public MCTSMasterDecider(Game<A, ActionEnum<A>> masterGame, StateFactory<A> stateFactory, BaseStateDecider<A> rolloutDecider, Decider<A> opponentModel) {
         super(stateFactory);
         this.rolloutDecider = rolloutDecider;
         if (rolloutDecider == null)
@@ -37,6 +38,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         this.opponentModel = opponentModel;
         if (opponentModel == null)
             this.opponentModel = new RandomDecider<>(stateFactory);
+        this.masterGame = masterGame;
     }
 
     public void setWriter(DatabaseWriter<MCTSDecision> dbw, String suffix) {
@@ -49,11 +51,10 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     public MCTSChildDecider<A> createChildDecider(Game clonedGame, MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
         MCTSChildDecider<A> retValue;
 
-        StateFactory<A> childFactory = openLoop ? new OpenLoopStateFactory<>(treeSetting, treeMap, clonedGame) : stateFactory;
         if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
-            retValue = new MCTSChildDecider<>(childFactory, tree, new MCActionValueDecider<>(tree, stateFactory, currentPlayer), decProp);
+            retValue = new MCTSChildDecider<>(stateFactory, tree, new MCActionValueDecider<>(tree, stateFactory, currentPlayer), decProp);
         else
-            retValue = new MCTSChildDecider<>(childFactory, tree, rolloutDecider, decProp);
+            retValue = new MCTSChildDecider<>(stateFactory, tree, rolloutDecider, decProp);
 
         retValue.setName("Child_MCTS");
         return retValue;
@@ -66,26 +67,14 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         Game<A, ActionEnum<A>> game = agent.getGame();
         int currentPlayer = game.getPlayerNumber(agent);
 
-        if (treeSetting.equals("single") && !openLoop)
-            throw new AssertionError("MonteCarloTree=single is only support for MonteCarloOpenLoop=true");
-
         // We initialise a new tree, and then rollout N times
         // once the game is finished, we process the trajectory to update the MCTree
         // This is not using any Lookahead; just the record of state to state transitions
         MonteCarloTree<A> tree = getTree(agent);
-        game.getAllPlayers().forEach(this::getTree);
 
         State<A> currentState = stateFactory.getCurrentState(agent);
         if (reuseOldTree) {
-            if (!openLoop) {
-                int before = tree.numberOfStates();
-                tree.pruneTree(tree.getStatisticsFor(currentState));
-                if (debug) {
-                    agent.log("Pruning reduces states in tree from " + before + " to " + tree.numberOfStates());
-                }
-            } else {
-                // openLoop reuse old tree is processed after we have made the next decision
-            }
+            pruneTree(agent);
         } else {
             treeMap.values().forEach(MonteCarloTree::reset);
         }
@@ -155,21 +144,17 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
             game.log(message);
         }
 
-        if (openLoop && reuseOldTree) {
-            // we need to apply the decision taken to all relevant trees
-            ActionWithRef<A> actionTaken = new ActionWithRef<>(best, agent.getActorRef());
-            treeMap.keySet().stream()
-                    .filter(p -> (p == 1 && singleTree) || !singleTree)
-                    .forEach(
-                            // TODO: This does not currently take account of any action partial visibility
-                            p -> {
-                                MCStatistics<A> rootStats = treeMap.get(p).rootNode;
-                                treeMap.get(p).rootNode = rootStats.getSuccessorNode(actionTaken);
-                            }
-                    );
-        }
-
         return best;
+    }
+
+    protected void pruneTree(A agent) {
+        State<A> currentState = stateFactory.getCurrentState(agent);
+        MonteCarloTree<A> tree = treeMap.get(agent.getActorRef());
+        int before = tree.numberOfStates();
+        tree.pruneTree(tree.getStatisticsFor(currentState));
+        if (debug) {
+            log("Pruning reduces states in tree from " + before + " to " + tree.numberOfStates());
+        }
     }
 
     protected void executeSearch(Game<A, ActionEnum<A>> clonedGame) {
@@ -179,7 +164,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         MCTSChildDecider<A> childDecider = createChildDecider(clonedGame, tree, currentPlayer, false);
 
         if (useAVDForOpponent)
-            opponentModel = new MCActionValueDecider<>(tree, this.stateFactory, currentPlayer);
+            opponentModel = new MCActionValueDecider<>(tree, stateFactory, currentPlayer);
 
         MCTSUtilities.launchGame(treeMap, clonedGame, childDecider, opponentModel, decProp);
     }
@@ -189,8 +174,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         clonedGame.redeterminise(perspective, perspective, Optional.empty());
         // IS-MCTS, we redeterminise once at the start of each iteration
     }
-    protected void postIterationProcessing(Game clonedGame) {
 
+    protected void postIterationProcessing(Game clonedGame) {
+        // Nothing as default
     }
 
     @Override
@@ -207,32 +193,31 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
     public void learnFrom(ExperienceRecord<A> exp, double maxResult) {
     }
 
+    protected MonteCarloTree<A> getEmptyTree(int playerCount) {
+        return new TranspositionTableMCTree<>(decProp, playerCount);
+    }
+
     public MonteCarloTree<A> getTree(A agent) {
-        if (treeMap.containsKey(agent.getActorRef())) {
-            return treeMap.get(agent.getActorRef());
-        }
-        MonteCarloTree<A> retValue;
-        if (openLoop) {
-            retValue = new OpenLoopMCTree<>(decProp, agent.getGame().getAllPlayers().size());
+        if (!treeMap.containsKey(agent.getActorRef())) {
+            int playerCount = agent.getGame().getAllPlayers().size();
+            MonteCarloTree<A> retValue = getEmptyTree(playerCount);
             if (multiTree) {
                 // use a different tree for all players
                 agent.getGame().getAllPlayers().stream()
-                        .filter(p -> p != agent)
-                        .forEach(p -> treeMap.put(p.getActorRef(), new OpenLoopMCTree<>(decProp, agent.getGame().getAllPlayers().size())));
+                        .forEach(p -> treeMap.put(p.getActorRef(), getEmptyTree(playerCount)));
+                if (deciderAsHeuristic)
+                    treeMap.values().forEach(t -> t.setOfflineHeuristic(rolloutDecider));
+            } else if (singleTree) {
+                // use the same tree for all players
+                Game<A, ActionEnum<A>> game = agent.getGame();
+                for (A player : game.getAllPlayers())
+                    treeMap.put(player.getActorRef(), retValue);
+            } else {
+                treeMap.put(agent.getActorRef(), retValue);
             }
-        } else {
-            retValue = new TranspositionTableMCTree<>(decProp, agent.getGame().getAllPlayers().size());
-        }
-        if (singleTree) {
-            // use the same tree for all players
-            Game<A, ActionEnum<A>> game = agent.getGame();
-            for (A player : game.getAllPlayers())
-                treeMap.put(player.getActorRef(), retValue);
-        } else {
-            treeMap.put(agent.getActorRef(), retValue);
-        }
-        if (deciderAsHeuristic) {
-            retValue.setOfflineHeuristic(rolloutDecider);
+            if (deciderAsHeuristic) {
+                retValue.setOfflineHeuristic(rolloutDecider);
+            }
         }
         return treeMap.get(agent.getActorRef());
     }
@@ -256,6 +241,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         deciderAsHeuristic = getProperty("MonteCarloRolloutAsHeuristic", "false").equals("true");
         MRISRootConsistency = getProperty("MonteCarloMRISRootConsistency", "false").equals("true");
         if (treeProcessor == null) treeProcessor = new MCTreeProcessor<>(dp, this.name);
+        masterGame.getAllPlayers().forEach(this::getTree);
     }
 
 }

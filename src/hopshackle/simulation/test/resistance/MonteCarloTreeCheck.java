@@ -53,7 +53,7 @@ public class MonteCarloTreeCheck {
     }
 
     private void setupGame() {
-        masterDecider = new MCTSMasterDecider<>(singletonStateFactory, rolloutDecider, rolloutDecider);
+        masterDecider = new OLMCTSMasterDecider<>(game, singletonStateFactory, rolloutDecider, rolloutDecider);
         masterDecider.injectProperties(localProp);
         players = new ResistancePlayer[5];
 

@@ -50,18 +50,17 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
 
     @Override
     public ActionEnum<P> getNextAction(State<P> state, List<ActionEnum<P>> possibleActions, int decidingAgent) {
-        MCStatistics<P> currentPointer = null;
-        if (state != null && state instanceof OpenLoopState) {
-            OpenLoopState<P> OLState = (OpenLoopState) state;
-            currentPointer = OLState.currentNodesByPlayer.get(decidingAgent);
-        }
+        throw new AssertionError("Method not supported for OpenLoopTree");
+    }
+
+    public ActionEnum<P> getNextAction(OpenLoopTreeTracker<P> tracker, List<ActionEnum<P>> possibleActions, int decidingAgent) {
+        MCStatistics<P> currentPointer = tracker.getCurrentNode(decidingAgent);
         if (currentPointer != null) {
             return currentPointer.getNextAction(possibleActions, decidingAgent);
         } else {
             return null;
         }
     }
-
 
     @Override
     public void insertRoot(State<P> state) {
@@ -75,18 +74,12 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
 
     @Override
     public MCStatistics<P> getStatisticsFor(State<P> state) {
-        if (state instanceof OpenLoopState) {
-            OpenLoopState<P> OLState = (OpenLoopState) state;
-            return (OLState.currentNodesByPlayer.get(OLState.currentPlayer));
-        } else {
-            throw new AssertionError("Invalid type of state " + state.getClass());
-        }
+        throw new AssertionError("Method not supported for OpenLoopTree");
     }
 
     @Override
     public boolean withinTree(State<P> state) {
-        if (state != null && state instanceof OpenLoopState) return true;
-        return false;
+        throw new AssertionError("Method not supported for OpenLoopTree");
     }
 
     @Override

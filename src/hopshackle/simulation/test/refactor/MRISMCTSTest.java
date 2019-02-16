@@ -15,7 +15,7 @@ public class MRISMCTSTest {
 
     List<GeneticVariable<MRISAgent>> genVar = new ArrayList<>(EnumSet.allOf(MRISGenVar.class));
     LinearStateFactory<MRISAgent> factory = new LinearStateFactory<>(genVar);
-    MRISTestDecider MRISDecider = new MRISTestDecider(factory, new RandomDecider<>(factory), new RandomDecider<>(factory));
+    MRISTestDecider MRISDecider;
     DeciderProperties localProp;
 
     @Before
@@ -34,7 +34,7 @@ public class MRISMCTSTest {
         localProp.setProperty("MonteCarloActionValueOpponentModel", "false");
         localProp.setProperty("MonteCarloActionValueDeciderTemperature", "0.0");
         localProp.setProperty("MonteCarloRetainTreeBetweenActions", "false");
-        localProp.setProperty("MonteCarloOpenLoop", "false");
+        localProp.setProperty("MonteCarloOpenLoop", "true");
         localProp.setProperty("MonteCarloTree", "ignoreOthers");
         localProp.setProperty("MonteCarloChoice", "default");
         localProp.setProperty("MonteCarloHeuristicOnSelection", "false");
@@ -42,40 +42,65 @@ public class MRISMCTSTest {
         localProp.setProperty("MonteCarloMAST", "false");
         localProp.setProperty("MaxTurnsPerGame", "10000");
         localProp.setProperty("GameOrdinalRewards", "0");
+    }
+
+    @Test
+    public void confirmThatWeOnlyDeterminiseOnceWithAnEmptyTree() {
+        MRISTestGame game = new MRISTestGame(10, true);
+        MRISDecider = new MRISTestDecider(game, factory, new RandomDecider<>(factory), new RandomDecider<>(factory));
         MRISDecider.injectProperties(localProp);
+        // We never return to the first player, which means that we will never exit the tree, and
+        // hence redeterminise at each move
+
+        MonteCarloTree<MRISAgent> tree = MRISDecider.getTree(game.getCurrentPlayer());
+        MRISDecider.executeSearch(game);
+
+        assertEquals(game.playerChange, 9, 2);
+        int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
+        assertEquals(updates, 1);
+        // just the once on initialisation. The first action we take will expand a node, so we then stop determinising
     }
 
     @Test
     public void confirmThatCallsToRedeterminiseCoincideWithPlayerChange() {
         MRISTestGame game = new MRISTestGame(10, true);
+        MRISDecider = new MRISTestDecider(game, factory, new RandomDecider<>(factory), new RandomDecider<>(factory));
+        MRISDecider.injectProperties(localProp);
         // We never return to the first player, which means that we will never exit the tree, and
         // hence redeterminise at each move
 
         MonteCarloTree<MRISAgent> tree = MRISDecider.getTree(game.getCurrentPlayer());
-        State<MRISAgent> currentState = factory.getCurrentState(game.getCurrentPlayer());
-        tree.insertRoot(currentState);
+        // we now set up two transitions in the tree, so that our first action should not stop redeterminisation
+        tree.setUpdatesLeft(2);
+        tree.getRootStatistics().update(MRISAction.Type.MRIS_ACTION_1, new double[10], 1);
+        tree.getRootStatistics().update(MRISAction.Type.MRIS_ACTION_2, new double[10], 1);
+        assertEquals(tree.updatesLeft(), 0);
         MRISDecider.executeSearch(game);
 
-        assertEquals(game.playerChange, 9, 2);
+        assertEquals(game.playerChange, 10);
         int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
-        assertEquals(updates, game.playerChange + 1);
-        // wew redeterminise every time the Player changes, plus once at the start of the iteration
+        assertEquals(updates, 11); // playerChanges + 1
     }
 
     @Test
     public void weStopRedeterminisingOnceOutsideTree() {
         MRISTestGame game = new MRISTestGame(100, false);
+        MRISDecider = new MRISTestDecider(game, factory, new RandomDecider<>(factory), new RandomDecider<>(factory));
+        MRISDecider.injectProperties(localProp);
         // this time, we will stop redeterminising once we return to the first player
 
         MonteCarloTree<MRISAgent> tree = MRISDecider.getTree(game.getCurrentPlayer());
-        State<MRISAgent> currentState = factory.getCurrentState(game.getCurrentPlayer());
-        tree.insertRoot(currentState);
+        tree.setUpdatesLeft(2);
+        tree.getRootStatistics().update(MRISAction.Type.MRIS_ACTION_1, new double[10], 1);
+        tree.getRootStatistics().update(MRISAction.Type.MRIS_ACTION_2, new double[10], 1);
+        assertEquals(tree.updatesLeft(), 0);
 
         MRISDecider.executeSearch(game);
 
         assertEquals(game.playerChange, 90, 10);
         int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
-        assertTrue(updates < game.playerChange / 2);
+        assertTrue(updates < 40);
+        assertTrue(updates > 1);
     }
 }
 
@@ -169,8 +194,11 @@ class MRISTestGame extends Game<MRISAgent, ActionEnum<MRISAgent>> {
         currentTurn++;
         calendar.setTime(currentTurn);
         int oldPlayer = getCurrentPlayerRef();
-        int nextPlayer = ignoreFirstPlayer ? Dice.roll(1, 9) + 1 : Dice.roll(1, 10);
-        changeCurrentPlayer(nextPlayer);
+        int newPlayer = oldPlayer;
+        do {
+            newPlayer = ignoreFirstPlayer ? Dice.roll(1, 9) + 1 : Dice.roll(1, 10);
+        } while (newPlayer == oldPlayer);
+        changeCurrentPlayer(newPlayer);
         if (getCurrentPlayerRef() != oldPlayer) playerChange++;
     }
 
@@ -245,8 +273,8 @@ enum MRISGenVar implements GeneticVariable<MRISAgent> {
 
 class MRISTestDecider extends MRISMCTSDecider<MRISAgent> {
 
-    public MRISTestDecider(StateFactory<MRISAgent> stateFactory, BaseStateDecider<MRISAgent> rolloutDecider, Decider<MRISAgent> opponentModel) {
-        super(stateFactory, rolloutDecider, opponentModel);
+    public MRISTestDecider(Game<MRISAgent, ActionEnum<MRISAgent>> game, StateFactory<MRISAgent> stateFactory, BaseStateDecider<MRISAgent> rolloutDecider, Decider<MRISAgent> opponentModel) {
+        super(game, stateFactory, rolloutDecider, opponentModel);
     }
 
     @Override

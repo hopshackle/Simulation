@@ -167,10 +167,6 @@ public class MCStatistics<P extends Agent> {
                 .collect(Collectors.toList());
     }
 
-    public Map<String, Integer> getSuccessorStatesFrom(ActionWithRef<P> actionRef) {
-        return successorStatesByAction.getOrDefault(actionRef, new HashMap());
-    }
-
     public Set<String> getSuccessorStates() {
         Set<String> successors = new HashSet<>();
         for (Map<String, Integer> states : successorStatesByAction.values()) {

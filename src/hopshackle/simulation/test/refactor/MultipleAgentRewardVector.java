@@ -54,17 +54,18 @@ public class MultipleAgentRewardVector {
 		localProp.setProperty("GameOrdinalRewards", "0");
 		localProp.setProperty("MonteCarloOpenLoop", "false");
 	//	tree = new MonteCarloTree<TestAgent>(localProp, 1);
-		masterDecider = new MCTSMasterDecider<TestAgent>(factory, rolloutDecider, rolloutDecider);
-		masterDecider.injectProperties(localProp);
 		Dice.setSeed(6l);
 		players = new TestAgent[4];
 		for (int i = 0; i < 4; i++) {
 			players[i] = new TestAgent(world);
-			players[i].setDecider(masterDecider);
 		}
 		game = new SimpleMazeGame(2, players);
-
-		erc = new ExperienceRecordCollector<TestAgent>(new StandardERFactory<TestAgent>(localProp));
+        masterDecider = new MCTSMasterDecider<>(game, factory, rolloutDecider, rolloutDecider);
+        masterDecider.injectProperties(localProp);
+        for (int i = 0; i < 4; i++) {
+            players[i].setDecider(masterDecider);
+        }
+		erc = new ExperienceRecordCollector<>(new StandardERFactory<>(localProp));
 	}
 
 	@Test

@@ -40,6 +40,7 @@ public class RunGame {
         DatabaseWriter<ResistancePlayer> playerWriter = new DatabaseWriter<>(new ResistancePlayerDAO(), dbu);
 
         for (int i = 0; i < numberOfGames; i++) {
+            Resistance game = new Resistance(numberOfPlayers, numberOfTraitors, new World());
             Set<String> deciderTypes = SimProperties.allDeciderNames();
             List<Decider<ResistancePlayer>> deciders = new ArrayList<>();
             if (includeRandom) deciders.add(randomDecider);
@@ -47,10 +48,10 @@ public class RunGame {
                 MCTSMasterDecider<ResistancePlayer> mctsDecider;
                 switch (SimProperties.getDeciderProperties(deciderName).getProperty("MonteCarloConstructor", "IS-MCTS")) {
                     case "IS-MCTS":
-                        mctsDecider = new MCTSMasterDecider<>(new SingletonStateFactory<>(), null, null);
+                        mctsDecider = new OLMCTSMasterDecider<>(game, new SingletonStateFactory<>(), null, null);
                         break;
                     case "MRIS":
-                        mctsDecider = new MRISMCTSDecider<>(new SingletonStateFactory<>(), null, null);
+                        mctsDecider = new MRISMCTSDecider<>(game, new SingletonStateFactory<>(), null, null);
                         break;
                     default:
                         throw new AssertionError("Unknown constructor type " + SimProperties.getDeciderProperties(deciderName).getProperty("MonteCarloConstructor", "IS-MCTS"));
@@ -62,7 +63,6 @@ public class RunGame {
                 Collections.shuffle(deciders);
             }
             Iterator<Decider<ResistancePlayer>> iterator = deciders.iterator();
-            Resistance game = new Resistance(numberOfPlayers, numberOfTraitors, new World());
             if (useSameDeciderForWholeTeam && deciders.size() > 1) {
                 game.getAllPlayers().stream()
                         .forEach(p -> {

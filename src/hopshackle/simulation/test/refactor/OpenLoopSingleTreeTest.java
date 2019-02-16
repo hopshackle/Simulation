@@ -66,16 +66,18 @@ public class OpenLoopSingleTreeTest {
     }
 
     private void setupGame() {
-        masterDecider = new MCTSMasterDecider<>(singletonStateFactory, rolloutDecider, rolloutDecider);
-        masterDecider.injectProperties(localProp);
         Dice.setSeed(6l);
         players = new TestAgent[3];
 
         for (int i = 0; i < 3; i++) {
             players[i] = new TestAgent(world);
-            players[i].setDecider(masterDecider);
         }
         game = new SimpleMazeGame(4, players);
+        masterDecider = new OLMCTSMasterDecider<>(game, singletonStateFactory, rolloutDecider, rolloutDecider);
+        masterDecider.injectProperties(localProp);
+        for (int i = 0; i < 3; i++) {
+            players[i].setDecider(masterDecider);
+        }
     }
 
     @Test

@@ -257,6 +257,32 @@ public class ResistanceGameTest {
         assertFalse(traitorsAfterRedeterminisation.contains(loyalists.get(1)));
     }
 
+    @Test
+    public void redeterminiseTakesAccountOfMissionAboutToFail() {
+        do {
+            game.redeterminise(Dice.roll(1, 5), Dice.roll(1, 5), Optional.empty());
+        } while (!game.getTraitors().contains(1));
+        int secondTraitor = game.getTraitors().get(1);
+        int firstTraitor = game.getTraitors().get(0);
+        int loyalist = 5;
+        if (firstTraitor == 5 || secondTraitor == 5)
+            loyalist = 4;
+        if (firstTraitor == 4 || secondTraitor == 4)
+            loyalist = 3;
+
+        game.applyAction((new IncludeInTeam(1)).getAction(game.getCurrentPlayer()));
+        game.applyAction((new IncludeInTeam(2)).getAction(game.getCurrentPlayer()));
+        for (int i = 0; i < 5; i++) game.applyAction((new SupportTeam()).getAction(game.getCurrentPlayer()));
+        game.applyAction((new Defect()).getAction(game.getCurrentPlayer()));
+
+        for (int loop = 0; loop < 100; loop++) {
+            // technically anyone could be a traitor...but we will insist that player 1 is a traitor given the (as yet unrevealed DEFECT)
+            game.redeterminise(loyalist, loyalist, Optional.empty());
+            assertTrue(game.getTraitors().contains(1));
+            assertEquals(game.getTraitors().size(), 2);
+        }
+    }
+
     private void chooseTeam(boolean firstTeam) {
         int firstTraitor = game.getTraitors().get(0);
         game.applyAction((new IncludeInTeam(firstTraitor)).getAction(game.getCurrentPlayer()));

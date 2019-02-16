@@ -9,13 +9,12 @@ import static org.junit.Assert.*;
 
 import hopshackle.simulation.games.GameEvent;
 import org.junit.*;
-import sun.java2d.pipe.SpanShapeRenderer;
 
 public class OpenLoopStateFactoryTest {
 
     Map<Integer, MonteCarloTree<TestAgent>> trees = new HashMap<>();
     DeciderProperties localProp;
-    OpenLoopStateFactory<TestAgent> factory;
+    OpenLoopTreeTracker<TestAgent> factory;
     SimpleMazeGame masterGame;
     MCTSMasterDecider<TestAgent> masterDecider;
     TestAgent[] masterPlayers;
@@ -46,17 +45,19 @@ public class OpenLoopStateFactoryTest {
     }
 
     private void setUpTrees() {
-        masterDecider = new MCTSMasterDecider<>(new SingletonStateFactory<>(), new SimpleMazeDecider(), new SimpleMazeDecider());
-        masterDecider.injectProperties(localProp);
         Dice.setSeed(6l);
         masterPlayers = new TestAgent[3];
         World world = new World();
 
         for (int i = 0; i < 3; i++) {
             masterPlayers[i] = new TestAgent(world);
-            masterPlayers[i].setDecider(masterDecider);
         }
         masterGame = new SimpleMazeGame(4, masterPlayers);
+        masterDecider = new OLMCTSMasterDecider<>(masterGame, new SingletonStateFactory<>(), new SimpleMazeDecider(), new SimpleMazeDecider());
+        masterDecider.injectProperties(localProp);
+        for (int i = 0; i < 3; i++) {
+            masterPlayers[i].setDecider(masterDecider);
+        }
         masterGame.oneAction();
         for (int i = 0; i < 3; i++)
             trees.put(i + 1, (OpenLoopMCTree) masterDecider.getTree(masterPlayers[i]));
@@ -75,30 +76,30 @@ public class OpenLoopStateFactoryTest {
             players[i] = new TestAgent(world);
         }
         SimpleMazeGame game = new SimpleMazeGame(4, players);
-        factory = new OpenLoopStateFactory<>("single", trees, game);
+        factory = new OpenLoopTreeTracker<>("single", trees, game);
         // should now be at root
         MCStatistics<TestAgent> root = trees.get(1).getRootStatistics();
         for (int j = 0; j < 3; j++)
             for (int i = 0; i < 3; i++) {
-                OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
-                assertEquals(state.currentPlayer, 1);
-                assertTrue(state.currentNodesByPlayer.get(i + 1) == root);
+                MCStatistics<TestAgent> currentNode = factory.getCurrentNode(players[j].getActorRef());
+                assertEquals(currentNode.getActorRef(), 1);
+                assertTrue(currentNode == root);
             }
         MCStatistics<TestAgent> moveLeftNode = root.getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 1));
         factory.processGameEvent(new GameEvent<>(new ActionWithRef<>(TestActionEnum.LEFT, 1), game));
         for (int j = 0; j < 3; j++)
             for (int i = 0; i < 3; i++) {
-                OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
-                assertEquals(state.currentPlayer, 2);
-                assertTrue(state.currentNodesByPlayer.get(i + 1) == moveLeftNode);
+                MCStatistics<TestAgent> currentNode = factory.getCurrentNode(players[j].getActorRef());
+                assertEquals(currentNode.getActorRef(), 2);
+                assertTrue(currentNode == moveLeftNode);
             }
         MCStatistics<TestAgent> testNode = moveLeftNode.getSuccessorNode(new ActionWithRef(TestActionEnum.TEST, 2));
         factory.processGameEvent(new GameEvent<>(new ActionWithRef<>(TestActionEnum.TEST, 2), game));
         for (int j = 0; j < 3; j++)
             for (int i = 0; i < 3; i++) {
-                OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
-                assertEquals(state.currentPlayer, 3);
-                assertTrue(state.currentNodesByPlayer.get(i + 1) == testNode);
+                MCStatistics<TestAgent> currentNode = factory.getCurrentNode(players[j].getActorRef());
+                assertEquals(currentNode.getActorRef(), 3);
+                assertTrue(currentNode == testNode);
             }
     }
 
@@ -115,19 +116,19 @@ public class OpenLoopStateFactoryTest {
             players[i] = new TestAgent(world);
         }
         SimpleMazeGame game = new SimpleMazeGame(4, players);
-        factory = new OpenLoopStateFactory<>("perPlayer", trees, game);
+        factory = new OpenLoopTreeTracker<>("perPlayer", trees, game);
         // should now be at root
         MCStatistics<TestAgent>[] root = new MCStatistics[3];
         for (int i = 0; i < 3; i++) root[i] = trees.get(i + 1).getRootStatistics();
         for (int j = 0; j < 3; j++) {
-            OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
-            assertTrue(state.currentNodesByPlayer.get(j + 1) == root[j]);
+            MCStatistics<TestAgent> currentNode = factory.getCurrentNode(players[j].getActorRef());
+            assertTrue(currentNode == root[j]);
             for (int i = 0; i < 3; i++) {
-                OpenLoopState<TestAgent> state2 = (OpenLoopState) factory.getCurrentState(players[i]);
-                assertEquals(state2.currentPlayer, 1);
-                assertEquals(state2.currentNodesByPlayer.get(i + 1).getVisits(), state.currentNodesByPlayer.get(j + 1).getVisits());
+                MCStatistics<TestAgent> currentNode2 = factory.getCurrentNode(players[i].getActorRef());
+                assertEquals(currentNode2.getActorRef(), 1);
+                assertEquals(currentNode2.getVisits(), currentNode.getVisits());
                 if (i != j)
-                    assertFalse(state2.currentNodesByPlayer.get(i + 1) == state.currentNodesByPlayer.get(j + 1));
+                    assertFalse(currentNode2 == currentNode);
             }
         }
         MCStatistics<TestAgent>[] moveLeftNode = new MCStatistics[3];
@@ -137,14 +138,14 @@ public class OpenLoopStateFactoryTest {
         }
         factory.processGameEvent(new GameEvent<>(new ActionWithRef<>(TestActionEnum.LEFT, 1), game));
         for (int j = 0; j < 3; j++) {
-            OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
-            assertTrue(state.currentNodesByPlayer.get(j + 1) == moveLeftNode[j]);
+            MCStatistics<TestAgent> currentNode = factory.getCurrentNode(players[j].getActorRef());
+            assertTrue(currentNode == moveLeftNode[j]);
             for (int i = 0; i < 3; i++) {
-                OpenLoopState<TestAgent> state2 = (OpenLoopState) factory.getCurrentState(players[i]);
-                assertEquals(state2.currentPlayer, 2);
-                assertEquals(state2.currentNodesByPlayer.get(i + 1).getVisits(), state.currentNodesByPlayer.get(j + 1).getVisits());
+                MCStatistics<TestAgent> currentNode2 = factory.getCurrentNode(players[i].getActorRef());
+                assertEquals(currentNode2.getActorRef(), 2);
+                assertEquals(currentNode2.getVisits(), currentNode.getVisits());
                 if (i != j)
-                    assertFalse(state2.currentNodesByPlayer.get(i + 1) == state.currentNodesByPlayer.get(j + 1));
+                    assertFalse(currentNode2 == currentNode);
             }
         }
         MCStatistics<TestAgent>[] testNode = new MCStatistics[3];
@@ -154,14 +155,14 @@ public class OpenLoopStateFactoryTest {
         }
         factory.processGameEvent(new GameEvent<>(new ActionWithRef<>(TestActionEnum.TEST, 2), game));
         for (int j = 0; j < 3; j++) {
-            OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
-            assertTrue(state.currentNodesByPlayer.get(j + 1) == testNode[j]);
+            MCStatistics<TestAgent> currentNode = factory.getCurrentNode(players[j].getActorRef());
+            assertTrue(currentNode == testNode[j]);
             for (int i = 0; i < 3; i++) {
-                OpenLoopState<TestAgent> state2 = (OpenLoopState) factory.getCurrentState(players[i]);
-                assertEquals(state2.currentPlayer, 3);
-                assertEquals(state2.currentNodesByPlayer.get(i + 1).getVisits(), state.currentNodesByPlayer.get(j + 1).getVisits());
+                MCStatistics<TestAgent> currentNode2 = factory.getCurrentNode(players[i].getActorRef());
+                assertEquals(currentNode2.getActorRef(), 3);
+                assertEquals(currentNode2.getVisits(), currentNode.getVisits());
                 if (i != j)
-                    assertFalse(state2.currentNodesByPlayer.get(i + 1) == state.currentNodesByPlayer.get(j + 1));
+                    assertFalse(currentNode2 == currentNode);
             }
         }
     }
@@ -179,7 +180,7 @@ public class OpenLoopStateFactoryTest {
             players[i] = new TestAgent(world);
         }
         SimpleMazeGame game = new SimpleMazeGame(4, players);
-        factory = new OpenLoopStateFactory<>("ignoreOthers", trees, game);
+        factory = new OpenLoopTreeTracker<>("ignoreOthers", trees, game);
         // should now be at root
         MCStatistics<TestAgent>[] root = new MCStatistics[3];
         for (int i = 0; i < 3; i++) {
@@ -191,25 +192,23 @@ public class OpenLoopStateFactoryTest {
             }
         }
         for (int j = 0; j < 3; j++) {
-            OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
+            MCStatistics<TestAgent> currentNode = factory.getCurrentNode(players[j].getActorRef());
             if (j == 0) {
-                assertTrue(state.currentNodesByPlayer.get(j + 1) == root[j]);
-                assertEquals(state.currentPlayer, j + 1);
+                assertTrue(currentNode == root[j]);
+                assertEquals(currentNode.getActorRef(), j + 1);
             } else {
-                assertEquals(state.currentPlayer, j + 1);
-                assertEquals(state.currentNodesByPlayer.get(j + 1), root[j]);
+                assertEquals(currentNode, root[j]);
             }
         }
         MCStatistics<TestAgent> moveLeftNode = root[0].getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 1));
         factory.processGameEvent(new GameEvent<>(new ActionWithRef<>(TestActionEnum.LEFT, 1), game));
         for (int j = 0; j < 3; j++) {
-            OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
+            MCStatistics<TestAgent> currentNode = factory.getCurrentNode(players[j].getActorRef());
             if (j == 0) {
-                assertTrue(state.currentNodesByPlayer.get(j + 1) == moveLeftNode);
-                assertEquals(state.currentPlayer, 1);
+                assertTrue(currentNode == moveLeftNode);
+                assertEquals(currentNode.getActorRef(), 1);
             } else {
-                assertEquals(state.currentPlayer, j + 1);
-                assertEquals(state.currentNodesByPlayer.get(j + 1), root[j]);
+                assertEquals(currentNode, root[j]);
             }
         }
         MCStatistics<TestAgent> testNode = moveLeftNode.getSuccessorNode(new ActionWithRef(TestActionEnum.TEST, 2));
@@ -217,13 +216,12 @@ public class OpenLoopStateFactoryTest {
         testNode = moveLeftNode.getSuccessorNode(new ActionWithRef(TestActionEnum.TEST, 1));
         factory.processGameEvent(new GameEvent<>(new ActionWithRef<>(TestActionEnum.TEST, 1), game));
         for (int j = 0; j < 3; j++) {
-            OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
+            MCStatistics<TestAgent> currentNode = factory.getCurrentNode(players[j].getActorRef());
             if (j == 0) {
-                assertTrue(state.currentNodesByPlayer.get(j + 1) == testNode);
-                assertEquals(state.currentPlayer, 1);
+                assertTrue(currentNode == testNode);
+                assertEquals(currentNode.getActorRef(), 1);
             } else {
-                assertEquals(state.currentPlayer, j + 1);
-                assertEquals(state.currentNodesByPlayer.get(j + 1), root[j]);
+                assertEquals(currentNode, root[j]);
             }
         }
     }
@@ -243,7 +241,7 @@ public class OpenLoopStateFactoryTest {
             players[i] = new TestAgent(world);
         }
         SimpleMazeGame game = new SimpleMazeGame(4, players);
-        factory = new OpenLoopStateFactory<>("ignoreOthers", trees, game);
+        factory = new OpenLoopTreeTracker<>("ignoreOthers", trees, game);
         // should now be at root
         MCStatistics<TestAgent>[] root = new MCStatistics[3];
         for (int i = 0; i < 3; i++) {
@@ -255,9 +253,9 @@ public class OpenLoopStateFactoryTest {
             }
         }
         for (int j = 0; j < 3; j++) {
-            OpenLoopState<TestAgent> state = (OpenLoopState) factory.getCurrentState(players[j]);
-            assertEquals(state.currentPlayer, j + 1);
-            assertEquals(state.currentNodesByPlayer.get(j + 1), root[j]);
+            MCStatistics<TestAgent> currentNode = factory.getCurrentNode(players[j].getActorRef());
+            if (j == 1) assertEquals(currentNode.getActorRef(), j + 1);
+            assertEquals(currentNode, root[j]);
         }
     }
 
@@ -266,11 +264,11 @@ public class OpenLoopStateFactoryTest {
         localProp.setProperty("MonteCarloTree", "single");
         setUpTrees();
         SimpleMazeGame newGame = (SimpleMazeGame) masterGame.clone();
-        factory = new OpenLoopStateFactory<>("single", trees, newGame);
-        for (int i = 0; i < newGame.numberOfPlayers; i++) assertNotNull(factory.getCurrentState(newGame.players[i]));
+        factory = new OpenLoopTreeTracker<>("single", trees, newGame);
+        for (int i = 0; i < newGame.numberOfPlayers; i++) assertNotNull(factory.getCurrentNode(i + 1));
         factory.processGameEvent(new GameEvent<>(new ActionWithRef<>(TestActionEnum.TEST, 2), newGame));
         // this is an action not seen in the original game...so moves us out of the tree
-        for (int i = 0; i < newGame.numberOfPlayers; i++) assertNull(factory.getCurrentState(newGame.players[i]));
+        for (int i = 0; i < newGame.numberOfPlayers; i++) assertNull(factory.getCurrentNode(i + 1));
     }
 
     @Test
@@ -282,19 +280,22 @@ public class OpenLoopStateFactoryTest {
         MCStatistics<TestAgent> oldRoot = trees.get(2).getRootStatistics();
         int previousRootVisits = oldRoot.getVisits();
         int previousVisits = 0;
-        MCStatistics<TestAgent> moveLeft = trees.get(2).getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 2));
+        // at this stage, we always have PLayer 1 making the action from root - we only prune before the next action
+        MCStatistics<TestAgent> moveLeft = trees.get(2).getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.LEFT, 1));
         previousVisits += moveLeft.getVisits();
-        MCStatistics<TestAgent> moveRight = trees.get(2).getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.RIGHT, 2));
+        MCStatistics<TestAgent> moveRight = trees.get(2).getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.RIGHT, 1));
         previousVisits += moveRight.getVisits();
-        MCStatistics<TestAgent> moveTest = trees.get(2).getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.TEST, 2));
+        MCStatistics<TestAgent> moveTest = trees.get(2).getRootStatistics().getSuccessorNode(new ActionWithRef(TestActionEnum.TEST, 1));
         previousVisits += moveTest.getVisits();
-        masterGame.oneAction();
-        assertEquals(oldRoot.getVisits(), 99 + previousRootVisits);
+        masterGame.oneAction(); // this will prune tree before taking an action.
+        assertEquals(oldRoot.getVisits(), previousRootVisits); // no change, as this should no longer be in tree
         // as we visit the root an additional 99 times
         MCStatistics<TestAgent> newRoot = trees.get(2).getRootStatistics();
         assertTrue(newRoot == moveLeft || newRoot == moveRight || newRoot == moveTest);
-
         assertEquals(moveLeft.getVisits() + moveRight.getVisits() + moveTest.getVisits(), 99 + previousVisits);
+
+        assertEquals(trees.get(1).getRootStatistics().getVisits(), newRoot.getVisits());
+        assertEquals(trees.get(3).getRootStatistics().getVisits(), newRoot.getVisits());
     }
 
 }
