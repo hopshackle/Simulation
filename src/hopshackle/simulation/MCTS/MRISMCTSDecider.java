@@ -74,7 +74,9 @@ class MRISChildDecider<P extends Agent> extends OLMCTSChildDecider<P> {
                 // we will expand this node on BP
                 determiniser.switchOn(false);
             }
+            return retValue;
         }
+        determiniser.switchOn(false);
         return null;
     }
 
@@ -106,5 +108,7 @@ class MRISGameDeterminiser<P extends Agent> implements GameListener<P> {
     void switchOn(boolean isOn) {
         on = isOn;
     }
+
+    boolean isOn() {return on;}
 
 }

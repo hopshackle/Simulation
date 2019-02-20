@@ -102,6 +102,12 @@ public class MRISMCTSTest {
         assertTrue(updates < 40);
         assertTrue(updates > 1);
     }
+
+    @Test
+    public void weStopDeterminisingOnceOutsidePerPLayerTree() {
+        localProp.setProperty("MonteCarloTree", "perPlayer");
+        weStopRedeterminisingOnceOutsideTree();
+    }
 }
 
 /*

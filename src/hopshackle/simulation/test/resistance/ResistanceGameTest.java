@@ -3,6 +3,10 @@ package hopshackle.simulation.test.resistance;
 import static org.junit.Assert.*;
 
 import hopshackle.simulation.MCTS.SingletonStateFactory;
+import hopshackle.simulation.games.Game;
+import hopshackle.simulation.games.GameEvent;
+import hopshackle.simulation.games.GameListener;
+import hopshackle.simulation.games.GameTracker;
 import hopshackle.simulation.games.resistance.*;
 import hopshackle.simulation.*;
 
@@ -258,7 +262,7 @@ public class ResistanceGameTest {
     }
 
     @Test
-    public void redeterminiseTakesAccountOfMissionAboutToFail() {
+    public void redeterminiseTakesNoAccountOfMissionAboutToFail() {
         do {
             game.redeterminise(Dice.roll(1, 5), Dice.roll(1, 5), Optional.empty());
         } while (!game.getTraitors().contains(1));
@@ -275,13 +279,79 @@ public class ResistanceGameTest {
         for (int i = 0; i < 5; i++) game.applyAction((new SupportTeam()).getAction(game.getCurrentPlayer()));
         game.applyAction((new Defect()).getAction(game.getCurrentPlayer()));
 
+        Set<Integer> traitorsAfterRedeterminisation = new HashSet<>();
+        Set<Integer> loyalistsAfterRedeterminisation = new HashSet<>();
         for (int loop = 0; loop < 100; loop++) {
             // technically anyone could be a traitor...but we will insist that player 1 is a traitor given the (as yet unrevealed DEFECT)
             game.redeterminise(loyalist, loyalist, Optional.empty());
-            assertTrue(game.getTraitors().contains(1));
+            traitorsAfterRedeterminisation.addAll(game.getTraitors());
+            loyalistsAfterRedeterminisation.addAll(game.getLoyalists());
             assertEquals(game.getTraitors().size(), 2);
         }
+        assertEquals(traitorsAfterRedeterminisation.size(), 4);
+        assertEquals(loyalistsAfterRedeterminisation.size(), 5);
+        assertFalse(traitorsAfterRedeterminisation.contains(loyalist));
     }
+
+    @Test
+    public void redeterminisationReinitialisesToStartOfVotePhase() {
+        game.applyAction((new IncludeInTeam(3)).getAction(game.getCurrentPlayer()));
+        game.applyAction((new IncludeInTeam(4)).getAction(game.getCurrentPlayer()));
+
+        for (int i = 1; i <= 4; i++) {
+            game.applyAction((new SupportTeam()).getAction(game.getCurrentPlayer()));
+        }
+        // redeterminise from perspective of player about to act
+        assertEquals(game.getCurrentPlayerRef(), 5);
+        game.redeterminise(5, 4, Optional.empty());
+        assertEquals(game.getCurrentPlayerRef(), 1);
+        assertSame(game.getPhase(), Resistance.Phase.VOTE);
+    }
+
+    @Test
+    public void redeterminisationReinitialisesToStartOfMissionPhase() {
+        game.applyAction((new IncludeInTeam(3)).getAction(game.getCurrentPlayer()));
+        game.applyAction((new IncludeInTeam(4)).getAction(game.getCurrentPlayer()));
+
+        for (int i = 1; i <= 5; i++) {
+            game.applyAction((new SupportTeam()).getAction(game.getCurrentPlayer()));
+        }
+        game.applyAction((new Cooperate()).getAction(game.getCurrentPlayer()));
+        assertEquals(game.getCurrentPlayerRef(), 4);
+        game.redeterminise(5, 4, Optional.empty());
+        assertEquals(game.getCurrentPlayerRef(), 3);
+        assertSame(game.getPhase(), Resistance.Phase.MISSION);
+        assertEquals(game.getMission(), 1);
+        assertEquals(game.getFailedVotes(), 0);
+        assertEquals(game.getSuccessfulMissions(), 0);
+    }
+
+    @Test
+    public void playerChangeEventNotPublishedInMiddleOfSimultaneousPlay() {
+        ResistanceEventTracker tracker = new ResistanceEventTracker();
+        game.registerListener(tracker);
+        game.applyAction((new IncludeInTeam(3)).getAction(game.getCurrentPlayer()));
+        game.applyAction((new IncludeInTeam(4)).getAction(game.getCurrentPlayer()));
+
+        assertEquals((int) tracker.count.getOrDefault(GameEvent.Type.PLAYER_CHANGE, 0), 0);
+        assertEquals((int) tracker.count.getOrDefault(GameEvent.Type.GAME_OVER, 0), 0);
+        assertEquals((int) tracker.count.getOrDefault(GameEvent.Type.MOVE, 0), 2);
+        for (int i = 1; i <= 5; i++) {
+            game.applyAction((new SupportTeam()).getAction(game.getCurrentPlayer()));
+            assertEquals((int) tracker.count.getOrDefault(GameEvent.Type.PLAYER_CHANGE, 0), i == 5 ? 1 : 0);
+            assertEquals((int) tracker.count.getOrDefault(GameEvent.Type.GAME_OVER, 0), 0);
+            assertEquals((int) tracker.count.getOrDefault(GameEvent.Type.MOVE, 0), i == 5 ? 8 : 2 + i);
+            // after the fifth Vote we get a MOVE detailing the vote result for +1, and the Player will change
+        }
+        for (int i = 1; i <= 2; i++) {
+            assertEquals(game.getCurrentPlayerRef(), 2 + i);
+            game.applyAction((new Cooperate()).getAction(game.getCurrentPlayer()));
+            assertEquals((int) tracker.count.getOrDefault(GameEvent.Type.PLAYER_CHANGE, 0), i == 2 ? 2 : 1);
+            assertEquals((int) tracker.count.getOrDefault(GameEvent.Type.GAME_OVER, 0), 0);
+            assertEquals((int) tracker.count.getOrDefault(GameEvent.Type.MOVE, 0), i == 2 ? 11 : 8 + i);
+        }
+    }
+
 
     private void chooseTeam(boolean firstTeam) {
         int firstTraitor = game.getTraitors().get(0);
@@ -301,3 +371,17 @@ public class ResistanceGameTest {
             IntStream.rangeClosed(1, 5).forEach(i -> assertEquals(rl.data.get(i).size(), 2));
     }
 }
+
+
+class ResistanceEventTracker implements GameListener<ResistancePlayer> {
+
+    public Map<GameEvent.Type, Integer> count = new HashMap<>();
+
+    @Override
+    public void processGameEvent(GameEvent<ResistancePlayer> event) {
+        //      System.out.println(String.format("Received event %s %s %s", event.type, event.actionTaken != null ? event.actionTaken : "null", HopshackleUtilities.formatList(event.visibleTo(), "|", null)));
+        count.put(event.type, count.getOrDefault(event.type, 0) + 1);
+    }
+
+}
+

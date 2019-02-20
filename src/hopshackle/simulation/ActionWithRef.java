@@ -23,6 +23,6 @@ public class ActionWithRef<A extends Agent> {
     }
 
     public String toString() {
-        return actionTaken.toString() + "|" + agentRef;
+        return (actionTaken != null ? actionTaken.toString() : "null") + "|" + agentRef;
     }
 }

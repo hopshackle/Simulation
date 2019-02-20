@@ -5,6 +5,7 @@ import hopshackle.simulation.games.AllPlayerDeterminiser;
 import hopshackle.simulation.games.Game;
 import hopshackle.simulation.games.GameDeterminisationMemory;
 import hopshackle.simulation.games.GameEvent;
+import hopshackle.simulation.metric.StatsCollator;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -104,10 +105,15 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         // otherwise we need to sample...the one piece of inference we should use is that any determinisation
         // must be compatible with the mission failures to date. I.e. each failed mission must have had a number of
         // traitors at least equal to the observed defections
-        boolean[] referenceTraitorIdentities = this.traitorIdentities;
+        if (inVotePhaseAndNotAtStart()) setToStartOfVotePhase();
+        if (inMissionPhaseAndNotAtStart()) setToStartOfMissionPhase();
+        boolean[] startingTraitorIdentities = this.traitorIdentities;
+        boolean[] referenceTraitorIdentities;
         if (rootGame.isPresent()) {
             Resistance root = (Resistance) rootGame.get();
             referenceTraitorIdentities = root.traitorIdentities;
+        } else {
+            referenceTraitorIdentities = startingTraitorIdentities;
         }
         // in Resistance we have four cases to consider.
         //  1) ISPlayer and perspective player both traitors...in which case all the traitors share the same, perfect information set.
@@ -120,7 +126,10 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
             boolean[] temp = referenceTraitorIdentities;
             IntStream.range(0, temp.length).forEach(i -> traitorIdentities[i] = temp[i]);
             if (!traitorsCompatibleWithHistory()) {
-                throw new AssertionError("Major Incompatibility problem has occurred");
+                // throw new AssertionError("Major Incompatibility problem has occurred");
+                randomiseTraitorsExcluding(-1);
+                // this can happen...at this point consistency with game history is prioritised
+                StatsCollator.addStatistics("ConsistencyOverride", 1.0);
             }
         } else if (referenceTraitorIdentities[ISPlayer]) {
             // case 2)
@@ -133,6 +142,15 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
             randomiseTraitorsExcluding(-1);
         }
 
+        if (!traitorsCompatibleWithHistory()) {
+            randomiseTraitorsExcluding(-1);
+            StatsCollator.addStatistics("ConsistencyOverride", 1.0);
+            if (!traitorsCompatibleWithHistory()) {
+                throw new AssertionError("Major Incompatibility problem has occurred");
+            }
+        } else {
+            StatsCollator.addStatistics("ConsistencyOverride", 0.0);
+        }
         updatePlayersWithTraitorInformation();
     }
 
@@ -159,16 +177,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     }
 
     private boolean traitorsCompatibleWithHistory() {
-        List<List<Integer>> teamsToCheck = HopshackleUtilities.cloneList(failedMissionDetails);
-        if (currentPhase == Phase.MISSION && defectorsOnMission > 0) {
-            // the current mission might be fated to fail too
-            int index = currentMissionTeam.indexOf(getCurrentPlayerRef());
-            List<Integer> incompleteFailedMission = new ArrayList<>();
-            for (int i = 0; i < index; i++) incompleteFailedMission.add(currentMissionTeam.get(i));
-            incompleteFailedMission.add(defectorsOnMission);
-            teamsToCheck.add(incompleteFailedMission);
-        }
-        for (List<Integer> failedTeam : teamsToCheck) {
+        for (List<Integer> failedTeam : failedMissionDetails) {
             int observedDefections = failedTeam.get(failedTeam.size() - 1);
             int traitorsOnMission = 0;
             for (int i = 0; i < failedTeam.size() - 1; i++) {
@@ -286,9 +295,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         switch (currentPhase) {
             case ASSEMBLE:
                 if (currentMissionTeam.size() == teamMembersByMissionandPlayercount[mission][playerCount]) {
-                    currentPhase = Phase.VOTE;
-                    missionTeamVotes = new boolean[playerCount + 1];
-                    changeCurrentPlayer(firstPlayer);
+                    setToStartOfVotePhase();
                     if (debug)
                         log(String.format("Mission Team proposal: %s", HopshackleUtilities.formatList(currentMissionTeam, ", ", null)));
                 } else {
@@ -296,8 +303,9 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                 }
                 break;
             case VOTE:
-                updateCurrentPlayer();
-                if (getCurrentPlayerRef() == firstPlayer) {
+                int lastPlayerToVote = (playerCount + firstPlayer - 1) % playerCount;
+                if (lastPlayerToVote == 0) lastPlayerToVote = playerCount;
+                if (getCurrentPlayerRef() == lastPlayerToVote) {
                     // everyone has now voted
                     applyGameAction(new VoteResult(missionTeamVotes), calendar.getTime());
                     int votesInFavour = 0;
@@ -307,17 +315,15 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                     if (debug)
                         log(String.format("%d out of %d votes in favour of proposed team", votesInFavour, playerCount));
                     if (votesInFavour > playerCount / 2.0) {
-                        currentPhase = Phase.MISSION;
-                        defectorsOnMission = 0;
-                        changeCurrentPlayer(currentMissionTeam.get(0));
+                        setToStartOfMissionPhase();
                     } else {
                         updateFirstPlayer();
-                        changeCurrentPlayer(firstPlayer);
                         failedVotes++;
-                        missionTeamVotes = new boolean[playerCount + 1];
-                        currentPhase = Phase.ASSEMBLE;
-                        currentMissionTeam = new ArrayList();
+                        setToStartOfAssemblePhase();
                     }
+                } else {
+                    // move on to next person to vote
+                    updateCurrentPlayer();
                 }
                 break;
             case MISSION:
@@ -333,17 +339,51 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                         failedMissionDetails.add(currentMissionTeam);
                     }
                     if (debug) log(String.format("%d total defectors on mission", defectorsOnMission));
-                    currentPhase = Phase.ASSEMBLE;
                     mission++;
                     calendar.setTime(mission);
                     updateFirstPlayer();
-                    changeCurrentPlayer(firstPlayer);
-                    currentMissionTeam = new ArrayList();
+                    setToStartOfAssemblePhase();
                 } else {
                     changeCurrentPlayer(currentMissionTeam.get(currentMissionTeam.indexOf(getCurrentPlayerRef()) + 1));
                 }
                 break;
         }
+    }
+
+    private void setToStartOfVotePhase() {
+        currentPhase = Phase.VOTE;
+        missionTeamVotes = new boolean[playerCount + 1];
+        changeCurrentPlayer(firstPlayer);
+    }
+
+    private void setToStartOfMissionPhase() {
+        currentPhase = Phase.MISSION;
+        defectorsOnMission = 0;
+        changeCurrentPlayer(currentMissionTeam.get(0));
+    }
+
+    private void setToStartOfAssemblePhase() {
+        currentPhase = Phase.ASSEMBLE;
+        currentMissionTeam = new ArrayList();
+        changeCurrentPlayer(firstPlayer);
+    }
+
+    @Override
+    protected void sendMessage(GameEvent event) {
+        // we suppress a PLAYER_CHANGE message if we are in the middle of simultaneous moves
+        if (event.type == GameEvent.Type.PLAYER_CHANGE) {
+            if (inMissionPhaseAndNotAtStart() || inVotePhaseAndNotAtStart())
+                return;
+        }
+        super.sendMessage(event);
+    }
+
+    private boolean inMissionPhaseAndNotAtStart() {
+        return currentPhase == Phase.MISSION && getCurrentPlayerRef() != currentMissionTeam.get(0);
+    }
+
+    private boolean inVotePhaseAndNotAtStart() {
+        return currentPhase == Phase.VOTE && getCurrentPlayerRef() != firstPlayer;
     }
 
     // no method for cooperation, as this is the default assumption
@@ -375,6 +415,14 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         List<Integer> retValue = new ArrayList();
         for (int i = 1; i < traitorIdentities.length; i++) {
             if (traitorIdentities[i]) retValue.add(i);
+        }
+        return retValue;
+    }
+
+    public List<Integer> getLoyalists() {
+        List<Integer> retValue = new ArrayList();
+        for (int i = 1; i < traitorIdentities.length; i++) {
+            if (!traitorIdentities[i]) retValue.add(i);
         }
         return retValue;
     }
