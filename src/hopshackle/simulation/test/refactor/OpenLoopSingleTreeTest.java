@@ -272,7 +272,7 @@ public class OpenLoopSingleTreeTest {
 
             GameTracker<TestAgent> gt = new GameTracker<>(clonedPlayers.get(0), clonedGame);
             clonedGame.playGame();
-            tree.processTrajectory(gt.getTrajectory(), clonedGame.getFinalScores());
+            tree.processTrajectory(gt.getTrajectory(), clonedGame.getFinalScores(), null, null);
 
             MCStatistics<TestAgent> rootStats = tree.getRootStatistics();
             assertEquals(rootStats.getVisits(), loop + 1);
@@ -352,7 +352,7 @@ public class OpenLoopSingleTreeTest {
 
             GameTracker<TestAgent> gt = new GameTracker<>(clonedPlayers.get(0), clonedGame);
             clonedGame.playGame();
-            tree[0].processTrajectory(gt.getFilteredTrajectory(t -> t.getValue1().agentRef == 1), clonedGame.getFinalScores());
+            tree[0].processTrajectory(gt.getFilteredTrajectory(t -> t.getValue1().agentRef == 1), clonedGame.getFinalScores(), null, null);
 
             MCStatistics<TestAgent> rootStats = tree[0].getRootStatistics();
             assertEquals(rootStats.getVisits(), loop + 1);

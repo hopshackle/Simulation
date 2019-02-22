@@ -96,7 +96,8 @@ public abstract class MonteCarloTree<P extends Agent> {
         return updatesLeft;
     }
 
-    public abstract void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, double[] finalScores);
+    public abstract void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory,
+                                           double[] finalScores, MCStatistics<P> startNode, MCStatistics<P> stopNode);
 
     protected void updateActionValues(ActionEnum<P> action, int actingPlayer, double reward) {
         String actionAsString = action.toString();

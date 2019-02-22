@@ -2,16 +2,22 @@ package hopshackle.simulation.games;
 
 import hopshackle.simulation.*;
 import hopshackle.simulation.MCTS.*;
-import hopshackle.simulation.games.resistance.Resistance;
+import hopshackle.simulation.games.resistance.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class AllPlayerDeterminiser<G extends Game, P extends Agent> extends Game<P, ActionEnum<P>> {
+public abstract class AllPlayerDeterminiser<G extends Game, P extends Agent> {
 
     public final int root;      // the master player ref
-    protected MCStatistics<P> mctsNode;
+    protected MCStatistics<P> mctsNode; // the node to which we back-propagate (not including)
     protected Map<Integer, G> determinisationsByPlayer;
+
+    public static AllPlayerDeterminiser getAPD(Game game, int perspective) {
+        if (game instanceof Resistance)
+            return new ResistanceAPD((Resistance) game, perspective);
+        throw new AssertionError("Unknown game type " + game.getClass());
+    }
 
     public AllPlayerDeterminiser(AllPlayerDeterminiser<G, P> apd) {
         root = apd.root;

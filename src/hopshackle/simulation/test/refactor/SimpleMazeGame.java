@@ -54,6 +54,11 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
 //    @Override
 //    public void undeterminise(GameDeterminisationMemory referenceData) {}
 
+    @Override
+    public void redeterminiseKeepingHiddenActions(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame) {
+        throw new AssertionError("Not implemented");
+    }
+
     public String getRef() {
         return "SimpleMazeGame";
     }

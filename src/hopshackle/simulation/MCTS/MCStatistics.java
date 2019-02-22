@@ -81,6 +81,7 @@ public class MCStatistics<P extends Agent> {
             if (V.length == 0) V = reward;
             if (Q.length == 0) Q = reward;
         }
+        //      if (!openLoop || totalVisits > 0) {
         if (map.containsKey(actionRef)) {
             MCData old = map.get(actionRef);
             if (tree.debug)
@@ -94,6 +95,7 @@ public class MCStatistics<P extends Agent> {
         } else {
             map.put(actionRef, new MCData(actionRef.toString(), reward, tree.properties));
         }
+        //      }
         totalVisits++;
         return nextNode;
     }
@@ -135,7 +137,7 @@ public class MCStatistics<P extends Agent> {
     private MCStatistics<P> nextNodeFrom(ActionWithRef<P> actionRef, State<P> nextState) {
         MCStatistics<P> nextNode = null;
         if (openLoop) {
-            nextNode = successorNodesByAction.get(actionRef);
+            nextNode = getSuccessorNode(actionRef);
             if (nextNode == null && tree.updatesLeft() > 0) {
                 nextNode = new MCStatistics<>(tree, null);
                 successorNodesByAction.put(actionRef, nextNode);

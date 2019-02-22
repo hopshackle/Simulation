@@ -58,13 +58,7 @@ class MRISChildDecider<P extends Agent> extends OLMCTSChildDecider<P> {
         super(stateFactory, treeTracker, rolloutDecider, prop);
         this.determiniser = gameDeterminiser;
     }
-/*
-    @Override
-    protected ActionEnum<P> rolloutDecision(P decidingAgent, List<ActionEnum<P>> chooseableOptions) {
-        determiniser.switchOn(false);
-        return super.rolloutDecision(decidingAgent, chooseableOptions);
-    }
-*/
+
     @Override
     protected ActionEnum<P> getNextTreeAction(State<P> state, List<ActionEnum<P>> chooseableOptions, int decidingAgentRef) {
         MCStatistics<P> currentPointer = treeTracker.getCurrentNode(decidingAgentRef);

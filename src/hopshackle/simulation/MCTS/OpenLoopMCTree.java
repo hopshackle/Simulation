@@ -15,12 +15,15 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
     }
 
     @Override
-    public void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, double[] finalScores) {
+    public void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory,
+                                  double[] finalScores, MCStatistics<P> startNode, MCStatistics<P> stopNode) {
         MCStatistics<P> currentPointer = rootNode;
         List<MCStatistics<P>> nodeTrajectory = new ArrayList();
-        nodeTrajectory.add(currentPointer);
 
         long endTime = trajectory.get(trajectory.size() - 1).getValue2();
+        boolean inValidPartOfTrajectory = stopNode == null ? true : false;
+        // a stop node is towards the start of the tree
+
         for (int i = 0; i < trajectory.size(); i++) {  // traverse through trajectory
             Triplet<State<P>, ActionWithRef<P>, Long> tuple = trajectory.get(i);
             ActionEnum<P> actionTaken = tuple.getValue1().actionTaken;
@@ -34,8 +37,18 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
 
             // we update, and get the next node
             if (currentPointer != null) {
-                currentPointer = currentPointer.update(actionTaken, discountedScores, actingPlayer);
-                if (currentPointer != null) nodeTrajectory.add(currentPointer);
+                boolean start = startNode == null ? false : currentPointer == startNode;
+                boolean stop = stopNode == null ? false : currentPointer == stopNode;
+                if (stop) inValidPartOfTrajectory = true;
+                // we do update the stopNode, and switch on for all later nodes
+                if (start) inValidPartOfTrajectory = false;
+                // we do not update the startNode itself, and then switch off for nodes later in the trajectory
+                if (inValidPartOfTrajectory) {
+                    nodeTrajectory.add(currentPointer);
+                    currentPointer = currentPointer.update(actionTaken, discountedScores, actingPlayer);
+                } else {
+                    currentPointer = currentPointer.getSuccessorNode(new ActionWithRef<>(actionTaken, actingPlayer));
+                }
             }
             if (MAST && actingPlayer > 0) {
                 updateActionValues(actionTaken, actingPlayer, discountedScores[actingPlayer - 1]);

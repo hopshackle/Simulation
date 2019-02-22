@@ -155,6 +155,11 @@ class MRISTestGame extends Game<MRISAgent, ActionEnum<MRISAgent>> {
     }
 
     @Override
+    public void redeterminiseKeepingHiddenActions(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame) {
+        throw new AssertionError("Not implemented");
+    }
+
+    @Override
     public AllPlayerDeterminiser getAPD(int perspectivePlayer) {
         throw new AssertionError("Not implemented");
     }

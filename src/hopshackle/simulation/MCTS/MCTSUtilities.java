@@ -15,7 +15,8 @@ This executes one iteration of search, and stores any results directly in the pr
                                              Game<A, ActionEnum<A>> clonedGame,
                                              Decider<A> childDecider,
                                              Decider<A> opponentModel,
-                                             DeciderProperties prop) {
+                                             DeciderProperties prop,
+                                             BackPropagationTactics bpTactics) {
         String treeSetting = prop.getProperty("MonteCarloTree", "single");
         boolean singleTree = treeSetting.equals("single");
         boolean multiTree = treeSetting.equals("perPlayer");
@@ -63,7 +64,8 @@ This executes one iteration of search, and stores any results directly in the pr
                             List<Triplet<State<A>, ActionWithRef<A>, Long>> trajectory = gameTrackers[p].getTrajectory();
                             MonteCarloTree<A> t = treeMap.get(p);
                             t.setUpdatesLeft(1);
-                            t.processTrajectory(trajectory, clonedGame.getFinalScores());
+                            t.processTrajectory(trajectory, clonedGame.getFinalScores(),
+                                    bpTactics.getStartNode(p), bpTactics.getStopNode(p));
                             //                       if (t.updatesLeft == 0) nodesExpanded.incrementAndGet();
                         }
                 );
@@ -76,7 +78,8 @@ This executes one iteration of search, and stores any results directly in the pr
                 if (treeSetting.equals("ignoreOthers"))
                     filterFunction = (t -> t.getValue1().agentRef == currentPlayer);
                 List<Triplet<State<A>, ActionWithRef<A>, Long>> trajectoryToUse = gameTrackers[currentPlayer].getFilteredTrajectory(filterFunction);
-                tree.processTrajectory(trajectoryToUse, clonedGame.getFinalScores());
+                tree.processTrajectory(trajectoryToUse, clonedGame.getFinalScores(),
+                        bpTactics.getStartNode(currentPlayer), bpTactics.getStopNode(currentPlayer));
                 //           if (tree.updatesLeft == 0) nodesExpanded.incrementAndGet();
                 break;
 

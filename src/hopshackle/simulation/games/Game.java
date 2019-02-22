@@ -59,6 +59,15 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     public abstract void redeterminise(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame);
 
     /*
+    Where redeterminise() may set the game state 'backwards' in the case of simultaneous actions that are
+    calculated sequentially, this method will keep intact any simultaneous actions earlier in the sequence.
+    This is required in CRIS when branching - on the basis that we track trajectories to update MCTrees using
+    published events...and the information has already flown the nest (would not be a problem in a simpler framework
+    where we run a rolled out game, and only extract the trajectory to update the MCTree from the game directly once it
+    has finished).
+     */
+    public abstract void redeterminiseKeepingHiddenActions(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame);
+    /*
     Returns an AllPlayerDeterminiser that redeterminises from the perspective of every agent apart from the perspectivePlayer
     This will also clone the game (N-1) times
      */

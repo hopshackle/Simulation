@@ -166,7 +166,8 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         if (useAVDForOpponent)
             opponentModel = new MCActionValueDecider<>(tree, stateFactory, currentPlayer);
 
-        MCTSUtilities.launchGame(treeMap, clonedGame, childDecider, opponentModel, decProp);
+        MCTSUtilities.launchGame(treeMap, clonedGame, childDecider, opponentModel, decProp,
+                new BackPropagationTactics(new HashMap<>(), new HashMap<>(), clonedGame.getAllPlayers().size()));
     }
 
     protected void preIterationProcessing(Game clonedGame, Game rootGame) {

@@ -64,7 +64,8 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
     }
 
     @Override
-    public void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, double[] finalScores) {
+    public void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, double[] finalScores,
+                                  MCStatistics<P> startNode, MCStatistics<P> stopNode) {
         long endTime = trajectory.get(trajectory.size()-1).getValue2();
         for (int i = 0; i < trajectory.size(); i++) {  // traverse through trajectory
             Triplet<State<P>, ActionWithRef<P>, Long> tuple = trajectory.get(i);

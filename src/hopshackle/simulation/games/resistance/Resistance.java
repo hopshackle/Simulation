@@ -154,6 +154,11 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         updatePlayersWithTraitorInformation();
     }
 
+    @Override
+    public void redeterminiseKeepingHiddenActions(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame) {
+        throw new AssertionError("Not implemented");
+    }
+
     private void randomiseTraitorsExcluding(int exclude) {
         int redeterminisationCount = 0;
         List<Integer> traitorRefs = new ArrayList<>();
