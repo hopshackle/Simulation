@@ -28,19 +28,6 @@ public class BackPropagationTactics {
         }
     }
 
-    public boolean isStartNode(int playerRef, MCStatistics node) {
-        return startNodes.get(playerRef) == node;
-    }
-    public boolean isStopNode(int playerRef, MCStatistics node) {
-        return stopNodes.get(playerRef) == node;
-    }
-    public boolean hasStartNode(int playerRef) {
-        return startNodes.get(playerRef) != null;
-    }
-    public boolean hasStopNode(int playerRef) {
-        return stopNodes.get(playerRef) != null;
-    }
-
     public void updateStartNodes(Map<Integer, MCStatistics> newNodes) {
         this.startNodes = newNodes;
     }

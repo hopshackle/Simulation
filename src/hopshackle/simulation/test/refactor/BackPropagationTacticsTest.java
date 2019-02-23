@@ -144,7 +144,6 @@ public class BackPropagationTacticsTest {
         IntStream.range(0, 5).forEach(i -> stopNodeMap.put(i + 1, onInclude3[i])); // we should only back-propagate to nodes below this point (not including the node)
         BackPropagationTactics bpTactics = new BackPropagationTactics(new HashMap<>(), stopNodeMap, 5);
         for (int i = 0; i < 5; i++) {
-            System.out.println(i);
             // we should now update visits and mean for Include3, but not Support
             masterDecider.getTree(players[i]).processTrajectory(trajectory[i], scores,
                     bpTactics.getStartNode(i + 1), bpTactics.getStopNode(i + 1));
@@ -163,6 +162,40 @@ public class BackPropagationTacticsTest {
 
     @Test
     public void BPStartsAndStopsWithOLForAllPlayers() {
-        fail("Not yet implemented");
+        Map<Integer, MCStatistics> startNodeMap = new HashMap<>();
+        Map<Integer, MCStatistics> stopNodeMap = new HashMap<>();
+        IntStream.range(0, 5).forEach(i -> stopNodeMap.put(i + 1, onInclude2[i])); // we should only back-propagate to nodes below this point (including the node)
+        IntStream.range(0, 5).forEach(i -> startNodeMap.put(i + 1, onInclude3[i])); // we should only back-propagate to nodes above this point (not including the node)
+        // this should mean that we only update the one node...onInclude2
+        BackPropagationTactics bpTactics = new BackPropagationTactics(startNodeMap, stopNodeMap, 5);
+
+        for (int i = 0; i < 5; i++) {
+            masterDecider.getTree(players[i]).processTrajectory(trajectory[i], scores,
+                    bpTactics.getStartNode(i + 1), bpTactics.getStopNode(i + 1));
+            assertEquals(rootVisits[i], rootVisits[i]);
+            assertEquals(onInclude2[i].getVisits(new IncludeInTeam(2)), onInclude2Visits[i] + 1);
+            assertEquals(onInclude3[i].getVisits(new IncludeInTeam(3)), onInclude3Visits[i]);
+            assertEquals(onSupport[i].getVisits(new SupportTeam()), onSupportVisits[i]);
+
+            assertEquals(onInclude2[i].getMean(new IncludeInTeam(2), 1)[i],
+                    (onInclude2Mean[i] * onInclude2Visits[i] + scores[i]) / (onInclude2Visits[i] + 1), 0.01);
+            assertEquals(onInclude3[i].getMean(new IncludeInTeam(3), 1)[i], onInclude3Mean[i], 0.01);
+            assertEquals(onSupport[i].getMean(new SupportTeam(), i + 1)[i], onSupportMean[i], 0.01);
+        }
+    }
+
+    @Test
+    public void BPReturnsTheCorrectNodes() {
+        Map<Integer, MCStatistics> startNodeMap = new HashMap<>();
+        Map<Integer, MCStatistics> stopNodeMap = new HashMap<>();
+        IntStream.range(0, 5).forEach(i -> stopNodeMap.put(i + 1, onInclude2[i])); // we should only back-propagate to nodes below this point (including the node)
+        IntStream.range(0, 5).forEach(i -> startNodeMap.put(i + 1, onSupport[i])); // we should only back-propagate to nodes above this point (not including the node)
+        // this should mean that we only update the one node...onInclude2
+        BackPropagationTactics bpTactics = new BackPropagationTactics(startNodeMap, stopNodeMap, 5);
+
+        for (int i = 0; i < 5; i++) {
+            assertSame(bpTactics.getStartNode(i+1), onSupport[i]);
+            assertSame(bpTactics.getStopNode(i+1), onInclude2[i]);
+        }
     }
 }

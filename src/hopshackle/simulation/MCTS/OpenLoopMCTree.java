@@ -21,7 +21,7 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
         List<MCStatistics<P>> nodeTrajectory = new ArrayList();
 
         long endTime = trajectory.get(trajectory.size() - 1).getValue2();
-        boolean inValidPartOfTrajectory = stopNode == null ? true : false;
+        boolean inValidPartOfTrajectory = stopNode == null;
         // a stop node is towards the start of the tree
 
         for (int i = 0; i < trajectory.size(); i++) {  // traverse through trajectory
