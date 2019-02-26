@@ -44,7 +44,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     This is false if thisPerspective and otherPerspective have information in common, and this subset is not
     identical between the two states.
      */
-    public abstract boolean isCompatibleWith(Game<P, A> otherState, ActionWithRef<P> actionRef);
+ //   public abstract boolean isCompatibleWith(Game<P, A> otherState, ActionWithRef<P> actionRef);
 
     /*
     Redeterminises hidden information from that player's perspective (WARNING: mutable state)
@@ -67,18 +67,6 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     has finished).
      */
     public abstract void redeterminiseKeepingHiddenActions(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame);
-    /*
-    Returns an AllPlayerDeterminiser that redeterminises from the perspective of every agent apart from the perspectivePlayer
-    This will also clone the game (N-1) times
-     */
-    public abstract AllPlayerDeterminiser<?, P> getAPD(int perspectivePlayer);
-
-    /*
-    Undeterminises by taking the current game as the base, and updating (WARNING: mutable state) it to
-    be compatible with referenceData. If the observed game history of this is incompatible with
-    referenceData, then this wins out.
-     */
- //   public abstract void undeterminise(GameDeterminisationMemory referenceData);
 
     public String getRef() {
         return String.valueOf(refID);
@@ -97,6 +85,8 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
     public abstract P getCurrentPlayer();
 
     public abstract List<P> getAllPlayers();
+
+    public abstract int getPlayerCount();
 
     public abstract int getPlayerNumber(P player);
 
@@ -147,7 +137,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
 
     public int getOrdinalPosition(int p) {
         // we count how many scores are less than or equal to the players score
-        int numberOfPlayers = getAllPlayers().size();
+        int numberOfPlayers = getPlayerCount();
         int retValue = numberOfPlayers + 1;
         double[] score = new double[numberOfPlayers];
         for (int i = 0; i < numberOfPlayers; i++) {
@@ -190,10 +180,15 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         applyAction(action);
     }
 
+    public void apply(ActionWithRef<P> actionWithRef) {
+        Action<P> action = actionWithRef.actionTaken.getAction(getPlayer(actionWithRef.agentRef));
+        applyAction(action);
+    }
+
     /* Note that the action is assumed to have a link to the Game
     and does not stand separate...it is responsible for updating the game state
      */
-    public void applyAction(Action action) {
+    public void applyAction(Action<P> action) {
         if (action == null) return;
         int actorRef = action.getActor().getActorRef();
         if (actorRef != getCurrentPlayerRef()) {

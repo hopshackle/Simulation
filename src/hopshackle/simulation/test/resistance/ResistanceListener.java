@@ -10,7 +10,7 @@ public class ResistanceListener implements GameListener<ResistancePlayer> {
 
     public ResistanceListener(Resistance game) {
         data = new HashMap<>();
-        for (int i = 1; i <= game.getAllPlayers().size(); i++) {
+        for (int i = 1; i <= game.getPlayerCount(); i++) {
             data.put(i, new ArrayList<>());
         }
         game.registerListener(this);

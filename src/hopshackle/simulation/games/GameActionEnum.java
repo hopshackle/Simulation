@@ -8,7 +8,7 @@ public interface GameActionEnum<A extends Agent> extends ActionEnum<A> {
 
     public default List<Integer> isVisibleTo(int actorRef, Game<A, ActionEnum<A>> game) {
         List<Integer> retValue = new ArrayList<>();
-        for (int i = 1; i <= game.getAllPlayers().size(); i++)
+        for (int i = 1; i <= game.getPlayerCount(); i++)
             retValue.add(i);
         return retValue;
     }

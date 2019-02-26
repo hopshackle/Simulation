@@ -293,6 +293,33 @@ public class ResistanceGameTest {
         assertFalse(traitorsAfterRedeterminisation.contains(loyalist));
     }
 
+
+    @Test
+    public void redeterminiseKeepingHiddenActionsTakesAccountOfMissionAboutToFail() {
+        do {
+            game.redeterminise(Dice.roll(1, 5), Dice.roll(1, 5), Optional.empty());
+        } while (!game.getTraitors().contains(1));
+        int secondTraitor = game.getTraitors().get(1);
+        int firstTraitor = game.getTraitors().get(0);
+        int loyalist = 5;
+        if (firstTraitor == 5 || secondTraitor == 5)
+            loyalist = 4;
+        if (firstTraitor == 4 || secondTraitor == 4)
+            loyalist = 3;
+
+        game.applyAction((new IncludeInTeam(1)).getAction(game.getCurrentPlayer()));
+        game.applyAction((new IncludeInTeam(2)).getAction(game.getCurrentPlayer()));
+        for (int i = 0; i < 5; i++) game.applyAction((new SupportTeam()).getAction(game.getCurrentPlayer()));
+        game.applyAction((new Defect()).getAction(game.getCurrentPlayer()));
+
+        for (int loop = 0; loop < 100; loop++) {
+            // player 1 must now be a traitor
+            game.redeterminiseKeepingHiddenActions(loyalist, loyalist, Optional.empty());
+            assertTrue(game.getTraitors().contains(1));
+            assertEquals(game.getTraitors().size(), 2);
+        }
+    }
+
     @Test
     public void redeterminisationReinitialisesToStartOfVotePhase() {
         game.applyAction((new IncludeInTeam(3)).getAction(game.getCurrentPlayer()));
@@ -360,7 +387,7 @@ public class ResistanceGameTest {
         if (firstTeam)
             IntStream.rangeClosed(1, 5).forEach(i -> assertEquals(rl.data.get(i).size(), 1));
 
-        for (int i = 1; i <= game.getAllPlayers().size(); i++) {
+        for (int i = 1; i <= game.getPlayerCount(); i++) {
             if (game.getTraitors().contains(i)) continue;
             game.applyAction((new IncludeInTeam(i)).getAction(game.getCurrentPlayer()));
             break;

@@ -8,7 +8,7 @@ import hopshackle.simulation.Decider;
 public class SimpleGameScoreCalculator implements GameScoreCalculator {
 
     public double[] finalScores(Game game) {
-        double[] retValue = new double[game.getAllPlayers().size()];
+        double[] retValue = new double[game.getPlayerCount()];
         for (int playerNumber = 1; playerNumber <= retValue.length; playerNumber++) {
             retValue[playerNumber - 1] = game.getPlayer(playerNumber).getScore();
             // we start with their basic score - the rest considers bonuses to this based on relative position

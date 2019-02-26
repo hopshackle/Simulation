@@ -28,7 +28,7 @@ public class ResistanceDAO implements DAO<Resistance> {
     public String getValues(Resistance game) {
 
         return String.format(" (%d, %d, %d, %d, %d, %d)",
-                game.getAllPlayers().size(),
+                game.getPlayerCount(),
                 game.getTraitors().size(),
                 Arrays.stream(game.getFinalScores()).filter(i -> i == 1.0).count() == game.getTraitors().size() ? 1 : 0,
                 game.getMission() - 1,

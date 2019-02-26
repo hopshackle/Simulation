@@ -23,7 +23,7 @@ public class GameEvent<A extends Agent> {
         actionTaken = null;
         if (type != Type.GAME_OVER)
             throw new AssertionError("Only GAME_OVER is valid with no further parameters");
-        for (int i = 1; i <= game.getAllPlayers().size(); i++)
+        for (int i = 1; i <= game.getPlayerCount(); i++)
             visibleTo.add(i);
     }
 

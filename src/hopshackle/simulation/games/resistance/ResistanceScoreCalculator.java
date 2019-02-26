@@ -13,7 +13,7 @@ public class ResistanceScoreCalculator implements GameScoreCalculator<Resistance
         if (!game.gameOver())
             throw new AssertionError("Should only be called when the game is over!");
         List<Integer> spies = game.getTraitors();
-        double[] retValue = new double[game.getAllPlayers().size()];
+        double[] retValue = new double[game.getPlayerCount()];
         if (game.spiesHaveWon()) {
             for (int spy : spies) retValue[spy - 1] = 1.0;
         } else {

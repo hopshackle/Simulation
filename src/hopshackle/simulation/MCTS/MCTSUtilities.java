@@ -12,11 +12,12 @@ public class MCTSUtilities {
 This executes one iteration of search, and stores any results directly in the provided Tree
  */
     public static <A extends Agent> void launchGame(Map<Integer, MonteCarloTree<A>> treeMap,
-                                             Game<A, ActionEnum<A>> clonedGame,
-                                             Decider<A> childDecider,
-                                             Decider<A> opponentModel,
-                                             DeciderProperties prop,
-                                             BackPropagationTactics bpTactics) {
+                                                    Game<A, ActionEnum<A>> clonedGame,
+                                                    Decider<A> childDecider,
+                                                    Decider<A> opponentModel,
+                                                    DeciderProperties prop,
+                                                    BackPropagationTactics bpTactics,
+                                                    List<ActionWithRef<A>> initialActions) {
         String treeSetting = prop.getProperty("MonteCarloTree", "single");
         boolean singleTree = treeSetting.equals("single");
         boolean multiTree = treeSetting.equals("perPlayer");
@@ -26,7 +27,7 @@ This executes one iteration of search, and stores any results directly in the pr
         int currentPlayer = clonedAgent.getActorRef();
         MonteCarloTree<A> tree = treeMap.get(currentPlayer);
 
-        GameTracker<A>[] gameTrackers = new GameTracker[clonedGame.getAllPlayers().size() + 1];
+        GameTracker<A>[] gameTrackers = new GameTracker[clonedGame.getPlayerCount() + 1];
         switch (treeSetting) {
             case "perPlayer":
                 for (A player : clonedGame.getAllPlayers()) {
@@ -53,6 +54,9 @@ This executes one iteration of search, and stores any results directly in the pr
                 player.setDecider(childDecider);
             }
         }
+
+        // Now we apply the initialActions defined by the process that launches the Game
+        initialActions.forEach(clonedGame::apply);
 
         clonedGame.playGame(rolloutLimit);
         // gameTracker tracks all events that are visible to us

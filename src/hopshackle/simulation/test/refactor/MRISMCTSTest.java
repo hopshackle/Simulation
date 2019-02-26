@@ -53,7 +53,8 @@ public class MRISMCTSTest {
         // hence redeterminise at each move
 
         MonteCarloTree<MRISAgent> tree = MRISDecider.getTree(game.getCurrentPlayer());
-        MRISDecider.executeSearch(game);
+        BackPropagationTactics emptyBPTactics = new BackPropagationTactics(new HashMap<>(), new HashMap<>(), 10);
+        MRISDecider.executeSearch(game, emptyBPTactics, new ArrayList<>());
 
         assertEquals(game.playerChange, 9, 2);
         int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
@@ -75,7 +76,8 @@ public class MRISMCTSTest {
         tree.getRootStatistics().update(MRISAction.Type.MRIS_ACTION_1, new double[10], 1);
         tree.getRootStatistics().update(MRISAction.Type.MRIS_ACTION_2, new double[10], 1);
         assertEquals(tree.updatesLeft(), 0);
-        MRISDecider.executeSearch(game);
+        BackPropagationTactics emptyBPTactics = new BackPropagationTactics(new HashMap<>(), new HashMap<>(), 10);
+        MRISDecider.executeSearch(game, emptyBPTactics, new ArrayList<>());
 
         assertEquals(game.playerChange, 10);
         int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
@@ -95,7 +97,8 @@ public class MRISMCTSTest {
         tree.getRootStatistics().update(MRISAction.Type.MRIS_ACTION_2, new double[10], 1);
         assertEquals(tree.updatesLeft(), 0);
 
-        MRISDecider.executeSearch(game);
+        BackPropagationTactics emptyBPTactics = new BackPropagationTactics(new HashMap<>(), new HashMap<>(), 100);
+        MRISDecider.executeSearch(game, emptyBPTactics, new ArrayList<>());
 
         assertEquals(game.playerChange, 90, 10);
         int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
@@ -144,11 +147,6 @@ class MRISTestGame extends Game<MRISAgent, ActionEnum<MRISAgent>> {
     }
 
     @Override
-    public boolean isCompatibleWith(Game otherState, ActionWithRef actionRef) {
-        return true;
-    }
-
-    @Override
     public void redeterminise(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame) {
         int newCount = redeterminisationCounts.getOrDefault(perspectivePlayer, 0) + 1;
         redeterminisationCounts.put(perspectivePlayer, newCount);
@@ -160,13 +158,13 @@ class MRISTestGame extends Game<MRISAgent, ActionEnum<MRISAgent>> {
     }
 
     @Override
-    public AllPlayerDeterminiser getAPD(int perspectivePlayer) {
-        throw new AssertionError("Not implemented");
+    public MRISAgent getCurrentPlayer() {
+        return players[getCurrentPlayerRef() - 1];
     }
 
     @Override
-    public MRISAgent getCurrentPlayer() {
-        return players[getCurrentPlayerRef() - 1];
+    public int getPlayerCount() {
+        return 10;
     }
 
     @Override
@@ -289,9 +287,9 @@ class MRISTestDecider extends MRISMCTSDecider<MRISAgent> {
     }
 
     @Override
-    public void executeSearch(Game<MRISAgent, ActionEnum<MRISAgent>> clonedGame) {
+    public void executeSearch(Game<MRISAgent, ActionEnum<MRISAgent>> clonedGame, BackPropagationTactics bpTactics, List<ActionWithRef<MRISAgent>> initialActions) {
         preIterationProcessing(clonedGame, clonedGame);
-        super.executeSearch(clonedGame);
+        super.executeSearch(clonedGame, bpTactics, initialActions);
         postIterationProcessing(clonedGame);
     }
 }

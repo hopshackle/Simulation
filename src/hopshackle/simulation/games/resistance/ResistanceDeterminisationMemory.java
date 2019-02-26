@@ -7,7 +7,7 @@ public class ResistanceDeterminisationMemory extends GameDeterminisationMemory<R
     private boolean[] traitors;
 
     public ResistanceDeterminisationMemory(Resistance baseGame) {
-        traitors = new boolean[baseGame.getAllPlayers().size() + 1];
+        traitors = new boolean[baseGame.getPlayerCount() + 1];
         for (int i = 1; i <= traitors.length; i++) {
             traitors[i] = baseGame.getPlayer(i).isTraitor();
         }

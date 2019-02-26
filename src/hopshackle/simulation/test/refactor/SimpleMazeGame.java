@@ -44,15 +44,8 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
     }
 
     @Override
-    public boolean isCompatibleWith(Game<TestAgent, ActionEnum<TestAgent>> otherState, ActionWithRef<TestAgent> actionRef) {
-        return true;
-    }
-
-    @Override
     public void redeterminise(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame) {
     }
-//    @Override
-//    public void undeterminise(GameDeterminisationMemory referenceData) {}
 
     @Override
     public void redeterminiseKeepingHiddenActions(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame) {
@@ -142,7 +135,7 @@ public class SimpleMazeGame extends Game<TestAgent, ActionEnum<TestAgent>> {
     }
 
     @Override
-    public AllPlayerDeterminiser getAPD(int player) {
-        throw new AssertionError("Not yet implemented");
+    public int getPlayerCount() {
+        return numberOfPlayers;
     }
 }

@@ -62,7 +62,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     }
 
     private void initialise() {
-        randomiseTraitorsExcluding(-1);
+        randomiseTraitorsExcluding(-1, false);
         updatePlayersWithTraitorInformation();
 
         mission = 1;
@@ -99,14 +99,29 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     }
 
     @Override
+    public int getPlayerCount() {
+        return playerCount;
+    }
+
+    @Override
     public void redeterminise(int perspective, int ISPlayer, Optional<Game> rootGame) {
+        redeterminise(perspective, ISPlayer, rootGame, false);
+    }
+    @Override
+    public void redeterminiseKeepingHiddenActions(int perspective, int ISPlayer, Optional<Game> rootGame) {
+        redeterminise(perspective, ISPlayer, rootGame, true);
+    }
+
+    private void redeterminise(int perspective, int ISPlayer, Optional<Game> rootGame, boolean referToHiddenActions) {
         // traitor identities is the tricky bit, as this includes hidden information
         // if the perspective player is a traitor...then it's easy, we just copy as they have complete information
         // otherwise we need to sample...the one piece of inference we should use is that any determinisation
         // must be compatible with the mission failures to date. I.e. each failed mission must have had a number of
         // traitors at least equal to the observed defections
-        if (inVotePhaseAndNotAtStart()) setToStartOfVotePhase();
-        if (inMissionPhaseAndNotAtStart()) setToStartOfMissionPhase();
+        if (!referToHiddenActions) {
+            if (inVotePhaseAndNotAtStart()) setToStartOfVotePhase();
+            if (inMissionPhaseAndNotAtStart()) setToStartOfMissionPhase();
+        }
         boolean[] startingTraitorIdentities = this.traitorIdentities;
         boolean[] referenceTraitorIdentities;
         if (rootGame.isPresent()) {
@@ -125,27 +140,27 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
             // case 1)
             boolean[] temp = referenceTraitorIdentities;
             IntStream.range(0, temp.length).forEach(i -> traitorIdentities[i] = temp[i]);
-            if (!traitorsCompatibleWithHistory()) {
+            if (!traitorsCompatibleWithHistory(referToHiddenActions)) {
                 // throw new AssertionError("Major Incompatibility problem has occurred");
-                randomiseTraitorsExcluding(-1);
+                randomiseTraitorsExcluding(-1, referToHiddenActions);
                 // this can happen...at this point consistency with game history is prioritised
                 StatsCollator.addStatistics("ConsistencyOverride", 1.0);
             }
         } else if (referenceTraitorIdentities[ISPlayer]) {
             // case 2)
-            randomiseTraitorsExcluding(perspective);
+            randomiseTraitorsExcluding(perspective, referToHiddenActions);
         } else if (ISPlayer == perspective) {
             // case 3)
-            randomiseTraitorsExcluding(perspective);
+            randomiseTraitorsExcluding(perspective, referToHiddenActions);
         } else {
             // case 4)
-            randomiseTraitorsExcluding(-1);
+            randomiseTraitorsExcluding(-1, referToHiddenActions);
         }
 
-        if (!traitorsCompatibleWithHistory()) {
-            randomiseTraitorsExcluding(-1);
+        if (!traitorsCompatibleWithHistory(referToHiddenActions)) {
+            randomiseTraitorsExcluding(-1, referToHiddenActions);
             StatsCollator.addStatistics("ConsistencyOverride", 1.0);
-            if (!traitorsCompatibleWithHistory()) {
+            if (!traitorsCompatibleWithHistory(referToHiddenActions)) {
                 throw new AssertionError("Major Incompatibility problem has occurred");
             }
         } else {
@@ -154,14 +169,9 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         updatePlayersWithTraitorInformation();
     }
 
-    @Override
-    public void redeterminiseKeepingHiddenActions(int perspectivePlayer, int ISPlayer, Optional<Game> rootGame) {
-        throw new AssertionError("Not implemented");
-    }
-
-    private void randomiseTraitorsExcluding(int exclude) {
+    private void randomiseTraitorsExcluding(int exclude, boolean referToHiddenActions) {
         int redeterminisationCount = 0;
-        List<Integer> traitorRefs = new ArrayList<>();
+        List<Integer> traitorRefs;
         do {
             for (int i = 0; i < traitorIdentities.length; i++) traitorIdentities[i] = false;
             int traitorsAllocated = 0;
@@ -176,13 +186,22 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
                     traitorsAllocated++;
                 }
             } while (traitorsAllocated < traitorCount);
-        } while (redeterminisationCount < 200 && !traitorsCompatibleWithHistory());
+        } while (redeterminisationCount < 200 && !traitorsCompatibleWithHistory(referToHiddenActions));
         if (debug)
             log(String.format("Traitors set to %s after %d attempts", HopshackleUtilities.formatList(traitorRefs, ", ", null), redeterminisationCount));
     }
 
-    private boolean traitorsCompatibleWithHistory() {
-        for (List<Integer> failedTeam : failedMissionDetails) {
+    private boolean traitorsCompatibleWithHistory(boolean referToHiddenActions) {
+        List<List<Integer>> teamsToCheck = HopshackleUtilities.cloneList(failedMissionDetails);
+        if (referToHiddenActions && currentPhase == Phase.MISSION && defectorsOnMission > 0) {
+            // the current mission might be fated to fail too
+            int index = currentMissionTeam.indexOf(getCurrentPlayerRef());
+            List<Integer> incompleteFailedMission = new ArrayList<>();
+            for (int i = 0; i <= index; i++) incompleteFailedMission.add(currentMissionTeam.get(i));
+            incompleteFailedMission.add(defectorsOnMission);
+            teamsToCheck.add(incompleteFailedMission);
+        }
+        for (List<Integer> failedTeam : teamsToCheck) {
             int observedDefections = failedTeam.get(failedTeam.size() - 1);
             int traitorsOnMission = 0;
             for (int i = 0; i < failedTeam.size() - 1; i++) {
@@ -200,18 +219,12 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     protected void updatePlayersWithTraitorInformation() {
         for (int i = 1; i <= playerCount; i++) {
             allPlayers[i].setTraitor(traitorIdentities[i]);
-            if (traitorIdentities[i] == true) {
+            if (traitorIdentities[i]) {
                 for (int j = 1; j < playerCount; j++) {
                     if (j != i && traitorIdentities[j]) allPlayers[i].setOtherTraitor(j);
                 }
             }
         }
-    }
-
-    @Override
-    public boolean isCompatibleWith(Game<ResistancePlayer, ActionEnum<ResistancePlayer>> otherGame, ActionWithRef<ResistancePlayer> actionRef) {
-        // incompatible iff actionRef is the end result of a mission, and has more defections than traitors present
-        throw new AssertionError("Not yet implemented");
     }
 
     @Override
@@ -445,8 +458,4 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         return currentPhase;
     }
 
-    @Override
-    public AllPlayerDeterminiser getAPD(int player) {
-        throw new AssertionError("Not yet implemented");
-    }
 }

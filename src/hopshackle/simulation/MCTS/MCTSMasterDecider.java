@@ -95,7 +95,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         for (int i = 0; i < N; i++) {
             Game<A, ActionEnum<A>> clonedGame = game.clone();
             preIterationProcessing(clonedGame, game);
-            executeSearch(clonedGame);
+            executeSearch(clonedGame,
+                    new BackPropagationTactics(new HashMap<>(), new HashMap<>(), clonedGame.getPlayerCount()),
+                    new ArrayList<>());
             postIterationProcessing(clonedGame);
             long now = System.currentTimeMillis();
             actualI = i;
@@ -157,7 +159,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         }
     }
 
-    protected void executeSearch(Game<A, ActionEnum<A>> clonedGame) {
+    protected void executeSearch(Game<A, ActionEnum<A>> clonedGame, BackPropagationTactics bpTactics, List<ActionWithRef<A>> initialActions) {
         MonteCarloTree<A> tree = getTree(clonedGame.getCurrentPlayer());
         int currentPlayer = clonedGame.getCurrentPlayerRef();
 
@@ -166,8 +168,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         if (useAVDForOpponent)
             opponentModel = new MCActionValueDecider<>(tree, stateFactory, currentPlayer);
 
-        MCTSUtilities.launchGame(treeMap, clonedGame, childDecider, opponentModel, decProp,
-                new BackPropagationTactics(new HashMap<>(), new HashMap<>(), clonedGame.getAllPlayers().size()));
+        MCTSUtilities.launchGame(treeMap, clonedGame, childDecider, opponentModel, decProp, bpTactics, initialActions);
     }
 
     protected void preIterationProcessing(Game clonedGame, Game rootGame) {
@@ -200,7 +201,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
 
     public MonteCarloTree<A> getTree(A agent) {
         if (!treeMap.containsKey(agent.getActorRef())) {
-            int playerCount = agent.getGame().getAllPlayers().size();
+            int playerCount = agent.getGame().getPlayerCount();
             MonteCarloTree<A> retValue = getEmptyTree(playerCount);
             if (multiTree) {
                 // use a different tree for all players
