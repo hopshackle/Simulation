@@ -4,6 +4,7 @@ import hopshackle.simulation.*;
 import hopshackle.simulation.games.*;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class OpenLoopTreeTracker<A extends Agent> implements GameListener<A> {
 
@@ -17,8 +18,7 @@ public class OpenLoopTreeTracker<A extends Agent> implements GameListener<A> {
             case "single":
             case "perPlayer":
             case "ignoreOthers":
-                game.getAllPlayers().stream()
-                        .mapToInt(game::getPlayerNumber)
+                IntStream.rangeClosed(1, game.getPlayerCount())
                         .filter(startingTrees.keySet()::contains)
                         .forEach(
                                 p -> currentNodes.put(p, startingTrees.get(p).rootNode)

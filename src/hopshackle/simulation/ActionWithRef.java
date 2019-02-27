@@ -12,6 +12,8 @@ public class ActionWithRef<A extends Agent> {
     public boolean equals(Object o) {
         if (o instanceof ActionWithRef) {
             ActionWithRef comparator = (ActionWithRef) o;
+            if (comparator.actionTaken == null && actionTaken == null && comparator.agentRef == agentRef)
+                return true;
             if (comparator.actionTaken.equals(actionTaken) && comparator.agentRef == agentRef)
                 return true;
         }
@@ -19,7 +21,7 @@ public class ActionWithRef<A extends Agent> {
     }
 
     public int hashCode() {
-        return 2 + agentRef * 43 + actionTaken.hashCode();
+        return 2 + agentRef * 43 + (actionTaken == null ? 1 : actionTaken.hashCode());
     }
 
     public String toString() {

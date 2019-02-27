@@ -7,10 +7,11 @@ import hopshackle.simulation.games.resistance.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P extends Agent> extends Game<P, ActionEnum<P>> {
+public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P extends Agent> extends Game<P, ActionEnum<P>> implements GameListener<P> {
 
     public final int root;      // the master player ref
     protected Map<Integer, G> determinisationsByPlayer;
+    protected Set<GameEvent<P>> allMessages = new HashSet<>();
 
     public static AllPlayerDeterminiser getAPD(Game game, int perspective) {
         if (game instanceof Resistance)
@@ -22,6 +23,7 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
         root = apd.root;
         determinisationsByPlayer = apd.determinisationsByPlayer.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), e -> (G) e.getValue().clone()));
+        determinisationsByPlayer.values().forEach(g -> g.registerListener(this));
     }
 
     /*
@@ -31,15 +33,15 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
     public AllPlayerDeterminiser(G rootGame, int rootPlayerID) {
         root = rootPlayerID;
         determinisationsByPlayer = new HashMap<>();
+        determinisationsByPlayer.put(rootPlayerID, rootGame);
 
         int playerCount = rootGame.getPlayerCount();
 
         for (int i = 1; i <= playerCount; i++) {
-            if (i == rootPlayerID)
-                determinisationsByPlayer.put(i, rootGame);
-            else
+            if (i != rootPlayerID)
                 determinisationsByPlayer.put(i, determiniseFromRoot(i));
         }
+        determinisationsByPlayer.values().forEach(g -> g.registerListener(this));
     }
 
     /*
@@ -91,7 +93,12 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
     public void applyAction(Action<P> action) {
         // we should not need to compatibilise here, as this is called from Game.oneAction()
         // and the CRISDecider is responsible for ensuring the APD is compatible before returning the selected action
-        determinisationsByPlayer.values().forEach(g -> g.applyAction(action));
+        // ...need to create a separate action for each game (and use the given action for the rootGame
+        determinisationsByPlayer.keySet().forEach(p -> {
+            G g = getDeterminisationFor(p);
+            Action<P> actionCopy = g.getCurrentPlayer() == action.getActor() ? action : action.getType().getAction(g.getCurrentPlayer());
+            g.applyAction(actionCopy);
+        });
     }
 
     /*
@@ -173,5 +180,15 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
     @Override
     public String logName() {
         return "APD_" + getMasterDeterminisation().logName();
+    }
+
+    @Override
+    public void processGameEvent(GameEvent<P> event) {
+        // received from component games
+        // we will get huge numbers of duplicates, and only want to publish one of each
+        if (allMessages.contains(event))
+            return;
+        allMessages.add(event);
+        sendMessage(event);
     }
 }

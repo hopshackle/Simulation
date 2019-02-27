@@ -44,4 +44,24 @@ public class GameEvent<A extends Agent> {
     public List<Integer> visibleTo() {
         return visibleTo;
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof GameEvent) {
+            GameEvent o = (GameEvent) other;
+            if (!o.type.equals(type)) return false;
+            if (o.time != time) return false;
+            if (!o.actionTaken.equals(actionTaken)) return false;
+            if (o.visibleTo.size() != visibleTo.size()) return false;
+            if (!o.visibleTo.stream().allMatch(visibleTo::contains)) return false;
+            if (!visibleTo.stream().allMatch(o.visibleTo::contains)) return false;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return 36343 + (int) time * 13 + actionTaken.hashCode() * 4057 + type.hashCode() * 4229 + visibleTo.hashCode();
+    }
 }

@@ -6,6 +6,7 @@ import hopshackle.simulation.games.Game;
 import hopshackle.simulation.games.GameDeterminisationMemory;
 import hopshackle.simulation.games.GameEvent;
 import hopshackle.simulation.metric.StatsCollator;
+import org.graalvm.compiler.lir.LIRInstruction;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -107,6 +108,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     public void redeterminise(int perspective, int ISPlayer, Optional<Game> rootGame) {
         redeterminise(perspective, ISPlayer, rootGame, false);
     }
+
     @Override
     public void redeterminiseKeepingHiddenActions(int perspective, int ISPlayer, Optional<Game> rootGame) {
         redeterminise(perspective, ISPlayer, rootGame, true);
@@ -192,16 +194,17 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
     }
 
     private boolean traitorsCompatibleWithHistory(boolean referToHiddenActions) {
-        List<List<Integer>> teamsToCheck = HopshackleUtilities.cloneList(failedMissionDetails);
         if (referToHiddenActions && currentPhase == Phase.MISSION && defectorsOnMission > 0) {
-            // the current mission might be fated to fail too
-            int index = currentMissionTeam.indexOf(getCurrentPlayerRef());
-            List<Integer> incompleteFailedMission = new ArrayList<>();
-            for (int i = 0; i <= index; i++) incompleteFailedMission.add(currentMissionTeam.get(i));
-            incompleteFailedMission.add(defectorsOnMission);
-            teamsToCheck.add(incompleteFailedMission);
+            // if anyone has defected on the current mission, they must be a traitor
+            for (int i = trajectory.size() - 1; i >= 0; i--) {
+                ActionWithRef<ResistancePlayer> action = trajectory.get(i).getValue0();
+                if (action.actionTaken instanceof Defect && !traitorIdentities[action.agentRef])
+                    return false;
+                if (!(action.actionTaken instanceof Cooperate || action.actionTaken instanceof Defect))
+                    break;
+            }
         }
-        for (List<Integer> failedTeam : teamsToCheck) {
+        for (List<Integer> failedTeam : failedMissionDetails) {
             int observedDefections = failedTeam.get(failedTeam.size() - 1);
             int traitorsOnMission = 0;
             for (int i = 0; i < failedTeam.size() - 1; i++) {
