@@ -11,7 +11,6 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
 
     public final int root;      // the master player ref
     protected Map<Integer, G> determinisationsByPlayer;
-    protected Set<GameEvent<P>> allMessages = new HashSet<>();
 
     public static AllPlayerDeterminiser getAPD(Game game, int perspective) {
         if (game instanceof Resistance)
@@ -23,7 +22,7 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
         root = apd.root;
         determinisationsByPlayer = apd.determinisationsByPlayer.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), e -> (G) e.getValue().clone()));
-        determinisationsByPlayer.values().forEach(g -> g.registerListener(this));
+        getMasterDeterminisation().registerListener(this);
     }
 
     /*
@@ -41,7 +40,7 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
             if (i != rootPlayerID)
                 determinisationsByPlayer.put(i, determiniseFromRoot(i));
         }
-        determinisationsByPlayer.values().forEach(g -> g.registerListener(this));
+        getMasterDeterminisation().registerListener(this);
     }
 
     /*
@@ -129,6 +128,11 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
     }
 
     @Override
+    public int getCurrentPlayerRef() {
+        return getMasterDeterminisation().getCurrentPlayerRef();
+    }
+
+    @Override
     public List<P> getAllPlayers() {
         List<P> retValue = determinisationsByPlayer.keySet().stream()
                 .map(i -> determinisationsByPlayer.get(i).getPlayer(i))
@@ -186,9 +190,6 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
     public void processGameEvent(GameEvent<P> event) {
         // received from component games
         // we will get huge numbers of duplicates, and only want to publish one of each
-        if (allMessages.contains(event))
-            return;
-        allMessages.add(event);
         sendMessage(event);
     }
 }

@@ -44,7 +44,7 @@ public class ResistanceAPD extends AllPlayerDeterminiser<Resistance, ResistanceP
     public boolean isValid(ActionWithRef<ResistancePlayer> actionWithRef, int perspectivePlayer) {
         // any action is valid as long as it is not a DEFECT by a LOYALIST
         Resistance game = determinisationsByPlayer.get(perspectivePlayer);
-        return !((actionWithRef.actionTaken instanceof Defect) && !game.getTraitors().contains(actionWithRef.agentRef));    }
+        return !((actionWithRef.actionTaken instanceof Defect) && game.getLoyalists().contains(actionWithRef.agentRef));    }
 
     @Override
     public boolean isCompatible(ActionWithRef<ResistancePlayer> actionWithRef, int perspectivePlayer) {

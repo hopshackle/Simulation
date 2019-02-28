@@ -78,7 +78,7 @@ public abstract class Game<P extends Agent, A extends ActionEnum<P>> {
         currentPlayer = newPlayer;
         if (oldPlayer != newPlayer) sendMessage(new GameEvent(oldPlayer, this));
     }
-    public final int getCurrentPlayerRef() {
+    public int getCurrentPlayerRef() {
         return currentPlayer;
     }
 
