@@ -76,8 +76,12 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
     }
 
     @Override
+    public void insertRoot(State<P> state, MCStatistics<P> newRoot) {
+        rootNode = newRoot;
+    }
+    @Override
     public void insertRoot(State<P> state) {
-        // do nothing
+        // nothing
     }
 
     @Override

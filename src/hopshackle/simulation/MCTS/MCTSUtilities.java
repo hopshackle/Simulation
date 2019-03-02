@@ -15,6 +15,16 @@ This executes one iteration of search, and stores any results directly in the pr
                                                     Game<A, ActionEnum<A>> clonedGame,
                                                     Decider<A> childDecider,
                                                     Decider<A> opponentModel,
+                                                    DeciderProperties prop) {
+        launchGame(treeMap, clonedGame, childDecider, opponentModel, prop,
+                new BackPropagationTactics(new HashMap<>(), new HashMap<>(), clonedGame.getPlayerCount()),
+                new ArrayList<>());
+    }
+
+    public static <A extends Agent> void launchGame(Map<Integer, MonteCarloTree<A>> treeMap,
+                                                    Game<A, ActionEnum<A>> clonedGame,
+                                                    Decider<A> childDecider,
+                                                    Decider<A> opponentModel,
                                                     DeciderProperties prop,
                                                     BackPropagationTactics bpTactics,
                                                     List<ActionWithRef<A>> initialActions) {

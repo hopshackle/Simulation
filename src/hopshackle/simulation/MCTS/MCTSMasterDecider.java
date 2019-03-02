@@ -48,8 +48,9 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         writer = dbw;
     }
 
-    public MCTSChildDecider<A> createChildDecider(Game clonedGame, MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
+    public MCTSChildDecider<A> createChildDecider(Game clonedGame, Map<Integer, MonteCarloTree<A>> localTreeMap, int currentPlayer, boolean opponent) {
         MCTSChildDecider<A> retValue;
+        MonteCarloTree<A> tree = localTreeMap.get(currentPlayer);
 
         if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
             retValue = new MCTSChildDecider<>(stateFactory, tree, new MCActionValueDecider<>(tree, stateFactory, currentPlayer), decProp);
@@ -95,9 +96,7 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         for (int i = 0; i < N; i++) {
             Game<A, ActionEnum<A>> clonedGame = game.clone();
             preIterationProcessing(clonedGame, game);
-            executeSearch(clonedGame,
-                    new BackPropagationTactics(new HashMap<>(), new HashMap<>(), clonedGame.getPlayerCount()),
-                    new ArrayList<>());
+            executeSearch(clonedGame);
             postIterationProcessing(clonedGame);
             long now = System.currentTimeMillis();
             actualI = i;
@@ -159,16 +158,16 @@ public class MCTSMasterDecider<A extends Agent> extends BaseAgentDecider<A> {
         }
     }
 
-    protected void executeSearch(Game<A, ActionEnum<A>> clonedGame, BackPropagationTactics bpTactics, List<ActionWithRef<A>> initialActions) {
+    protected void executeSearch(Game<A, ActionEnum<A>> clonedGame) {
         MonteCarloTree<A> tree = getTree(clonedGame.getCurrentPlayer());
         int currentPlayer = clonedGame.getCurrentPlayerRef();
 
-        MCTSChildDecider<A> childDecider = createChildDecider(clonedGame, tree, currentPlayer, false);
+        MCTSChildDecider<A> childDecider = createChildDecider(clonedGame, treeMap, currentPlayer, false);
 
         if (useAVDForOpponent)
             opponentModel = new MCActionValueDecider<>(tree, stateFactory, currentPlayer);
 
-        MCTSUtilities.launchGame(treeMap, clonedGame, childDecider, opponentModel, decProp, bpTactics, initialActions);
+        MCTSUtilities.launchGame(treeMap, clonedGame, childDecider, opponentModel, decProp);
     }
 
     protected void preIterationProcessing(Game clonedGame, Game rootGame) {

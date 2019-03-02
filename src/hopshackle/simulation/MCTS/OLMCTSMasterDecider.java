@@ -3,6 +3,8 @@ package hopshackle.simulation.MCTS;
 import hopshackle.simulation.*;
 import hopshackle.simulation.games.*;
 
+import java.util.*;
+
 public class OLMCTSMasterDecider<A extends Agent> extends MCTSMasterDecider<A> {
 
     private OpenLoopTreeTracker<A> masterGameTracker;
@@ -11,13 +13,12 @@ public class OLMCTSMasterDecider<A extends Agent> extends MCTSMasterDecider<A> {
         super(game, stateFactory, rolloutDecider, opponentModel);
     }
 
-    @Override
-    public MCTSChildDecider<A> createChildDecider(Game clonedGame, MonteCarloTree<A> tree, int currentPlayer, boolean opponent) {
+    public MCTSChildDecider<A> createChildDecider(Game clonedGame, Map<Integer, MonteCarloTree<A>> treeMapToUse, int currentPlayer, boolean opponent) {
         MCTSChildDecider<A> retValue;
 
-        OpenLoopTreeTracker<A> treeTracker = new OpenLoopTreeTracker<>(treeSetting, treeMap, clonedGame);
+        OpenLoopTreeTracker<A> treeTracker = new OpenLoopTreeTracker<A>(treeSetting, treeMapToUse, clonedGame);
         if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
-            retValue = new OLMCTSChildDecider<>(stateFactory, treeTracker, new MCActionValueDecider<>(tree, stateFactory, currentPlayer), decProp);
+            retValue = new OLMCTSChildDecider<>(stateFactory, treeTracker, new MCActionValueDecider<>(treeMapToUse.get(currentPlayer), stateFactory, currentPlayer), decProp);
         else
             retValue = new OLMCTSChildDecider<>(stateFactory, treeTracker, rolloutDecider, decProp);
 
@@ -36,7 +37,7 @@ public class OLMCTSMasterDecider<A extends Agent> extends MCTSMasterDecider<A> {
                 treeMap.keySet().forEach(p -> treeMap.get(p).pruneTree(masterGameTracker.getCurrentNode(p)));
                 break;
             default:
-                throw new AssertionError("Unknown tree setting "+ treeSetting);
+                throw new AssertionError("Unknown tree setting " + treeSetting);
         }
     }
 

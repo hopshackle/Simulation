@@ -1,15 +1,10 @@
 package hopshackle.simulation.games.resistance;
 
 import hopshackle.simulation.*;
-import hopshackle.simulation.games.AllPlayerDeterminiser;
-import hopshackle.simulation.games.Game;
-import hopshackle.simulation.games.GameDeterminisationMemory;
-import hopshackle.simulation.games.GameEvent;
+import hopshackle.simulation.games.*;
 import hopshackle.simulation.metric.StatsCollator;
-import org.graalvm.compiler.lir.LIRInstruction;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.*;
 
 public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlayer>> {

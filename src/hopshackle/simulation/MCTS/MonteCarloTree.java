@@ -138,6 +138,8 @@ public abstract class MonteCarloTree<P extends Agent> {
 
     public abstract void insertRoot(State<P> state);
 
+    public abstract void insertRoot(State<P> state, MCStatistics<P> newRoot);
+
     public MCStatistics getRootStatistics() {
         return rootNode;
     }

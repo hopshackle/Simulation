@@ -39,7 +39,7 @@ public class CRISChildDecider<P extends Agent> extends OLMCTSChildDecider<P> {
             }
             count++;
         } while (count < 200);
-        throw new AssertionError("Unable to find a compatible action in resonable time");
+        throw new AssertionError("Unable to find a compatible action in reasonable time");
     }
 
     protected void spawnBranch(ActionEnum<P> initialChoice, int decidingAgentRef) {
@@ -50,7 +50,7 @@ public class CRISChildDecider<P extends Agent> extends OLMCTSChildDecider<P> {
         IntStream.rangeClosed(1, playerCount).forEach(i -> stopNodes.put(i, treeTracker.getCurrentNode(i)));
         BackPropagationTactics bpTactics = new BackPropagationTactics(new HashMap<>(), stopNodes, playerCount);
         Game newBasisGame = apd.getDeterminisationFor(decidingAgentRef).clone();
-        masterDecider.executeSearch(newBasisGame, bpTactics, initialActions);
+        masterDecider.executeBranchingSearch(newBasisGame, bpTactics, initialActions);
     }
 
 }

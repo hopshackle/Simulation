@@ -262,7 +262,7 @@ public class OpenLoopSingleTreeTest {
 
             MCTSChildDecider<TestAgent>[] childDecider = new MCTSChildDecider[3];
             for (int i = 0; i < 3; i++) {
-                childDecider[i] = masterDecider.createChildDecider(clonedGame, tree,i + 1, false);
+                childDecider[i] = masterDecider.createChildDecider(clonedGame, treeMap,i + 1, false);
             }
             childDecider[0].setRolloutDecider(new HardCodedDecider<>(TestActionEnum.LEFT));
             childDecider[1].setRolloutDecider(new HardCodedDecider<>(TestActionEnum.TEST));
@@ -343,7 +343,7 @@ public class OpenLoopSingleTreeTest {
         for (int loop = 0; loop < 8; loop++) {
             for (int i = 0; i < 3; i++) tree[i].setUpdatesLeft(1);
             SimpleMazeGame clonedGame = (SimpleMazeGame) game.clone();
-            MCTSChildDecider<TestAgent> childDecider = masterDecider.createChildDecider(clonedGame, tree[0], 1, false);
+            MCTSChildDecider<TestAgent> childDecider = masterDecider.createChildDecider(clonedGame, treeMap, 1, false);
             childDecider.setRolloutDecider(new HardCodedDecider<>(TestActionEnum.LEFT));
             List<TestAgent> clonedPlayers = clonedGame.getAllPlayers();
             clonedPlayers.get(0).setDecider(childDecider);

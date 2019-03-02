@@ -14,10 +14,16 @@ public class OLMCTSChildDecider<A extends Agent> extends MCTSChildDecider<A> {
 
     @Override
     protected ActionEnum<A> getNextTreeAction(State<A> state, List<ActionEnum<A>> chooseableOptions, int decidingAgentRef) {
+        if (treeTracker == null)
+            throw new AssertionError("Must have a treeTracker specified before using the decider");
         MCStatistics<A> currentPointer = treeTracker.getCurrentNode(decidingAgentRef);
         if (currentPointer != null) {
             return currentPointer.getNextAction(chooseableOptions, decidingAgentRef);
         }
         return null;
+    }
+
+    public void injectTreeTracker(OpenLoopTreeTracker<A> newTracker) {
+        treeTracker = newTracker;
     }
 }

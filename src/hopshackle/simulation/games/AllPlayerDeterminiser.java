@@ -5,16 +5,25 @@ import hopshackle.simulation.MCTS.*;
 import hopshackle.simulation.games.resistance.*;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P extends Agent> extends Game<P, ActionEnum<P>> implements GameListener<P> {
 
     public final int root;      // the master player ref
+    private boolean inRolloutMode;
     protected Map<Integer, G> determinisationsByPlayer;
+    protected OpenLoopTreeTracker<P> treeTracker;
 
-    public static AllPlayerDeterminiser getAPD(Game game, int perspective) {
-        if (game instanceof Resistance)
-            return new ResistanceAPD((Resistance) game, perspective);
+    public static AllPlayerDeterminiser getAPD(Game game, int perspective,
+                                               String treeSetting, Map<Integer, MonteCarloTree> treeMap) {
+        if (game instanceof Resistance) {
+            Map<Integer, MonteCarloTree<ResistancePlayer>> treeMap2 = treeMap.keySet().stream()
+                    .collect(Collectors.toMap(Function.identity(), treeMap::get));
+            // hack to get typing correct
+            return new ResistanceAPD((Resistance) game, perspective, treeSetting, treeMap2);
+        }
         throw new AssertionError("Unknown game type " + game.getClass());
     }
 
@@ -23,13 +32,17 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
         determinisationsByPlayer = apd.determinisationsByPlayer.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey(), e -> (G) e.getValue().clone()));
         getMasterDeterminisation().registerListener(this);
+        // TODO: Need to instantiate a new TreeTracker that inherits from the old one, and tracks the cloned game
+        // currently no such method exists
+        if (inRolloutMode)
+            throw new AssertionError("Should never need to clone an APD when in rollout mode");
     }
 
     /*
     rootGame is not re-determinised. We simply generate a determinisation for every other player
     that is compatible with the IS of the rootPlayer (i.e. it is a state the rootPlayer believes they could believe)
      */
-    public AllPlayerDeterminiser(G rootGame, int rootPlayerID) {
+    public AllPlayerDeterminiser(G rootGame, int rootPlayerID, String treeSetting, Map<Integer, MonteCarloTree<P>> treeMap) {
         root = rootPlayerID;
         determinisationsByPlayer = new HashMap<>();
         determinisationsByPlayer.put(rootPlayerID, rootGame);
@@ -41,6 +54,8 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
                 determinisationsByPlayer.put(i, determiniseFromRoot(i));
         }
         getMasterDeterminisation().registerListener(this);
+        treeTracker = new OpenLoopTreeTracker<>(treeSetting, treeMap, rootGame);
+        // this assumes we always start at the rootNode of the tree, i.e. that rootGame has just been instantiated
     }
 
     /*
@@ -75,8 +90,11 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
      */
     @Override
     public void apply(ActionWithRef<P> actionWithRef) {
+        checkRolloutMode(actionWithRef.agentRef);
         for (int player : determinisationsByPlayer.keySet()) {
-            G determinisation = determinisationsByPlayer.get(player);
+            if (inRolloutMode && player != root)
+                continue;
+            G determinisation = getDeterminisationFor(player);
             if (!isValid(actionWithRef, player) || !isCompatible(actionWithRef, player))
                 compatibilise(actionWithRef, player);
             // TODO: This doesn't feel like the right place to put this (and should be done before calling apply)
@@ -93,11 +111,23 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
         // we should not need to compatibilise here, as this is called from Game.oneAction()
         // and the CRISDecider is responsible for ensuring the APD is compatible before returning the selected action
         // ...need to create a separate action for each game (and use the given action for the rootGame
+        checkRolloutMode(action.getActor().getActorRef());
         determinisationsByPlayer.keySet().forEach(p -> {
-            G g = getDeterminisationFor(p);
-            Action<P> actionCopy = g.getCurrentPlayer() == action.getActor() ? action : action.getType().getAction(g.getCurrentPlayer());
-            g.applyAction(actionCopy);
+            if (!inRolloutMode || p == root) {
+                G g = getDeterminisationFor(p);
+                Action<P> actionCopy = g.getCurrentPlayer() == action.getActor() ? action : action.getType().getAction(g.getCurrentPlayer());
+                g.applyAction(actionCopy);
+            }
         });
+    }
+
+    private void checkRolloutMode(int player) {
+        if (!inRolloutMode && treeTracker.hasLeftTree(player)) {
+            IntStream.rangeClosed(1, getPlayerCount())
+                    .forEach( p-> getMasterDeterminisation().getPlayer(p).setDecider(getPlayer(p).getDecider())
+            );
+            inRolloutMode = true;
+        }
     }
 
     /*
@@ -106,13 +136,14 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
     An empty list as the returned value means we can continue this game without branching
      */
     public List<Integer> getIncompatible(ActionWithRef<P> actionWithRef) {
+        if (inRolloutMode) return new ArrayList<>();
         return determinisationsByPlayer.keySet().stream()
                 .filter(i -> !isValid(actionWithRef, i) || !isCompatible(actionWithRef, i))
                 .collect(Collectors.toList());
     }
 
     public G getDeterminisationFor(int playerID) {
-        G retValue = determinisationsByPlayer.get(playerID);
+        G retValue = inRolloutMode ? getMasterDeterminisation() : determinisationsByPlayer.get(playerID);
         if (retValue == null)
             throw new AssertionError(playerID + " does not have a determinisation");
         return retValue;
@@ -124,7 +155,8 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
 
     @Override
     public P getCurrentPlayer() {
-        return determinisationsByPlayer.get(getMasterDeterminisation().getCurrentPlayerRef()).getCurrentPlayer();
+        int playerRef = getMasterDeterminisation().getCurrentPlayerRef();
+        return getDeterminisationFor(playerRef).getCurrentPlayer();
     }
 
     @Override
@@ -134,8 +166,8 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
 
     @Override
     public List<P> getAllPlayers() {
-        List<P> retValue = determinisationsByPlayer.keySet().stream()
-                .map(i -> determinisationsByPlayer.get(i).getPlayer(i))
+        List<P> retValue = IntStream.rangeClosed(1, getPlayerCount())
+                .mapToObj(i -> getDeterminisationFor(i).getPlayer(i))
                 .collect(Collectors.toList());
         return retValue;
     }
@@ -152,13 +184,13 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
 
     @Override
     public P getPlayer(int n) {
-        return determinisationsByPlayer.get(n).getPlayer(n);
+        return getDeterminisationFor(n).getPlayer(n);
     }
 
     @Override
     public List<ActionEnum<P>> getPossibleActions() {
         int activePlayer = getMasterDeterminisation().getCurrentPlayerRef();
-        return determinisationsByPlayer.get(activePlayer).getPossibleActions();
+        return getDeterminisationFor(activePlayer).getPossibleActions();
     }
 
     @Override
@@ -192,4 +224,5 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
         // we will get huge numbers of duplicates, and only want to publish one of each
         sendMessage(event);
     }
+
 }

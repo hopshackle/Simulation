@@ -8,10 +8,11 @@ import java.util.stream.IntStream;
 
 public class OpenLoopTreeTracker<A extends Agent> implements GameListener<A> {
 
-    private String treeType;
+    public final String treeType;
     private Map<Integer, MCStatistics<A>> currentNodes = new HashMap<>();
 
     public OpenLoopTreeTracker(String treeSetting, Map<Integer, MonteCarloTree<A>> startingTrees, Game<A, ActionEnum<A>> game) {
+
         game.registerListener(this);
         switch (treeSetting) {
             // In all cases we initialise all players to be at the root of their respective trees (which might be the same one)
@@ -35,8 +36,12 @@ public class OpenLoopTreeTracker<A extends Agent> implements GameListener<A> {
      */
     public MCStatistics<A> getCurrentNode(int decidingAgent) {
         return (currentNodes.getOrDefault(decidingAgent, null));
-   //     Set<Integer> actors = currentNodes.get(agent.getActorRef()).actorsFrom();
-  //      int actingAgent = actors.size() == 1 ? actors.iterator().next() : agent.getActorRef();
+        //     Set<Integer> actors = currentNodes.get(agent.getActorRef()).actorsFrom();
+        //      int actingAgent = actors.size() == 1 ? actors.iterator().next() : agent.getActorRef();
+    }
+
+    public boolean hasLeftTree(int player) {
+        return currentNodes.get(player) == null;
     }
 
     @Override
@@ -53,7 +58,7 @@ public class OpenLoopTreeTracker<A extends Agent> implements GameListener<A> {
                         if (currentNode != null) {
                             MCStatistics<A> newNode = currentNode.getSuccessorNode(event.actionTaken);
                             currentNodes.keySet().stream()
-                 //                   .filter(event.visibleTo()::contains)
+                                    //                   .filter(event.visibleTo()::contains)
                                     .forEach(
                                             p -> currentNodes.put(p, newNode)
                                     );

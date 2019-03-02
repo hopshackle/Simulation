@@ -35,12 +35,12 @@ public class MRISMCTSDecider<P extends Agent> extends OLMCTSMasterDecider<P> {
     }
 
     @Override
-    public MCTSChildDecider<P> createChildDecider(Game clonedGame, MonteCarloTree<P> tree, int currentPlayer, boolean opponent) {
+    public MCTSChildDecider<P> createChildDecider(Game clonedGame, Map<Integer, MonteCarloTree<P>> localTreeMap, int currentPlayer, boolean opponent) {
         MCTSChildDecider<P> retValue;
 
-        OpenLoopTreeTracker<P> treeTracker = new OpenLoopTreeTracker<>(treeSetting, treeMap, clonedGame);
+        OpenLoopTreeTracker<P> treeTracker = new OpenLoopTreeTracker<>(treeSetting, localTreeMap, clonedGame);
         if ((useAVDForRollout && !opponent) || (useAVDForOpponent && opponent))
-            retValue = new MRISChildDecider<>(determiniser, stateFactory, treeTracker, new MCActionValueDecider<>(tree, stateFactory, currentPlayer), decProp);
+            retValue = new MRISChildDecider<>(determiniser, stateFactory, treeTracker, new MCActionValueDecider<>(localTreeMap.get(currentPlayer), stateFactory, currentPlayer), decProp);
         else
             retValue = new MRISChildDecider<>(determiniser, stateFactory, treeTracker, rolloutDecider, decProp);
 

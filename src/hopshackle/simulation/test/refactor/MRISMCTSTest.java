@@ -53,8 +53,7 @@ public class MRISMCTSTest {
         // hence redeterminise at each move
 
         MonteCarloTree<MRISAgent> tree = MRISDecider.getTree(game.getCurrentPlayer());
-        BackPropagationTactics emptyBPTactics = new BackPropagationTactics(new HashMap<>(), new HashMap<>(), 10);
-        MRISDecider.executeSearch(game, emptyBPTactics, new ArrayList<>());
+        MRISDecider.executeSearch(game);
 
         assertEquals(game.playerChange, 9, 2);
         int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
@@ -77,7 +76,7 @@ public class MRISMCTSTest {
         tree.getRootStatistics().update(MRISAction.Type.MRIS_ACTION_2, new double[10], 1);
         assertEquals(tree.updatesLeft(), 0);
         BackPropagationTactics emptyBPTactics = new BackPropagationTactics(new HashMap<>(), new HashMap<>(), 10);
-        MRISDecider.executeSearch(game, emptyBPTactics, new ArrayList<>());
+        MRISDecider.executeSearch(game);
 
         assertEquals(game.playerChange, 10);
         int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
@@ -97,8 +96,7 @@ public class MRISMCTSTest {
         tree.getRootStatistics().update(MRISAction.Type.MRIS_ACTION_2, new double[10], 1);
         assertEquals(tree.updatesLeft(), 0);
 
-        BackPropagationTactics emptyBPTactics = new BackPropagationTactics(new HashMap<>(), new HashMap<>(), 100);
-        MRISDecider.executeSearch(game, emptyBPTactics, new ArrayList<>());
+        MRISDecider.executeSearch(game);
 
         assertEquals(game.playerChange, 90, 10);
         int updates = game.redeterminisationCounts.values().stream().mapToInt(i -> i).sum();
@@ -287,9 +285,9 @@ class MRISTestDecider extends MRISMCTSDecider<MRISAgent> {
     }
 
     @Override
-    public void executeSearch(Game<MRISAgent, ActionEnum<MRISAgent>> clonedGame, BackPropagationTactics bpTactics, List<ActionWithRef<MRISAgent>> initialActions) {
+    public void executeSearch(Game<MRISAgent, ActionEnum<MRISAgent>> clonedGame) {
         preIterationProcessing(clonedGame, clonedGame);
-        super.executeSearch(clonedGame, bpTactics, initialActions);
+        super.executeSearch(clonedGame);
         postIterationProcessing(clonedGame);
     }
 }

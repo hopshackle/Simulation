@@ -62,6 +62,10 @@ public class TranspositionTableMCTree<P extends Agent> extends MonteCarloTree<P>
         insertState(state);
         rootNode = tree.get(state.getAsString());
     }
+    @Override
+    public void insertRoot(State<P> state, MCStatistics<P> newRoot) {
+        insertRoot(state);
+    }
 
     @Override
     public void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory, double[] finalScores,

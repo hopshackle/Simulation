@@ -83,7 +83,7 @@ public class MCTSUtilitiesTest {
             Resistance clonedGame = (Resistance) game.clone();
             clonedGame.getAllPlayers().forEach(p -> p.setDecider(ISMCTSDecider));
             int currentPlayer = clonedGame.getCurrentPlayerRef();
-            MCTSChildDecider<ResistancePlayer> ISMCTSChildDecider = ISMCTSDecider.createChildDecider(clonedGame, treeMap.get(currentPlayer), currentPlayer, false);
+            MCTSChildDecider<ResistancePlayer> ISMCTSChildDecider = ISMCTSDecider.createChildDecider(clonedGame, treeMap, currentPlayer, false);
             MCTSUtilities.launchGame(treeMap, clonedGame, ISMCTSChildDecider, null, localProp, bpTactics, initialActions);
         }
         // Now we check that in the trees generated, player 1 always Defects, and the others all have MissionResult with 1 Defection
@@ -124,8 +124,8 @@ public class MCTSUtilitiesTest {
             Resistance clonedGame = (Resistance) game.clone();
             clonedGame.getAllPlayers().forEach(p -> p.setDecider(ISMCTSDecider));
             int currentPlayer = clonedGame.getCurrentPlayerRef();
-            ResistanceAPD apd = new ResistanceAPD(clonedGame, currentPlayer);
-            MCTSChildDecider<ResistancePlayer> ISMCTSChildDecider = ISMCTSDecider.createChildDecider(apd, treeMap.get(currentPlayer), currentPlayer, false);
+            ResistanceAPD apd = new ResistanceAPD(clonedGame, currentPlayer, "perPlayer", treeMap);
+            MCTSChildDecider<ResistancePlayer> ISMCTSChildDecider = ISMCTSDecider.createChildDecider(apd, treeMap, currentPlayer, false);
             MCTSUtilities.launchGame(treeMap, apd, ISMCTSChildDecider, null, localProp, bpTactics, initialActions);
         }
         // Now we check that in the trees generated, player 1 always Defects, and the others all have MissionResult with 1 Defection

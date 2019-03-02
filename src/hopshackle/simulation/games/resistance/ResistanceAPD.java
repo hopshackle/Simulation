@@ -1,14 +1,15 @@
 package hopshackle.simulation.games.resistance;
 
 import hopshackle.simulation.ActionWithRef;
+import hopshackle.simulation.MCTS.MonteCarloTree;
 import hopshackle.simulation.games.*;
 
-import java.util.Optional;
+import java.util.*;
 
 public class ResistanceAPD extends AllPlayerDeterminiser<Resistance, ResistancePlayer> {
 
-    public ResistanceAPD(Resistance game, int perspective) {
-        super(game, perspective);
+    public ResistanceAPD(Resistance game, int perspective, String treeSetting, Map<Integer, MonteCarloTree<ResistancePlayer>> treeMap) {
+        super(game, perspective, treeSetting, treeMap);
     }
 
     public ResistanceAPD(ResistanceAPD apdToClone) {
