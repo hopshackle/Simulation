@@ -3,6 +3,7 @@ package hopshackle.simulation.MCTS;
 import hopshackle.simulation.*;
 import org.javatuples.*;
 
+import javax.accessibility.AccessibleStateSet;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
@@ -12,6 +13,9 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
     public OpenLoopMCTree(DeciderProperties properties, int numberOfAgents) {
         super(properties, numberOfAgents);
         reset();
+    }
+    public OpenLoopMCTree(MonteCarloTree<P> parentTree, MCStatistics<P> subTreeRoot) {
+        super(parentTree, subTreeRoot);
     }
 
     @Override
@@ -76,16 +80,14 @@ public class OpenLoopMCTree<P extends Agent> extends MonteCarloTree<P> {
     }
 
     @Override
-    public void insertRoot(State<P> state, MCStatistics<P> newRoot) {
-        rootNode = newRoot;
-    }
-    @Override
     public void insertRoot(State<P> state) {
         // nothing
     }
 
     @Override
     public void reset() {
+        if (parent.isPresent())
+            throw new AssertionError("Should not reset a sub-tree; only a parent");
         rootNode = new MCStatistics(this, null);
     }
 

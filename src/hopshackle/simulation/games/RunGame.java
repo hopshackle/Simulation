@@ -53,6 +53,9 @@ public class RunGame {
                     case "MRIS":
                         mctsDecider = new MRISMCTSDecider<>(game, new SingletonStateFactory<>(), null, null);
                         break;
+                    case "CRIS":
+                        mctsDecider = new CRISMCTSDecider<>(game, new SingletonStateFactory<>(), null, null);
+                        break;
                     default:
                         throw new AssertionError("Unknown constructor type " + SimProperties.getDeciderProperties(deciderName).getProperty("MonteCarloConstructor", "IS-MCTS"));
                 }

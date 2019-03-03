@@ -205,6 +205,16 @@ public class ResistanceGameTest {
     }
 
     @Test
+    public void redeterminiseISLoyalIsNeverCoTraitor() {
+        for (int loop = 0; loop < 100; loop++) {
+            int firstLoyalist = game.getLoyalists().get(0);
+            int perspective = Dice.roll(1, 5);
+            game.redeterminise(perspective, firstLoyalist, Optional.empty());
+            assertFalse(game.getTraitors().contains(firstLoyalist) && game.getTraitors().contains(perspective) && firstLoyalist != perspective);
+        }
+    }
+
+    @Test
     public void redeterminiseISOnlyTraitor() {
         List<Integer> loyalists = IntStream.rangeClosed(1, 5).filter(i -> !game.getTraitors().contains(i)).mapToObj(i -> i).collect(Collectors.toList());
         int firstTraitor = game.getTraitors().get(0);

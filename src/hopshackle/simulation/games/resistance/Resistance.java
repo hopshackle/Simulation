@@ -151,7 +151,11 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
             randomiseTraitorsExcluding(perspective, referToHiddenActions);
         } else {
             // case 4)
-            randomiseTraitorsExcluding(-1, referToHiddenActions);
+            do {
+                randomiseTraitorsExcluding(-1, referToHiddenActions);
+                // a special case that if the ISPlayer is a loyalist, it is not possible for the perspective player to think that
+                // both they and the ISPlayer are traitors
+            } while (traitorIdentities[ISPlayer] && traitorIdentities[perspective]);
         }
 
         if (!traitorsCompatibleWithHistory(referToHiddenActions)) {
@@ -163,6 +167,7 @@ public class Resistance extends Game<ResistancePlayer, ActionEnum<ResistancePlay
         } else {
             StatsCollator.addStatistics("ConsistencyOverride", 0.0);
         }
+
         updatePlayersWithTraitorInformation();
     }
 

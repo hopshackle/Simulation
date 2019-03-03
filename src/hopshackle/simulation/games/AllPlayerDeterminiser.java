@@ -111,7 +111,6 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
         // we should not need to compatibilise here, as this is called from Game.oneAction()
         // and the CRISDecider is responsible for ensuring the APD is compatible before returning the selected action
         // ...need to create a separate action for each game (and use the given action for the rootGame
-        checkRolloutMode(action.getActor().getActorRef());
         determinisationsByPlayer.keySet().forEach(p -> {
             if (!inRolloutMode || p == root) {
                 G g = getDeterminisationFor(p);
@@ -156,6 +155,7 @@ public abstract class AllPlayerDeterminiser<G extends Game<P, ActionEnum<P>>, P 
     @Override
     public P getCurrentPlayer() {
         int playerRef = getMasterDeterminisation().getCurrentPlayerRef();
+        checkRolloutMode(playerRef);
         return getDeterminisationFor(playerRef).getCurrentPlayer();
     }
 

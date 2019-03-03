@@ -41,8 +41,7 @@ public class CRISMCTSDecider<A extends Agent> extends OLMCTSMasterDecider<A> {
         Map<Integer, MonteCarloTree<A>> reducedTreeMap = new HashMap<>();
         Map<Integer, MonteCarloTree> reducedTreeMapForAPD = new HashMap<>();
         for (int i = 1; i <= clonedGame.getPlayerCount(); i++) {
-            MonteCarloTree<A> reducedTree = new OpenLoopMCTree<>(decProp, clonedGame.getPlayerCount());
-            reducedTree.insertRoot(stateFactory.getCurrentState(clonedGame.getPlayer(i)), bpTactics.getStopNode(i));
+            MonteCarloTree<A> reducedTree = new OpenLoopMCTree<>(treeMap.get(i), bpTactics.getStopNode(i));
             reducedTreeMap.put(i, reducedTree);
             reducedTreeMapForAPD.put(i, reducedTree);
         }

@@ -142,20 +142,28 @@ public class CRISMCTSTest {
 
     @Test
     public void branchesOccurCorrectlyDuringTreeSearch() {
+        for (int i = 0; i < 10; i++) {
+            TestCRISChildDecider.globalSpawnCount = 0;
+            oneBranchingTest();
+        }
+    }
+
+    private void oneBranchingTest() {
         // firstly we have to construct a tree. The easiest way to do this is to run oneAction()
         // using MCTSMasterDecider
-        OLMCTSMasterDecider<ResistancePlayer> ISMCTSDecider = new OLMCTSMasterDecider<>(masterGame, factory, new RandomDecider<>(factory), null);
+        Resistance localGame = (Resistance) masterGame.clone();
+        OLMCTSMasterDecider<ResistancePlayer> ISMCTSDecider = new OLMCTSMasterDecider<>(localGame, factory, new RandomDecider<>(factory), null);
         localProp.setProperty("MonteCarloRolloutCount", "500");
         localProp.setProperty("MonteCarloTimePerMove", "3000");
         ISMCTSDecider.injectProperties(localProp);
-        masterGame.apply(new ActionWithRef<>(new IncludeInTeam(secondLoyalist), 1));
-        masterGame.apply(new ActionWithRef<>(new IncludeInTeam(firstTraitor), 1));
-        masterGame.getAllPlayers().forEach(p -> p.setDecider(ISMCTSDecider));
+        localGame.apply(new ActionWithRef<>(new IncludeInTeam(secondLoyalist), 1));
+        localGame.apply(new ActionWithRef<>(new IncludeInTeam(firstTraitor), 1));
+        localGame.getAllPlayers().forEach(p -> p.setDecider(ISMCTSDecider));
         Map<Integer, MonteCarloTree<ResistancePlayer>> treeMap = new HashMap<>();
         IntStream.rangeClosed(1, 5).forEach(i -> treeMap.put(i, ISMCTSDecider.getTree(masterGame.getPlayer(i))));
 
-        Resistance gameToTest = (Resistance) masterGame.clone();
-        masterGame.oneAction();
+        Resistance gameToTest = (Resistance) localGame.clone();
+        localGame.oneAction();
         assertEquals(treeMap.get(1).getRootStatistics().getVisits(), 500);
         // this reaches to the Cooperate/Defect level on the first mission, after voting has taken place
 
@@ -171,6 +179,7 @@ public class CRISMCTSTest {
         }
         // we should now be good to go with player 1 to vote (and therefore a known Loyalist as root)
         assertEquals(apd.getCurrentPlayerRef(), 1);
+        boolean p2IsTraitorToP3 = apd.getDeterminisationFor(secondLoyalist).getTraitors().contains(2);
         /*
         We need to check the actual spawned games to make sure they update the tree properly
 
@@ -232,24 +241,47 @@ public class CRISMCTSTest {
             currentNodes.get(secondLoyalist - 1).update(new Cooperate(), new double[]{-2.0, -2.0, -2.0, -2.0, -2.0}, secondLoyalist);
         }
         assertEquals(currentNodes.get(secondLoyalist - 1).getNextAction(traitorOptions, secondLoyalist), new Defect());
-        int incrementalSpawnCount = 0;
         startingVisits = IntStream.range(0, 5)
                 .mapToObj(i -> currentNodes.get(i).getVisits())
                 .collect(Collectors.toList());
-        int firstIterationSpawnCount = 0;
+        List<Integer> missionTeam = new ArrayList<>();
+        missionTeam.add(secondLoyalist);
+        missionTeam.add(firstTraitor);
+        double defectValueP3[] = currentNodes.get(secondLoyalist - 1).getMean(new Defect(), secondLoyalist);
+        double defectValueP2[] = currentNodes.get(firstTraitor - 1).getMean(new Defect(), firstTraitor);
+        int firstTraitorDefections = currentNodes.get(firstTraitor - 1).getVisits(new Defect());
+        double missionResultValue[] = currentNodes.get(0).getMean(new MissionResult(missionTeam, 1), -1);
         for (int i = 0; i < 10; i++) {
             Decider temp = apd.getCurrentPlayer().getDecider();
             TestCRISChildDecider childDecider = (TestCRISChildDecider) temp;
             ActionEnum<ResistancePlayer> choice = childDecider.getNextTreeAction(factory.getCurrentState(apd.getCurrentPlayer()), traitorOptions, apd.getCurrentPlayerRef());
             assertNotEquals(childDecider.spawnCount, 0);
-            if (i == 0) firstIterationSpawnCount = childDecider.spawnCount;
-            assertEquals(childDecider.spawnCount, firstIterationSpawnCount);
+            assertEquals(childDecider.spawnCount, TestCRISChildDecider.globalSpawnCount);
+            // as if we branch at p3=Defect, the spawned branch must have p2's determination with them as Loyalist
             assertEquals(choice, new Cooperate()); // will always be true as the ultimate choice
             // and then we check that visits have been add to the currentNodes
+            // this is complicated, as we can spawn from p3 (secondLoyalist), or p2 (firstTraitor)
+            // the first is from spawnCount, the combined total from globalSpawnCount
             for (int j = 0; j < 5; j++) {
-                assertEquals(currentNodes.get(j).getVisits(), startingVisits.get(j) + childDecider.spawnCount);
-                assertEquals(CRISDecider.getTree(apd.getPlayer(j + 1)).numberOfStates(), 501);
+                // for p3, the currentNode is only visited for its spawns, as the p2 spawns are further down the p3 tree
+                int expectedVisits = j == 2 ? childDecider.spawnCount : TestCRISChildDecider.globalSpawnCount;
+                assertEquals(currentNodes.get(j).getVisits(), startingVisits.get(j) + expectedVisits);
+                // we also check that a state has been added to every tree for every spawn (for all players)
+                assertEquals(CRISDecider.getTree(apd.getPlayer(j + 1)).numberOfStates(), 501 + TestCRISChildDecider.globalSpawnCount);
                 assertEquals(CRISDecider.getTree(apd.getPlayer(j + 1)).getRootStatistics().getVisits(), 500);
+                // we also check that values have changed...ignoring those that are already at extremes of 0.0/1.0
+                // as these are likely to be updated with the same value
+                if (defectValueP3[j] > 0.01 && defectValueP3[j] < 0.99)
+                    assertNotEquals(defectValueP3[j], currentNodes.get(secondLoyalist - 1).getMean(new Defect(), secondLoyalist)[j], 0.01);
+                if (p2IsTraitorToP3) {
+                    assertNotEquals(firstTraitorDefections, currentNodes.get(firstTraitor - 1).getVisits(new Defect()));
+                    assertNotEquals(defectValueP2[j], currentNodes.get(firstTraitor - 1).getMean(new Defect(), firstTraitor)[j], 0.01);
+                } else {
+                    assertEquals(firstTraitorDefections, currentNodes.get(firstTraitor - 1).getVisits(new Defect()));
+                    assertEquals(defectValueP2[j], currentNodes.get(firstTraitor - 1).getMean(new Defect(), firstTraitor)[j], 0.01);
+                }
+                if (!p2IsTraitorToP3 && missionResultValue[j] > 0.01 && missionResultValue[j] < 0.99)
+                    if (missionResultValue[j] == currentNodes.get(0).getMean(new MissionResult(missionTeam, 1), -1)[j]);
             }
         }
     }
@@ -282,7 +314,10 @@ class TestCRISMCTSDecider extends CRISMCTSDecider<ResistancePlayer> {
     public void setTreeMap(Map<Integer, MonteCarloTree<ResistancePlayer>> newMap) {
         treeMap = newMap;
     }
-    public Map<Integer, MonteCarloTree<ResistancePlayer>> getTreeMap() {return treeMap;}
+
+    public Map<Integer, MonteCarloTree<ResistancePlayer>> getTreeMap() {
+        return treeMap;
+    }
 
     @Override
     public TestCRISChildDecider createChildDecider(Game clonedGame, Map<Integer, MonteCarloTree<ResistancePlayer>> localTreeMap, int currentPlayer, boolean opponent) {
@@ -304,6 +339,7 @@ class TestCRISMCTSDecider extends CRISMCTSDecider<ResistancePlayer> {
 
 class TestCRISChildDecider extends CRISChildDecider<ResistancePlayer> {
 
+    public static int globalSpawnCount;
     public int spawnCount;
 
     public TestCRISChildDecider(AllPlayerDeterminiser<Game<ResistancePlayer, ActionEnum<ResistancePlayer>>, ResistancePlayer> apd,
@@ -320,6 +356,7 @@ class TestCRISChildDecider extends CRISChildDecider<ResistancePlayer> {
     @Override
     public void spawnBranch(ActionEnum<ResistancePlayer> initialChoice, int decidingAgentRef) {
         spawnCount++;
+        globalSpawnCount++;
         super.spawnBranch(initialChoice, decidingAgentRef);
     }
 

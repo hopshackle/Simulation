@@ -24,6 +24,7 @@ public abstract class MonteCarloTree<P extends Agent> {
     protected String treeSetting;
     protected boolean MAST, RAVE, singleTree, multiTree, ignoreOthers;
     protected double RAVE_C, gamma, timePeriod;
+    protected Optional<MonteCarloTree<P>> parent = Optional.empty();
 
     /**
      * Basic constructor. Note the mandatory injection of properties.
@@ -35,6 +36,27 @@ public abstract class MonteCarloTree<P extends Agent> {
      */
     public MonteCarloTree(DeciderProperties properties) {
         this(properties, 1);
+    }
+
+
+    /**
+     * This is used to instantiate a tree with a different rootNode
+     * Almost certainly only relevant for OpenLoop trees, in which the tree structure is
+     * represented by pointers from node to node, and not a HashMap as in a Transposition Table tree
+     * <p>
+     * All the MCStatistics nodes in the tree will point to the parentTree for shared functions such as:
+     * - updatesLeft
+     * - MAST and other heuristics
+     */
+    public MonteCarloTree(MonteCarloTree<P> parentTree, MCStatistics<P> subTreeRoot) {
+        this(parentTree.properties, parentTree.maxActors);
+        parent = Optional.of(parentTree);
+        actionValues = parentTree.actionValues;
+        offlineHeuristic = parentTree.offlineHeuristic;
+        entityLogger = parentTree.entityLogger;
+        stateRefs = parentTree.stateRefs;
+        nextRef = parentTree.nextRef;
+        rootNode = subTreeRoot;
     }
 
     /**
@@ -89,11 +111,17 @@ public abstract class MonteCarloTree<P extends Agent> {
      * The count is automatically decremented every time insertState() is called.
      */
     public void setUpdatesLeft(int n) {
-        updatesLeft = n;
+        if (parent.isPresent())
+            parent.get().setUpdatesLeft(n);
+        else
+            updatesLeft = n;
     }
 
     public int updatesLeft() {
-        return updatesLeft;
+        if (parent.isPresent())
+            return parent.get().updatesLeft;
+        else
+            return updatesLeft;
     }
 
     public abstract void processTrajectory(List<Triplet<State<P>, ActionWithRef<P>, Long>> trajectory,
@@ -137,8 +165,6 @@ public abstract class MonteCarloTree<P extends Agent> {
     public abstract void pruneTree(MCStatistics<P> newRoot);
 
     public abstract void insertRoot(State<P> state);
-
-    public abstract void insertRoot(State<P> state, MCStatistics<P> newRoot);
 
     public MCStatistics getRootStatistics() {
         return rootNode;

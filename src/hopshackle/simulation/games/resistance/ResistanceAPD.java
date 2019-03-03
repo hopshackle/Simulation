@@ -28,7 +28,8 @@ public class ResistanceAPD extends AllPlayerDeterminiser<Resistance, ResistanceP
         int count = 0;
         while (!isValid(actionWithRef, perspective)) {
             // we redeterminise the perspective agent's D. This needs to have perspective as traitor
-            determinisationsByPlayer.get(perspective).redeterminiseKeepingHiddenActions(perspective, root, Optional.empty());
+            determinisationsByPlayer.get(perspective).redeterminiseKeepingHiddenActions(perspective, root,
+                    Optional.of(getMasterDeterminisation()));
             count++;
             if (count > 200 || root == perspective)
                 throw new AssertionError("Should have found a valid one by now!");

@@ -35,10 +35,18 @@ public class CRISChildDecider<P extends Agent> extends OLMCTSChildDecider<P> {
                 // or possibly we check isCompatible for this? (This is really only a problem in the Hanabi-like case of an information partition that means that our move reveals hidden
                 // hidden information (to us), that is known to others.
             } else {
+                // we also need to compatibilise any determinations other than root or the acting agent
+                for (int p = 1; p <= apd.getPlayerCount(); p++) {
+                    if (p == apd.root || p == decidingAgentRef)
+                        continue;
+                    if (!(apd.isValid(action, p) && apd.isCompatible(action, p))) {
+                        apd.compatibilise(action, p);
+                    }
+                }
                 return initialChoice;
             }
             count++;
-        } while (count < 200);
+        } while (count < 2000);
         throw new AssertionError("Unable to find a compatible action in reasonable time");
     }
 
