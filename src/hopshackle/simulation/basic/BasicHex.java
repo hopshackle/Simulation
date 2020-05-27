@@ -54,7 +54,7 @@ public class BasicHex extends Hex {
 	public void maintenance() {
 		super.maintenance();
 		long currentTime = world.getCurrentTime();
-		if (currentTime - lastMaintenance > HEX_MAINTENANCE_CONSTANT) {
+		if (currentTime - lastMaintenance >= HEX_MAINTENANCE_CONSTANT) {
 			if (carryingCapacity == maxCarryingCapacity) 
 				switch (terrain) {
 				case FOREST:

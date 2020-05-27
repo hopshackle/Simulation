@@ -101,7 +101,7 @@ public class Hut extends Location implements Artefact {
 		if (isOccupied()) {
 			timeLastOccupied = world.getCurrentTime();
 		} else {
-			if (getTimeLeftVacant() > HUT_VACANCY_TIMELIMIT)
+			if (getTimeLeftVacant() >= HUT_VACANCY_TIMELIMIT)
 				this.destroy();
 		}
 	}

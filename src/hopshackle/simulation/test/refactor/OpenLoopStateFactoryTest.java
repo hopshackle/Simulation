@@ -9,7 +9,6 @@ import static org.junit.Assert.*;
 
 import hopshackle.simulation.games.GameEvent;
 import org.junit.*;
-import sun.java2d.pipe.SpanShapeRenderer;
 
 public class OpenLoopStateFactoryTest {
 

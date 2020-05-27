@@ -1,13 +1,21 @@
 package hopshackle.simulation;
 
-import java.sql.*;
-import java.util.*;
-import java.io.*;
-
-import hopshackle.simulation.metric.*;
+import Jama.Matrix;
+import hopshackle.simulation.metric.MySQLDataSet;
+import hopshackle.simulation.metric.MySQLMetric;
+import hopshackle.simulation.metric.RunMetrics;
 import jgpml.GaussianProcess;
 import jgpml.covariancefunctions.*;
-import Jama.*;
+
+import java.io.File;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * Created by james on 31/07/2017.
@@ -37,8 +45,8 @@ public class ParameterSearch {
             int hyphenIndex = value.indexOf("-"); // -1 if none
             int pipeIndex = value.indexOf("|");  // -1 if none
             if (hyphenIndex > -1) {
-                double from = Double.valueOf(value.substring(0, hyphenIndex));
-                double to = Double.valueOf(value.substring(hyphenIndex + 1));
+                double from = Double.parseDouble(value.substring(0, hyphenIndex));
+                double to = Double.parseDouble(value.substring(hyphenIndex + 1));
                 parameterConstraints.add(new ParameterDetail(key, from, to));
             }
             if (pipeIndex > -1) {

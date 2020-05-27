@@ -1,12 +1,18 @@
 package hopshackle.simulation.test;
 
 
+import hopshackle.simulation.ConnectionFactory;
+import hopshackle.simulation.DatabaseAccessUtility;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 import static org.junit.Assert.*;
-import hopshackle.simulation.*;
-
-import java.sql.*;
-
-import org.junit.*;
 
 public class DatabaseServiceTest {
 	
@@ -28,7 +34,7 @@ public class DatabaseServiceTest {
 	
 	private void wasteTime() {
 		try {
-			Thread.sleep(500);
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

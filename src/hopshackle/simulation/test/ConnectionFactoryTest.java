@@ -1,11 +1,14 @@
 package hopshackle.simulation.test;
 
-import static org.junit.Assert.assertTrue;
 import hopshackle.simulation.ConnectionFactory;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 
-import org.junit.*;
+import static org.junit.Assert.*;
 
 public class ConnectionFactoryTest {
 	
@@ -17,14 +20,14 @@ public class ConnectionFactoryTest {
 
 	@Test
 	public void testVanilla() {
-		c = ConnectionFactory.getConnection();	
-		assertTrue (c != null);
+		c = ConnectionFactory.getConnection();
+		assertNotNull(c);
 	}
 
 	@Test
 	public void testFailure() {
 		c = ConnectionFactory.getConnection("dummy", "who", "noidea", "", true);
-		assertTrue (c == null);
+		assertNull(c);
 	}
 
 	@Test

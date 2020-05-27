@@ -50,7 +50,7 @@ public class AgentArchive {
 
         Agent secondAttempt = null;
         String worldName = cacheOfTheDead.get(uniqueRef);
-        if (worldName != null && worldName != "" && agentRetriever != null && world != null) {
+        if (worldName != null && !worldName.equals("") && agentRetriever != null && world != null) {
             secondAttempt = agentRetriever.getAgent(uniqueRef, worldName, world);
         }
         return secondAttempt;

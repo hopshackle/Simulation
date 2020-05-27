@@ -1,9 +1,13 @@
 package hopshackle.simulation.test;
-import static org.junit.Assert.*;
 import hopshackle.simulation.*;
-import hopshackle.simulation.basic.*;
+import hopshackle.simulation.basic.BasicActions;
+import hopshackle.simulation.basic.BasicAgent;
+import hopshackle.simulation.basic.BasicHex;
+import hopshackle.simulation.basic.Forage;
+import org.junit.Before;
+import org.junit.Test;
 
-import org.junit.*;
+import static org.junit.Assert.*;
 
 public class BasicForageFoodAndCarryingCapacityTest {
 
@@ -19,7 +23,7 @@ public class BasicForageFoodAndCarryingCapacityTest {
 		stasisCalendar = new FastCalendar(0);
 		stasisCalendar.setTime(0);
 		w.setCalendar(stasisCalendar);
-		hexMap = new HexMap<BasicHex>(5,5, BasicHex.getHexFactory());
+		hexMap = new HexMap<>(5,5, BasicHex.getHexFactory());
 		w.setLocationMap(hexMap);
 		forestHex = hexMap.getHexAt(0, 0);
 		hillsHex = hexMap.getHexAt(0, 1);

@@ -103,7 +103,7 @@ public class BasicAgent extends Agent implements Persistent {
 				addHealth(5.0);
 			}
 		}
-		if (world.getCurrentTime() - lastMaintenance > 10000) {
+		if (world.getCurrentTime() - lastMaintenance >= 10000) {
 			// need to eat Food
 			lastMaintenance = world.getCurrentTime();
 			if (getInventory().contains(Resource.FOOD)) {

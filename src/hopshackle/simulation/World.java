@@ -29,7 +29,7 @@ public class World extends Location {
     }
 
     public World() {
-        this(new SimpleWorldLogic<Agent>(null));
+        this(new SimpleWorldLogic<>(null));
     }
 
     /**
