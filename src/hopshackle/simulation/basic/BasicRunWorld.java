@@ -1,14 +1,20 @@
 package hopshackle.simulation.basic;
 
-import hopshackle.GUI.*;
+import hopshackle.GUI.SimpleAnimationPanel;
+import hopshackle.GUI.WorldHexMap;
 import hopshackle.simulation.*;
 
-import java.awt.event.*;
-import java.io.IOException;
-import java.util.*;
-import java.util.logging.*;
-
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.EnumSet;
+import java.util.TimerTask;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class BasicRunWorld {
 
@@ -16,9 +22,9 @@ public class BasicRunWorld {
 	
 	protected RealTimeTeacher<BasicAgent> femaleTeacher = new RealTimeTeacher<BasicAgent>();
 	protected RealTimeTeacher<BasicAgent> maleTeacher = new RealTimeTeacher<BasicAgent>();
-	protected ExperienceRecordFactory<BasicAgent> erFactory;
-	protected ExperienceRecordCollector<BasicAgent> femaleERCollector = new ExperienceRecordCollector<BasicAgent>(erFactory);
-	protected ExperienceRecordCollector<BasicAgent> maleERCollector = new ExperienceRecordCollector<BasicAgent>(erFactory);
+	protected ExperienceRecordFactory<BasicAgent> erFactory = new StandardERFactory<>(SimProperties.getDeciderProperties("GLOBAL"));
+	protected ExperienceRecordCollector<BasicAgent> femaleERCollector = new ExperienceRecordCollector<>(erFactory);
+	protected ExperienceRecordCollector<BasicAgent> maleERCollector = new ExperienceRecordCollector<>(erFactory);
 	protected boolean genderSpecificTeacher = SimProperties.getProperty("BasicGenderSpecificTeacher", "true").equals("true");
 	protected Decider<BasicAgent> maleBasicDecider, femaleBasicDecider;
 	protected ExperienceRecordCollector.ERCAllocationPolicy<BasicAgent> ercPolicy = new ExperienceRecordCollector.ERCAllocationPolicy<BasicAgent>() {

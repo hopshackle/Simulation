@@ -23,7 +23,8 @@ public class BasicAgent extends Agent implements Persistent {
 	private static BasicAgentRetriever masterAgentRetriever = new BasicAgentRetriever();
 	private static double debugChance = 0.01;
 	private static int locationMemoryLimit = SimProperties.getPropertyAsInteger("BasicLocationMemory", "100");
-	
+	private static BasicAgentRetriever bar = new BasicAgentRetriever();
+
 	private double health;
 	private long lastMaintenance;
 	private int movementPointsSpent;
@@ -224,13 +225,11 @@ public class BasicAgent extends Agent implements Persistent {
 	
 	public List<BasicAgent> getAllPartners() {
 		List<BasicAgent> partners = new ArrayList<BasicAgent>();
-		BasicAgentRetriever bar = new BasicAgentRetriever();
 		for (Long id : allPartners) {
 			BasicAgent s = (BasicAgent) AgentArchive.getAgent(id, bar, world);
 			if (s != null)
 				partners.add(s);
 		}
-		bar.closeConnection();
 		return partners;
 	}
 
