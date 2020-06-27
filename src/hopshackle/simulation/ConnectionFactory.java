@@ -24,8 +24,8 @@ public class ConnectionFactory {
         connectionProperties.setProperty("jdbcCompliantTruncation",
                 Boolean.toString(truncate));
 
-		String connectionStr = "jdbc:mysql://" + hostname + ":3306/" + db;
-//		if (hostname == "") // NamedPipes more efficient if we're on the local machine
+        String connectionStr = "jdbc:mysql://" + hostname + ":3306/" + db +" ?serverTimezone=UTC";
+        //		if (hostname == "") // NamedPipes more efficient if we're on the local machine
 //			connectionStr = connectionStr + "?socketFactory=com.mysql.jdbc.NamedPipeSocketFactory";
 
 //        String connectionStr = "jdbc:mysql:///" + db;
