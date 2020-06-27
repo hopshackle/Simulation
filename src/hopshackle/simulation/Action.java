@@ -159,13 +159,13 @@ public abstract class Action<A extends Agent> implements Delayed {
         }
     }
 
-    private void updateAgreement(A a, boolean choice) {
-        agentAgreement.put(a, choice);
+    private void updateAgreement(A a, boolean confirmed) {
+        agentAgreement.put(a, confirmed);
         // Now check for change of state
         boolean changeState = (currentState == State.PROPOSED);
         for (A m : mandatoryActors) {
             if (agentAgreement.containsKey(m)) {
-                if (agentAgreement.get(m) == false) {
+                if (!agentAgreement.get(m)) {
                     this.cancel();
                     changeState = false;
                     break;
@@ -174,7 +174,7 @@ public abstract class Action<A extends Agent> implements Delayed {
                 changeState = false;
             }
         }
-        if (optionalActors.contains(a) && choice == false) {
+        if (optionalActors.contains(a) && !confirmed) {
             optionalActors.remove(a);
             a.actionPlan.actionCompleted(this);
         }
@@ -304,6 +304,10 @@ public abstract class Action<A extends Agent> implements Delayed {
             default:
                 return plannedStartTime;
         }
+    }
+
+    public boolean isCancelled() {
+        return currentState == State.CANCELLED;
     }
 
     public boolean isDeleted() {

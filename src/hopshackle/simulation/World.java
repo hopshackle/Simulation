@@ -22,6 +22,7 @@ public class World extends Location {
     private double lastTempPublished = 999;
     private long actualEndOfWorldTime;
     private Map<String, WorldLogic<?>> logicMap = new HashMap<String, WorldLogic<?>>();
+    private Map<String, DatabaseWriter> dbWriterMap = new HashMap<>();
 
     public World(ActionProcessor ap, String suffix, WorldLogic<?> logic) {
         this(ap, suffix, 60000, logic);
@@ -314,5 +315,12 @@ public class World extends Location {
     public <A extends Agent> WorldLogic<A> getWorldLogic(A agent) {
         String key = agent.getType();
         return (WorldLogic<A>) logicMap.get(key);
+    }
+
+    public <T> void registerDatabaseWriter(Class<T> klass, DatabaseWriter<T> dbWriter) {
+        dbWriterMap.put(klass.getName(), dbWriter);
+    }
+    public <T> DatabaseWriter<T> getDBWriter(Class<T> klass) {
+        return dbWriterMap.get(klass.getName());
     }
 }

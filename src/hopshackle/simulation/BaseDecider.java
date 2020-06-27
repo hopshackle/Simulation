@@ -193,6 +193,7 @@ public abstract class BaseDecider<A extends Agent> implements Decider<A> {
         return retValue;
     }
 
+
     protected List<Double> getNormalisedBoltzmannValuesPerOption(List<ActionEnum<A>> optionList, A decidingAgent) {
         double temperature = SimProperties.getPropertyAsDouble("Temperature", "1.0");
         return getNormalisedBoltzmannValuesPerOption(optionList, decidingAgent, temperature);

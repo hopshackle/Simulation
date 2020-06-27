@@ -102,7 +102,7 @@ public class FastCalendar implements WorldCalendar {
                 season = "Autumn";
                 break;
         }
-        return season + " " + String.valueOf(year);
+        return season + " " + year;
     }
 
     @Override

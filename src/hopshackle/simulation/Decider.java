@@ -10,7 +10,7 @@ public interface Decider<A extends Agent> {
 
     public double valueOption(ActionEnum<A> option, A decidingAgent);
 
-    public abstract double valueOption(ActionEnum<A> option, State<A> state);
+    public double valueOption(ActionEnum<A> option, State<A> state);
 
     public List<Double> valueOptions(List<ActionEnum<A>> options, A decidingAgent);
 

@@ -24,6 +24,10 @@ public class DatabaseAccessUtility implements Runnable{
 		otherSetup();
 	}
 
+	public void registerWriter(DatabaseWriter writer) {
+		writers.add(writer);
+	}
+
 	private void otherSetup(){
 		queue = new LinkedBlockingQueue<>();
 	}
@@ -54,6 +58,7 @@ public class DatabaseAccessUtility implements Runnable{
 				nextUpdate = queue.poll(timeout, TimeUnit.MINUTES);
 	//			System.out.println("Executing " + nextUpdate);
 				if (nextUpdate == null || nextUpdate.equals("EXIT")) {
+					flushWriters();
 					done = true;
 	//				System.out.println("DBU exiting at " + (System.currentTimeMillis()-startTime));
 				} else {

@@ -16,6 +16,7 @@ public class DatabaseWriter<T> {
         this.DAO = DAO;
         numberInBuffer = 0;
         databaseAccessUtility = dbu;
+        dbu.registerWriter(this);
     }
 
     public void write(T thing, String tableSuffix) {
