@@ -70,7 +70,7 @@ public class ActionPlan {
     @SuppressWarnings({"rawtypes", "unchecked"})
     public synchronized void addAction(Action newAction) {
         if (!agent.isDead() && (agent.getWorld() != null) && newAction != null) {
-            if (actionQueue.contains(newAction)) return;
+       //     if (actionQueue.contains(newAction)) return;
             if (willFitInPlan(newAction, true)) {
                 newAction.agree(agent);
                 actionQueue.add(newAction);

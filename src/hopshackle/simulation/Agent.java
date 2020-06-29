@@ -244,7 +244,7 @@ public abstract class Agent extends Observable {
 	 * Mainly a convenience function for testing.
 	 */
 	public void setAge(int age) {
-		long currentAge = getAge();
+		long currentAge = this.getAge();
 		long birth = getBirth();
 		setBirth(birth + currentAge - age);
 	}
@@ -524,7 +524,7 @@ public abstract class Agent extends Observable {
 	public Map<Agent, Relationship> getRelationships() {
 		return relationships;
 	}
-	public List<Agent> getRelationships(Relationship type) {
+	public List<Agent> getRelationshipsOfType(Relationship type) {
 		List<Agent> retValue = new ArrayList<>();
 		for (Agent a : relationships.keySet()) {
 			if (relationships.get(a) == type)

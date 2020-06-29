@@ -45,10 +45,10 @@ public class Organisation<T extends Agent> extends Location implements Persisten
             MembershipDetails md = membership.get(exMember.getUniqueID());
             md.membershipTerminates(world.getCurrentTime());
         }
- //       if (getCurrentSize() == 0) {
- //           dissolved = world.getCurrentTime();
- //           setParentLocation(null);
- //       }
+        if (getCurrentSize() == 0) {
+            dissolved = world.getCurrentTime();
+            setParentLocation(null);
+        }
     }
 
     public boolean isOrHasBeenMember(T agent) {
@@ -84,10 +84,6 @@ public class Organisation<T extends Agent> extends Location implements Persisten
         return founded;
     }
 
-    public long getDissolved() {
-        return dissolved;
-    }
-
     public int getCurrentSize() {
         int total = 0;
         for (MembershipDetails md : membership.values()) {
@@ -117,14 +113,10 @@ public class Organisation<T extends Agent> extends Location implements Persisten
             }
         }
 
-        Collections.sort(retValue, new Comparator<T>() {
-
-            @Override
-            public int compare(T m1, T m2) {
-                Long id1 = m1.getUniqueID();
-                Long id2 = m2.getUniqueID();
-                return (int) (membership.get(id1).getMembershipStart() - membership.get(id2).getMembershipStart());
-            }
+        retValue.sort((m1, m2) -> {
+            Long id1 = m1.getUniqueID();
+            Long id2 = m2.getUniqueID();
+            return (int) (membership.get(id1).getMembershipStart() - membership.get(id2).getMembershipStart());
         });
 
         return retValue;

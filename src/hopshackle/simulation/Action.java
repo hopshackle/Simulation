@@ -200,7 +200,8 @@ public abstract class Action<A extends Agent> implements Delayed {
                 plannedEndTime = startTime + duration;
                 changeState(State.EXECUTING);
                 initialisation();
-                if (!isDeleted()) break;
+                break;
+                // Amended this from if (!isDeleted())...as if we are deleted we should go back and run the cancel action explicitly (which is when we do the CleanUp and NextDecision
             case FINISHED:
             case CANCELLED:
                 doCleanUp();

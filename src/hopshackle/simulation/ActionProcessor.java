@@ -151,12 +151,23 @@ public class ActionProcessor {
         public void run() {
             Long startTime, endTime;
             try {
+                int sameActionCount = 0;
+                String lastActionName = "";
                 do {
                     currentAction = q.poll(10, TimeUnit.SECONDS);
                     // If we ever have to wait for more than 10 seconds,
                     // then exit
                     if (currentAction != null && !done) {
-          //              System.out.println("AP processing " + currentAction + " : " + currentAction.getState());
+                        if (currentAction.toString().equals(lastActionName)) {
+                            sameActionCount++;
+                        } else {
+                            sameActionCount = 0;
+                            lastActionName = currentAction.toString();
+                        }
+                        if (sameActionCount > 50 && currentAction.getState() == Action.State.CANCELLED) {
+                            throw new AssertionError("50+ repetitions of action " + lastActionName);
+                        }
+      //                  System.out.println("AP processing " + currentAction + " : " + currentAction.getState());
                         synchronized (ap) {
                             if (debug)
                                 logger.info("started action: " + currentAction.toString() + " in state of " + currentAction.getState()
