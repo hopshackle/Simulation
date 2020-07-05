@@ -164,8 +164,8 @@ public class ActionProcessor {
                             sameActionCount = 0;
                             lastActionName = currentAction.toString();
                         }
-                        if (sameActionCount > 50 && currentAction.getState() == Action.State.CANCELLED) {
-                            throw new AssertionError("50+ repetitions of action " + lastActionName);
+                        if (sameActionCount > 150 && currentAction.getState() == Action.State.CANCELLED) {
+                            throw new AssertionError("150+ repetitions of action " + lastActionName);
                         }
       //                  System.out.println("AP processing " + currentAction + " : " + currentAction.getState());
                         synchronized (ap) {
@@ -208,10 +208,10 @@ public class ActionProcessor {
                                             currentAction.toString(),
                                             endTime - startTime);
                             }
-                            if ((endTime - startTime) > 1000) {
+                            if ((endTime - startTime) > 60000) {
                                 logger.warning(currentAction.toString()
                                         + " takes "
-                                        + (endTime - startTime) + " ms");
+                                        + (endTime - startTime) / 1000 + " seconds");
                             }
                             ap.notifyAll();
                         }

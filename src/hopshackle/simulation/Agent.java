@@ -134,8 +134,9 @@ public abstract class Agent extends Observable {
 		inventory.clear();
 		clearMapKnowledge();
 
-		if (logger != null)
+		if (logger != null) {
 			logger.close();
+		}
 	}
 	
 	public void purgeActions(boolean overrideExecuting){
@@ -406,8 +407,9 @@ public abstract class Agent extends Observable {
 			die("Culled");
 			errorLogger.info(toString() +" struck by lightning");
 		}
-		if (world.isDead())
+		if (world.isDead()) {
 			die("World has ended");
+		}
 	}
 
 	public void addListener(AgentListener el) {

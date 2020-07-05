@@ -212,14 +212,13 @@ public class World extends Location {
     public void worldDeath() {
         if (isDead()) return;
         isAlive = false;
+        actionProcessor.stop();
         if (calendar != null)
             actualEndOfWorldTime = calendar.getTime();
         setCalendar(null);
-        List<Agent> allAgents = new ArrayList<Agent>();
-        for (Agent a : agentsInLocation)
-            allAgents.add(a);
-        for (Agent a : allAgents)
+        for (Agent a : getAgentsIncludingChildLocations()) {
             a.maintenance();
+        }
         for (ActionListener al : listeners) {
             al.actionPerformed(new ActionEvent(this, 1, "Death"));
         }

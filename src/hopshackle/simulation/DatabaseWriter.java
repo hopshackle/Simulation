@@ -11,6 +11,7 @@ public class DatabaseWriter<T> {
     private static int bufferLimit = SimProperties.getPropertyAsInteger("DatabaseWriterBufferLimit", "10");
     private DatabaseAccessUtility databaseAccessUtility;
     private DAO<T> DAO;
+    private T sample;
 
     public DatabaseWriter(DAO<T> DAO, DatabaseAccessUtility dbu) {
         this.DAO = DAO;
@@ -20,6 +21,7 @@ public class DatabaseWriter<T> {
     }
 
     public void write(T thing, String tableSuffix) {
+        sample = thing;
         if (lastSuffix == null || !lastSuffix.equals(tableSuffix)) {
             lastSuffix = tableSuffix;
 
@@ -68,6 +70,6 @@ public class DatabaseWriter<T> {
     }
 
     public String toString() {
-        return lastSuffix;
+        return sample.getClass().getName() + " " + lastSuffix;
     }
 }

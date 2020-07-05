@@ -43,7 +43,7 @@ public class DatabaseAccessUtility implements Runnable{
 	public void flushWriters() {
 		for (DatabaseWriter writer : writers) {
 			writer.writeBuffer();
-//			System.out.println("Flushing buffer for " + writer.toString());
+			System.out.println("Flushing buffer for " + writer.toString());
 		}
 	}
 
@@ -60,14 +60,14 @@ public class DatabaseAccessUtility implements Runnable{
 				if (nextUpdate == null || nextUpdate.equals("EXIT")) {
 					flushWriters();
 					done = true;
-	//				System.out.println("DBU exiting at " + (System.currentTimeMillis()-startTime));
+					System.out.println("DBU exiting");
 				} else {
 					try {
-						long start = System.currentTimeMillis();
+		//				long start = System.currentTimeMillis();
 						Statement st = mainConnection.createStatement();
 						st.executeUpdate(nextUpdate);
 						st.close();
-						long finish = System.currentTimeMillis();
+		//				long finish = System.currentTimeMillis();
 		//						System.out.println("DBU access time = " + (finish - start));
 						nextUpdate = null;
 					} catch (SQLException e) {
